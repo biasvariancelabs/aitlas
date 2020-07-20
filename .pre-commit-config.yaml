@@ -1,0 +1,31 @@
+---
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.1.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+
+  - repo: https://github.com/pre-commit/mirrors-isort
+    rev: v4.3.17
+    hooks:
+      - id: isort
+        language_version: "python3"
+
+  - repo: https://github.com/ambv/black
+    rev: stable
+    hooks:
+      - id: black
+        name: black
+        language: system
+        language_version: "python3"
+        entry: black
+        types: [python]
+
+#  - repo: https://github.com/pre-commit/mirrors-pylint
+#    rev: v2.4.4
+#    hooks:
+#      - id: pylint
+#        language_version: "python3"
