@@ -1,0 +1,6 @@
+torch<1.6.1
+torchvision<0.7.1
+munch
+numpy
+marshmallow
+matplotlib

@@ -1,18 +1,42 @@
 from abc import ABC
-import inspect
-import json
 
 from marshmallow import Schema, fields
+from munch import Munch
 
 
-class Config:
-    """ Generic configuration object. This will store configuration names and values.
+class Config(Munch):
+    """ Config object used for automatic object creation from a dict.
     """
-    def __init__(self, dictionary):
-        def _traverse(key, element):
-            if isinstance(element, dict):
-                return key, Config(element)
-            else:
-                return key, element
 
-        self.__dict__.update(dict(_traverse(k, v) for k, v in dictionary.items()))
+    def __init__(self, config):
+        def convert(obj):
+            """ Recursively convert a dict to Munch. (there is a Munch.from_dict method, but it's not python3 compatible)
+            """
+            if isinstance(obj, list):
+                return [convert(element) for element in obj]
+            if isinstance(obj, dict):
+                return Munch({k: convert(v) for k, v in obj.items()})
+            return obj
+
+        config = convert(config)
+
+        super().__init__(config)
+
+
+class ObjectConfig(Schema):
+    classname = fields.String(required=True, description="Class to instantiate.")
+    config = fields.Dict(
+        required=True, descripton="Configuration used for instantiation of the class."
+    )
+
+
+class Configurable(ABC):
+    """ Base class for all configurable objects.
+    """
+
+    schema = None  # you need specify the schema of the class
+
+    def __init__(self, config):
+        if not self.schema:
+            raise ValueError(f"You are missing a schema for {self.__class__}")
+        self.config = Config(self.schema().load(config))
