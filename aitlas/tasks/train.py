@@ -6,7 +6,7 @@ class TrainTask(BaseTask):
     schema = TrainTaskSchema
 
     def __init__(self, model: BaseModel, dataset: BaseDataset, config):
-        super().__init__(model, config)
+        super().__init__(model, dataset, config)
 
     def run(self):
         """Do something awesome here"""

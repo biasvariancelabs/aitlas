@@ -24,3 +24,9 @@ class CifarDataset(BaseDataset):
             download=self.config.download,
             transform=transform,
         )
+
+    def __getitem__(self, index):
+        return self.dataset.__getitem__(index)
+
+    def __len__(self):
+        return self.dataset.__len__()

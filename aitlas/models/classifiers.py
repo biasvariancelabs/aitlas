@@ -1,11 +1,12 @@
 import logging
 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
 from ..base import BaseDataset, BaseModel
-from ..utils import current_ms
+from ..utils import current_ts
 from .schemas import BaseClassifierSchema
 
 
@@ -46,7 +47,7 @@ class BaseClassifier(BaseModel):
     ):
 
         start_epoch = 0
-        start = current_ms()
+        start = current_ts()
 
         # load optimizer
         if not self.optimizer:
@@ -59,23 +60,28 @@ class BaseClassifier(BaseModel):
             start_epoch, loss, start = self.load_model(resume_model, self.optimizer)
             start_epoch += 1
 
+        # get dataloader
+        dataloader = torch.utils.data.DataLoader(
+            dataset, batch_size=4, shuffle=True, num_workers=2
+        )
+
         self.train()
         for epoch in range(start_epoch, epochs):  # loop over the dataset multiple times
             loss = self.train_epoch(
-                epoch, dataset, self.optimizer, self.criterion, iterations_log
+                epoch, dataloader, self.optimizer, self.criterion, iterations_log
             )
             if epoch % save_epochs == 0:
-                self.save_model(model_directory, self.optimizer, epoch, loss, start)
+                self.save_model(model_directory, epoch, self.optimizer, loss, start)
 
-        logging.info(f"finished training. training time: {current_ms()-start}")
+        logging.info(f"finished training. training time: {current_ts() - start}")
 
-    def train_epoch(self, epoch, dataset, optimizer, criterion, iterations_log):
-        start = current_ms()
+    def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
+        start = current_ts()
         running_loss = 0.0
         total_loss = 0.0
         total = 0
 
-        for i, data in enumerate(dataset):
+        for i, data in enumerate(dataloader):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
 
@@ -92,11 +98,9 @@ class BaseClassifier(BaseModel):
             running_loss += loss.item()
             total_loss += running_loss
 
-            if (
-                i % iterations_log == iterations_log - 1
-            ):  # print every iterations_log mini-batches
+            if i % iterations_log == 0:  # print every iterations_log mini-batches
                 logging.info(
-                    f"[{epoch}, {i}], loss: {running_loss / iterations_log : %.5f}"
+                    f"[{epoch}, {i}], loss: {running_loss / iterations_log : .5f}"
                 )
                 running_loss = 0.0
 
@@ -104,7 +108,7 @@ class BaseClassifier(BaseModel):
 
         total_loss = total_loss / total
         logging.info(
-            f"epoch: {epoch}, time: {current_ms() - start}, loss: {total_loss: %.5f}"
+            f"epoch: {epoch}, time: {current_ts() - start}, loss: {total_loss: .5f}"
         )
         return total_loss
 

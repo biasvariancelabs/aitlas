@@ -5,7 +5,7 @@ from shutil import copyfile
 import torch
 import torch.nn as nn
 
-from ..utils import current_ms
+from ..utils import current_ts
 from .config import Configurable
 from .dataset import BaseDataset
 
@@ -61,7 +61,7 @@ class BaseModel(nn.Module, Configurable):
         if not os.path.isdir(model_directory):
             os.makedirs(model_directory)
 
-        timestamp = current_ms()
+        timestamp = current_ts()
         checkpoint = os.path.join(model_directory, f"checkpoint_{timestamp}.pth.tar")
 
         # create timestamped checkpoint

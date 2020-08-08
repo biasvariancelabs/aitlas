@@ -9,6 +9,6 @@ def get_class(class_name):
     return getattr(importlib.import_module(module), cls)
 
 
-def current_ms():
-    """returns current timestamp in ms"""
-    return int(time() * 1000)
+def current_ts():
+    """returns current timestamp in secs"""
+    return int(time())

@@ -1,1 +1,1 @@
-from .utils import current_ms, get_class
+from .utils import current_ts, get_class
