@@ -39,7 +39,7 @@ class BaseModel(nn.Module, Configurable):
         """
         raise NotImplementedError
 
-    def evaluate(self):
+    def evaluate(self, dataset: BaseDataset = None, model_path: str = None):
         """
         Evaluates a given model against a test dataset.
         """
@@ -79,7 +79,7 @@ class BaseModel(nn.Module, Configurable):
         # replace last checkpoint
         copyfile(checkpoint, os.path.join(model_directory, "checkpoint.pth.tar"))
 
-    def load_model(self, file_path, optimizer):
+    def load_model(self, file_path, optimizer=None):
         """Loads a model from a checkpoint"""
         if os.path.isfile(file_path):
             logging.info(f"=> loading checkpoint {file_path}")
@@ -89,7 +89,9 @@ class BaseModel(nn.Module, Configurable):
             start_epoch = checkpoint["epoch"]
             loss = checkpoint["loss"]
             start = checkpoint["start"]
-            optimizer.load_state_dict(checkpoint["optimizer"])
+
+            if optimizer:
+                optimizer.load_state_dict(checkpoint["optimizer"])
 
             logging.info(f"=> loaded checkpoint {file_path} at epoch {start_epoch}")
             return (start_epoch, loss, start)

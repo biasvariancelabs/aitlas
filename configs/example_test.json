@@ -1,0 +1,21 @@
+{
+    "model": {
+        "classname": "aitlas.models.CifarModel",
+        "config": {
+            "num_classes": 10
+        }
+    },
+    "dataset": {
+        "classname": "aitlas.datasets.CifarDataset",
+        "config": {
+            "download": true,
+            "train": false
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.EvaluateTask",
+        "config": {
+             "model_path": "./examples/experiment/checkpoint.pth.tar"
+        }
+    }
+  }

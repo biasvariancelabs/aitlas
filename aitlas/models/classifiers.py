@@ -61,9 +61,7 @@ class BaseClassifier(BaseModel):
             start_epoch += 1
 
         # get dataloader
-        dataloader = torch.utils.data.DataLoader(
-            dataset, batch_size=4, shuffle=True, num_workers=2
-        )
+        dataloader = dataset.dataloader
 
         self.train()
         for epoch in range(start_epoch, epochs):  # loop over the dataset multiple times
@@ -112,8 +110,29 @@ class BaseClassifier(BaseModel):
         )
         return total_loss
 
-    def log_epoch(self):
-        logging.info("")
+    def evaluate(self, dataset: BaseDataset = None, model_path: str = None):
+        # load the model
+        self.load_model(model_path)
+
+        # get data loader
+        dataloader = dataset.dataloader
+
+        # initialize counters
+        correct = 0
+        total = 0
+
+        # evaluate
+        with torch.no_grad():
+            for data in dataloader:
+                images, labels = data
+                outputs = self(images)
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+
+        result = 100 * correct / total
+        logging.info(f"Accuracy: {result:.3f}")
+        return result
 
 
 class CifarModel(BaseClassifier):
