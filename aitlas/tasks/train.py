@@ -1,13 +1,18 @@
-from ..base import BaseTask
+from ..base import BaseDataset, BaseModel, BaseTask
 from .schemas import TrainTaskSchema
 
 
 class TrainTask(BaseTask):
     schema = TrainTaskSchema
 
-    def __init__(self, model, config):
+    def __init__(self, model: BaseModel, dataset: BaseDataset, config):
         super().__init__(model, config)
 
     def run(self):
         """Do something awesome here"""
-        pass
+        self.model.fit(
+            dataset=self.dataset,
+            epochs=self.config.epochs,
+            model_directory=self.config.model_directory,
+            save_epochs=self.config.save_epochs,
+        )

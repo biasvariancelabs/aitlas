@@ -1,18 +1,24 @@
 {
     "model": {
-        "classname": "aitlas.models.BaseClassifier",
+        "classname": "aitlas.models.CifarModel",
         "config": {
             "num_classes": 10,
             "learning_rate": 0.001
         }
     },
+    "dataset": {
+        "classname": "aitlas.datasets.CifarDataset",
+        "config": {
+            "download": true,
+            "train": true
+        }
+    },
     "task": {
         "classname": "aitlas.tasks.TrainTask",
         "config": {
-            "num_epochs": 10,
-            "model_directory": "./temp/experiment",
-            "iterations_per_epoch": 200,
-            "save_steps": 400
+            "epochs": 100,
+            "model_directory": "./examples/experiment",
+            "save_epochs": 10
         }
     }
   }

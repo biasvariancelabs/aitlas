@@ -18,33 +18,32 @@ class BaseModel(nn.Module, Configurable):
         super(BaseModel, self).__init__()
         Configurable.__init__(self, config)
 
-    def train(
+    def fit(
         self,
         dataset: BaseDataset = None,
         epochs: int = 100,
         model_directory: str = None,
-        save_steps: int = 10,
-        optimizer=None,
-        criterion=None,
+        save_epochs: int = 10,
+        iterations_log: int = 100,
         resume_model: str = None,
         **kwargs,
     ):
         """
         Trains the model on the given dataset. Saves the model on disk for reuse.
         """
-        pass
+        raise NotImplementedError
 
     def predict(self):
         """
         Makes predictions for a given model and dataset.
         """
-        pass
+        raise NotImplementedError
 
     def evaluate(self):
         """
         Evaluates a given model against a test dataset.
         """
-        pass
+        raise NotImplementedError
 
     def forward(self, *input, **kwargs):
         """
@@ -53,7 +52,7 @@ class BaseModel(nn.Module, Configurable):
         """
         raise NotImplementedError
 
-    def save_model(self, model_directory, epoch, optimizer, loss):
+    def save_model(self, model_directory, epoch, optimizer, loss, start):
         """
         Saves the model on disk
         :param model_directory:
@@ -72,6 +71,7 @@ class BaseModel(nn.Module, Configurable):
                 "state_dict": self.state_dict(),
                 "optimizer": optimizer.state_dict(),
                 "loss": loss,
+                "start": start,
             },
             checkpoint,
         )
@@ -88,9 +88,10 @@ class BaseModel(nn.Module, Configurable):
             self.load_state_dict(checkpoint["state_dict"])
             start_epoch = checkpoint["epoch"]
             loss = checkpoint["loss"]
+            start = checkpoint["start"]
             optimizer.load_state_dict(checkpoint["optimizer"])
 
             logging.info(f"=> loaded checkpoint {file_path} at epoch {start_epoch}")
-            return (start_epoch, loss)
+            return (start_epoch, loss, start)
         else:
             raise ValueError(f"No checkpoint found at {file_path}")
