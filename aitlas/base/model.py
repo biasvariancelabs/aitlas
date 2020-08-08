@@ -1,6 +1,16 @@
+import logging
+import os
+from shutil import copyfile
+
+import torch
 import torch.nn as nn
 
+from ..utils import current_ms
 from .config import Configurable
+from .dataset import BaseDataset
+
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 class BaseModel(nn.Module, Configurable):
@@ -8,7 +18,17 @@ class BaseModel(nn.Module, Configurable):
         super(BaseModel, self).__init__()
         Configurable.__init__(self, config)
 
-    def train(self, epochs: int = 10):
+    def train(
+        self,
+        dataset: BaseDataset = None,
+        epochs: int = 100,
+        model_directory: str = None,
+        save_steps: int = 10,
+        optimizer=None,
+        criterion=None,
+        resume_model: str = None,
+        **kwargs,
+    ):
         """
         Trains the model on the given dataset. Saves the model on disk for reuse.
         """
@@ -32,3 +52,45 @@ class BaseModel(nn.Module, Configurable):
         :return:  instance extending `nn.Module`
         """
         raise NotImplementedError
+
+    def save_model(self, model_directory, epoch, optimizer, loss):
+        """
+        Saves the model on disk
+        :param model_directory:
+        :return:
+        """
+        if not os.path.isdir(model_directory):
+            os.makedirs(model_directory)
+
+        timestamp = current_ms()
+        checkpoint = os.path.join(model_directory, f"checkpoint_{timestamp}.pth.tar")
+
+        # create timestamped checkpoint
+        torch.save(
+            {
+                "epoch": epoch + 1,
+                "state_dict": self.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "loss": loss,
+            },
+            checkpoint,
+        )
+
+        # replace last checkpoint
+        copyfile(checkpoint, os.path.join(model_directory, "checkpoint.pth.tar"))
+
+    def load_model(self, file_path, optimizer):
+        """Loads a model from a checkpoint"""
+        if os.path.isfile(file_path):
+            logging.info(f"=> loading checkpoint {file_path}")
+            checkpoint = torch.load(file_path)
+
+            self.load_state_dict(checkpoint["state_dict"])
+            start_epoch = checkpoint["epoch"]
+            loss = checkpoint["loss"]
+            optimizer.load_state_dict(checkpoint["optimizer"])
+
+            logging.info(f"=> loaded checkpoint {file_path} at epoch {start_epoch}")
+            return (start_epoch, loss)
+        else:
+            raise ValueError(f"No checkpoint found at {file_path}")

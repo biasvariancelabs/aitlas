@@ -4,7 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from marshmallow.validate import ContainsOnly, OneOf
 
-from ..base import BaseModel, Configurable
+from ..base import BaseDataset, BaseModel
+from ..utils import current_ms
 from .schemas import BaseClassifierSchema
 
 
@@ -28,6 +29,49 @@ class BaseClassifier(BaseModel):
 
     def __init__(self, config):
         super().__init__(config)
+
+    def train(
+        self,
+        dataset: BaseDataset = None,
+        epochs: int = 100,
+        model_directory: str = None,
+        save_steps: int = 10,
+        optimizer=None,
+        criterion=None,
+        resume_model: str = None,
+        **kwargs,
+    ):
+
+        start_epoch = 0
+        # load the model if needs to resume training
+        if resume_model:
+            start_epoch, loss = self.load_model(resume_model, optimizer)
+
+        for epoch in range(start_epoch, epochs):  # loop over the dataset multiple times
+            running_loss = 0.0
+            for i, data in enumerate(dataset, 0):
+                # get the inputs; data is a list of [inputs, labels]
+                inputs, labels = data
+
+                # zero the parameter gradients
+                optimizer.zero_grad()
+
+                # forward + backward + optimize
+                outputs = self(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
+
+                # print statistics
+                running_loss += loss.item()
+                if i % 2000 == 1999:  # print every 2000 mini-batches
+                    logging.info(f"[{epoch}, {i}] loss: {running_loss: %.3f}")
+                    running_loss = 0.0
+
+            if epoch % save_steps == 0:
+                self.save_model(
+                    model_directory, optimizer, epoch, running_loss
+                )  # TODO: update loss here!
 
 
 class CifarModel(BaseModel):
