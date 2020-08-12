@@ -2,11 +2,11 @@ import torchvision
 import torchvision.transforms as transforms
 
 from ..base import BaseDataset
-from .schemas import CifarDatasetSchema
+from .schemas import SplitableDatasetSchema
 
 
-class CifarDataset(BaseDataset):
-    schema = CifarDatasetSchema
+class EurosatDataset(BaseDataset):
+    schema = SplitableDatasetSchema
 
     def __init__(self, config):
         BaseDataset.__init__(self, config)

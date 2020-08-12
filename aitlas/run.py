@@ -10,9 +10,7 @@ from .utils import get_class
 class RunConfig(Schema):
     """Top level configuration schema"""
 
-    model = fields.Nested(
-        ObjectConfig, required=True, description="Model configuration"
-    )
+    model = fields.Nested(ObjectConfig, missing=None, description="Model configuration")
     dataset = fields.Nested(
         ObjectConfig, required=True, description="Dataset configuration"
     )
@@ -28,9 +26,11 @@ def main(config_file):
     # load configuration
     config = Config(RunConfig().load(config))
 
-    # load model
-    model_cls = get_class(config.model.classname)
-    model = model_cls(config.model.config)
+    # load model, if specified
+    model = None
+    if config.model:
+        model_cls = get_class(config.model.classname)
+        model = model_cls(config.model.config)
 
     # load dataset
     dataset_cls = get_class(config.dataset.classname)
