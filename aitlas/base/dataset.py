@@ -50,7 +50,7 @@ class SplitableDataset(BaseDataset):
         BaseDataset.__init__(self, config)
 
         should_split = True
-        if not config.split.override:  # check if the files exists
+        if not config.override:  # check if the files exists
             self.verify_files()
 
             # load splits
@@ -78,7 +78,7 @@ class SplitableDataset(BaseDataset):
         self.val_set = Subset(dataset=self, indices=self.val_indices)
 
     def has_val(self):
-        return not self.config.split.val
+        return self.config.split.val
 
     def check_file(self, file):
         if not os.path.isfile(file):
@@ -103,11 +103,13 @@ class SplitableDataset(BaseDataset):
         return res == 100
 
     def split(self):
-        train_num = self.config.split.train.ratio / 100
-        test_num = self.config.split.test.ratio / 100
+        size = self.__len__()
+        train_num = int(size * self.config.split.train.ratio / 100)
+        test_num = int(size * self.config.split.test.ratio / 100)
 
         if self.has_val():
-            val_num = self.config.split.val.ratio / 100
+            val_num = int(size * self.config.split.val.ratio / 100)
+
             [self.train_indices, self.val_indices, self.test_indices] = random_split(
                 self, [train_num, val_num, test_num]
             )

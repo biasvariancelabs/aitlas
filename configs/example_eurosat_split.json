@@ -1,0 +1,26 @@
+{
+    "dataset": {
+        "classname": "aitlas.datasets.EurosatDataset",
+        "config": {
+            "override": true,
+            "split": {
+                "train": {
+                    "ratio": 60,
+                    "file": "./data/train.csv"
+                },
+                "val": {
+                    "ratio": 20,
+                    "file": "./data/val.csv"
+                },
+                "test": {
+                    "ratio": 20,
+                    "file": "./data/test.csv"
+                }
+            }
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.SplitTask",
+        "config": {}
+    }
+  }

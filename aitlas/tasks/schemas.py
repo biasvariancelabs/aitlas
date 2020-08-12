@@ -21,3 +21,7 @@ class EvaluateTaskSchema(Schema):
         description="Path to the model",
         example="/tmp/model/checkpoint.pth.tar",
     )
+
+
+class SplitTaskSchema(Schema):
+    pass
