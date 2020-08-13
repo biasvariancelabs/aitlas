@@ -50,7 +50,7 @@ class SplitableDataset(BaseDataset):
         BaseDataset.__init__(self, config)
 
         should_split = True
-        if not config.override:  # check if the files exists
+        if not self.config.override:  # check if the files exists
             self.verify_files()
 
             # load splits

@@ -2,8 +2,10 @@ from marshmallow import Schema, fields
 
 
 class SplitSetObjectSchema(Schema):
-    ratio = fields.Int(description="Ratio of dataset", example=60)
-    file = fields.String(description="File indices", example="./data/indices.csv")
+    ratio = fields.Int(required=True, description="Ratio of dataset", example=60)
+    file = fields.String(
+        required=True, description="File indices", example="./data/indices.csv"
+    )
 
 
 class SplitObjectSchema(Schema):

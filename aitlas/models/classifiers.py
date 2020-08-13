@@ -60,16 +60,20 @@ class BaseClassifier(BaseModel):
             start_epoch, loss, start = self.load_model(resume_model, self.optimizer)
             start_epoch += 1
 
-        # get dataloader
-        dataloader = dataset.dataloader
+        # get data loaders
+        trainloader = dataset.trainloader()
+        valloader = dataset.valloader()
 
-        self.train()
         for epoch in range(start_epoch, epochs):  # loop over the dataset multiple times
             loss = self.train_epoch(
-                epoch, dataloader, self.optimizer, self.criterion, iterations_log
+                epoch, trainloader, self.optimizer, self.criterion, iterations_log
             )
             if epoch % save_epochs == 0:
                 self.save_model(model_directory, epoch, self.optimizer, loss, start)
+
+            # evaluate against a validation if there is one
+            if valloader:
+                self.evaluate_model(valloader)
 
         logging.info(f"finished training. training time: {current_ts() - start}")
 
@@ -79,6 +83,7 @@ class BaseClassifier(BaseModel):
         total_loss = 0.0
         total = 0
 
+        self.train()
         for i, data in enumerate(dataloader):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
@@ -114,8 +119,16 @@ class BaseClassifier(BaseModel):
         # load the model
         self.load_model(model_path)
 
-        # get data loader
-        dataloader = dataset.dataloader
+        # get test data loader
+        dataloader = dataset.testloader()
+
+        # evaluate model on data
+        result = self.evaluate_model(dataloader)
+
+        return result
+
+    def evaluate_model(self, dataloader, epoch=None, optimizer=None):
+        self.eval()
 
         # initialize counters
         correct = 0
