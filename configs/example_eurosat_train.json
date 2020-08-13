@@ -1,6 +1,6 @@
 {
     "model": {
-        "classname": "aitlas.models.CifarModel",
+        "classname": "aitlas.models.ResNet50",
         "config": {
             "num_classes": 10,
             "learning_rate": 0.001
@@ -9,18 +9,20 @@
     "dataset": {
         "classname": "aitlas.datasets.EurosatDataset",
         "config": {
+            "mode": "rgb",
+            "root": "./data/EuroSAT/2750",
+            "override": true,
             "split": {
-                "override": true,
                 "train": {
-                    "ratio": 60,
+                    "ratio": 80,
                     "file": "./data/train.csv"
                 },
                 "val": {
-                    "ratio": 20,
+                    "ratio": 10,
                     "file": "./data/val.csv"
                 },
                 "test": {
-                    "ratio": 20,
+                    "ratio": 10,
                     "file": "./data/test.csv"
                 }
             }

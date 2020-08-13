@@ -1,5 +1,12 @@
 import importlib
+import os
 from time import time
+
+import numpy as np
+import six
+import tifffile
+from PIL import Image
+from torch.utils.model_zoo import tqdm
 
 
 def get_class(class_name):
@@ -12,3 +19,14 @@ def get_class(class_name):
 def current_ts():
     """returns current timestamp in secs"""
     return int(time())
+
+
+def pil_loader(file):
+    """open an image from disk"""
+    with open(file, "rb") as f:
+        return np.asarray(Image.open(f))
+
+
+def tiff_loader(file):
+    """opens a tiff image from disk"""
+    return tifffile.imread(file)

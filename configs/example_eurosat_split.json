@@ -5,18 +5,19 @@
             "override": true,
             "split": {
                 "train": {
-                    "ratio": 60,
+                    "ratio": 100,
                     "file": "./data/train.csv"
                 },
                 "val": {
-                    "ratio": 20,
+                    "ratio": 0,
                     "file": "./data/val.csv"
                 },
                 "test": {
-                    "ratio": 20,
+                    "ratio": 0,
                     "file": "./data/test.csv"
                 }
-            }
+            },
+            "root": "./data/EuroSAT/2750"
         }
     },
     "task": {

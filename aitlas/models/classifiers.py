@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torchvision import models
 
 from ..base import BaseDataset, BaseModel
 from ..utils import current_ts
@@ -45,7 +46,7 @@ class BaseClassifier(BaseModel):
         resume_model: str = None,
         **kwargs,
     ):
-
+        logging.info("Starting training.")
         start_epoch = 0
         start = current_ts()
 
@@ -167,3 +168,13 @@ class CifarModel(BaseClassifier):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
+
+
+class ResNet50(BaseClassifier):
+    def __init__(self, config):
+        BaseClassifier.__init__(self, config)
+
+        self.model = models.resnet50(False, False, num_classes=self.config.num_classes)
+
+    def forward(self, x):
+        return self.model.forward(x)
