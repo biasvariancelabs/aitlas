@@ -4,3 +4,4 @@ munch
 numpy
 marshmallow
 matplotlib
+tifffile

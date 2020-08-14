@@ -15,6 +15,7 @@ class BaseDataset(Dataset, Configurable):
         Configurable.__init__(self, config)
 
     def __getitem__(self, index):
+        """ Implement here what you want to return"""
         raise NotImplementedError
 
     def __len__(self):
@@ -32,7 +33,7 @@ class BaseDataset(Dataset, Configurable):
         return self.dataloader(self)
 
     def valloader(self):
-        return self.dataloader(self)
+        return None  # by default we think people won't want to to use a validation set
 
     def testloader(self):
         return self.dataloader(self)
@@ -111,11 +112,11 @@ class SplitableDataset(BaseDataset):
             val_num = int(size * self.config.split.val.ratio / 100)
 
             [self.train_indices, self.val_indices, self.test_indices] = random_split(
-                self, [train_num, val_num, test_num]
+                range(size), [train_num, val_num, test_num]
             )
         else:
             [self.train_indices, self.test_indices] = random_split(
-                self, [train_num, test_num]
+                range(size), [train_num, test_num]
             )
 
     def save_split(self, indices, file):

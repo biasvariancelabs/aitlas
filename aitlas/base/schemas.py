@@ -15,7 +15,7 @@ class SplitObjectSchema(Schema):
 
 
 class BaseDatasetSchema(Schema):
-    batch_size = fields.Int(missing=4, description="Batch size", example=4)
+    batch_size = fields.Int(missing=1, description="Batch size", example=64)
     shuffle = fields.Bool(
         missing=False, description="Should shuffle dataset", example=False
     )

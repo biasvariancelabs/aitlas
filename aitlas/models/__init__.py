@@ -1,1 +1,1 @@
-from .classifiers import BaseClassifier, CifarModel, ResNet50
+from .classifiers import BaseClassifier, CifarModel, ResNet50, ShallowCNNNet
