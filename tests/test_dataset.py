@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest import mock
 
-from aitlas.base.dataset import SplitableDataset
+from aitlas.base.datasets import SplitableDataset
 
 
 class TestSplitableDataset(unittest.TestCase):

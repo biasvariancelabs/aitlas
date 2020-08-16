@@ -30,6 +30,16 @@ class ObjectConfig(Schema):
     )
 
 
+class RunConfig(Schema):
+    """Top level configuration schema"""
+
+    model = fields.Nested(ObjectConfig, missing=None, description="Model configuration")
+    dataset = fields.Nested(
+        ObjectConfig, required=True, description="Dataset configuration"
+    )
+    task = fields.Nested(ObjectConfig, required=True, description="Task configuration")
+
+
 class Configurable(ABC):
     """ Base class for all configurable objects.
     """

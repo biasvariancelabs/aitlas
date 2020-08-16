@@ -11,5 +11,5 @@ class EvaluateTask(BaseTask):
     def run(self):
         """Do something awesome here"""
         self.model.evaluate(
-            dataset=self.testloader(), model_path=self.config.model_path,
+            dataset=self.dataset, model_path=self.config.model_path,
         )

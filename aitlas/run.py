@@ -1,20 +1,8 @@
 import argparse
 import json
 
-from marshmallow import Schema, fields, post_load
-
-from .base.config import Config, ObjectConfig
+from .base import Config, RunConfig
 from .utils import get_class
-
-
-class RunConfig(Schema):
-    """Top level configuration schema"""
-
-    model = fields.Nested(ObjectConfig, missing=None, description="Model configuration")
-    dataset = fields.Nested(
-        ObjectConfig, required=True, description="Dataset configuration"
-    )
-    task = fields.Nested(ObjectConfig, required=True, description="Task configuration")
 
 
 def main(config_file):
@@ -35,6 +23,8 @@ def main(config_file):
     # load dataset
     dataset_cls = get_class(config.dataset.classname)
     dataset = dataset_cls(config.dataset.config)
+    # prepare the dataset
+    dataset.prepare()
 
     # load task
     task_cls = get_class(config.task.classname)

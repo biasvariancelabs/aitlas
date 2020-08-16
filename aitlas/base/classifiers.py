@@ -2,9 +2,7 @@ import logging
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-from torchvision import models
 
 from ..base import BaseDataset, BaseModel
 from ..utils import current_ts
@@ -32,10 +30,6 @@ class BaseClassifier(BaseModel):
     def __init__(self, config):
         super().__init__(config)
 
-        # initialize loss and optmizer
-        self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = None  # this has to be None, here so, we'll actually initialize it in the `fit` method.
-
     def fit(
         self,
         dataset: BaseDataset = None,
@@ -50,11 +44,9 @@ class BaseClassifier(BaseModel):
         start_epoch = 0
         start = current_ts()
 
-        # load optimizer
-        if not self.optimizer:
-            self.optimizer = optim.SGD(
-                self.parameters(), lr=self.config.learning_rate, momentum=0.9
-            )
+        # load loss and optimizer
+        self.criterion = self.load_criterion()
+        self.optimizer = self.load_optimizer()
 
         # load the model if needs to resume training
         if resume_model:
@@ -62,19 +54,19 @@ class BaseClassifier(BaseModel):
             start_epoch += 1
 
         # get data loaders
-        trainloader = dataset.trainloader()
-        valloader = dataset.valloader()
+        train_loader = dataset.train_loader()
+        val_loader = dataset.val_loader()
 
         for epoch in range(start_epoch, epochs):  # loop over the dataset multiple times
             loss = self.train_epoch(
-                epoch, trainloader, self.optimizer, self.criterion, iterations_log
+                epoch, train_loader, self.optimizer, self.criterion, iterations_log
             )
             if epoch % save_epochs == 0:
                 self.save_model(model_directory, epoch, self.optimizer, loss, start)
 
             # evaluate against a validation if there is one
-            if valloader:
-                self.evaluate_model(valloader)
+            if val_loader:
+                self.evaluate_model(val_loader)
 
         logging.info(f"finished training. training time: {current_ts() - start}")
 
@@ -121,7 +113,7 @@ class BaseClassifier(BaseModel):
         self.load_model(model_path)
 
         # get test data loader
-        dataloader = dataset.testloader()
+        dataloader = dataset.test_loader()
 
         # evaluate model on data
         result = self.evaluate_model(dataloader)
@@ -148,55 +140,10 @@ class BaseClassifier(BaseModel):
         logging.info(f"Accuracy: {result:.3f}")
         return result
 
+    def load_optimizer(self):
+        """Load the optimizer"""
+        return optim.SGD(self.parameters(), lr=self.config.learning_rate, momentum=0.9)
 
-class CifarModel(BaseClassifier):
-    def __init__(self, config):
-        BaseClassifier.__init__(self, config)
-
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
-
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-
-class ShallowCNNNet(BaseClassifier):
-    def __init__(self, config):
-        BaseClassifier.__init__(self, config)
-
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 53 * 53, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
-
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-
-        x = x.view(-1, 16 * 53 * 53)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-
-class ResNet50(BaseClassifier):
-    def __init__(self, config):
-        BaseClassifier.__init__(self, config)
-
-        self.model = models.resnet50(False, False, num_classes=self.config.num_classes)
-
-    def forward(self, x):
-        return self.model.forward(x)
+    def load_criterion(self):
+        """Load the loss function"""
+        return nn.CrossEntropyLoss()

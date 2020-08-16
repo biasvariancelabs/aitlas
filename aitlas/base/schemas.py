@@ -15,7 +15,7 @@ class SplitObjectSchema(Schema):
 
 
 class BaseDatasetSchema(Schema):
-    batch_size = fields.Int(missing=1, description="Batch size", example=64)
+    batch_size = fields.Int(missing=64, description="Batch size", example=64)
     shuffle = fields.Bool(
         missing=False, description="Should shuffle dataset", example=False
     )
@@ -32,4 +32,11 @@ class SplitableDatasetSchema(BaseDatasetSchema):
         missing=False,
         default="Should override split files if they exist.",
         example=False,
+    )
+
+
+class BaseClassifierSchema(Schema):
+    num_classes = fields.Int(required=True, description="Number of classes", example=2)
+    learning_rate = fields.Float(
+        missing=None, description="Learning rate used in training.", example=0.01
     )

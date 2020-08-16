@@ -1,6 +1,5 @@
 import os
 
-import torchvision
 import torchvision.transforms as transforms
 
 from ..base import SplitableDataset
@@ -82,10 +81,13 @@ class EurosatDataset(SplitableDataset):
     url_allband = "http://madm.dfki.de/files/sentinel/EuroSATallBands.zip"
 
     def __init__(self, config):
-        if config.mode == "rgb":
+        # now call the constuctor to validate the schema and split the data
+        SplitableDataset.__init__(self, config)
+
+        if self.config.mode == "rgb":
             self.image_loader = pil_loader
             extensions = [".jpg", ".png"]
-        elif config.mode == "all":
+        elif self.config.mode == "all":
             self.image_loader = tiff_loader
             extensions = [".tif", ".tiff"]
         else:
@@ -93,9 +95,10 @@ class EurosatDataset(SplitableDataset):
                 "Eurosat mode invalid. It should be either `rgb` or `all`."
             )
 
-        self.data = make_dataset(config.root, CLASSES_TO_IDX, extensions)
+        self.data = make_dataset(self.config.root, CLASSES_TO_IDX, extensions)
 
-        self.transform = transforms.Compose(
+    def load_transforms(self):
+        return transforms.Compose(
             [
                 transforms.ToPILImage(),
                 transforms.Resize(256),
@@ -103,9 +106,6 @@ class EurosatDataset(SplitableDataset):
                 transforms.ToTensor(),
             ]
         )
-
-        # now call the constuctor to validate the schema and split the data
-        SplitableDataset.__init__(self, config)
 
     def __getitem__(self, index):
         """
@@ -118,7 +118,7 @@ class EurosatDataset(SplitableDataset):
         # load image
         img = self.image_loader(self.data[index][0])
         # apply transformations
-        img = self.transform(img)
+        img = self.transforms(img)
         target = self.data[index][1]
         return img, target
 

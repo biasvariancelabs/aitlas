@@ -13,6 +13,11 @@ class TrainTaskSchema(Schema):
     save_epochs = fields.Int(
         missing=100, description="Number of training steps between model checkpoints."
     )
+    resume_model = fields.String(
+        missing=None,
+        description="File path to the model to be resumed",
+        example="/tmp/model/checkpoint.pth.tar",
+    )
 
 
 class EvaluateTaskSchema(Schema):

@@ -2,6 +2,7 @@ import os
 
 import torch
 from torch.utils.data import Dataset, Subset, random_split
+from torchvision import transforms
 
 from .config import Configurable
 from .schemas import BaseDatasetSchema, SplitableDatasetSchema
@@ -14,12 +15,23 @@ class BaseDataset(Dataset, Configurable):
         Dataset.__init__(self)
         Configurable.__init__(self, config)
 
+        # get the transformations to be applied
+        self.transforms = self.load_transforms()
+
     def __getitem__(self, index):
         """ Implement here what you want to return"""
         raise NotImplementedError
 
     def __len__(self):
         raise NotImplementedError
+
+    def prepare(self):
+        """Implement if something needs to happen to the dataset after object creation"""
+        raise True
+
+    def load_transforms(self):
+        """Transformations that might be applied on the dataset"""
+        return transforms.Compose([])
 
     def dataloader(self, dataset):
         return torch.utils.data.DataLoader(
@@ -29,13 +41,13 @@ class BaseDataset(Dataset, Configurable):
             num_workers=self.config.num_workers,
         )
 
-    def trainloader(self):
+    def train_loader(self):
         return self.dataloader(self)
 
-    def valloader(self):
+    def val_loader(self):
         return None  # by default we think people won't want to to use a validation set
 
-    def testloader(self):
+    def test_loader(self):
         return self.dataloader(self)
 
 
@@ -50,6 +62,10 @@ class SplitableDataset(BaseDataset):
     def __init__(self, config):
         BaseDataset.__init__(self, config)
 
+    def prepare(self):
+        self.split()
+
+    def split(self):
         should_split = True
         if not self.config.override:  # check if the files exists
             self.verify_files()
@@ -69,7 +85,7 @@ class SplitableDataset(BaseDataset):
                     "The defined split is invalid. The sum should be equal to 100."
                 )
             # split the dataset
-            self.split()
+            self.make_splits()
             # save the splits
             self.save_splits()
 
@@ -103,7 +119,7 @@ class SplitableDataset(BaseDataset):
             res += self.config.split.val.ratio
         return res == 100
 
-    def split(self):
+    def make_splits(self):
         size = self.__len__()
         train_num = int(size * self.config.split.train.ratio / 100)
         test_num = int(size * self.config.split.test.ratio / 100)
@@ -130,11 +146,11 @@ class SplitableDataset(BaseDataset):
         if self.has_val():
             self.save_split(self.val_indices, self.config.split.val.file)
 
-    def trainloader(self):
+    def train_loader(self):
         return self.dataloader(self.train_set)
 
-    def valloader(self):
+    def val_loader(self):
         return self.dataloader(self.val_set)
 
-    def testloader(self):
+    def test_loader(self):
         return self.dataloader(self.test_set)

@@ -9,8 +9,8 @@
     "dataset": {
         "classname": "aitlas.datasets.EurosatDataset",
         "config": {
-            "mode": "rgb",
-            "root": "./data/EuroSAT/2750",
+            "mode": "all",
+            "root": "./data/EuroSAT/ds/images/remote_sensing/otherDatasets/sentinel_2/tif/",
             "override": false,
             "split": {
                 "train": {

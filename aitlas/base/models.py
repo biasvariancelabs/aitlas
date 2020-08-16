@@ -7,7 +7,7 @@ import torch.nn as nn
 
 from ..utils import current_ts
 from .config import Configurable
-from .dataset import BaseDataset
+from .datasets import BaseDataset
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
