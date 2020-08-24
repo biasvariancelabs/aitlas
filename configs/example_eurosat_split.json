@@ -5,15 +5,15 @@
             "override": true,
             "split": {
                 "train": {
-                    "ratio": 100,
+                    "ratio": 60,
                     "file": "./data/train.csv"
                 },
                 "val": {
-                    "ratio": 0,
+                    "ratio": 20,
                     "file": "./data/val.csv"
                 },
                 "test": {
-                    "ratio": 0,
+                    "ratio": 20,
                     "file": "./data/test.csv"
                 }
             },
