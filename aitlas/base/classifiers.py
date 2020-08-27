@@ -4,8 +4,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from ..base import BaseDataset, BaseModel
 from ..utils import current_ts
+from .datasets import BaseDataset
+from .models import BaseModel
 from .schemas import BaseClassifierSchema
 
 
