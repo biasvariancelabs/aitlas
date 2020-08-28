@@ -4,25 +4,13 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from ..utils import current_ts
+from ..utils import CLASSIFICATION_METRICS, current_ts
 from .datasets import BaseDataset
 from .models import BaseModel
 from .schemas import BaseClassifierSchema
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-
-
-# Available losses. Add keys with new losses here.
-losses = {"cross_entropy": nn.CrossEntropyLoss()}
-
-
-# Available metrics. Add keys with new metrics here.
-classification_metrics = {
-    # 'accuracy': tf.keras.metrics.CategoricalAccuracy(name='accuracy'),
-    # 'precision': tf.keras.metrics.Precision,
-    # 'recall': tf.keras.metrics.Recall
-}
 
 
 class BaseClassifier(BaseModel):
@@ -109,7 +97,12 @@ class BaseClassifier(BaseModel):
         )
         return total_loss
 
-    def evaluate(self, dataset: BaseDataset = None, model_path: str = None):
+    def evaluate(
+        self,
+        dataset: BaseDataset = None,
+        model_path: str = None,
+        metrics: list = CLASSIFICATION_METRICS.keys(),
+    ):
         # load the model
         self.load_model(model_path)
 
@@ -117,16 +110,16 @@ class BaseClassifier(BaseModel):
         dataloader = dataset.test_loader()
 
         # evaluate model on data
-        result = self.evaluate_model(dataloader)
+        result = self.evaluate_model(dataloader, metrics)
 
         return result
 
-    def evaluate_model(self, dataloader, epoch=None, optimizer=None):
+    def evaluate_model(self, dataloader, metrics=CLASSIFICATION_METRICS.keys()):
         self.eval()
 
         # initialize counters
-        correct = 0
-        total = 0
+        y_true = []
+        y_pred = []
 
         # evaluate
         with torch.no_grad():
@@ -134,12 +127,15 @@ class BaseClassifier(BaseModel):
                 images, labels = data
                 outputs = self(images)
                 _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
+                y_pred += list(predicted.cpu().numpy())
+                y_true += list(labels.cpu().numpy())
 
-        result = 100 * correct / total
-        logging.info(f"Accuracy: {result:.3f}")
-        return result
+        response = {}
+
+        for key in metrics:
+            metric = CLASSIFICATION_METRICS[key]()
+            response[metric.name] = metric.calculate(y_true, y_pred)
+        return response
 
     def load_optimizer(self):
         """Load the optimizer"""

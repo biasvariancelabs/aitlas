@@ -1,4 +1,6 @@
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, validate
+
+from ..utils import CLASSIFICATION_METRICS
 
 
 class TrainTaskSchema(Schema):
@@ -25,6 +27,13 @@ class EvaluateTaskSchema(Schema):
         required=True,
         description="Path to the model",
         example="/tmp/model/checkpoint.pth.tar",
+    )
+    metrics = fields.List(
+        fields.String,
+        missing=["f1_score"],
+        description="Metrics you want to calculate",
+        example=["accuracy", "precision", "recall", "f1_score"],
+        validate=validate.ContainsOnly(list(CLASSIFICATION_METRICS.keys())),
     )
 
 

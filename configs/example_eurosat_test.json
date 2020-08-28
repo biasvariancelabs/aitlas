@@ -31,7 +31,8 @@
     "task": {
         "classname": "aitlas.tasks.EvaluateTask",
         "config": {
-             "model_path": "./examples/experiment/checkpoint.pth.tar"
+             "model_path": "./examples/experiment/checkpoint.pth.tar",
+             "metrics":["accuracy","precision", "recall", "f1_score"]
         }
     }
   }
