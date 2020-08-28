@@ -27,7 +27,7 @@ class BaseDataset(Dataset, Configurable):
 
     def prepare(self):
         """Implement if something needs to happen to the dataset after object creation"""
-        raise True
+        return True
 
     def load_transforms(self):
         """Transformations that might be applied on the dataset"""
