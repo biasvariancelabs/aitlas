@@ -33,7 +33,7 @@ class BaseModel(nn.Module, Configurable):
         """
         raise NotImplementedError
 
-    def predict(self):
+    def predict(self, *input, **kwargs):
         """
         Makes predictions for a given model and dataset.
         """

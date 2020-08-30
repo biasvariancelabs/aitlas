@@ -74,7 +74,7 @@ class BaseClassifier(BaseModel):
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = self(inputs)
+            outputs = self.predict(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
@@ -96,6 +96,9 @@ class BaseClassifier(BaseModel):
             f"epoch: {epoch}, time: {current_ts() - start}, loss: {total_loss: .5f}"
         )
         return total_loss
+
+    def predict(self, *input, **kwargs):
+        return self(*input)
 
     def evaluate(
         self,
@@ -125,7 +128,7 @@ class BaseClassifier(BaseModel):
         with torch.no_grad():
             for data in dataloader:
                 images, labels = data
-                outputs = self(images)
+                outputs = self.predict(images)
                 _, predicted = torch.max(outputs.data, 1)
                 y_pred += list(predicted.cpu().numpy())
                 y_true += list(labels.cpu().numpy())

@@ -30,3 +30,16 @@ def pil_loader(file):
 def tiff_loader(file):
     """opens a tiff image from disk"""
     return tifffile.imread(file)
+
+
+def stringify(obj):
+    """stringify whatever objec you have"""
+    response = ""
+    if isinstance(obj, list):
+        response = ", ".join([stringify(o) for o in obj])
+    elif isinstance(obj, dict):
+        response = ", ".join([f"{k}:{stringify(v)}" for k, v in obj.items()])
+    else:
+        response = str(obj)
+
+    return response
