@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from ..utils import CLASSIFICATION_METRICS, current_ts
+from ..utils import CLASSIFICATION_METRICS, current_ts, stringify
 from .datasets import BaseDataset
 from .models import BaseModel
 from .schemas import BaseClassifierSchema
@@ -55,7 +55,8 @@ class BaseClassifier(BaseModel):
 
             # evaluate against a validation if there is one
             if val_loader:
-                self.evaluate_model(val_loader)
+                val = self.evaluate_model(val_loader)
+                logging.info(stringify(val))
 
         logging.info(f"finished training. training time: {current_ts() - start}")
 
@@ -83,9 +84,11 @@ class BaseClassifier(BaseModel):
             running_loss += loss.item()
             total_loss += running_loss
 
-            if i % iterations_log == 0:  # print every iterations_log mini-batches
+            if (
+                i % iterations_log == iterations_log - 1
+            ):  # print every iterations_log mini-batches
                 logging.info(
-                    f"[{epoch}, {i}], loss: {running_loss / iterations_log : .5f}"
+                    f"[{epoch + 1}, {i + 1}], loss: {running_loss / iterations_log : .5f}"
                 )
                 running_loss = 0.0
 
