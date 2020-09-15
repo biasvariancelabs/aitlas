@@ -2,18 +2,23 @@ import torch.nn as nn
 import torchvision.models as models
 
 from ..base import BaseClassifier
+from .schemas import ResnetSchema
 
 
 class ResNet50(BaseClassifier):
+    schema = ResnetSchema
+
     def __init__(self, config):
         BaseClassifier.__init__(self, config)
 
-        self.model = models.resnet50(
-            self.config.pretrained, False, num_classes=self.config.num_classes
-        )
         if self.config.pretrained:
+            self.model = models.resnet50(self.config.pretrained, False)
             num_ftrs = self.model.fc.in_features
             self.model.fc = nn.Linear(num_ftrs, self.config.num_classes)
+        else:
+            self.model = models.resnet50(
+                self.config.pretrained, False, num_classes=self.config.num_classes
+            )
 
     def forward(self, x):
         return self.model.forward(x)
