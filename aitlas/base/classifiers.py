@@ -29,6 +29,7 @@ class BaseClassifier(BaseModel):
         resume_model: str = None,
         **kwargs,
     ):
+        self.to(self.device)
         logging.info("Starting training.")
         start_epoch = 0
         start = current_ts()
@@ -75,8 +76,8 @@ class BaseClassifier(BaseModel):
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = self.predict(inputs)
-            loss = criterion(outputs, labels)
+            outputs = self.predict(inputs.to(self.device))
+            loss = criterion(outputs, labels.to(self.device))
             loss.backward()
             optimizer.step()
 
@@ -131,7 +132,7 @@ class BaseClassifier(BaseModel):
         with torch.no_grad():
             for data in dataloader:
                 images, labels = data
-                outputs = self.predict(images)
+                outputs = self.predict(images.to(self.device))
                 _, predicted = torch.max(outputs.data, 1)
                 y_pred += list(predicted.cpu().numpy())
                 y_true += list(labels.cpu().numpy())

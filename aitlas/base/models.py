@@ -17,6 +17,7 @@ class BaseModel(nn.Module, Configurable):
     def __init__(self, config):
         super(BaseModel, self).__init__()
         Configurable.__init__(self, config)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def fit(
         self,
