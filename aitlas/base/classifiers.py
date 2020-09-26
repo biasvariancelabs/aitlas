@@ -32,6 +32,9 @@ class BaseClassifier(BaseModel):
         run_id: str = None,
         **kwargs,
     ):
+        from ..visualizations import confusion_matrix
+        from ..metrics import F1Score
+
         logging.info("Starting training.")
 
         start_epoch = 0
@@ -69,11 +72,18 @@ class BaseClassifier(BaseModel):
 
             # evaluate against a validation if there is one
             if val_loader:
-                val_eval, _, _, val_loss = self.evaluate_model(
-                    val_loader, criterion=self.criterion
+                val_eval, y_true, y_pred, val_loss = self.evaluate_model(
+                    val_loader, metrics=[F1Score], criterion=self.criterion
                 )
                 logging.info(stringify(val_eval))
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
+                fig = confusion_matrix(
+                    dataset,
+                    y_true,
+                    y_pred,
+                    os.path.join(model_directory, run_id, f"cm_{epoch + 1}.png"),
+                )
+                self.writer.add_figure("Confusion matrics", fig, epoch + 1)
 
         self.writer.close()
         logging.info(f"finished training. training time: {current_ts() - start}")
@@ -149,7 +159,7 @@ class BaseClassifier(BaseModel):
         y_pred = []
 
         # initialize loss if applicable
-        total_loss = 0
+        total_loss = 0.0
         total = 0
 
         # evaluate

@@ -16,7 +16,8 @@
         "classname": "aitlas.tasks.EvaluateTask",
         "config": {
              "model_path": "./examples/experiment/checkpoint.pth.tar",
-             "metrics":["aitlas.metrics.PrecisionScore","aitlas.metrics.AccuracyScore", "aitlas.metrics.RecallScore", "aitlas.metrics.F1Score"]
+             "metrics":["aitlas.metrics.PrecisionScore","aitlas.metrics.AccuracyScore", "aitlas.metrics.RecallScore", "aitlas.metrics.F1Score"],
+             "visualizations": ["aitlas.visualizations.ConfusionMatrix"]
         }
     }
   }

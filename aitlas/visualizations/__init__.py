@@ -1,1 +1,1 @@
-from .classification import ConfusionMatrix
+from .classification import ConfusionMatrix, confusion_matrix

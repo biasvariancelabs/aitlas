@@ -42,6 +42,12 @@ class EvaluateTaskSchema(BaseTaskShema):
         description="Metric classes you want to calculate",
         example=["aitlas.metrics.PrecisionScore", "aitlas.metrics.AccuracyScore"],
     )
+    visualizations = fields.List(
+        fields.String,
+        missing=None,
+        description="Visualizations classes you want to show",
+        example=["aitlas.visualizations.ConfusionMatrix"],
+    )
 
 
 class SplitTaskSchema(BaseTaskShema):

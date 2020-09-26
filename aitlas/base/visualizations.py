@@ -3,7 +3,7 @@ from .config import Configurable
 
 class BaseVisualization:
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        pass
 
     def plot(self):
         raise NotImplementedError

@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix as sk_confusion_matrix
 
 from ..base import BaseVisualization
 
@@ -12,11 +12,11 @@ class ConfusionMatrix(BaseVisualization):
         self.dataset = kwargs.get("dataset")
         self.y_true = kwargs.get("y_true")
         self.y_pred = kwargs.get("y_pred")
-        self.output_file = kwargs.get("file")
+        self.output_file = kwargs.get("file", "cm.png")
 
     def plot(self):
         # get the confusion matrix
-        cm = confusion_matrix(self.y_true, self.y_pred)
+        cm = sk_confusion_matrix(self.y_true, self.y_pred)
         df_cm = pd.DataFrame(
             cm, index=self.dataset.labels(), columns=self.dataset.labels()
         )
@@ -34,3 +34,11 @@ class ConfusionMatrix(BaseVisualization):
         # plt.clf()
 
         return figure
+
+
+def confusion_matrix(dataset, y_true, y_pred, output_file):
+    """Wrapper for the call for easier usage"""
+    viz = ConfusionMatrix(
+        dataset=dataset, y_true=y_true, y_pred=y_pred, file=output_file,
+    )
+    return viz.plot()
