@@ -1,20 +1,11 @@
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
-
-class BaseMetric:
-    """Base class for implementing metrics """
-
-    name = "BaseMetric"  # override this to give your metric a descriptive name
-
-    def __init__(self, **kwargs):
-        pass
-
-    def calculate(self, y_true, y_pred):
-        raise NotImplementedError
+from ..base import BaseMetric
 
 
 class AccuracyScore(BaseMetric):
     name = "Accuracy"
+    key = "accuracy"
 
     def __init__(self, **kwargs):
         BaseMetric.__init__(self, **kwargs)
@@ -38,6 +29,7 @@ class AveragedScore(BaseMetric):
 
 class PrecisionScore(AveragedScore):
     name = "Precision"
+    key = "precision"
 
     def __init__(self, **kwargs):
         AveragedScore.__init__(self, **kwargs)
@@ -46,6 +38,7 @@ class PrecisionScore(AveragedScore):
 
 class RecallScore(AveragedScore):
     name = "Recall"
+    key = "recall"
 
     def __init__(self, **kwargs):
         AveragedScore.__init__(self, **kwargs)
@@ -54,16 +47,8 @@ class RecallScore(AveragedScore):
 
 class F1Score(AveragedScore):
     name = "F1 Score"
+    key = "f1_score"
 
     def __init__(self, **kwargs):
         AveragedScore.__init__(self, **kwargs)
         self.method = f1_score
-
-
-# Available metrics. Add keys with new metrics here.
-CLASSIFICATION_METRICS = {
-    "accuracy": AccuracyScore,
-    "precision": PrecisionScore,
-    "recall": RecallScore,
-    "f1_score": F1Score,
-}

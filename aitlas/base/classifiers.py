@@ -1,10 +1,12 @@
 import logging
+import os
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.tensorboard import SummaryWriter
 
-from ..utils import CLASSIFICATION_METRICS, current_ts, stringify
+from ..utils import current_ts, stringify
 from .datasets import BaseDataset
 from .models import BaseModel
 from .schemas import BaseClassifierSchema
@@ -27,10 +29,11 @@ class BaseClassifier(BaseModel):
         save_epochs: int = 10,
         iterations_log: int = 100,
         resume_model: str = None,
+        run_id: str = None,
         **kwargs,
     ):
-        self.to(self.device)
         logging.info("Starting training.")
+
         start_epoch = 0
         start = current_ts()
 
@@ -40,8 +43,15 @@ class BaseClassifier(BaseModel):
 
         # load the model if needs to resume training
         if resume_model:
-            start_epoch, loss, start = self.load_model(resume_model, self.optimizer)
-            start_epoch += 1
+            start_epoch, loss, start, run_id = self.load_model(
+                resume_model, self.optimizer
+            )
+
+        # allocate device
+        self.allocate_device()
+
+        # start logger
+        self.writer = SummaryWriter(os.path.join(model_directory, run_id))
 
         # get data loaders
         train_loader = dataset.train_loader()
@@ -51,14 +61,21 @@ class BaseClassifier(BaseModel):
             loss = self.train_epoch(
                 epoch, train_loader, self.optimizer, self.criterion, iterations_log
             )
+            self.writer.add_scalar("Loss/train", loss, epoch + 1)
             if epoch % save_epochs == 0:
-                self.save_model(model_directory, epoch, self.optimizer, loss, start)
+                self.save_model(
+                    model_directory, epoch, self.optimizer, loss, start, run_id
+                )
 
             # evaluate against a validation if there is one
             if val_loader:
-                val = self.evaluate_model(val_loader)
-                logging.info(stringify(val))
+                val_eval, _, _, val_loss = self.evaluate_model(
+                    val_loader, criterion=self.criterion
+                )
+                logging.info(stringify(val_eval))
+                self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
 
+        self.writer.close()
         logging.info(f"finished training. training time: {current_ts() - start}")
 
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
@@ -67,7 +84,7 @@ class BaseClassifier(BaseModel):
         total_loss = 0.0
         total = 0
 
-        self.train()
+        self.model.train()
         for i, data in enumerate(dataloader):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
@@ -97,18 +114,15 @@ class BaseClassifier(BaseModel):
 
         total_loss = total_loss / total
         logging.info(
-            f"epoch: {epoch}, time: {current_ts() - start}, loss: {total_loss: .5f}"
+            f"epoch: {epoch + 1}, time: {current_ts() - start}, loss: {total_loss: .5f}"
         )
         return total_loss
 
     def predict(self, *input, **kwargs):
-        return self(*input)
+        return self.model(*input)
 
     def evaluate(
-        self,
-        dataset: BaseDataset = None,
-        model_path: str = None,
-        metrics: list = CLASSIFICATION_METRICS.keys(),
+        self, dataset: BaseDataset = None, model_path: str = None, metrics: list = (),
     ):
         # load the model
         self.load_model(model_path)
@@ -121,32 +135,54 @@ class BaseClassifier(BaseModel):
 
         return result
 
-    def evaluate_model(self, dataloader, metrics=CLASSIFICATION_METRICS.keys()):
-        self.eval()
+    def evaluate_model(self, dataloader, metrics=(), criterion=None):
+        """
+        Evaluates the current model against the specified dataloader for the specified metrics
+        :param dataloader:
+        :param metrics: list of metric keys to calculate
+        :return: tuple of (metrics, y_true, y_pred)
+        """
+        self.model.eval()
 
         # initialize counters
         y_true = []
         y_pred = []
+
+        # initialize loss if applicable
+        total_loss = 0
+        total = 0
 
         # evaluate
         with torch.no_grad():
             for data in dataloader:
                 images, labels = data
                 outputs = self.predict(images.to(self.device))
+
+                if criterion:
+                    batch_loss = criterion(outputs, labels.to(self.device))
+                    total_loss += batch_loss.item()
+                    total += 1
+
                 _, predicted = torch.max(outputs.data, 1)
                 y_pred += list(predicted.cpu().numpy())
                 y_true += list(labels.cpu().numpy())
 
-        response = {}
+        calculated_metrics = {}
 
-        for key in metrics:
-            metric = CLASSIFICATION_METRICS[key]()
-            response[metric.name] = metric.calculate(y_true, y_pred)
-        return response
+        for metric_cls in metrics:
+            metric = metric_cls()
+            calculated_metrics[metric.name] = metric.calculate(y_true, y_pred)
+
+        if criterion:
+            total_loss = total_loss / total
+
+        return (calculated_metrics, y_true, y_pred, total_loss)
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.SGD(self.parameters(), lr=self.config.learning_rate, momentum=0.9)
+        return optim.SGD(
+            self.model.parameters(), lr=self.config.learning_rate, momentum=0.9
+        )
 
     def load_criterion(self):
         """Load the loss function"""

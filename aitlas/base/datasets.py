@@ -20,10 +20,14 @@ class BaseDataset(Dataset, Configurable):
 
     def __getitem__(self, index):
         """ Implement here what you want to return"""
-        raise NotImplementedError
+        raise NotImplementedError(
+            "Please implement the `__getittem__` method for your dataset"
+        )
 
     def __len__(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            "Please implement the `__len__` method for your dataset"
+        )
 
     def prepare(self):
         """Implement if something needs to happen to the dataset after object creation"""
@@ -49,6 +53,12 @@ class BaseDataset(Dataset, Configurable):
 
     def test_loader(self):
         return self.dataloader(self)
+
+    def labels(self):
+        """Implent this if you want to return the complete set of labels of the dataset"""
+        raise NotImplementedError(
+            "Please implement the `labels` method for your dataset"
+        )
 
 
 class SplitableDataset(BaseDataset):

@@ -124,3 +124,6 @@ class EurosatDataset(SplitableDataset):
 
     def __len__(self):
         return len(self.data)
+
+    def labels(self):
+        return list(CLASSES_TO_IDX.keys())

@@ -33,8 +33,7 @@ def tiff_loader(file):
 
 
 def stringify(obj):
-    """stringify whatever objec you have"""
-    response = ""
+    """stringify whatever object you have"""
     if isinstance(obj, list):
         response = ", ".join([stringify(o) for o in obj])
     elif isinstance(obj, dict):

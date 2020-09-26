@@ -1,6 +1,8 @@
 import argparse
 import json
 
+import torch.nn as nn
+
 from .base import Config, RunConfig
 from .utils import get_class
 

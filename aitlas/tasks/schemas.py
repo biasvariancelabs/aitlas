@@ -1,9 +1,17 @@
 from marshmallow import Schema, fields, validate
 
-from ..utils import CLASSIFICATION_METRICS
+
+class BaseTaskShema(Schema):
+    log = fields.Boolean(required=False, missing=True, description="Turn on logging")
+    id = fields.String(
+        required=False,
+        description="Run name/ID",
+        example="train_eurosat_123",
+        missing=None,
+    )
 
 
-class TrainTaskSchema(Schema):
+class TrainTaskSchema(BaseTaskShema):
     epochs = fields.Int(
         required=True, description="Number of epochs used in training", example=50
     )
@@ -22,7 +30,7 @@ class TrainTaskSchema(Schema):
     )
 
 
-class EvaluateTaskSchema(Schema):
+class EvaluateTaskSchema(BaseTaskShema):
     model_path = fields.String(
         required=True,
         description="Path to the model",
@@ -30,12 +38,11 @@ class EvaluateTaskSchema(Schema):
     )
     metrics = fields.List(
         fields.String,
-        missing=["f1_score"],
-        description="Metrics you want to calculate",
-        example=["accuracy", "precision", "recall", "f1_score"],
-        validate=validate.ContainsOnly(list(CLASSIFICATION_METRICS.keys())),
+        missing=["aitlas.metrics.F1Score"],
+        description="Metric classes you want to calculate",
+        example=["aitlas.metrics.PrecisionScore", "aitlas.metrics.AccuracyScore"],
     )
 
 
-class SplitTaskSchema(Schema):
+class SplitTaskSchema(BaseTaskShema):
     pass

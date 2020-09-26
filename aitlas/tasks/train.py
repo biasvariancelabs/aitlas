@@ -16,4 +16,5 @@ class TrainTask(BaseTask):
             model_directory=self.config.model_directory,
             save_epochs=self.config.save_epochs,
             resume_model=self.config.resume_model,
+            run_id=self.id,
         )

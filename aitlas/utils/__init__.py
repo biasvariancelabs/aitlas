@@ -1,2 +1,1 @@
-from .metrics import CLASSIFICATION_METRICS
 from .utils import current_ts, get_class, pil_loader, stringify, tiff_loader

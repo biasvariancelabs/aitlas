@@ -5,6 +5,20 @@ from ..base import BaseDataset
 from .schemas import CifarDatasetSchema
 
 
+CLASSES = (
+    "plane",
+    "car",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck",
+)
+
+
 class CifarDataset(BaseDataset):
     schema = CifarDatasetSchema
 
@@ -31,3 +45,9 @@ class CifarDataset(BaseDataset):
 
     def __len__(self):
         return self.dataset.__len__()
+
+    def labels(self):
+        return CLASSES
+
+    def val_loader(self):
+        return self.test_loader()
