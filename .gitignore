@@ -134,3 +134,7 @@ dmypy.json
 # ignore data folder
 data/
 /data
+
+
+# ignore examples/experiment folder
+examples/experiment/
