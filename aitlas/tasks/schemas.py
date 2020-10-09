@@ -23,6 +23,10 @@ class TrainTaskSchema(BaseTaskShema):
     save_epochs = fields.Int(
         missing=100, description="Number of training steps between model checkpoints."
     )
+    iterations_log = fields.Int(
+        missing=200,
+        description="After how many mini-batches do we want to show something in the log.",
+    )
     resume_model = fields.String(
         missing=None,
         description="File path to the model to be resumed",

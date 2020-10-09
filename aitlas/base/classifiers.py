@@ -40,9 +40,10 @@ class BaseClassifier(BaseModel):
         start_epoch = 0
         start = current_ts()
 
-        # load loss and optimizer
+        # load loss, optimizer and lr scheduler
         self.criterion = self.load_criterion()
         self.optimizer = self.load_optimizer()
+        self.lr_scheduler = self.load_lr_scheduler()
 
         # load the model if needs to resume training
         if resume_model:
@@ -70,6 +71,10 @@ class BaseClassifier(BaseModel):
                     model_directory, epoch, self.optimizer, loss, start, run_id
                 )
 
+            # adjust learning rate if needed
+            if self.lr_scheduler:
+                self.lr_scheduler.step()
+
             # evaluate against a validation if there is one
             if val_loader:
                 val_eval, y_true, y_pred, val_loss = self.evaluate_model(
@@ -83,7 +88,7 @@ class BaseClassifier(BaseModel):
                     y_pred,
                     os.path.join(model_directory, run_id, f"cm_{epoch + 1}.png"),
                 )
-                self.writer.add_figure("Confusion matrics", fig, epoch + 1)
+                self.writer.add_figure("Confusion matrix", fig, epoch + 1)
 
         self.writer.close()
         logging.info(f"finished training. training time: {current_ts() - start}")
@@ -197,3 +202,6 @@ class BaseClassifier(BaseModel):
     def load_criterion(self):
         """Load the loss function"""
         return nn.CrossEntropyLoss()
+
+    def load_lr_scheduler(self):
+        return None

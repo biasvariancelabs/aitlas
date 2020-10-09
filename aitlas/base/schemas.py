@@ -30,7 +30,7 @@ class SplitableDatasetSchema(BaseDatasetSchema):
     )
     override = fields.Bool(
         missing=False,
-        default="Should override split files if they exist.",
+        description="Should override split files if they exist.",
         example=False,
     )
 
@@ -40,3 +40,4 @@ class BaseClassifierSchema(Schema):
     learning_rate = fields.Float(
         missing=None, description="Learning rate used in training.", example=0.01
     )
+    use_cuda = fields.Bool(missing=True, description="Whether to use CUDA if possible")

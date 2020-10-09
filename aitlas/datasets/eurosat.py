@@ -118,7 +118,7 @@ class EurosatDataset(SplitableDataset):
         # load image
         img = self.image_loader(self.data[index][0])
         # apply transformations
-        img = self.transforms(img)
+        img = self.transform(img)
         target = self.data[index][1]
         return img, target
 

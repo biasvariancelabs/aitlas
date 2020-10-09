@@ -29,7 +29,7 @@ class CifarDataset(BaseDataset):
             root="./data",
             train=self.config.train,
             download=self.config.download,
-            transform=self.transforms,
+            transform=self.transform,
         )
 
     def load_transforms(self):

@@ -17,4 +17,5 @@ class TrainTask(BaseTask):
             save_epochs=self.config.save_epochs,
             resume_model=self.config.resume_model,
             run_id=self.id,
+            iterations_log=self.config.iterations_log,
         )

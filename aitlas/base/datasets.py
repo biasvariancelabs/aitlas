@@ -16,7 +16,7 @@ class BaseDataset(Dataset, Configurable):
         Configurable.__init__(self, config)
 
         # get the transformations to be applied
-        self.transforms = self.load_transforms()
+        self.transform = self.load_transforms()
 
     def __getitem__(self, index):
         """ Implement here what you want to return"""
@@ -134,16 +134,24 @@ class SplitableDataset(BaseDataset):
         train_num = int(size * self.config.split.train.ratio / 100)
         test_num = int(size * self.config.split.test.ratio / 100)
 
+        arr_num = [train_num, test_num]
+
         if self.has_val():
             val_num = int(size * self.config.split.val.ratio / 100)
+            arr_num.append(val_num)
 
-            [self.train_indices, self.val_indices, self.test_indices] = random_split(
-                range(size), [train_num, val_num, test_num]
-            )
-        else:
-            [self.train_indices, self.test_indices] = random_split(
-                range(size), [train_num, test_num]
-            )
+        # fix roundup cases
+        arr_num[0] += size - sum(arr_num)
+
+        print(arr_num)
+
+        result = random_split(range(size), arr_num)
+
+        self.train_indices = result[0]
+        self.test_indices = result[1]
+
+        if self.has_val():
+            self.val_indices = result[2]
 
     def save_split(self, indices, file):
         with open(file, "w") as f:

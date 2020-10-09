@@ -20,7 +20,11 @@ class BaseModel(Configurable):
         self.model = nn.Module()
         self.model.forward = self.forward
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device_name = "cpu"
+        if self.config.use_cuda and torch.cuda.is_available():
+            device_name = "cuda"
+
+        self.device = torch.device(device_name)
 
     def fit(
         self,
