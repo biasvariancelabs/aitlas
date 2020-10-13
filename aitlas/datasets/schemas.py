@@ -31,7 +31,7 @@ class UcMercedDatasetSchema(SplitableDatasetSchema):
         missing=True, description="Whether to download the dataset", example=True
     )
     root = fields.String(
-        required=True, description="Is it train dataset", example="./data/UcMerced/"
+        required=True, description="Dataset path on disk", example="./data/UcMerced/"
     )
 
 
@@ -51,7 +51,7 @@ class Resisc45DatasetSchema(SplitableDatasetSchema):
         missing=True, description="Whether to download the dataset", example=True
     )
     root = fields.String(
-        required=True, description="Is it train dataset", example="./data/Resisc45/"
+        required=True, description="Dataset path on disk", example="./data/Resisc45/"
     )
 
 
@@ -60,5 +60,15 @@ class PatternNetDatasetSchema(SplitableDatasetSchema):
         missing=True, description="Whether to download the dataset", example=True
     )
     root = fields.String(
-        required=True, description="Is it train dataset", example="./data/PatternNet/"
+        required=True, description="Dataset path on disk", example="./data/PatternNet/"
+    )
+
+
+class BigEarthNetSchema(SplitableDatasetSchema):
+    lmdb_path = fields.String(required=True, description="Path to the lmdb storage")
+    root = fields.String(
+        required=True, description="Dataset path on disk", example="./data/BigEarthNet/"
+    )
+    prepare = fields.Bool(
+        missing=False, description="Should the data be processed to LMDB"
     )

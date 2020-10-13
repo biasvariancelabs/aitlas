@@ -1,3 +1,4 @@
+from .big_earth_net import BigEarthNetDataset
 from .eurosat import EurosatDataset
 from .pattern_net import PatternNetDataset
 from .resisc45 import Resisc45Dataset

@@ -1,0 +1,29 @@
+{
+    "dataset": {
+        "classname": "aitlas.datasets.BigEarthNetDataset",
+        "config": {
+            "lmdb_path": "./data/lmdb",
+            "override": true,
+            "prepare": true,
+            "split": {
+                "train": {
+                    "ratio": 50,
+                    "file": "./data/train.csv"
+                },
+                "val": {
+                    "ratio": 25,
+                    "file": "./data/val.csv"
+                },
+                "test": {
+                    "ratio": 25,
+                    "file": "./data/test.csv"
+                }
+            },
+            "root": "./data/BigEarthNet"
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.PrepareTask",
+        "config": {}
+    }
+  }
