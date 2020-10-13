@@ -1,10 +1,10 @@
 import torch
 
-from .classifiers import BaseClassifier
+from .classifiers import BaseMulticlassClassifier
 from .schemas import BaseClassifierSchema
 
 
-class BaseSegmentation(BaseClassifier):
+class BaseSegmentation(BaseMulticlassClassifier):
     schema = BaseClassifierSchema
 
     def __init__(self, config):

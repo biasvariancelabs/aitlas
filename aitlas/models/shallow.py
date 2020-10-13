@@ -1,12 +1,12 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..base import BaseClassifier
+from ..base import BaseMulticlassClassifier
 
 
-class ShallowCNNNet(BaseClassifier):
+class ShallowCNNNet(BaseMulticlassClassifier):
     def __init__(self, config):
-        BaseClassifier.__init__(self, config)
+        BaseMulticlassClassifier.__init__(self, config)
 
         self.model.conv1 = nn.Conv2d(3, 6, 5)
         self.model.pool = nn.MaxPool2d(2, 2)

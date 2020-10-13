@@ -3,13 +3,6 @@ from marshmallow import fields, validate
 from ..base.schemas import BaseDatasetSchema, SplitableDatasetSchema
 
 
-class CifarDatasetSchema(BaseDatasetSchema):
-    download = fields.Bool(
-        missing=True, description="Whether to download the dataset", example=True
-    )
-    train = fields.Bool(missing=True, description="Is it train dataset", example=True)
-
-
 class EurosatDatasetSchema(SplitableDatasetSchema):
     download = fields.Bool(
         missing=True, description="Whether to download the dataset", example=True
@@ -24,13 +17,6 @@ class EurosatDatasetSchema(SplitableDatasetSchema):
         validate=validate.OneOf(["rgb", "all"]),
     )
 
-class PennFundanSchema(SplitableDatasetSchema):
-    root = fields.String(
-        required=True, description="Dataset path on disk", example="./data/PennFundan/"
-    )
-    download = fields.Bool(
-        missing=True, description="Whether to download the dataset", example=True
-    )
 
 class CrackForestSchema(SplitableDatasetSchema):
     root = fields.String(
@@ -38,6 +24,7 @@ class CrackForestSchema(SplitableDatasetSchema):
         description="Dataset path on disk",
         example="./data/CrackForest-dataset-master/",
     )
+
 
 class UcMercedDatasetSchema(SplitableDatasetSchema):
     download = fields.Bool(
@@ -47,13 +34,17 @@ class UcMercedDatasetSchema(SplitableDatasetSchema):
         required=True, description="Is it train dataset", example="./data/UcMerced/"
     )
 
+
 class UcMercedMultiLabelsDatasetSchema(SplitableDatasetSchema):
     download = fields.Bool(
         missing=True, description="Whether to download the dataset", example=True
     )
     root = fields.String(
-        required=True, description="Is it train dataset", example="./data/UcMercedMultiLabels/"
+        required=True,
+        description="Is it train dataset",
+        example="./data/UcMercedMultiLabels/",
     )
+
 
 class Resisc45DatasetSchema(SplitableDatasetSchema):
     download = fields.Bool(
@@ -62,6 +53,7 @@ class Resisc45DatasetSchema(SplitableDatasetSchema):
     root = fields.String(
         required=True, description="Is it train dataset", example="./data/Resisc45/"
     )
+
 
 class PatternNetDatasetSchema(SplitableDatasetSchema):
     download = fields.Bool(

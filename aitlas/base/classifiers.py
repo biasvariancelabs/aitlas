@@ -1,6 +1,7 @@
 import logging
 import os
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -15,7 +16,7 @@ from .schemas import BaseClassifierSchema
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
-class BaseClassifier(BaseModel):
+class BaseMulticlassClassifier(BaseModel):
     schema = BaseClassifierSchema
 
     def __init__(self, config):
@@ -127,7 +128,7 @@ class BaseClassifier(BaseModel):
 
             total += 1
 
-        total_loss = total_loss / total
+        total_loss = total_loss / (total * iterations_log)
         logging.info(
             f"epoch: {epoch + 1}, time: {current_ts() - start}, loss: {total_loss: .5f}"
         )
@@ -178,7 +179,8 @@ class BaseClassifier(BaseModel):
                     total_loss += batch_loss.item()
                     total += 1
 
-                _, predicted = torch.max(outputs.data, 1)
+                predicted = self.get_predicted(outputs)
+
                 y_pred += list(predicted.cpu().numpy())
                 y_true += list(labels.cpu().numpy())
 
@@ -193,6 +195,10 @@ class BaseClassifier(BaseModel):
 
         return (calculated_metrics, y_true, y_pred, total_loss)
 
+    def get_predicted(self, outputs):
+        _, predicted = torch.max(outputs.data, 1)
+        return predicted
+
     def load_optimizer(self):
         """Load the optimizer"""
         return optim.SGD(
@@ -205,3 +211,12 @@ class BaseClassifier(BaseModel):
 
     def load_lr_scheduler(self):
         return None
+
+
+class BaseMultilabelClassifier(BaseMulticlassClassifier):
+    """The multilabel """
+
+    def get_predicted(self, outputs):
+        predicted_probs = torch.sigmoid(outputs).cpu().numpy()
+        predicted = (predicted_probs >= 0.5).astype(np.float32)
+        return predicted

@@ -1,15 +1,15 @@
 import torch.nn as nn
 import torchvision.models as models
 
-from ..base import BaseClassifier
+from ..base import BaseMulticlassClassifier
 from .schemas import ResnetSchema
 
 
-class ResNet50(BaseClassifier):
+class ResNet50(BaseMulticlassClassifier):
     schema = ResnetSchema
 
     def __init__(self, config):
-        BaseClassifier.__init__(self, config)
+        BaseMulticlassClassifier.__init__(self, config)
 
         if self.config.pretrained:
             self.model = models.resnet50(self.config.pretrained, False)

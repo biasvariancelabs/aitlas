@@ -1,4 +1,6 @@
 import os
+import os.path
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 import torch
 from torch.utils.data import Dataset, Subset, random_split
@@ -172,3 +174,72 @@ class SplitableDataset(BaseDataset):
 
     def test_loader(self):
         return self.dataloader(self.test_set)
+
+
+class DatasetFolderMixin:
+    """A mixin for datasets the samples are arranged in this way: ::
+        root/class_x/xxx.ext
+        root/class_x/xxy.ext
+        root/class_x/xxz.ext
+        root/class_y/123.ext
+        root/class_y/nsdf3.ext
+        root/class_y/asd932_.ext
+    """
+
+    extensions = [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".ppm",
+        ".bmp",
+        ".pgm",
+        ".tif",
+        ".tiff",
+        "webp",
+    ]
+
+    classes_to_idx = None  # need to put your mapping here
+
+    def has_file_allowed_extension(self, filename, extensions):
+        """Checks if a file is an allowed extension.
+        Args:
+            filename (string): path to a file
+            extensions (iterable of strings): extensions to consider (lowercase)
+        Returns:
+            bool: True if the filename ends with one of given extensions
+        """
+        filename_lower = filename.lower()
+        return any(filename_lower.endswith(ext) for ext in extensions)
+
+    def is_image_file(self, filename):
+        """Checks if a file is an allowed image extension.
+        Args:
+            filename (string): path to a file
+        Returns:
+            bool: True if the filename ends with a known image extension
+        """
+        return self.has_file_allowed_extension(filename, self.extensions)
+
+    def make_dataset(self, dir, extensions=None):
+        if not self.classes_to_idx:
+            raise ValueError(
+                "You need to implement the classes to index mapping for the dataset"
+            )
+        if not extensions:
+            extensions = self.extensions
+        images = []
+        dir = os.path.expanduser(dir)
+        for target in sorted(self.classes_to_idx.keys()):
+            d = os.path.join(dir, target)
+            if not os.path.isdir(d):
+                continue
+
+            # this ensures the image always have the same index numbers
+            for root, _, fnames in sorted(os.walk(d)):
+                for fname in sorted(fnames):
+                    if self.has_file_allowed_extension(fname, extensions):
+                        path = os.path.join(root, fname)
+                        item = (path, self.classes_to_idx[target])
+                        images.append(item)
+
+        return images
