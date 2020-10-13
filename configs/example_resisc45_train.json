@@ -1,0 +1,39 @@
+{
+    "model": {
+        "classname": "aitlas.models.ResNet50",
+        "config": {
+            "num_classes": 45,
+            "learning_rate": 0.001,
+             "pretrained": true
+        }
+    },
+    "dataset": {
+        "classname": "aitlas.datasets.Resisc45Dataset",
+        "config": {
+            "root": "/media/hdd/RESISC45",
+            "override": true,
+            "split": {
+                "train": {
+                    "ratio": 80,
+                    "file": "./data/train.csv"
+                },
+                "val": {
+                    "ratio": 10,
+                    "file": "./data/val.csv"
+                },
+                "test": {
+                    "ratio": 10,
+                    "file": "./data/test.csv"
+                }
+            }
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainTask",
+        "config": {
+            "epochs": 50,
+            "model_directory": "./examples/experiment",
+            "save_epochs": 5
+        }
+    }
+  }
