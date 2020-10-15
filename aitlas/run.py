@@ -25,8 +25,6 @@ def main(config_file):
     # load dataset
     dataset_cls = get_class(config.dataset.classname)
     dataset = dataset_cls(config.dataset.config)
-    # prepare the dataset
-    dataset.prepare()
 
     # load task
     task_cls = get_class(config.task.classname)

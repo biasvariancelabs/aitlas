@@ -10,6 +10,7 @@ class TrainTask(BaseTask):
 
     def run(self):
         """Do something awesome here"""
+        self.dataset.prepare()
         self.model.fit(
             dataset=self.dataset,
             epochs=self.config.epochs,

@@ -14,4 +14,5 @@ class PrepareTask(BaseTask):
         super().__init__(model, dataset, config)
 
     def run(self):
+        self.dataset.prepare()
         logging.info("And that's it!")

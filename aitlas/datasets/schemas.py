@@ -69,6 +69,18 @@ class BigEarthNetSchema(SplitableDatasetSchema):
     root = fields.String(
         required=True, description="Dataset path on disk", example="./data/BigEarthNet/"
     )
-    prepare = fields.Bool(
-        missing=False, description="Should the data be processed to LMDB"
+    import_to_lmdb = fields.Bool(
+        missing=False, description="Should the data be moved to LMDB"
+    )
+    bands10_mean = fields.List(
+        fields.Float,
+        missing=[],
+        required=False,
+        description="List of mean values for the 3 channels",
+    )
+    bands10_std = fields.List(
+        fields.Float,
+        missing=[],
+        required=False,
+        description="List of std values for the 3 channels",
     )

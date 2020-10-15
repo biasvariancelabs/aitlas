@@ -1,4 +1,4 @@
-from .classifiers import BaseMulticlassClassifier
+from .classifiers import BaseMulticlassClassifier, BaseMultilabelClassifier
 from .config import Config, Configurable, RunConfig
 from .datasets import BaseDataset, DatasetFolderMixin, SplitableDataset
 from .metrics import BaseMetric
