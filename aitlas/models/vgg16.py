@@ -25,6 +25,10 @@ class VGG16MultiLabel(BaseMultilabelClassifier):
         BaseMultilabelClassifier.__init__(self, config)
 
         if self.config.pretrained:
+            self.model = models.vgg16(
+                self.config.pretrained, False, num_classes=self.config.num_classes
+            )
+        else:
             self.model = models.vgg16(self.config.pretrained, False)
 
             self.model.encoder = nn.Sequential(
@@ -43,10 +47,9 @@ class VGG16MultiLabel(BaseMultilabelClassifier):
 
             self.model.apply(weights_init_kaiming)
             self.model.apply(fc_init_weights)
-        else:
-            self.model = models.vgg16(
-                self.config.pretrained, False, num_classes=self.config.num_classes
-            )
+
+        # we need rebind the function, when overwriting the model
+        self.model.forward = self.forward
 
     def forward(self, x):
         x = self.model.encoder(x)

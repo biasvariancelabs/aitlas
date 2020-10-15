@@ -34,7 +34,6 @@ class BaseMulticlassClassifier(BaseModel):
         run_id: str = None,
         **kwargs,
     ):
-        from ..visualizations import confusion_matrix
         from ..metrics import F1Score
 
         logging.info("Starting training.")
@@ -84,13 +83,17 @@ class BaseMulticlassClassifier(BaseModel):
                 )
                 logging.info(stringify(val_eval))
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
-                fig = confusion_matrix(
-                    dataset,
+
+                self.log_additional_metrics(
+                    val_eval,
                     y_true,
                     y_pred,
-                    os.path.join(model_directory, run_id, f"cm_{epoch + 1}.png"),
+                    val_loss,
+                    dataset,
+                    model_directory,
+                    run_id,
+                    epoch,
                 )
-                self.writer.add_figure("Confusion matrix", fig, epoch + 1)
 
         self.writer.close()
         logging.info(f"finished training. training time: {current_ts() - start}")
@@ -200,6 +203,27 @@ class BaseMulticlassClassifier(BaseModel):
         _, predicted = torch.max(outputs.data, 1)
         return predicted
 
+    def log_additional_metrics(
+        self,
+        val_eval,
+        y_true,
+        y_pred,
+        val_loss,
+        dataset,
+        model_directory,
+        run_id,
+        epoch,
+    ):
+        from ..visualizations import confusion_matrix
+
+        fig = confusion_matrix(
+            dataset,
+            y_true,
+            y_pred,
+            os.path.join(model_directory, run_id, f"cm_{epoch + 1}.png"),
+        )
+        self.writer.add_figure("Confusion matrix", fig, epoch + 1)
+
     def load_optimizer(self):
         """Load the optimizer"""
         return optim.SGD(
@@ -218,6 +242,19 @@ class BaseMultilabelClassifier(BaseMulticlassClassifier):
     """The multilabel """
 
     def get_predicted(self, outputs):
-        predicted_probs = torch.sigmoid(outputs).cpu().numpy()
-        predicted = (predicted_probs >= 0.5).astype(np.float32)
+        predicted_probs = torch.sigmoid(outputs)
+        predicted = predicted_probs >= 0.5
         return predicted
+
+    def log_additional_metrics(
+        self,
+        val_eval,
+        y_true,
+        y_pred,
+        val_loss,
+        dataset,
+        model_directory,
+        run_id,
+        epoch,
+    ):
+        return True  # let's don't log anything for this

@@ -145,8 +145,6 @@ class SplitableDataset(BaseDataset):
         # fix roundup cases
         arr_num[0] += size - sum(arr_num)
 
-        print(arr_num)
-
         result = random_split(range(size), arr_num)
 
         self.train_indices = result[0]

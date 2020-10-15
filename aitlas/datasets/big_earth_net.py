@@ -6,6 +6,7 @@ import numpy as np
 import pyarrow as pa
 import torch
 from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms
 
 from ..base import SplitableDataset
 from .schemas import BigEarthNetSchema
@@ -211,22 +212,25 @@ class BigEarthNetDataset(SplitableDataset):
         with self.db.begin(write=False) as txn:
             byteflow = txn.get(patch_name.encode())
 
-            bands10, bands20, bands60, multihots = loads_pyarrow(byteflow)
+        bands10, bands20, bands60, multihots = loads_pyarrow(byteflow)
 
-            bands10 = bands10.astype(np.float32)
-            bands20 = bands20.astype(np.float32)
-            bands60 = bands60.astype(np.float32)
-            multihots = multihots.astype(np.float32)
+        bands10 = bands10.astype(np.float32)[0][0:3]
+        bands20 = bands20.astype(np.float32)
+        bands60 = bands60.astype(np.float32)
+        multihots = multihots.astype(np.float32)[0]
 
-            if self.transform:
-                bands10, bands20, bands60, multihots = self.transform(
-                    (bands10, bands20, bands60, multihots)
-                )
+        if self.transform:
+            bands10, bands20, bands60, multihots = self.transform(
+                (bands10, bands20, bands60, multihots)
+            )
 
-            return bands10, bands20, bands60, multihots
+        return bands10, multihots
 
     def __len__(self):
         return len(self.patches)
+
+    def load_transforms(self):
+        return transforms.Compose([ToTensor()])
 
     def load_patches(self, root):
         dir = os.path.expanduser(root)
@@ -250,7 +254,6 @@ class BigEarthNetDataset(SplitableDataset):
         for idx, data in enumerate(dataloader):
             bands10, bands20, bands60, patch_name, multihots = data
             patch_name = patch_name[0]
-            print(u"{}".format(patch_name).encode("ascii"))
             txn.put(
                 u"{}".format(patch_name).encode("ascii"),
                 dumps_pyarrow(
@@ -353,11 +356,11 @@ class Normalize(object):
         for t, m, s in zip(bands10, self.bands10_mean, self.bands10_std):
             t.sub_(m).div_(s)
 
-        return bands10, multihots
+        return bands10, bands20, bands60, multihots
 
 
 class ToTensor(object):
     def __call__(self, sample):
         bands10, bands20, bands60, multihots = sample
 
-        return torch.tensor(bands10), multihots
+        return torch.tensor(bands10), bands20, bands60, multihots

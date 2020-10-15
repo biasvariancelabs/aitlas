@@ -8,6 +8,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class PrepareTask(BaseTask):
+    """If the prepare part (or a version of it) is extensive, you can run it as a separate task"""
+
     schema = SplitTaskSchema
 
     def __init__(self, model: BaseModel, dataset: BaseDataset, config):
