@@ -105,7 +105,7 @@ class BaseMulticlassClassifier(BaseModel):
         total = 0
 
         self.model.train()
-        for i, data in enumerate(dataloader):
+        for i, data in enumerate(tqdm(dataloader, desc="training")):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
 
