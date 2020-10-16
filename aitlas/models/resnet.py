@@ -56,6 +56,6 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
         return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4)
 
     def get_predicted(self, outputs):
-        predicted_probs = torch.sigmoid(outputs).cpu().numpy()
-        predicted = (predicted_probs >= 0.5).astype(np.float32)
+        predicted_probs = torch.sigmoid(outputs)
+        predicted = predicted_probs >= 0.5
         return predicted_probs, predicted
