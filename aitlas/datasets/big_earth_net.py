@@ -4,7 +4,9 @@ import os
 import lmdb
 import numpy as np
 import pyarrow as pa
+import torch
 from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms
 
 from ..base import SplitableDataset
 from .schemas import BigEarthNetSchema
@@ -139,29 +141,29 @@ def dumps_pyarrow(obj):
     return pa.serialize(obj).to_buffer()
 
 
-def cls2multiHot(cls_vec, label_indices):
+def cls2multihot(cls_vec, label_indices):
     label_conversion = label_indices["label_conversion"]
-    BigEarthNet_19_label_idx = {
+
+    bigearthnet_19_label_idx = {
         v: k for k, v in label_indices["BigEarthNet-19_labels"].items()
     }
 
-    BigEarthNet_19_labels = []
-    BigEartNet_19_labels_multiHot = np.zeros((len(label_conversion),))
-    original_labels_multiHot = np.zeros((len(label_indices["original_labels"]),))
+    bigearthnet_19_labels_multihot = np.zeros((len(label_conversion),))
+    original_labels_multihot = np.zeros((len(label_indices["original_labels"]),))
 
     for cls_nm in cls_vec:
-        original_labels_multiHot[label_indices["original_labels"][cls_nm]] = 1
+        original_labels_multihot[label_indices["original_labels"][cls_nm]] = 1
 
     for i in range(len(label_conversion)):
-        BigEartNet_19_labels_multiHot[i] = (
-            np.sum(original_labels_multiHot[label_conversion[i]]) > 0
+        bigearthnet_19_labels_multihot[i] = (
+            np.sum(original_labels_multihot[label_conversion[i]]) > 0
         ).astype(int)
 
-    BigEarthNet_19_labels = []
-    for i in np.where(BigEartNet_19_labels_multiHot == 1)[0]:
-        BigEarthNet_19_labels.append(BigEarthNet_19_label_idx[i])
+    bigearthnet_19_labels = []
+    for i in np.where(bigearthnet_19_labels_multihot == 1)[0]:
+        bigearthnet_19_labels.append(bigearthnet_19_label_idx[i])
 
-    return BigEartNet_19_labels_multiHot, BigEarthNet_19_labels
+    return bigearthnet_19_labels_multihot, bigearthnet_19_labels
 
 
 def read_scale_raster(file_path, scale=1):
@@ -196,16 +198,39 @@ class BigEarthNetDataset(SplitableDataset):
 
         self.root = self.config.root
         self.num_workers = self.config.num_workers
-        self.should_prepare = self.config.prepare
+        self.should_prepare = self.config.import_to_lmdb
+
+        self.bands10_mean = self.config.bands10_mean
+        self.bands10_std = self.config.bands10_std
 
         self.db = lmdb.open(config.lmdb_path)
         self.patches = self.load_patches(self.root)
 
     def __getitem__(self, index):
-        pass
+        patch_name = self.patches[index]
+
+        with self.db.begin(write=False) as txn:
+            byteflow = txn.get(patch_name.encode())
+
+        bands10, bands20, bands60, multihots = loads_pyarrow(byteflow)
+
+        bands10 = bands10.astype(np.float32)[0][0:3]
+        bands20 = bands20.astype(np.float32)
+        bands60 = bands60.astype(np.float32)
+        multihots = multihots.astype(np.float32)[0]
+
+        if self.transform:
+            bands10, bands20, bands60, multihots = self.transform(
+                (bands10, bands20, bands60, multihots)
+            )
+
+        return bands10, multihots
 
     def __len__(self):
         return len(self.patches)
+
+    def load_transforms(self):
+        return transforms.Compose([ToTensor()])
 
     def load_patches(self, root):
         dir = os.path.expanduser(root)
@@ -227,9 +252,8 @@ class BigEarthNetDataset(SplitableDataset):
         patch_names = []
         txn = self.db.begin(write=True)
         for idx, data in enumerate(dataloader):
-            bands10, bands20, bands60, patch_name, multiHots = data
+            bands10, bands20, bands60, patch_name, multihots = data
             patch_name = patch_name[0]
-            print(u"{}".format(patch_name).encode("ascii"))
             txn.put(
                 u"{}".format(patch_name).encode("ascii"),
                 dumps_pyarrow(
@@ -237,7 +261,7 @@ class BigEarthNetDataset(SplitableDataset):
                         bands10.numpy(),
                         bands20.numpy(),
                         bands60.numpy(),
-                        multiHots.numpy(),
+                        multihots.numpy(),
                     )
                 ),
             )
@@ -308,7 +332,7 @@ class PrepBigEarthNetDataset(Dataset):
         labels = parse_json_labels(
             os.path.join(self.root, imgNm, imgNm + "_labels_metadata.json")
         )
-        BigEartNet_19_labels_multiHot, BigEarthNet_19_labels = cls2multiHot(
+        BigEartNet_19_labels_multiHot, BigEarthNet_19_labels = cls2multihot(
             labels, self.label_indices
         )
 
@@ -319,3 +343,24 @@ class PrepBigEarthNetDataset(Dataset):
             imgNm,
             BigEartNet_19_labels_multiHot,
         )
+
+
+class Normalize(object):
+    def __init__(self, bands_mean: tuple, bands_std: tuple):
+        self.bands10_mean = bands_mean
+        self.bands10_std = bands_std
+
+    def __call__(self, sample: tuple):
+        bands10, bands20, bands60, multihots = sample
+
+        for t, m, s in zip(bands10, self.bands10_mean, self.bands10_std):
+            t.sub_(m).div_(s)
+
+        return bands10, bands20, bands60, multihots
+
+
+class ToTensor(object):
+    def __call__(self, sample):
+        bands10, bands20, bands60, multihots = sample
+
+        return torch.tensor(bands10), bands20, bands60, multihots

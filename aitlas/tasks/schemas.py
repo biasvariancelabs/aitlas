@@ -42,13 +42,13 @@ class EvaluateTaskSchema(BaseTaskShema):
     )
     metrics = fields.List(
         fields.String,
-        missing=["aitlas.metrics.F1Score"],
+        missing=[],
         description="Metric classes you want to calculate",
         example=["aitlas.metrics.PrecisionScore", "aitlas.metrics.AccuracyScore"],
     )
     visualizations = fields.List(
         fields.String,
-        missing=None,
+        missing=[],
         description="Visualizations classes you want to show",
         example=["aitlas.visualizations.ConfusionMatrix"],
     )

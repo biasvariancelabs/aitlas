@@ -3,8 +3,8 @@
         "classname": "aitlas.datasets.BigEarthNetDataset",
         "config": {
             "lmdb_path": "./data/lmdb",
+            "import_to_lmdb": true,
             "override": true,
-            "prepare": true,
             "split": {
                 "train": {
                     "ratio": 50,
@@ -19,7 +19,9 @@
                     "file": "./data/test.csv"
                 }
             },
-            "root": "./data/BigEarthNet"
+            "root": "./data/BigEarthNet",
+            "bands10_mean": [429.9430203,614.21682446,590.23569706],
+            "bands10_std": [572.41639287,582.87945694,675.88746967]
         }
     },
     "task": {

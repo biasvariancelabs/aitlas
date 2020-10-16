@@ -17,6 +17,9 @@ class EvaluateTask(BaseTask):
     def run(self):
         """Do something awesome here"""
 
+        # prepare the dataset
+        self.dataset.prepare()
+
         # get metric classes
         metrics = []
         for metric in self.config.metrics:

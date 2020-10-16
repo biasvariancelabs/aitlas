@@ -15,3 +15,4 @@ opencv-python<4.4.1
 tensorboard<2.3.1
 lmdb<1.0.1
 pyarrow<1.0.2
+tqdm<4.50.3
