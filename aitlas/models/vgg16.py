@@ -48,9 +48,6 @@ class VGG16MultiLabel(BaseMultilabelClassifier):
             self.model.apply(weights_init_kaiming)
             self.model.apply(fc_init_weights)
 
-        # we need rebind the function, when overwriting the model
-        self.model.forward = self.forward
-
     def forward(self, x):
         x = self.model.encoder(x)
         x = x.view(x.size(0), -1)

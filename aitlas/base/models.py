@@ -13,12 +13,11 @@ from .datasets import BaseDataset
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
-class BaseModel(Configurable):
+class BaseModel(nn.Module, Configurable):
     def __init__(self, config):
         Configurable.__init__(self, config)
 
         self.model = nn.Module()
-        self.model.forward = self.forward
 
         device_name = "cpu"
         if self.config.use_cuda and torch.cuda.is_available():

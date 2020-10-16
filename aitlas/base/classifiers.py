@@ -140,7 +140,7 @@ class BaseMulticlassClassifier(BaseModel):
         return total_loss
 
     def predict(self, *input, **kwargs):
-        return self.model(*input)
+        return self(*input)
 
     def evaluate(
         self, dataset: BaseDataset = None, model_path: str = None, metrics: list = (),
