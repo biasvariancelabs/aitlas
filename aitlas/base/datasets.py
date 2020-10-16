@@ -11,7 +11,14 @@ from .schemas import BaseDatasetSchema, SplitableDatasetSchema
 
 
 class BaseDataset(Dataset, Configurable):
+
     schema = BaseDatasetSchema
+
+    train_incides = []
+    test_indices = []
+    val_indices = []
+
+    train_indices_inverted = []
 
     def __init__(self, config):
         Dataset.__init__(self)
@@ -29,6 +36,12 @@ class BaseDataset(Dataset, Configurable):
     def __len__(self):
         raise NotImplementedError(
             "Please implement the `__len__` method for your dataset"
+        )
+
+    def get_item_name(self, index):
+        """Implement this method if you want to export splits"""
+        raise NotImplementedError(
+            "Please implement the `get_item_path` method for your dataset"
         )
 
     def prepare(self):
@@ -67,10 +80,6 @@ class SplitableDataset(BaseDataset):
     """General class for a dataset that can be split into train, test and validation"""
 
     schema = SplitableDatasetSchema
-
-    train_incides = []
-    test_indices = []
-    val_indices = []
 
     def __init__(self, config):
         BaseDataset.__init__(self, config)

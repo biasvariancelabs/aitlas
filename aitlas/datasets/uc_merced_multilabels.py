@@ -43,14 +43,14 @@ class UcMercedMultiLabelsDataset(SplitableDataset, DatasetFolderMixin):
         self.image_loader = tiff_loader
         self.data = self.make_dataset(self.config.root)
 
-    def make_dataset(self, dir, extensions='.tif'):
+    def make_dataset(self, dir, extensions=".tif"):
         # read labels
         multi_hot_labels = {}
         with open(dir + "/multilabels.txt", "rb") as f:
             lines = f.readlines()
             for line in lines[1:]:
                 line = line.decode("utf-8")
-                labels_list = line[line.find("\t") + 1:].split("\t")
+                labels_list = line[line.find("\t") + 1 :].split("\t")
                 multi_hot_labels[line[: line.find("\t")]] = np.asarray(
                     list((map(float, labels_list)))
                 )
@@ -77,6 +77,9 @@ class UcMercedMultiLabelsDataset(SplitableDataset, DatasetFolderMixin):
                 transforms.ToTensor(),
             ]
         )
+
+    def get_item_name(self, index):
+        return self.data[index][0]
 
     def __getitem__(self, index):
         """

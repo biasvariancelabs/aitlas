@@ -242,6 +242,9 @@ class BigEarthNetDataset(SplitableDataset):
             return sorted(os.listdir(dir))
         raise ValueError("`root` should be a folder")
 
+    def get_item_name(self, index):
+        return self.patches[index]
+
     def prepare(self):
         super().prepare()
         if self.should_prepare:

@@ -39,6 +39,9 @@ class CrackForestDataset(SplitableDataset):
 
         return image, mask
 
+    def get_item_name(self, index):
+        return self.images[index]
+
     def __len__(self):
         return len(self.images)
 

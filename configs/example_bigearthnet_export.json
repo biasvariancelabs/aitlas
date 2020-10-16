@@ -1,16 +1,8 @@
 {
-    "model": {
-        "classname": "aitlas.models.VGG16MultiLabel",
-        "config": {
-            "num_classes": 19,
-            "learning_rate": 0.001,
-            "pretrained": false
-        }
-    },
     "dataset": {
         "classname": "aitlas.datasets.BigEarthNetDataset",
         "config": {
-            "lmdb_path": "./data/lmdb/",
+            "lmdb_path": "./data/lmdb",
             "import_to_lmdb": false,
             "override": false,
             "split": {
@@ -27,18 +19,15 @@
                     "file": "./data/test.csv"
                 }
             },
-            "root": "./data/BigEarthNet/",
-                "bands10_mean": [429.9430203,614.21682446,590.23569706],
-                "bands10_std": [572.41639287,582.87945694,675.88746967],
-            "num_workers": 0
+            "root": "./data/BigEarthNet"
         }
     },
     "task": {
-        "classname": "aitlas.tasks.TrainTask",
+        "classname": "aitlas.tasks.ExportSplitsTask",
         "config": {
-            "epochs": 50,
-            "model_directory": "./examples/experiment",
-            "save_epochs": 1
+            "train_export": "./data/train_export.csv",
+            "val_export": "./data/val_export.csv",
+            "test_export": "./data/test_export.csv"
         }
     }
   }

@@ -56,3 +56,22 @@ class EvaluateTaskSchema(BaseTaskShema):
 
 class SplitTaskSchema(BaseTaskShema):
     pass
+
+
+class ExportSplitTaskSchema(BaseTaskShema):
+    train_export = fields.String(
+        required=True,
+        description="Path to the train split export",
+        example="./data/train_export.csv",
+    )
+    val_export = fields.String(
+        required=False,
+        missing=None,
+        description="Path to the val split export",
+        example="./data/valexport.csv",
+    )
+    test_export = fields.String(
+        required=True,
+        description="Path to the test split export",
+        example="./data/test_export.csv",
+    )

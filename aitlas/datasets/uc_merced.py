@@ -55,6 +55,9 @@ class UcMercedDataset(SplitableDataset, DatasetFolderMixin):
             ]
         )
 
+    def get_item_name(self, index):
+        return self.data[index][0]
+
     def __getitem__(self, index):
         """
         Args:

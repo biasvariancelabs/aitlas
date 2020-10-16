@@ -74,13 +74,13 @@ class BigEarthNetSchema(SplitableDatasetSchema):
     )
     bands10_mean = fields.List(
         fields.Float,
-        missing=[],
+        missing=[429.9430203, 614.21682446, 590.23569706],
         required=False,
         description="List of mean values for the 3 channels",
     )
     bands10_std = fields.List(
         fields.Float,
-        missing=[],
+        missing=[572.41639287, 582.87945694, 675.88746967],
         required=False,
         description="List of std values for the 3 channels",
     )
