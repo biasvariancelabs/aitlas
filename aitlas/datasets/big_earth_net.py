@@ -190,6 +190,8 @@ def read_scale_raster(file_path, scale=1):
 
 
 class BigEarthNetDataset(SplitableDataset):
+    """BigEartNet dataset adaptation"""
+
     schema = BigEarthNetSchema
 
     def __init__(self, config):
@@ -214,9 +216,11 @@ class BigEarthNetDataset(SplitableDataset):
 
         bands10, bands20, bands60, multihots = loads_pyarrow(byteflow)
 
-        bands10 = bands10.astype(np.float32)[0][0:3]
-        bands20 = bands20.astype(np.float32)
-        bands60 = bands60.astype(np.float32)
+        bands10 = bands10.astype(np.float32)[0][
+            0:3
+        ]  # TODO: maybe make this configuratble
+        bands20 = bands20.astype(np.float32)[0]
+        bands60 = bands60.astype(np.float32)[0]
         multihots = multihots.astype(np.float32)[0]
 
         if self.transform:

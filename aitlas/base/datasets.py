@@ -64,8 +64,9 @@ class BaseDataset(Dataset, Configurable):
 
 
 class SplitableDataset(BaseDataset):
+    """General class for a dataset that can be split into train, test and validation"""
+
     schema = SplitableDatasetSchema
-    default_dir = "./data/"
 
     train_incides = []
     test_indices = []
