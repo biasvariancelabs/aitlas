@@ -4,6 +4,7 @@ import os
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as nnf
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 
@@ -83,13 +84,13 @@ class BaseMulticlassClassifier(BaseModel):
                 )
                 logging.info(stringify(val_eval))
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
-                fig = confusion_matrix(
-                    dataset,
-                    y_true,
-                    y_pred,
-                    os.path.join(model_directory, run_id, f"cm_{epoch + 1}.png"),
-                )
-                self.writer.add_figure("Confusion matrix", fig, epoch + 1)
+                #fig = confusion_matrix(
+                #    dataset,
+                #    y_true,
+                #    y_pred,
+                #    os.path.join(model_directory, run_id, f"cm_{epoch + 1}.png"),
+                #)
+                #self.writer.add_figure("Confusion matrix", fig, epoch + 1)
 
         self.writer.close()
         logging.info(f"finished training. training time: {current_ts() - start}")
@@ -179,9 +180,10 @@ class BaseMulticlassClassifier(BaseModel):
                     total_loss += batch_loss.item()
                     total += 1
 
-                predicted = self.get_predicted(outputs)
+                predicted_probs, predicted = self.get_predicted(outputs)
 
-                y_pred += list(predicted.cpu().numpy())
+                #y_pred += list(predicted.cpu().numpy())
+                y_pred += list(predicted)
                 y_true += list(labels.cpu().numpy())
 
         calculated_metrics = {}
@@ -196,8 +198,10 @@ class BaseMulticlassClassifier(BaseModel):
         return (calculated_metrics, y_true, y_pred, total_loss)
 
     def get_predicted(self, outputs):
-        _, predicted = torch.max(outputs.data, 1)
-        return predicted
+        probs = nnf.softmax(outputs.data, dim=1)
+        predicted_probs, predicted = probs.topk(1, dim=1)
+        #_, predicted = torch.max(outputs.data, 1)
+        return predicted_probs, predicted.cpu().numpy()
 
     def load_optimizer(self):
         """Load the optimizer"""
@@ -219,4 +223,4 @@ class BaseMultilabelClassifier(BaseMulticlassClassifier):
     def get_predicted(self, outputs):
         predicted_probs = torch.sigmoid(outputs).cpu().numpy()
         predicted = (predicted_probs >= 0.5).astype(np.float32)
-        return predicted
+        return predicted_probs, predicted

@@ -18,11 +18,11 @@
                     "file": "./data/train.csv"
                 },
                 "val": {
-                    "ratio": 10,
+                    "ratio": 20,
                     "file": "./data/val.csv"
                 },
                 "test": {
-                    "ratio": 10,
+                    "ratio": 0,
                     "file": "./data/test.csv"
                 }
             }

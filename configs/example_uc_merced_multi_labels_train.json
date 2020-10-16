@@ -1,6 +1,6 @@
 {
     "model": {
-        "classname": "aitlas.models.ResNet50",
+        "classname": "aitlas.models.ResNet50MultiLabel",
         "config": {
             "num_classes": 17,
             "learning_rate": 0.001,
@@ -18,11 +18,11 @@
                     "file": "./data/train.csv"
                 },
                 "val": {
-                    "ratio": 10,
+                    "ratio": 20,
                     "file": "./data/val.csv"
                 },
                 "test": {
-                    "ratio": 10,
+                    "ratio": 0,
                     "file": "./data/test.csv"
                 }
             }
