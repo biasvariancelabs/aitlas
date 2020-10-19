@@ -25,7 +25,7 @@ class EvaluateTask(BaseTask):
         for metric in self.config.metrics:
             metrics.append(get_class(metric))
 
-        calculated_metrics, y_true, y_pred, loss = self.model.evaluate(
+        calculated_metrics, y_true, y_pred, y_probs, loss = self.model.evaluate(
             dataset=self.dataset, model_path=self.config.model_path, metrics=metrics,
         )
 
@@ -33,6 +33,7 @@ class EvaluateTask(BaseTask):
         visualuzation_conf = {
             "y_true": y_true,
             "y_pred": y_pred,
+            "y_probs": y_probs,
             "loss": loss,
             "dataset": self.dataset,
         }

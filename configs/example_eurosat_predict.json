@@ -15,24 +15,26 @@
             "split": {
                 "train": {
                     "ratio": 80,
-                    "file": "./data/train.csv"
+                    "file": "./data/train_eurosat.csv"
                 },
                 "val": {
                     "ratio": 10,
-                    "file": "./data/val.csv"
+                    "file": "./data/val_eurosat.csv"
                 },
                 "test": {
                     "ratio": 10,
-                    "file": "./data/test.csv"
+                    "file": "./data/test_eurosat.csv"
                 }
             }
         }
     },
     "task": {
-        "classname": "aitlas.tasks.EvaluateTask",
+        "classname": "aitlas.tasks.PredictTask",
         "config": {
-             "model_path": "./examples/experiment/eurosat/checkpoint.pth.tar",
-             "metrics":["aitlas.metrics.PrecisionScore","aitlas.metrics.AccuracyScore", "aitlas.metrics.RecallScore", "aitlas.metrics.F1Score"]
+            "model_path": "./examples/experiment/eurosat/checkpoint.pth.tar",
+            "dir": "./data/test/",
+            "output_path": "./examples/",
+            "output_format": "plot"
         }
     }
   }

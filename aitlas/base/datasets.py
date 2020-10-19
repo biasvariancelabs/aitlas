@@ -52,22 +52,34 @@ class BaseDataset(Dataset, Configurable):
         """Transformations that might be applied on the dataset"""
         return transforms.Compose([])
 
-    def dataloader(self, dataset):
+    def load_train_transforms(self):
+        """Transformations that might be applied on the train part of the dataset"""
+        return self.load_transforms()
+
+    def load_val_transforms(self):
+        """Transformations that might be applied on the val part of the dataset"""
+        return transforms.Compose([])
+
+    def load_test_transforms(self):
+        """Transformations that might be applied on the test part of the dataset"""
+        return transforms.Compose([])
+
+    def dataloader(self, dataset, shuffle=False):
         return torch.utils.data.DataLoader(
             dataset,
             batch_size=self.config.batch_size,
-            shuffle=self.config.shuffle,
+            shuffle=shuffle,
             num_workers=self.config.num_workers,
         )
 
     def train_loader(self):
-        return self.dataloader(self)
+        return self.dataloader(self, self.config.shuffle)
 
     def val_loader(self):
         return None  # by default we think people won't want to to use a validation set
 
     def test_loader(self):
-        return self.dataloader(self)
+        return self.dataloader(self, False)
 
     def labels(self):
         """Implent this if you want to return the complete set of labels of the dataset"""
@@ -175,13 +187,13 @@ class SplitableDataset(BaseDataset):
             self.save_split(self.val_indices, self.config.split.val.file)
 
     def train_loader(self):
-        return self.dataloader(self.train_set)
+        return self.dataloader(self.train_set, self.config.shuffle)
 
     def val_loader(self):
-        return self.dataloader(self.val_set)
+        return self.dataloader(self.val_set, False)
 
     def test_loader(self):
-        return self.dataloader(self.test_set)
+        return self.dataloader(self.test_set, False)
 
 
 class DatasetFolderMixin:

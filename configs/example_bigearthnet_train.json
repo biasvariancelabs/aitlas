@@ -8,7 +8,7 @@
         }
     },
     "dataset": {
-        "classname": "aitlas.datasets.BigEarthNetDataset",
+        "classname": "aitlas.datasets.BigEarthNetRGBDataset",
         "config": {
             "lmdb_path": "./data/lmdb/",
             "import_to_lmdb": false,
