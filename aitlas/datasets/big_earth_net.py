@@ -6,11 +6,12 @@ import lmdb
 import numpy as np
 import pyarrow as pa
 import torch
+from skimage.transform import resize
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 
 from ..base import SplitableDataset, CsvDataset
-from .schemas import BigEarthNetRGBSchema, BigEarthNetRGBCsvSchema
+from .schemas import BigEarthNetSchema, BigEarthNetRGBCsvSchema
 
 
 LABELS = {
@@ -104,6 +105,18 @@ LABELS = {
 }
 
 
+def interp_band(bands, img10_shape=[120, 120]):
+    """
+    https://github.com/lanha/DSen2/blob/master/utils/patches.py
+    """
+    bands_interp = np.zeros([bands.shape[0]] + img10_shape).astype(np.float32)
+
+    for i in range(bands.shape[0]):
+        bands_interp[i] = resize(bands[i] / 30000, img10_shape, mode="reflect") * 30000
+
+    return bands_interp
+
+
 def parse_json_labels(f_j_path):
     """
     parse meta-data json file for big earth to get image labels
@@ -190,10 +203,10 @@ def read_scale_raster(file_path, scale=1):
             raise ImportError("You need to have `gdal` or `rasterio` installed. ")
 
 
-class BigEarthNetRGBDataset(SplitableDataset):
+class BaseBigEarthNetDataset(SplitableDataset):
     """BigEartNet dataset adaptation"""
 
-    schema = BigEarthNetRGBSchema
+    schema = BigEarthNetSchema
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
@@ -402,6 +415,52 @@ class BigEarthNetRGBCsvDataset(CsvDataset):
         self.db.close()
 
 
+class BigEarthNetRGBDataset(BaseBigEarthNetDataset):
+    def __getitem__(self, index):
+        patch_name = self.patches[index]
+
+        with self.db.begin(write=False) as txn:
+            byteflow = txn.get(patch_name.encode())
+
+        bands10, bands20, bands60, multihots = loads_pyarrow(byteflow)
+
+        bands10 = bands10.astype(np.float32)[0][0:3]  # Return only RGB channels
+        bands20 = bands20.astype(np.float32)[0]
+        bands60 = bands60.astype(np.float32)[0]
+        multihots = multihots.astype(np.float32)[0]
+
+        if self.transform:
+            bands10, bands20, bands60, multihots = self.transform(
+                (bands10, bands20, bands60, multihots)
+            )
+
+        return bands10, multihots
+
+
+class BigEarthNetAllBandsDataset(BaseBigEarthNetDataset):
+    def __getitem__(self, index):
+        patch_name = self.patches[index]
+
+        with self.db.begin(write=False) as txn:
+            byteflow = txn.get(patch_name.encode())
+
+        bands10, bands20, bands60, multihots = loads_pyarrow(byteflow)
+
+        bands20 = interp_band(bands20)
+
+        bands10 = bands10.astype(np.float32)[0]
+        bands20 = bands20.astype(np.float32)[0]
+        bands60 = bands60.astype(np.float32)[0]
+        multihots = multihots.astype(np.float32)[0]
+
+        if self.transform:
+            bands10, bands20, bands60, multihots = self.transform(
+                (bands10, bands20, bands60, multihots)
+            )
+
+        return bands10, multihots
+
+
 class PrepBigEarthNetDataset(Dataset):
     def __init__(self, root=None, patch_names_list=None, label_indices=None):
         self.root = root
@@ -483,4 +542,4 @@ class ToTensor(object):
     def __call__(self, sample):
         bands10, multihots = sample
 
-        return torch.tensor(bands10), multihots
+        return torch.tensor(bands10), torch.tensor(bands20), bands60, multihots

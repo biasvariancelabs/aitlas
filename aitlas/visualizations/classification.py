@@ -4,6 +4,7 @@ import seaborn as sns
 from sklearn.metrics import confusion_matrix as sk_confusion_matrix
 
 from ..base import BaseVisualization
+from ..utils import pil_loader
 
 
 class ConfusionMatrix(BaseVisualization):
@@ -36,9 +37,52 @@ class ConfusionMatrix(BaseVisualization):
         return figure
 
 
+class ImageLabelsVisualization(BaseVisualization):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.image = kwargs.get("image")
+        self.probs = kwargs.get("probs")
+        self.labels = kwargs.get("labels")
+        self.output_file = kwargs.get("file", "classification.png")
+
+    def plot(self):
+        image = pil_loader(self.image)
+        fig = self.plot_prediction(image, self.probs, self.labels)
+        fig.savefig(self.output_file, format="png")
+
+    def plot_prediction(self, img, probs, classes):
+        """Display image and preditions from model"""
+
+        # Convert results to dataframe for plotting
+        result = pd.DataFrame({"p": probs}, index=classes)
+
+        # Show the image
+        fig = plt.figure(figsize=(16, 5))
+        ax = plt.subplot(1, 2, 1)
+        ax.imshow(img)
+
+        # Set title to be the actual class
+        ax.set_title("", size=20)
+
+        ax = plt.subplot(1, 2, 2)
+        # Plot a bar plot of predictions
+        result.sort_values("p")["p"].plot.barh(color="blue", edgecolor="k", ax=ax)
+        plt.xlabel("Predicted Probability")
+        plt.tight_layout()
+
+        return fig
+
+
 def confusion_matrix(dataset, y_true, y_pred, output_file):
     """Wrapper for the call for easier usage"""
     viz = ConfusionMatrix(
         dataset=dataset, y_true=y_true, y_pred=y_pred, file=output_file,
     )
     return viz.plot()
+
+
+def display_image_labels(image, probs, labels, output_file):
+    viz = ImageLabelsVisualization(
+        image=image, probs=probs, labels=labels, file=output_file
+    )
+    viz.plot()

@@ -53,7 +53,19 @@ class BaseDataset(Dataset, Configurable):
         """Transformations that might be applied on the dataset"""
         return transforms.Compose([])
 
-    def dataloader(self, dataset, shuffle):
+    def load_train_transforms(self):
+        """Transformations that might be applied on the train part of the dataset"""
+        return self.load_transforms()
+
+    def load_val_transforms(self):
+        """Transformations that might be applied on the val part of the dataset"""
+        return transforms.Compose([])
+
+    def load_test_transforms(self):
+        """Transformations that might be applied on the test part of the dataset"""
+        return transforms.Compose([])
+
+    def dataloader(self, dataset, shuffle=False):
         return torch.utils.data.DataLoader(
             dataset,
             batch_size=self.config.batch_size,
@@ -62,13 +74,13 @@ class BaseDataset(Dataset, Configurable):
         )
 
     def train_loader(self):
-        return self.dataloader(self)
+        return self.dataloader(self, self.config.shuffle)
 
     def val_loader(self):
         return None  # by default we think people won't want to to use a validation set
 
     def test_loader(self):
-        return self.dataloader(self)
+        return self.dataloader(self, False)
 
     def labels(self):
         """Implent this if you want to return the complete set of labels of the dataset"""

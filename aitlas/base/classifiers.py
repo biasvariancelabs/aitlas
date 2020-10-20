@@ -79,7 +79,7 @@ class BaseMulticlassClassifier(BaseModel):
 
             # evaluate against a validation if there is one
             if val_loader:
-                val_eval, y_true, y_pred, val_loss = self.evaluate_model(
+                val_eval, y_true, y_pred, y_probs, val_loss = self.evaluate_model(
                     val_loader, metrics=[F1Score], criterion=self.criterion
                 )
                 logging.info(stringify(val_eval))
@@ -174,6 +174,7 @@ class BaseMulticlassClassifier(BaseModel):
         # initialize counters
         y_true = []
         y_pred = []
+        y_pred_probs = []
 
         # initialize loss if applicable
         total_loss = 0.0
@@ -192,6 +193,7 @@ class BaseMulticlassClassifier(BaseModel):
 
                 predicted_probs, predicted = self.get_predicted(outputs)
 
+                y_pred_probs += list(predicted_probs.cpu().numpy())
                 y_pred += list(predicted.cpu().numpy())
                 y_true += list(labels.cpu().numpy())
 
@@ -204,12 +206,12 @@ class BaseMulticlassClassifier(BaseModel):
         if criterion:
             total_loss = total_loss / total
 
-        return (calculated_metrics, y_true, y_pred, total_loss)
+        return (calculated_metrics, y_true, y_pred, y_pred_probs, total_loss)
 
     def get_predicted(self, outputs):
         probs = nnf.softmax(outputs.data, dim=1)
         predicted_probs, predicted = probs.topk(1, dim=1)
-        return predicted_probs, predicted
+        return probs, predicted
 
     def log_additional_metrics(
         self,

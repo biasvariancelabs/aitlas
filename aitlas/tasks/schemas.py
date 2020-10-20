@@ -75,3 +75,25 @@ class ExportSplitTaskSchema(BaseTaskShema):
         description="Path to the test split export",
         example="./data/test_export.csv",
     )
+
+
+class PredictTaskSchema(BaseTaskShema):
+    dir = fields.String(
+        required=True,
+        description="Directory with the image to perform predictio on",
+        example="/tmp/test/",
+    )
+    model_path = fields.String(
+        required=True,
+        description="Path to the model",
+        example="/tmp/model/checkpoint.pth.tar",
+    )
+    output_format = fields.String(
+        missing="plot",
+        description="Whether to output the predictions to csv or plots",
+        validate=validate.OneOf(["plot", "csv"]),
+    )
+    output_path = fields.String(
+        missing="predictions.csv",
+        description="File or folder path where the csv or plot predictions will be stored",
+    )
