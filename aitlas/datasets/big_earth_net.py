@@ -244,7 +244,7 @@ class BaseBigEarthNetDataset(SplitableDataset):
         return len(self.patches)
 
     def load_transforms(self):
-        return transforms.Compose([ToTensor()])
+        return transforms.Compose([ToTensorRGB()])
 
     def load_patches(self, root):
         dir = os.path.expanduser(root)
