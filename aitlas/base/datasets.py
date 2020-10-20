@@ -1,18 +1,33 @@
+import csv
 import os
 import os.path
-import csv
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 import torch
-from torch.utils.data import Dataset, Subset, random_split
+from torch.utils.data import Dataset
+from torch.utils.data import Subset as TorchSubset
+from torch.utils.data import random_split
 from torchvision import transforms
 
 from .config import Configurable
-from .schemas import BaseDatasetSchema, SplitableDatasetSchema, CsvDatasetSchema
+from .schemas import BaseDatasetSchema, CsvDatasetSchema, SplitableDatasetSchema
+
+
+class Subset(TorchSubset):
+    """AiTLAS subset we use to split the data and apply appropriate transformations"""
+
+    def __init__(self, dataset, indices, transform):
+        super().__init__(dataset, indices)
+        self.transform = transform
+
+    def __getitem__(self, idx):
+        item, target = self.dataset[self.indices[idx]]
+        if self.transform:
+            item = self.transform(item)
+        return item, target
 
 
 class BaseDataset(Dataset, Configurable):
-
     schema = BaseDatasetSchema
 
     train_indices = []
@@ -21,12 +36,11 @@ class BaseDataset(Dataset, Configurable):
 
     train_indices_inverted = []
 
+    state = DatasetState.TRAIN
+
     def __init__(self, config):
         Dataset.__init__(self)
         Configurable.__init__(self, config)
-
-        # get the transformations to be applied
-        self.transform = self.load_transforms()
 
     def __getitem__(self, index):
         """ Implement here what you want to return"""
@@ -49,21 +63,21 @@ class BaseDataset(Dataset, Configurable):
         """Implement if something needs to happen to the dataset after object creation"""
         return True
 
-    def load_transforms(self):
-        """Transformations that might be applied on the dataset"""
+    def default_transform(self):
+        """Default transformation to apply"""
         return transforms.Compose([])
 
-    def load_train_transforms(self):
+    def train_transform(self):
         """Transformations that might be applied on the train part of the dataset"""
-        return self.load_transforms()
+        return self.default_transform()
 
-    def load_val_transforms(self):
+    def val_transform(self):
         """Transformations that might be applied on the val part of the dataset"""
-        return transforms.Compose([])
+        return self.default_transform()
 
-    def load_test_transforms(self):
+    def test_transform(self):
         """Transformations that might be applied on the test part of the dataset"""
-        return transforms.Compose([])
+        return self.default_transform()
 
     def dataloader(self, dataset, shuffle=False):
         return torch.utils.data.DataLoader(
@@ -125,9 +139,15 @@ class SplitableDataset(BaseDataset):
             self.save_splits()
 
         # create subsets from splits
-        self.train_set = Subset(dataset=self, indices=self.train_indices)
-        self.test_set = Subset(dataset=self, indices=self.test_indices)
-        self.val_set = Subset(dataset=self, indices=self.val_indices)
+        self.train_set = Subset(
+            dataset=self, indices=self.train_indices, transform=self.train_transform()
+        )
+        self.test_set = Subset(
+            dataset=self, indices=self.test_indices, transform=self.test_transform()
+        )
+        self.val_set = Subset(
+            dataset=self, indices=self.val_indices, transform=self.val_transform()
+        )
 
     def has_val(self):
         return self.config.split.val
@@ -208,27 +228,35 @@ class CsvDataset(BaseDataset):
 
     def read_csv(self):
         if self.config.train_csv:
-            with open(self.config.train_csv, 'r') as f:
+            with open(self.config.train_csv, "r") as f:
                 csv_reader = csv.reader(f)
                 for index, row in enumerate(csv_reader):
                     self.train_indices.append(index)
 
         if self.config.val_csv:
-            with open(self.config.val_csv, 'r') as f:
+            with open(self.config.val_csv, "r") as f:
                 csv_reader = csv.reader(f)
                 for index, row in enumerate(csv_reader):
                     self.val_indices.append(len(self.train_indices) + index)
 
         if self.config.test_csv:
-            with open(self.config.test_csv, 'r') as f:
+            with open(self.config.test_csv, "r") as f:
                 csv_reader = csv.reader(f)
                 for index, row in enumerate(csv_reader):
-                    self.test_indices.append(len(self.train_indices) + len(self.val_indices) + index)
+                    self.test_indices.append(
+                        len(self.train_indices) + len(self.val_indices) + index
+                    )
 
         # create subsets from csv files
-        self.train_set = Subset(dataset=self, indices=self.train_indices)
-        self.test_set = Subset(dataset=self, indices=self.test_indices)
-        self.val_set = Subset(dataset=self, indices=self.val_indices)
+        self.train_set = Subset(
+            dataset=self, indices=self.train_indices, transform=self.train_transform()
+        )
+        self.test_set = Subset(
+            dataset=self, indices=self.test_indices, transform=self.test_transform()
+        )
+        self.val_set = Subset(
+            dataset=self, indices=self.val_indices, transform=self.val_transform()
+        )
 
     def train_loader(self):
         return self.dataloader(self.train_set, self.config.shuffle)
@@ -238,6 +266,7 @@ class CsvDataset(BaseDataset):
 
     def test_loader(self):
         return self.dataloader(self.test_set, False)
+
 
 class DatasetFolderMixin:
     """A mixin for datasets the samples are arranged in this way: ::

@@ -46,7 +46,9 @@ class EurosatDataset(SplitableDataset, DatasetFolderMixin):
 
         self.data = self.make_dataset(self.config.root, extensions)
 
-    def load_transforms(self):
+        self.transform = self.train_transform()
+
+    def default_transform(self):
         return transforms.Compose(
             [
                 transforms.ToPILImage(),
@@ -69,8 +71,6 @@ class EurosatDataset(SplitableDataset, DatasetFolderMixin):
         """
         # load image
         img = self.image_loader(self.data[index][0])
-        # apply transformations
-        img = self.transform(img)
         target = self.data[index][1]
         return img, target
 

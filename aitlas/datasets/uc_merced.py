@@ -45,7 +45,7 @@ class UcMercedDataset(SplitableDataset, DatasetFolderMixin):
         self.image_loader = tiff_loader
         self.data = self.make_dataset(self.config.root)
 
-    def load_transforms(self):
+    def default_transform(self):
         return transforms.Compose(
             [
                 transforms.ToPILImage(),
@@ -68,8 +68,6 @@ class UcMercedDataset(SplitableDataset, DatasetFolderMixin):
         """
         # load image
         img = self.image_loader(self.data[index][0])
-        # apply transformations
-        img = self.transform(img)
         target = self.data[index][1]
         return img, target
 

@@ -45,7 +45,7 @@ class CrackForestDataset(SplitableDataset):
     def __len__(self):
         return len(self.images)
 
-    def load_transforms(self):
+    def default_transform(self):
         return Compose([ToTensor()])
 
 
