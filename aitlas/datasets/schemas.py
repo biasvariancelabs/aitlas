@@ -1,6 +1,6 @@
 from marshmallow import fields, validate
 
-from ..base.schemas import BaseDatasetSchema, SplitableDatasetSchema
+from ..base.schemas import BaseDatasetSchema, SplitableDatasetSchema, CsvDatasetSchema
 
 
 class EurosatDatasetSchema(SplitableDatasetSchema):
@@ -64,7 +64,28 @@ class PatternNetDatasetSchema(SplitableDatasetSchema):
     )
 
 
-class BigEarthNetSchema(SplitableDatasetSchema):
+class BigEarthNetRGBSchema(SplitableDatasetSchema):
+    lmdb_path = fields.String(required=True, description="Path to the lmdb storage")
+    root = fields.String(
+        required=True, description="Dataset path on disk", example="./data/BigEarthNet/"
+    )
+    import_to_lmdb = fields.Bool(
+        missing=False, description="Should the data be moved to LMDB"
+    )
+    bands10_mean = fields.List(
+        fields.Float,
+        missing=[429.9430203, 614.21682446, 590.23569706],
+        required=False,
+        description="List of mean values for the 3 channels",
+    )
+    bands10_std = fields.List(
+        fields.Float,
+        missing=[572.41639287, 582.87945694, 675.88746967],
+        required=False,
+        description="List of std values for the 3 channels",
+    )
+
+class BigEarthNetRGBCsvSchema(CsvDatasetSchema):
     lmdb_path = fields.String(required=True, description="Path to the lmdb storage")
     root = fields.String(
         required=True, description="Dataset path on disk", example="./data/BigEarthNet/"

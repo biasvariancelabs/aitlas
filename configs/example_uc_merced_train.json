@@ -12,6 +12,7 @@
         "config": {
             "root": "/media/hdd/UCMerced",
             "override": true,
+            "shuffle": true,
             "split": {
                 "train": {
                     "ratio": 80,

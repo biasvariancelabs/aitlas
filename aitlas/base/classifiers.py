@@ -109,13 +109,18 @@ class BaseMulticlassClassifier(BaseModel):
         for i, data in enumerate(tqdm(dataloader, desc="training")):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
-
+            inputs = inputs.to(self.device)
+            labels = labels.to(self.device)
             # zero the parameter gradients
+            #print(optimizer, criterion)
+            #print(self)
+
             optimizer.zero_grad()
+            #print(inputs)
 
             # forward + backward + optimize
-            outputs = self.predict(inputs.to(self.device))
-            loss = criterion(outputs, labels.to(self.device))
+            outputs = self.predict(inputs)
+            loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
 
@@ -140,6 +145,7 @@ class BaseMulticlassClassifier(BaseModel):
         return total_loss
 
     def predict(self, *input, **kwargs):
+        #print(input)
         return self(*input)
 
     def evaluate(

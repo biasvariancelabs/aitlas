@@ -8,29 +8,18 @@
         }
     },
     "dataset": {
-        "classname": "aitlas.datasets.BigEarthNetDataset",
+        "classname": "aitlas.datasets.BigEarthNetRGBCsvDataset",
         "config": {
-            "lmdb_path": "./data/lmdb/",
+            "lmdb_path": "/media/hdd/BigEarthNet/lmdb/BigEarthNet-19.lmdb",
             "import_to_lmdb": false,
-            "override": false,
-            "split": {
-                "train": {
-                    "ratio": 50,
-                    "file": "./data/train.csv"
-                },
-                "val": {
-                    "ratio": 25,
-                    "file": "./data/val.csv"
-                },
-                "test": {
-                    "ratio": 25,
-                    "file": "./data/test.csv"
-                }
-            },
-            "root": "./data/BigEarthNet/",
-                "bands10_mean": [429.9430203,614.21682446,590.23569706],
-                "bands10_std": [572.41639287,582.87945694,675.88746967],
-            "num_workers": 0
+            "train_csv": "/media/hdd/BigEarthNet/bigearthnet-19-models/splits/train.csv",
+            "val_csv": "/media/hdd/BigEarthNet/bigearthnet-19-models/splits/val.csv",
+            "test_csv": "/media/hdd/BigEarthNet/bigearthnet-19-models/splits/test.csv",
+            "root": "/media/hdd/BigEarthNet/BigEarthNet-v1.0/",
+            "bands10_mean": [429.9430203,614.21682446,590.23569706],
+            "bands10_std": [572.41639287,582.87945694,675.88746967],
+            "num_workers": 8,
+            "batch_size": 256
         }
     },
     "task": {

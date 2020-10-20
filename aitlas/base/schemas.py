@@ -17,7 +17,7 @@ class SplitObjectSchema(Schema):
 class BaseDatasetSchema(Schema):
     batch_size = fields.Int(missing=64, description="Batch size", example=64)
     shuffle = fields.Bool(
-        missing=False, description="Should shuffle dataset", example=False
+        missing=True, description="Should shuffle dataset", example=False
     )
     num_workers = fields.Int(missing=4, description="Number of workers", example=4)
 
@@ -32,6 +32,17 @@ class SplitableDatasetSchema(BaseDatasetSchema):
         missing=False,
         description="Should override split files if they exist.",
         example=False,
+    )
+
+class CsvDatasetSchema(BaseDatasetSchema):
+    train_csv = fields.String(
+        required=True, description="Train csv file", example="./data/train.csv"
+    )
+    val_csv = fields.String(
+        required=False, description="Validation csv file", example="./data/val.csv"
+    )
+    test_csv = fields.String(
+        required=False, description="Test csv file", example="./data/test.csv"
     )
 
 

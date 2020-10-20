@@ -1,5 +1,6 @@
 import json
 import os
+import csv
 
 import lmdb
 import numpy as np
@@ -8,8 +9,8 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 
-from ..base import SplitableDataset
-from .schemas import BigEarthNetSchema
+from ..base import SplitableDataset, CsvDataset
+from .schemas import BigEarthNetRGBSchema, BigEarthNetRGBCsvSchema
 
 
 LABELS = {
@@ -189,10 +190,10 @@ def read_scale_raster(file_path, scale=1):
             raise ImportError("You need to have `gdal` or `rasterio` installed. ")
 
 
-class BigEarthNetDataset(SplitableDataset):
+class BigEarthNetRGBDataset(SplitableDataset):
     """BigEartNet dataset adaptation"""
 
-    schema = BigEarthNetSchema
+    schema = BigEarthNetRGBSchema
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
@@ -202,30 +203,26 @@ class BigEarthNetDataset(SplitableDataset):
         self.num_workers = self.config.num_workers
         self.should_prepare = self.config.import_to_lmdb
 
-        self.bands10_mean = self.config.bands10_mean
-        self.bands10_std = self.config.bands10_std
-
         self.db = lmdb.open(config.lmdb_path)
         self.patches = self.load_patches(self.root)
 
     def __getitem__(self, index):
         patch_name = self.patches[index]
+        print(patch_name)
 
         with self.db.begin(write=False) as txn:
             byteflow = txn.get(patch_name.encode())
 
-        bands10, bands20, bands60, multihots = loads_pyarrow(byteflow)
+        bands10, _, _, multihots = loads_pyarrow(byteflow)
 
         bands10 = bands10.astype(np.float32)[0][
             0:3
-        ]  # TODO: maybe make this configuratble
-        bands20 = bands20.astype(np.float32)[0]
-        bands60 = bands60.astype(np.float32)[0]
+        ]
         multihots = multihots.astype(np.float32)[0]
 
         if self.transform:
-            bands10, bands20, bands60, multihots = self.transform(
-                (bands10, bands20, bands60, multihots)
+            bands10, multihots = self.transform(
+                (bands10, multihots)
             )
 
         return bands10, multihots
@@ -234,13 +231,129 @@ class BigEarthNetDataset(SplitableDataset):
         return len(self.patches)
 
     def load_transforms(self):
-        return transforms.Compose([ToTensor()])
+        return transforms.Compose([
+                        ToTensor(),
+                        #Normalize(self.config.bands10_mean, self.config.bands10_std)
+                    ])
 
     def load_patches(self, root):
         dir = os.path.expanduser(root)
         if os.path.isdir(dir):
             return sorted(os.listdir(dir))
         raise ValueError("`root` should be a folder")
+
+    def get_item_name(self, index):
+        return self.patches[index]
+
+    def prepare(self):
+        super().prepare()
+        if self.should_prepare:
+            self.process_to_lmdb()
+
+    def process_to_lmdb(self):
+        datagen = PrepBigEarthNetDataset(
+            self.root, patch_names_list=self.patches, label_indices=LABELS
+        )
+        dataloader = DataLoader(datagen, num_workers=self.num_workers)
+
+        patch_names = []
+        txn = self.db.begin(write=True)
+        for idx, data in enumerate(dataloader):
+            bands10, bands20, bands60, patch_name, multihots = data
+            patch_name = patch_name[0]
+            txn.put(
+                u"{}".format(patch_name).encode("ascii"),
+                dumps_pyarrow(
+                    (
+                        bands10.numpy(),
+                        bands20.numpy(),
+                        bands60.numpy(),
+                        multihots.numpy(),
+                    )
+                ),
+            )
+            patch_names.append(patch_name)
+
+            if idx % 10000 == 0:
+                txn.commit()
+                txn = self.db.begin(write=True)
+
+        txn.commit()
+        keys = [u"{}".format(patch_name).encode("ascii") for patch_name in patch_names]
+
+        with self.db.begin(write=True) as txn:
+            txn.put(b"__keys__", dumps_pyarrow(keys))
+            txn.put(b"__len__", dumps_pyarrow(len(keys)))
+
+        self.db.sync()
+        self.db.close()
+
+class BigEarthNetRGBCsvDataset(CsvDataset):
+    """BigEartNet dataset adaptation"""
+
+    schema = BigEarthNetRGBCsvSchema
+
+    def __init__(self, config):
+        # now call the constructor to validate the schema and split the data
+        CsvDataset.__init__(self, config)
+
+        self.root = self.config.root
+        self.num_workers = self.config.num_workers
+        self.should_prepare = self.config.import_to_lmdb
+
+        self.db = lmdb.open(config.lmdb_path, readonly=True, lock=False, readahead=False, meminit=False)
+        self.patches = self.load_patches(self.root)
+
+    def __getitem__(self, index):
+        patch_name = self.patches[index]
+
+        with self.db.begin(write=False) as txn:
+            byteflow = txn.get(patch_name.encode())
+
+        bands10, _, _, multihots = loads_pyarrow(byteflow)
+
+        bands10 = bands10.astype(np.float32)[0:3]
+        multihots = multihots.astype(np.float32)
+
+        if self.transform:
+            bands10, multihots = self.transform(
+                (bands10, multihots)
+            )
+
+        return bands10, multihots
+
+    def __len__(self):
+        return len(self.patches)
+
+    def load_transforms(self):
+        return transforms.Compose([
+                        ToTensor(),
+                        Normalize(self.config.bands10_mean, self.config.bands10_std)
+                    ])
+
+    def load_patches(self, root):
+        patch_names = []
+        if self.config.train_csv:
+            with open(self.config.train_csv, 'r') as f:
+                csv_reader = csv.reader(f)
+                for row in csv_reader:
+                    patch_names.append(row[0])
+
+        if self.config.val_csv:
+            with open(self.config.val_csv, 'r') as f:
+                csv_reader = csv.reader(f)
+                for row in csv_reader:
+                    patch_names.append(row[0])
+
+        if self.config.test_csv:
+            with open(self.config.test_csv, 'r') as f:
+                csv_reader = csv.reader(f)
+                for row in csv_reader:
+                    patch_names.append(row[0])
+
+        print(len(patch_names))
+
+        return patch_names
 
     def get_item_name(self, index):
         return self.patches[index]
@@ -353,21 +466,21 @@ class PrepBigEarthNetDataset(Dataset):
 
 
 class Normalize(object):
-    def __init__(self, bands_mean: tuple, bands_std: tuple):
+    def __init__(self, bands_mean, bands_std):
         self.bands10_mean = bands_mean
         self.bands10_std = bands_std
 
-    def __call__(self, sample: tuple):
-        bands10, bands20, bands60, multihots = sample
+    def __call__(self, sample):
+        bands10, multihots = sample
 
         for t, m, s in zip(bands10, self.bands10_mean, self.bands10_std):
             t.sub_(m).div_(s)
 
-        return bands10, bands20, bands60, multihots
+        return bands10, multihots
 
 
 class ToTensor(object):
     def __call__(self, sample):
-        bands10, bands20, bands60, multihots = sample
+        bands10, multihots = sample
 
-        return torch.tensor(bands10), bands20, bands60, multihots
+        return torch.tensor(bands10), multihots

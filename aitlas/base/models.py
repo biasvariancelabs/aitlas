@@ -16,6 +16,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 class BaseModel(nn.Module, Configurable):
     def __init__(self, config):
         Configurable.__init__(self, config)
+        super(BaseModel, self).__init__()
 
         self.model = nn.Module()
 

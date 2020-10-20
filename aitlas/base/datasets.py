@@ -1,5 +1,6 @@
 import os
 import os.path
+import csv
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 import torch
@@ -7,14 +8,14 @@ from torch.utils.data import Dataset, Subset, random_split
 from torchvision import transforms
 
 from .config import Configurable
-from .schemas import BaseDatasetSchema, SplitableDatasetSchema
+from .schemas import BaseDatasetSchema, SplitableDatasetSchema, CsvDatasetSchema
 
 
 class BaseDataset(Dataset, Configurable):
 
     schema = BaseDatasetSchema
 
-    train_incides = []
+    train_indices = []
     test_indices = []
     val_indices = []
 
@@ -52,11 +53,11 @@ class BaseDataset(Dataset, Configurable):
         """Transformations that might be applied on the dataset"""
         return transforms.Compose([])
 
-    def dataloader(self, dataset):
+    def dataloader(self, dataset, shuffle):
         return torch.utils.data.DataLoader(
             dataset,
             batch_size=self.config.batch_size,
-            shuffle=self.config.shuffle,
+            shuffle=shuffle,
             num_workers=self.config.num_workers,
         )
 
@@ -175,14 +176,58 @@ class SplitableDataset(BaseDataset):
             self.save_split(self.val_indices, self.config.split.val.file)
 
     def train_loader(self):
-        return self.dataloader(self.train_set)
+        return self.dataloader(self.train_set, self.config.shuffle)
 
     def val_loader(self):
-        return self.dataloader(self.val_set)
+        return self.dataloader(self.val_set, False)
 
     def test_loader(self):
-        return self.dataloader(self.test_set)
+        return self.dataloader(self.test_set, False)
 
+
+class CsvDataset(BaseDataset):
+    schema = CsvDatasetSchema
+
+    def __init__(self, config):
+        BaseDataset.__init__(self, config)
+
+    def prepare(self):
+        self.read_csv()
+
+    def read_csv(self):
+        if self.config.train_csv:
+            with open(self.config.train_csv, 'r') as f:
+                csv_reader = csv.reader(f)
+                for index, row in enumerate(csv_reader):
+                    self.train_indices.append(index)
+
+        if self.config.val_csv:
+            with open(self.config.val_csv, 'r') as f:
+                csv_reader = csv.reader(f)
+                for index, row in enumerate(csv_reader):
+                    self.val_indices.append(len(self.train_indices) + index)
+
+        if self.config.test_csv:
+            with open(self.config.test_csv, 'r') as f:
+                csv_reader = csv.reader(f)
+                for index, row in enumerate(csv_reader):
+                    self.test_indices.append(len(self.train_indices) + len(self.val_indices) + index)
+
+        print(len(self.train_indices), len(self.val_indices), len(self.test_indices))
+
+        # create subsets from csv files
+        self.train_set = Subset(dataset=self, indices=self.train_indices)
+        self.test_set = Subset(dataset=self, indices=self.test_indices)
+        self.val_set = Subset(dataset=self, indices=self.val_indices)
+
+    def train_loader(self):
+        return self.dataloader(self.train_set, self.config.shuffle)
+
+    def val_loader(self):
+        return self.dataloader(self.val_set, False)
+
+    def test_loader(self):
+        return self.dataloader(self.test_set, False)
 
 class DatasetFolderMixin:
     """A mixin for datasets the samples are arranged in this way: ::
