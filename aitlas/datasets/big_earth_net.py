@@ -275,10 +275,10 @@ class BaseBigEarthNetDataset(SplitableDataset):
                 u"{}".format(patch_name).encode("ascii"),
                 dumps_pyarrow(
                     (
-                        bands10.numpy(),
-                        bands20.numpy(),
-                        bands60.numpy(),
-                        multihots.numpy(),
+                        bands10[0].numpy(),
+                        bands20[0].numpy(),
+                        bands60[0].numpy(),
+                        multihots[0].numpy(),
                     )
                 ),
             )
