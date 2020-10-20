@@ -225,8 +225,6 @@ class CsvDataset(BaseDataset):
                 for index, row in enumerate(csv_reader):
                     self.test_indices.append(len(self.train_indices) + len(self.val_indices) + index)
 
-        print(len(self.train_indices), len(self.val_indices), len(self.test_indices))
-
         # create subsets from csv files
         self.train_set = Subset(dataset=self, indices=self.train_indices)
         self.test_set = Subset(dataset=self, indices=self.test_indices)

@@ -111,12 +111,9 @@ class BaseMulticlassClassifier(BaseModel):
             inputs, labels = data
             inputs = inputs.to(self.device)
             labels = labels.to(self.device)
-            # zero the parameter gradients
-            #print(optimizer, criterion)
-            #print(self)
 
+            # zero the parameter gradients
             optimizer.zero_grad()
-            #print(inputs)
 
             # forward + backward + optimize
             outputs = self.predict(inputs)
@@ -145,7 +142,6 @@ class BaseMulticlassClassifier(BaseModel):
         return total_loss
 
     def predict(self, *input, **kwargs):
-        #print(input)
         return self(*input)
 
     def evaluate(

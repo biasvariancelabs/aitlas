@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 
 from ..base import SplitableDataset, CsvDataset
-from .schemas import BigEarthNetSchema, BigEarthNetRGBCsvSchema
+from .schemas import BigEarthNetSchema
 
 
 LABELS = {
@@ -244,10 +244,7 @@ class BaseBigEarthNetDataset(SplitableDataset):
         return len(self.patches)
 
     def load_transforms(self):
-        return transforms.Compose([
-                        ToTensor(),
-                        #Normalize(self.config.bands10_mean, self.config.bands10_std)
-                    ])
+        return transforms.Compose([ToTensor()])
 
     def load_patches(self, root):
         dir = os.path.expanduser(root)
@@ -304,7 +301,7 @@ class BaseBigEarthNetDataset(SplitableDataset):
 class BigEarthNetRGBCsvDataset(CsvDataset):
     """BigEartNet dataset adaptation"""
 
-    schema = BigEarthNetRGBCsvSchema
+    schema = BigEarthNetSchema
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
@@ -315,7 +312,7 @@ class BigEarthNetRGBCsvDataset(CsvDataset):
         self.should_prepare = self.config.import_to_lmdb
 
         self.db = lmdb.open(config.lmdb_path, readonly=True, lock=False, readahead=False, meminit=False)
-        self.patches = self.load_patches(self.root)
+        self.patches = self.load_patches()
 
     def __getitem__(self, index):
         patch_name = self.patches[index]
@@ -340,11 +337,11 @@ class BigEarthNetRGBCsvDataset(CsvDataset):
 
     def load_transforms(self):
         return transforms.Compose([
-                        ToTensor(),
-                        Normalize(self.config.bands10_mean, self.config.bands10_std)
+                        ToTensorRGB(),
+                        NormalizeRGB(self.config.bands10_mean, self.config.bands10_std)
                     ])
 
-    def load_patches(self, root):
+    def load_patches(self):
         patch_names = []
         if self.config.train_csv:
             with open(self.config.train_csv, 'r') as f:
@@ -363,56 +360,10 @@ class BigEarthNetRGBCsvDataset(CsvDataset):
                 csv_reader = csv.reader(f)
                 for row in csv_reader:
                     patch_names.append(row[0])
-
-        print(len(patch_names))
-
         return patch_names
 
     def get_item_name(self, index):
         return self.patches[index]
-
-    def prepare(self):
-        super().prepare()
-        if self.should_prepare:
-            self.process_to_lmdb()
-
-    def process_to_lmdb(self):
-        datagen = PrepBigEarthNetDataset(
-            self.root, patch_names_list=self.patches, label_indices=LABELS
-        )
-        dataloader = DataLoader(datagen, num_workers=self.num_workers)
-
-        patch_names = []
-        txn = self.db.begin(write=True)
-        for idx, data in enumerate(dataloader):
-            bands10, bands20, bands60, patch_name, multihots = data
-            patch_name = patch_name[0]
-            txn.put(
-                u"{}".format(patch_name).encode("ascii"),
-                dumps_pyarrow(
-                    (
-                        bands10.numpy(),
-                        bands20.numpy(),
-                        bands60.numpy(),
-                        multihots.numpy(),
-                    )
-                ),
-            )
-            patch_names.append(patch_name)
-
-            if idx % 10000 == 0:
-                txn.commit()
-                txn = self.db.begin(write=True)
-
-        txn.commit()
-        keys = [u"{}".format(patch_name).encode("ascii") for patch_name in patch_names]
-
-        with self.db.begin(write=True) as txn:
-            txn.put(b"__keys__", dumps_pyarrow(keys))
-            txn.put(b"__len__", dumps_pyarrow(len(keys)))
-
-        self.db.sync()
-        self.db.close()
 
 
 class BigEarthNetRGBDataset(BaseBigEarthNetDataset):
@@ -422,16 +373,14 @@ class BigEarthNetRGBDataset(BaseBigEarthNetDataset):
         with self.db.begin(write=False) as txn:
             byteflow = txn.get(patch_name.encode())
 
-        bands10, bands20, bands60, multihots = loads_pyarrow(byteflow)
+        bands10, _, _, multihots = loads_pyarrow(byteflow)
 
-        bands10 = bands10.astype(np.float32)[0][0:3]  # Return only RGB channels
-        bands20 = bands20.astype(np.float32)[0]
-        bands60 = bands60.astype(np.float32)[0]
-        multihots = multihots.astype(np.float32)[0]
+        bands10 = bands10.astype(np.float32)[0:3]  # Return only RGB channels
+        multihots = multihots.astype(np.float32)
 
         if self.transform:
             bands10, bands20, bands60, multihots = self.transform(
-                (bands10, bands20, bands60, multihots)
+                (bands10, multihots)
             )
 
         return bands10, multihots
@@ -444,21 +393,20 @@ class BigEarthNetAllBandsDataset(BaseBigEarthNetDataset):
         with self.db.begin(write=False) as txn:
             byteflow = txn.get(patch_name.encode())
 
-        bands10, bands20, bands60, multihots = loads_pyarrow(byteflow)
+        bands10, bands20, _, multihots = loads_pyarrow(byteflow)
 
         bands20 = interp_band(bands20)
 
-        bands10 = bands10.astype(np.float32)[0]
-        bands20 = bands20.astype(np.float32)[0]
-        bands60 = bands60.astype(np.float32)[0]
-        multihots = multihots.astype(np.float32)[0]
+        bands10 = bands10.astype(np.float32)
+        bands20 = bands20.astype(np.float32)
+        multihots = multihots.astype(np.float32)
 
         if self.transform:
             bands10, bands20, bands60, multihots = self.transform(
-                (bands10, bands20, bands60, multihots)
+                (bands10, bands20, multihots)
             )
 
-        return bands10, multihots
+        return bands10, bands20, multihots
 
 
 class PrepBigEarthNetDataset(Dataset):
@@ -524,7 +472,7 @@ class PrepBigEarthNetDataset(Dataset):
         )
 
 
-class Normalize(object):
+class NormalizeRGB(object):
     def __init__(self, bands_mean, bands_std):
         self.bands10_mean = bands_mean
         self.bands10_std = bands_std
@@ -538,8 +486,33 @@ class Normalize(object):
         return bands10, multihots
 
 
-class ToTensor(object):
+class ToTensorRGB(object):
     def __call__(self, sample):
         bands10, multihots = sample
 
-        return torch.tensor(bands10), torch.tensor(bands20), bands60, multihots
+        return torch.tensor(bands10), multihots
+
+class NormalizeAllBands(object):
+    def __init__(self, bands10_mean, bands10_std, bands20_mean, bands20_std):
+        self.bands10_mean = bands10_mean
+        self.bands10_std = bands10_std
+        self.bands20_mean = bands20_mean
+        self.bands20_std = bands20_std
+
+    def __call__(self, sample):
+        bands10, bands20, multihots = sample
+
+        for t, m, s in zip(bands10, self.bands10_mean, self.bands10_std):
+            t.sub_(m).div_(s)
+
+        for t, m, s in zip(bands20, self.bands20_mean, self.bands20_std):
+            t.sub_(m).div_(s)
+
+        return bands10, bands20, multihots
+
+
+class ToTensorAllBands(object):
+    def __call__(self, sample):
+        bands10, bands20, multihots = sample
+
+        return torch.tensor(bands10), torch.tensor(bands20), multihots
