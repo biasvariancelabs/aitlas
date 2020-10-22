@@ -1,4 +1,9 @@
-from .big_earth_net import BigEarthNetAllBandsDataset, BigEarthNetRGBDataset, BigEarthNetRGBCsvDataset
+from .big_earth_net import (
+    BigEarthNetAllBandsDataset,
+    BigEarthNetRGBCsvDataset,
+    BigEarthNetRGBDataset,
+)
+from .datafolder import DataFolderDataset
 from .eurosat import EurosatDataset
 from .pattern_net import PatternNetDataset
 from .resisc45 import Resisc45Dataset

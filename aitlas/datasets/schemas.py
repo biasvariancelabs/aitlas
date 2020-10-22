@@ -1,6 +1,12 @@
 from marshmallow import fields, validate
 
-from ..base.schemas import BaseDatasetSchema, SplitableDatasetSchema, CsvDatasetSchema
+from ..base.schemas import BaseDatasetSchema, CsvDatasetSchema, SplitableDatasetSchema
+
+
+class RootFolderSchema(SplitableDatasetSchema):
+    root = fields.String(
+        required=True, description="Dataset path on disk", example="./data/dataset/",
+    )
 
 
 class EurosatDatasetSchema(SplitableDatasetSchema):

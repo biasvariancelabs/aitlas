@@ -1,0 +1,27 @@
+{
+    "dataset": {
+        "classname": "aitlas.datasets.DataFolderDataset",
+        "config": {
+            "override": true,
+            "split": {
+                "train": {
+                    "ratio": 60,
+                    "file": "./data/train.csv"
+                },
+                "val": {
+                    "ratio": 20,
+                    "file": "./data/val.csv"
+                },
+                "test": {
+                    "ratio": 20,
+                    "file": "./data/test.csv"
+                }
+            },
+            "root": "./data/datafolder"
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.SplitTask",
+        "config": {}
+    }
+  }
