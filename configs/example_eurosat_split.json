@@ -5,18 +5,18 @@
             "split": {
                 "train": {
                     "ratio": 60,
-                    "file": "D:/datasets/EuroSAT/train.csv"
+                    "file": "./data/EuroSAT/2750/train.csv"
                 },
                 "val": {
                     "ratio": 20,
-                    "file": "D:/datasets/EuroSAT/val.csv"
+                    "file": "./data/EuroSAT/2750/val.csv"
                 },
                 "test": {
                     "ratio": 20,
-                    "file": "D:/datasets/EuroSAT/test.csv"
+                    "file": "./data/EuroSAT/2750/test.csv"
                 }
             },
-            "root": "D:/datasets/EuroSAT"
+            "root": "./data/EuroSAT/2750/"
         }
     }
 }
