@@ -1,16 +1,16 @@
+import collections
 import logging
 import os
 from shutil import copyfile
-import collections
 
 import torch
 import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
+from ..utils import current_ts, stringify
 from .config import Configurable
 from .datasets import BaseDataset
-from torch.utils.tensorboard import SummaryWriter
-from ..utils import current_ts, stringify
-from tqdm import tqdm
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -30,19 +30,18 @@ class BaseModel(nn.Module, Configurable):
         self.device = torch.device(device_name)
 
     def fit(
-            self,
-            dataset: BaseDataset,
-            epochs: int = 100,
-            model_directory: str = None,
-            save_epochs: int = 10,
-            iterations_log: int = 100,
-            resume_model: str = None,
-            val_dataset: BaseDataset = None,
-            run_id: str = None,
-            **kwargs,
+        self,
+        dataset: BaseDataset,
+        epochs: int = 100,
+        model_directory: str = None,
+        save_epochs: int = 10,
+        iterations_log: int = 100,
+        resume_model: str = None,
+        val_dataset: BaseDataset = None,
+        run_id: str = None,
+        metrics: tuple = (),
+        **kwargs,
     ):
-        from ..metrics import F1Score
-
         logging.info("Starting training.")
 
         start_epoch = 0
@@ -67,10 +66,9 @@ class BaseModel(nn.Module, Configurable):
 
         # get data loaders
         train_loader = dataset.dataloader()
+        val_loader = None
         if val_dataset:
             val_loader = val_dataset.dataloader()
-        else:
-            val_loader = None
 
         for epoch in range(start_epoch, epochs):  # loop over the dataset multiple times
             loss = self.train_epoch(
@@ -86,12 +84,19 @@ class BaseModel(nn.Module, Configurable):
             if self.lr_scheduler:
                 self.lr_scheduler.step()
 
-            # evaluate against a validation if there is one
+            # evaluate against the train set
+            calculated = self.evaluate_model(
+                train_loader, metrics=metrics, criterion=self.criterion
+            )
+            self.log_metrics(calculated)
+
+            # evaluate against a validation set if there is one
             if val_loader:
-                val_eval, y_true, y_pred, y_probs, val_loss = self.evaluate_model(
-                    val_loader, metrics=[F1Score], criterion=self.criterion
+                calculated = self.evaluate_model(
+                    val_loader, metrics=metrics, criterion=self.criterion
                 )
-                logging.info(stringify(val_eval))
+                self.log_metrics(calculated)
+                _, _, _, _, val_loss = calculated
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
 
         self.writer.close()
@@ -116,9 +121,9 @@ class BaseModel(nn.Module, Configurable):
             # forward + backward + optimize
             outputs = self.predict(inputs)
 
-            #check if outputs is OrderedDict for segmentation
+            # check if outputs is OrderedDict for segmentation
             if isinstance(outputs, collections.Mapping):
-                outputs = outputs['out']
+                outputs = outputs["out"]
 
             loss = criterion(outputs, labels)
             loss.backward()
@@ -129,7 +134,7 @@ class BaseModel(nn.Module, Configurable):
             total_loss += running_loss
 
             if (
-                    i % iterations_log == iterations_log - 1
+                i % iterations_log == iterations_log - 1
             ):  # print every iterations_log mini-batches
                 logging.info(
                     f"[{epoch + 1}, {i + 1}], loss: {running_loss / iterations_log : .5f}"
@@ -148,7 +153,7 @@ class BaseModel(nn.Module, Configurable):
         return self(*input)
 
     def evaluate(
-            self, dataset: BaseDataset = None, model_path: str = None, metrics: list = (),
+        self, dataset: BaseDataset = None, model_path: str = None, metrics: list = (),
     ):
         # load the model
         self.load_model(model_path)
@@ -187,7 +192,7 @@ class BaseModel(nn.Module, Configurable):
 
                 # check if outputs is OrderedDict for segmentation
                 if isinstance(outputs, collections.Mapping):
-                    outputs = outputs['out']
+                    outputs = outputs["out"]
 
                 if criterion:
                     batch_loss = criterion(outputs, labels.to(self.device))
@@ -219,8 +224,15 @@ class BaseModel(nn.Module, Configurable):
         raise NotImplementedError
 
     def get_predicted(self, outputs):
+        """Gets the output from the model and return the predictions
+        :return: tuple in the format (probabilities, predicted classes/labels)
+        """
+        raise NotImplementedError("Please implement `get_predicted` for your model. ")
 
-        raise NotImplementedError
+    def log_metrics(self, output):
+        """Log the calculated metrics"""
+        val_eval, y_true, y_pred, y_probs, val_loss = output
+        logging.info(stringify(val_eval))
 
     def allocate_device(self, opts=None):
         """
@@ -288,45 +300,48 @@ class BaseModel(nn.Module, Configurable):
             raise ValueError(f"No checkpoint found at {file_path}")
 
     def train_model(
-            self,
-            train_dataset: BaseDataset,
-            epochs: int = 100,
-            model_directory: str = None,
-            save_epochs: int = 10,
-            iterations_log: int = 100,
-            resume_model: str = None,
-            val_dataset: BaseDataset = None,
-            run_id: str = None,
-            **kwargs,
+        self,
+        train_dataset: BaseDataset,
+        epochs: int = 100,
+        model_directory: str = None,
+        save_epochs: int = 10,
+        iterations_log: int = 100,
+        resume_model: str = None,
+        val_dataset: BaseDataset = None,
+        run_id: str = None,
+        **kwargs,
     ):
-        return self.fit(dataset=train_dataset,
-                        epochs=epochs,
-                        model_directory=model_directory,
-                        save_epochs=save_epochs,
-                        iterations_log=iterations_log,
-                        resume_model=resume_model,
-                        run_id=run_id,
-                        ** kwargs)
+        return self.fit(
+            dataset=train_dataset,
+            epochs=epochs,
+            model_directory=model_directory,
+            save_epochs=save_epochs,
+            iterations_log=iterations_log,
+            resume_model=resume_model,
+            run_id=run_id,
+            **kwargs,
+        )
 
     def train_and_evaluate_model(
-            self,
-            train_dataset: BaseDataset,
-            epochs: int = 100,
-            model_directory: str = None,
-            save_epochs: int = 10,
-            iterations_log: int = 100,
-            resume_model: str = None,
-            val_dataset: BaseDataset = None,
-            run_id: str = None,
-            **kwargs,
+        self,
+        train_dataset: BaseDataset,
+        epochs: int = 100,
+        model_directory: str = None,
+        save_epochs: int = 10,
+        iterations_log: int = 100,
+        resume_model: str = None,
+        val_dataset: BaseDataset = None,
+        run_id: str = None,
+        **kwargs,
     ):
-        return self.fit(dataset=train_dataset,
-                        epochs=epochs,
-                        model_directory=model_directory,
-                        save_epochs=save_epochs,
-                        iterations_log=iterations_log,
-                        resume_model=resume_model,
-                        val_dataset=val_dataset,
-                        run_id=run_id,
-                        ** kwargs)
-
+        return self.fit(
+            dataset=train_dataset,
+            epochs=epochs,
+            model_directory=model_directory,
+            save_epochs=save_epochs,
+            iterations_log=iterations_log,
+            resume_model=resume_model,
+            val_dataset=val_dataset,
+            run_id=run_id,
+            **kwargs,
+        )

@@ -13,6 +13,8 @@ class BaseDataset(Dataset, Configurable):
     def __init__(self, config):
         Dataset.__init__(self)
         Configurable.__init__(self, config)
+
+        # get dataloader parameters
         self.shuffle = self.config.shuffle
         self.batch_size = self.config.batch_size
         self.num_workers = self.config.num_workers
@@ -52,7 +54,3 @@ class BaseDataset(Dataset, Configurable):
         raise NotImplementedError(
             "Please implement the `labels` method for your dataset"
         )
-
-
-
-

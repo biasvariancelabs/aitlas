@@ -56,5 +56,3 @@ class BaseMulticlassClassifier(BaseModel):
 
     def load_lr_scheduler(self):
         return None
-
-

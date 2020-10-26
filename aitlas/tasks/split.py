@@ -1,8 +1,11 @@
 import logging
 import os
-from ..base import BaseTask, BaseModel
-from .schemas import SplitTaskSchema
+
 from torch.utils.data import random_split
+
+from ..base import BaseModel, BaseTask
+from .schemas import SplitTaskSchema
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -63,16 +66,16 @@ class SplitTask(BaseTask):
 
         result = random_split(range(size), arr_num)
 
-        # save the splits
-
         self.train_indices = result[0]
         self.test_indices = result[1]
 
         if self.has_val():
             self.val_indices = result[2]
 
+        # save the splits
         self.save_split(result[0], self.config.split.train.file)
         self.save_split(result[1], self.config.split.test.file)
+
         if self.has_val():
             self.save_split(result[2], self.config.split.val.file)
 
@@ -99,7 +102,9 @@ class SplitTask(BaseTask):
 
         images = []
         dir = os.path.expanduser(dir)
-        classes = [item for item in os.listdir(dir) if os.path.isdir(os.path.join(dir, item))]
+        classes = [
+            item for item in os.listdir(dir) if os.path.isdir(os.path.join(dir, item))
+        ]
 
         for target in classes:
             d = os.path.join(dir, target)
@@ -114,5 +119,3 @@ class SplitTask(BaseTask):
                         images.append(item)
 
         return images
-
-
