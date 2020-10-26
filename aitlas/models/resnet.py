@@ -7,11 +7,9 @@ import numpy as np
 
 
 from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
-from .schemas import ResnetSchema
 
 
 class ResNet50(BaseMulticlassClassifier):
-    schema = ResnetSchema
 
     def __init__(self, config):
         BaseMulticlassClassifier.__init__(self, config)
@@ -30,7 +28,6 @@ class ResNet50(BaseMulticlassClassifier):
 
 
 class ResNet50MultiLabel(BaseMultilabelClassifier):
-    schema = ResnetSchema
 
     def __init__(self, config):
         BaseMultilabelClassifier.__init__(self, config)

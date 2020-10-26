@@ -1,76 +1,21 @@
 from marshmallow import fields, validate
 
-from ..base.schemas import BaseDatasetSchema, CsvDatasetSchema, SplitableDatasetSchema
+from ..base.schemas import BaseDatasetSchema
 
 
-class RootFolderSchema(SplitableDatasetSchema):
-    root = fields.String(
-        required=True, description="Dataset path on disk", example="./data/dataset/",
-    )
-
-
-class EurosatDatasetSchema(SplitableDatasetSchema):
+class MultiClassCsvDatasetSchema(BaseDatasetSchema):
     download = fields.Bool(
         missing=True, description="Whether to download the dataset", example=True
     )
-    root = fields.String(
-        required=True, description="Dataset path on disk", example="./data/EuroSAT/"
-    )
-    mode = fields.String(
-        missing="rgb",
-        default="Work with rgb or all bands mode",
-        example="rgb",
-        validate=validate.OneOf(["rgb", "all"]),
+    csv_file_path = fields.String(
+        required=True, description="CSV file on disk", example="./data/train.csv"
     )
 
 
-class CrackForestSchema(SplitableDatasetSchema):
-    root = fields.String(
-        required=True,
-        description="Dataset path on disk",
-        example="./data/CrackForest-dataset-master/",
+class BigEarthNetSchema(BaseDatasetSchema):
+    csv_file_path = fields.String(
+        required=True, description="CSV file on disk", example="./data/train.csv"
     )
-
-
-class UcMercedDatasetSchema(SplitableDatasetSchema):
-    download = fields.Bool(
-        missing=True, description="Whether to download the dataset", example=True
-    )
-    root = fields.String(
-        required=True, description="Dataset path on disk", example="./data/UcMerced/"
-    )
-
-
-class UcMercedMultiLabelsDatasetSchema(SplitableDatasetSchema):
-    download = fields.Bool(
-        missing=True, description="Whether to download the dataset", example=True
-    )
-    root = fields.String(
-        required=True,
-        description="Is it train dataset",
-        example="./data/UcMercedMultiLabels/",
-    )
-
-
-class Resisc45DatasetSchema(SplitableDatasetSchema):
-    download = fields.Bool(
-        missing=True, description="Whether to download the dataset", example=True
-    )
-    root = fields.String(
-        required=True, description="Dataset path on disk", example="./data/Resisc45/"
-    )
-
-
-class PatternNetDatasetSchema(SplitableDatasetSchema):
-    download = fields.Bool(
-        missing=True, description="Whether to download the dataset", example=True
-    )
-    root = fields.String(
-        required=True, description="Dataset path on disk", example="./data/PatternNet/"
-    )
-
-
-class BigEarthNetSchema(CsvDatasetSchema):
     lmdb_path = fields.String(required=True, description="Path to the lmdb storage")
     root = fields.String(
         required=True, description="Dataset path on disk", example="./data/BigEarthNet/"

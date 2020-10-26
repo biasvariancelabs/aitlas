@@ -4,11 +4,9 @@ from torch.nn import functional as F
 from torchvision import models
 
 from ..base import BaseSegmentation
-from .schemas import DeepLabV3Schema
 
 
 class DeepLabV3(BaseSegmentation):
-    schema = DeepLabV3Schema
 
     def __init__(self, config):
         BaseSegmentation.__init__(self, config)

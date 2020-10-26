@@ -32,6 +32,18 @@ def tiff_loader(file):
     return tifffile.imread(file)
 
 
+def image_loader(file_path):
+    filename, file_extension = os.path.splitext(file_path)
+    if file_extension in [".jpg", ".png"]:
+        return pil_loader(file_path)
+    elif file_extension in [".tif", ".tiff"]:
+        return tiff_loader(file_path)
+    else:
+        raise ValueError(
+            "Invalid image. It should be `.jpg, .png, .tif, .tiff`"
+        )
+
+
 def stringify(obj):
     """stringify whatever object you have"""
     if isinstance(obj, list):

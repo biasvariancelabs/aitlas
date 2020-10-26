@@ -4,11 +4,9 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
 from ..base import BaseSegmentation
-from .schemas import FastRCNNSchema
 
 
 class FastRCNN(BaseSegmentation):
-    schema = FastRCNNSchema
 
     def __init__(self, config):
         BaseSegmentation.__init__(self, config)

@@ -1,5 +1,5 @@
 from marshmallow import Schema, fields, validate
-
+from ..base import ObjectConfig
 
 class BaseTaskShema(Schema):
     log = fields.Boolean(required=False, missing=True, description="Turn on logging")
@@ -10,8 +10,32 @@ class BaseTaskShema(Schema):
         missing=None,
     )
 
+class SplitSetObjectSchema(Schema):
+    ratio = fields.Int(required=True, description="Ratio of dataset", example=60)
+    file = fields.String(
+        required=True, description="File indices", example="./data/indices.csv"
+    )
+
+class SplitObjectSchema(Schema):
+    train = fields.Nested(SplitSetObjectSchema, required=True)
+    val = fields.Nested(SplitSetObjectSchema, required=False, missing=None)
+    test = fields.Nested(SplitSetObjectSchema, required=True)
+
+class SplitTaskSchema(BaseTaskShema):
+    root = fields.String(
+        required=True,
+        description="Dataset path on disk",
+        example="./data/tmp/",
+    )
+    split = fields.Nested(
+        SplitObjectSchema,
+        description="Configuration on how to split the dataset.",
+        missing=None,
+    )
 
 class TrainTaskSchema(BaseTaskShema):
+    dataset_config = fields.Nested(nested=ObjectConfig, required=True,
+                                   description="Train dataset type and configuration.")
     epochs = fields.Int(
         required=True, description="Number of epochs used in training", example=50
     )
@@ -34,7 +58,36 @@ class TrainTaskSchema(BaseTaskShema):
     )
 
 
+class TrainAndEvaluateTaskSchema(BaseTaskShema):
+    epochs = fields.Int(
+        required=True, description="Number of epochs used in training", example=50
+    )
+    model_directory = fields.String(
+        required=True,
+        description="Directory of the model output",
+        example="/tmp/model/",
+    )
+    save_epochs = fields.Int(
+        missing=100, description="Number of training steps between model checkpoints."
+    )
+    iterations_log = fields.Int(
+        missing=200,
+        description="After how many mini-batches do we want to show something in the log.",
+    )
+    resume_model = fields.String(
+        missing=None,
+        description="File path to the model to be resumed",
+        example="/tmp/model/checkpoint.pth.tar",
+    )
+    train_dataset_config = fields.Nested(nested=ObjectConfig, required=True,
+                                       description="Validation dataset type and configuration.")
+    val_dataset_config = fields.Nested(nested=ObjectConfig, required=True,
+                                   description="Validation dataset type and configuration.")
+
+
 class EvaluateTaskSchema(BaseTaskShema):
+    dataset_config = fields.Nested(nested=ObjectConfig, required=True,
+                                   description="Dataset type and configuration.")
     model_path = fields.String(
         required=True,
         description="Path to the model",
@@ -54,33 +107,10 @@ class EvaluateTaskSchema(BaseTaskShema):
     )
 
 
-class SplitTaskSchema(BaseTaskShema):
-    pass
-
-
-class ExportSplitTaskSchema(BaseTaskShema):
-    train_export = fields.String(
-        required=True,
-        description="Path to the train split export",
-        example="./data/train_export.csv",
-    )
-    val_export = fields.String(
-        required=False,
-        missing=None,
-        description="Path to the val split export",
-        example="./data/valexport.csv",
-    )
-    test_export = fields.String(
-        required=True,
-        description="Path to the test split export",
-        example="./data/test_export.csv",
-    )
-
-
 class PredictTaskSchema(BaseTaskShema):
     dir = fields.String(
         required=True,
-        description="Directory with the image to perform predictio on",
+        description="Directory with the image to perform prediction on",
         example="/tmp/test/",
     )
     model_path = fields.String(

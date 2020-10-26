@@ -10,7 +10,7 @@ from skimage.transform import resize
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 
-from ..base import CsvDataset, SplitableDataset
+from ..base import BaseDataset
 from .schemas import BigEarthNetSchema
 
 
@@ -203,14 +203,14 @@ def read_scale_raster(file_path, scale=1):
             raise ImportError("You need to have `gdal` or `rasterio` installed. ")
 
 
-class BaseBigEarthNetDataset(SplitableDataset):
+class BaseBigEarthNetDataset(BaseDataset):
     """BigEartNet dataset adaptation"""
 
     schema = BigEarthNetSchema
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
-        SplitableDataset.__init__(self, config)
+        BaseDataset.__init__(self, config)
 
         self.root = self.config.root
         self.num_workers = self.config.num_workers
@@ -219,10 +219,27 @@ class BaseBigEarthNetDataset(SplitableDataset):
         self.db = lmdb.open(config.lmdb_path)
         self.patches = self.load_patches(self.root)
 
+    def __getitem__(self, index):
+        patch_name = self.patches[index]
+        print(patch_name)
+
+        with self.db.begin(write=False) as txn:
+            byteflow = txn.get(patch_name.encode())
+
+        bands10, _, _, multihots = loads_pyarrow(byteflow)
+
+        bands10 = bands10.astype(np.float32)[0][0:3]
+        multihots = multihots.astype(np.float32)[0]
+
+        if self.transform:
+            bands10, multihots = self.transform((bands10, multihots))
+
+        return bands10, multihots
+
     def __len__(self):
         return len(self.patches)
 
-    def default_transform(self):
+    def load_transforms(self):
         return transforms.Compose([ToTensorRGB()])
 
     def load_patches(self, root):
@@ -278,14 +295,14 @@ class BaseBigEarthNetDataset(SplitableDataset):
         self.db.close()
 
 
-class BigEarthNetRGBCsvDataset(CsvDataset):
+class BigEarthNetRGBCsvDataset(BaseDataset):
     """BigEartNet dataset adaptation"""
 
     schema = BigEarthNetSchema
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
-        CsvDataset.__init__(self, config)
+        BaseDataset.__init__(self, config)
 
         self.root = self.config.root
         self.num_workers = self.config.num_workers
@@ -307,12 +324,15 @@ class BigEarthNetRGBCsvDataset(CsvDataset):
         bands10 = bands10.astype(np.float32)[0:3]
         multihots = multihots.astype(np.float32)
 
+        if self.transform:
+            bands10, multihots = self.transform((bands10, multihots))
+
         return bands10, multihots
 
     def __len__(self):
         return len(self.patches)
 
-    def default_transform(self):
+    def load_transforms(self):
         return transforms.Compose(
             [
                 ToTensorRGB(),
@@ -322,27 +342,11 @@ class BigEarthNetRGBCsvDataset(CsvDataset):
 
     def load_patches(self):
         patch_names = []
-        if self.config.train_csv:
-            with open(self.config.train_csv, "r") as f:
+        if self.config.csv_file_path:
+            with open(self.config.csv_file_path, "r") as f:
                 csv_reader = csv.reader(f)
                 for row in csv_reader:
                     patch_names.append(row[0])
-
-        if self.config.val_csv:
-            with open(self.config.val_csv, "r") as f:
-                csv_reader = csv.reader(f)
-                for row in csv_reader:
-                    patch_names.append(row[0])
-
-        if self.config.test_csv:
-            with open(self.config.test_csv, "r") as f:
-                csv_reader = csv.reader(f)
-                for row in csv_reader:
-                    patch_names.append(row[0])
-        return patch_names
-
-    def get_item_name(self, index):
-        return self.patches[index]
 
 
 class BigEarthNetRGBDataset(BaseBigEarthNetDataset):
@@ -356,6 +360,9 @@ class BigEarthNetRGBDataset(BaseBigEarthNetDataset):
 
         bands10 = bands10.astype(np.float32)[0:3]  # Return only RGB channels
         multihots = multihots.astype(np.float32)
+
+        if self.transform:
+            bands10, bands20, bands60, multihots = self.transform((bands10, multihots))
 
         return bands10, multihots
 
@@ -444,9 +451,6 @@ class PrepBigEarthNetDataset(Dataset):
             imgNm,
             BigEartNet_19_labels_multiHot,
         )
-
-
-# transformations
 
 
 class NormalizeRGB(object):

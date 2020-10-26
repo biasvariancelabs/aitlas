@@ -1,27 +1,22 @@
 {
-    "dataset": {
-        "classname": "aitlas.datasets.EurosatDataset",
+    "task": {
+        "classname": "aitlas.tasks.SplitTask",
         "config": {
-            "override": true,
             "split": {
                 "train": {
                     "ratio": 60,
-                    "file": "./data/train.csv"
+                    "file": "./data/EuroSAT/2750/train.csv"
                 },
                 "val": {
                     "ratio": 20,
-                    "file": "./data/val.csv"
+                    "file": "./data/EuroSAT/2750/val.csv"
                 },
                 "test": {
                     "ratio": 20,
-                    "file": "./data/test.csv"
+                    "file": "./data/EuroSAT/2750/test.csv"
                 }
             },
-            "root": "./data/EuroSAT/2750"
+            "root": "./data/EuroSAT/2750/"
         }
-    },
-    "task": {
-        "classname": "aitlas.tasks.SplitTask",
-        "config": {}
     }
-  }
+}

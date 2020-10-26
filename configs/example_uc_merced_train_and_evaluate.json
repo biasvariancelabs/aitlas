@@ -8,13 +8,13 @@
         }
     },
     "task": {
-        "classname": "aitlas.tasks.TrainTask",
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
         "config": {
             "epochs": 50,
             "model_directory": "D:\\models",
             "save_epochs": 5,
             "id": "uc_merced",
-            "dataset_config":{
+            "train_dataset_config":{
                 "classname": "aitlas.datasets.UcMercedDataset",
                 "config": {
                     "batch_size": 16,
@@ -23,7 +23,17 @@
                     "download": false,
                     "csv_file_path": "D:\\datasets\\UcMerced\\train.csv"
                 }
-            }
+            },
+            "val_dataset_config":{
+                  "classname": "aitlas.datasets.UcMercedDataset",
+                  "config": {
+                      "batch_size": 16,
+                      "shuffle": false,
+                      "num_workers": 4,
+                      "download": false,
+                      "csv_file_path": "D:\\datasets\\UcMerced\\val.csv"
+                  }
+              }
         }
     }
 }
