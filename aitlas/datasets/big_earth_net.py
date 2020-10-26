@@ -10,7 +10,7 @@ from skimage.transform import resize
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 
-from ..base import SplitableDataset, CsvDataset
+from ..base import BaseDataset
 from .schemas import BigEarthNetSchema
 
 
@@ -203,14 +203,14 @@ def read_scale_raster(file_path, scale=1):
             raise ImportError("You need to have `gdal` or `rasterio` installed. ")
 
 
-class BaseBigEarthNetDataset(SplitableDataset):
+class BaseBigEarthNetDataset(BaseDataset):
     """BigEartNet dataset adaptation"""
 
     schema = BigEarthNetSchema
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
-        SplitableDataset.__init__(self, config)
+        BaseDataset.__init__(self, config)
 
         self.root = self.config.root
         self.num_workers = self.config.num_workers
@@ -298,14 +298,14 @@ class BaseBigEarthNetDataset(SplitableDataset):
         self.db.sync()
         self.db.close()
 
-class BigEarthNetRGBCsvDataset(CsvDataset):
+class BigEarthNetRGBCsvDataset(BaseDataset):
     """BigEartNet dataset adaptation"""
 
     schema = BigEarthNetSchema
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
-        CsvDataset.__init__(self, config)
+        BaseDataset.__init__(self, config)
 
         self.root = self.config.root
         self.num_workers = self.config.num_workers
@@ -343,27 +343,11 @@ class BigEarthNetRGBCsvDataset(CsvDataset):
 
     def load_patches(self):
         patch_names = []
-        if self.config.train_csv:
-            with open(self.config.train_csv, 'r') as f:
+        if self.config.csv_file_path:
+            with open(self.config.csv_file_path, 'r') as f:
                 csv_reader = csv.reader(f)
                 for row in csv_reader:
                     patch_names.append(row[0])
-
-        if self.config.val_csv:
-            with open(self.config.val_csv, 'r') as f:
-                csv_reader = csv.reader(f)
-                for row in csv_reader:
-                    patch_names.append(row[0])
-
-        if self.config.test_csv:
-            with open(self.config.test_csv, 'r') as f:
-                csv_reader = csv.reader(f)
-                for row in csv_reader:
-                    patch_names.append(row[0])
-        return patch_names
-
-    def get_item_name(self, index):
-        return self.patches[index]
 
 
 class BigEarthNetRGBDataset(BaseBigEarthNetDataset):

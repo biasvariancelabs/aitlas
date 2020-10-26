@@ -2,9 +2,8 @@ import os
 
 import torchvision.transforms as transforms
 
-from ..base import DatasetFolderMixin, SplitableDataset
+from .multi_class_csv import MultiClassCsvDataset
 from ..utils import pil_loader, tiff_loader
-from .schemas import UcMercedDatasetSchema
 
 
 CLASSES_TO_IDX = {
@@ -32,18 +31,13 @@ CLASSES_TO_IDX = {
 }
 
 
-class UcMercedDataset(SplitableDataset, DatasetFolderMixin):
-    schema = UcMercedDatasetSchema
-
-    url = "http://weegee.vision.ucmerced.edu/datasets/UCMerced_LandUse.zip"
+class UcMercedDataset(MultiClassCsvDataset):
 
     classes_to_idx = CLASSES_TO_IDX
 
     def __init__(self, config):
         # now call the constuctor to validate the schema and split the data
-        SplitableDataset.__init__(self, config)
-        self.image_loader = tiff_loader
-        self.data = self.make_dataset(self.config.root)
+        MultiClassCsvDataset.__init__(self, config)
 
     def load_transforms(self):
         return transforms.Compose(
@@ -54,27 +48,3 @@ class UcMercedDataset(SplitableDataset, DatasetFolderMixin):
                 transforms.ToTensor(),
             ]
         )
-
-    def get_item_name(self, index):
-        return self.data[index][0]
-
-    def __getitem__(self, index):
-        """
-        Args:
-            index (int): Index
-
-        Returns:
-            tuple: (image, target) where target is index of the target class.
-        """
-        # load image
-        img = self.image_loader(self.data[index][0])
-        # apply transformations
-        img = self.transform(img)
-        target = self.data[index][1]
-        return img, target
-
-    def __len__(self):
-        return len(self.data)
-
-    def labels(self):
-        return list(self.classes_to_idx.keys())

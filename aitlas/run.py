@@ -22,13 +22,9 @@ def main(config_file):
         model_cls = get_class(config.model.classname)
         model = model_cls(config.model.config)
 
-    # load dataset
-    dataset_cls = get_class(config.dataset.classname)
-    dataset = dataset_cls(config.dataset.config)
-
     # load task
     task_cls = get_class(config.task.classname)
-    task = task_cls(model, dataset, config.task.config)
+    task = task_cls(model, config.task.config)
 
     # run task
     task.run()

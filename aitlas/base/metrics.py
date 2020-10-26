@@ -1,5 +1,3 @@
-from .config import Configurable
-
 
 class BaseMetric:
     """Base class for implementing metrics """

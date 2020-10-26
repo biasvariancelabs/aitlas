@@ -1,18 +1,46 @@
 from ..base import BaseDataset, BaseModel, BaseTask
-from .schemas import TrainTaskSchema
+from .schemas import TrainTaskSchema, TrainAndEvaluateTaskSchema
 
 
 class TrainTask(BaseTask):
     schema = TrainTaskSchema
 
-    def __init__(self, model: BaseModel, dataset: BaseDataset, config):
-        super().__init__(model, dataset, config)
+    def __init__(self, model: BaseModel, config):
+        super().__init__(model, config)
 
     def run(self):
         """Do something awesome here"""
-        self.dataset.prepare()
-        self.model.fit(
-            dataset=self.dataset,
+        dataset = self.create_dataset(self.config.dataset_config)
+
+        #self.dataset.prepare()
+
+        self.model.train_model(
+            train_dataset=dataset,
+            epochs=self.config.epochs,
+            model_directory=self.config.model_directory,
+            save_epochs=self.config.save_epochs,
+            resume_model=self.config.resume_model,
+            run_id=self.id,
+            iterations_log=self.config.iterations_log,
+        )
+
+
+class TrainAndEvaluateTask(BaseTask):
+    schema = TrainAndEvaluateTaskSchema
+
+    def __init__(self, model: BaseModel, config):
+        super().__init__(model, config)
+
+    def run(self):
+        """Do something awesome here"""
+        train_dataset = self.create_dataset(self.config.train_dataset_config)
+        val_dataset = self.create_dataset(self.config.val_dataset_config)
+
+        #self.dataset.prepare()
+
+        self.model.train_and_evaluate_model(
+            train_dataset=train_dataset,
+            val_dataset=val_dataset,
             epochs=self.config.epochs,
             model_directory=self.config.model_directory,
             save_epochs=self.config.save_epochs,

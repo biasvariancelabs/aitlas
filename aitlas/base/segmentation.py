@@ -1,6 +1,6 @@
 import torch
 
-from .classifiers import BaseMulticlassClassifier
+from .multi_class_classifiers import BaseMulticlassClassifier
 from .schemas import BaseClassifierSchema
 
 

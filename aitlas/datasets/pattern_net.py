@@ -1,8 +1,7 @@
 import torchvision.transforms as transforms
 
-from ..base import DatasetFolderMixin, SplitableDataset
 from ..utils import pil_loader
-from .schemas import PatternNetDatasetSchema
+from .multi_class_csv import MultiClassCsvDataset
 
 
 CLASSES_TO_IDX = {
@@ -47,19 +46,13 @@ CLASSES_TO_IDX = {
 }
 
 
-class PatternNetDataset(SplitableDataset, DatasetFolderMixin):
-    schema = PatternNetDatasetSchema
-
-    url = "https://sites.google.com/view/zhouwx/dataset"
+class PatternNetDataset(MultiClassCsvDataset):
 
     classes_to_idx = CLASSES_TO_IDX
 
     def __init__(self, config):
         # now call the constuctor to validate the schema and split the data
-        SplitableDataset.__init__(self, config)
-
-        self.image_loader = pil_loader
-        self.data = self.make_dataset(self.config.root)
+        MultiClassCsvDataset.__init__(self, config)
 
     def load_transforms(self):
         return transforms.Compose(
@@ -70,27 +63,3 @@ class PatternNetDataset(SplitableDataset, DatasetFolderMixin):
                 transforms.ToTensor(),
             ]
         )
-
-    def get_item_name(self, index):
-        return self.data[index][0]
-
-    def __getitem__(self, index):
-        """
-        Args:
-            index (int): Index
-
-        Returns:
-            tuple: (image, target) where target is index of the target class.
-        """
-        # load image
-        img = self.image_loader(self.data[index][0])
-        # apply transformations
-        img = self.transform(img)
-        target = self.data[index][1]
-        return img, target
-
-    def __len__(self):
-        return len(self.data)
-
-    def labels(self):
-        return list(CLASSES_TO_IDX.keys())

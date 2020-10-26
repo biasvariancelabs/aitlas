@@ -4,7 +4,6 @@ import torch.optim as optim
 import torchvision.models as models
 
 from ..base import BaseMultilabelClassifier
-from .schemas import TorchModelSchema
 
 
 def weights_init_kaiming(m):
@@ -19,7 +18,6 @@ def fc_init_weights(m):
 
 
 class VGG16MultiLabel(BaseMultilabelClassifier):
-    schema = TorchModelSchema
 
     def __init__(self, config):
         BaseMultilabelClassifier.__init__(self, config)

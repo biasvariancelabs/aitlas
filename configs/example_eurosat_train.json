@@ -1,40 +1,29 @@
 {
     "model": {
-        "classname": "aitlas.models.ShallowCNNNet",
+        "classname": "aitlas.models.ResNet50",
         "config": {
             "num_classes": 10,
-            "learning_rate": 0.001
-        }
-    },
-    "dataset": {
-        "classname": "aitlas.datasets.EurosatDataset",
-        "config": {
-            "mode": "rgb",
-            "root": "./data/EuroSAT/2750",
-            "override": false,
-            "split": {
-                "train": {
-                    "ratio": 80,
-                    "file": "./data/train_eurosat.csv"
-                },
-                "val": {
-                    "ratio": 10,
-                    "file": "./data/val_eurosat.csv"
-                },
-                "test": {
-                    "ratio": 10,
-                    "file": "./data/test_eurosat.csv"
-                }
-            }
+            "learning_rate": 0.001,
+             "pretrained": true
         }
     },
     "task": {
         "classname": "aitlas.tasks.TrainTask",
         "config": {
             "epochs": 50,
-            "model_directory": "./examples/experiment",
+            "model_directory": "D:\\models",
             "save_epochs": 5,
-            "id": "eurosat"
+            "id": "eurosat",
+            "dataset_config":{
+                "classname": "aitlas.datasets.EurosatDataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "download": false,
+                    "csv_file_path": "D:\\datasets\\EuroSAT\\train.csv"
+                }
+            }
         }
     }
-  }
+}

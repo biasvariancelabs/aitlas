@@ -1,0 +1,22 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.SplitTask",
+        "config": {
+            "split": {
+                "train": {
+                    "ratio": 80,
+                    "file": "D:/datasets/UcMerced/train.csv"
+                },
+                "val": {
+                    "ratio": 20,
+                    "file": "D:/datasets/UcMerced/val.csv"
+                },
+                "test": {
+                    "ratio": 0,
+                    "file": "D:/datasets/UcMerced/test.csv"
+                }
+            },
+            "root": "D:/datasets/UcMerced"
+        }
+    }
+}

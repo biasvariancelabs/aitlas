@@ -3,10 +3,8 @@ import os
 import numpy as np
 import torchvision.transforms as transforms
 
-from ..base import DatasetFolderMixin, SplitableDataset
+from ..base import BaseDataset
 from ..utils import pil_loader, tiff_loader
-from .schemas import UcMercedMultiLabelsDatasetSchema
-
 
 CLASSES_TO_IDX = {
     "airplane": 0,
@@ -29,8 +27,7 @@ CLASSES_TO_IDX = {
 }
 
 
-class UcMercedMultiLabelsDataset(SplitableDataset, DatasetFolderMixin):
-    schema = UcMercedMultiLabelsDatasetSchema
+class UcMercedMultiLabelsDataset(BaseDataset):
 
     url = "https://drive.google.com/file/d/1DtKiauowCB0ykjFe8v0OVvT76rEfOk0v/view"
 
@@ -38,7 +35,7 @@ class UcMercedMultiLabelsDataset(SplitableDataset, DatasetFolderMixin):
 
     def __init__(self, config):
         # now call the constuctor to validate the schema and split the data
-        SplitableDataset.__init__(self, config)
+        BaseDataset.__init__(self, config)
 
         self.image_loader = tiff_loader
         self.data = self.make_dataset(self.config.root)
@@ -77,9 +74,6 @@ class UcMercedMultiLabelsDataset(SplitableDataset, DatasetFolderMixin):
                 transforms.ToTensor(),
             ]
         )
-
-    def get_item_name(self, index):
-        return self.data[index][0]
 
     def __getitem__(self, index):
         """
