@@ -7,6 +7,10 @@ class BaseDatasetSchema(Schema):
         missing=True, description="Should shuffle dataset", example=False
     )
     num_workers = fields.Int(missing=4, description="Number of workers", example=4)
+    transforms = fields.String(
+        missing="aitlas.transforms.DefaultTransforms",
+        description="Class to run transformations.",
+    )
 
 
 class BaseClassifierSchema(Schema):
@@ -18,3 +22,7 @@ class BaseClassifierSchema(Schema):
     pretrained = fields.Bool(
         missing=False, description="Whether to use a pretrained network or not."
     )
+
+
+class BaseTransformsSchema(Schema):
+    pass

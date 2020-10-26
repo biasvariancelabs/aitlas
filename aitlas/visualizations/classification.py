@@ -10,7 +10,7 @@ from ..utils import pil_loader
 class ConfusionMatrix(BaseVisualization):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.dataset = kwargs.get("dataset")
+        self.labels = kwargs.get("labels")
         self.y_true = kwargs.get("y_true")
         self.y_pred = kwargs.get("y_pred")
         self.output_file = kwargs.get("file", "cm.png")
@@ -18,9 +18,7 @@ class ConfusionMatrix(BaseVisualization):
     def plot(self):
         # get the confusion matrix
         cm = sk_confusion_matrix(self.y_true, self.y_pred)
-        df_cm = pd.DataFrame(
-            cm, index=self.dataset.labels(), columns=self.dataset.labels()
-        )
+        df_cm = pd.DataFrame(cm, index=self.labels, columns=self.labels)
 
         # plot confusion matrix
         figure = plt.figure()

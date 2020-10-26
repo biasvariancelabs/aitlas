@@ -5,10 +5,12 @@ from ..base.schemas import BaseDatasetSchema
 
 class MultiClassCsvDatasetSchema(BaseDatasetSchema):
     download = fields.Bool(
-        missing=True, description="Whether to download the dataset", example=True
+        missing=False, description="Whether to download the dataset", example=True
     )
     csv_file_path = fields.String(
-        required=True, description="CSV file on disk", example="./data/train.csv"
+        missing="./data/train.csv",
+        description="CSV file on disk",
+        example="./data/train.csv",
     )
 
 

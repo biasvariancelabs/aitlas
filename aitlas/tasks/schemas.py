@@ -1,5 +1,7 @@
 from marshmallow import Schema, fields, validate
+
 from ..base import ObjectConfig
+
 
 class BaseTaskShema(Schema):
     log = fields.Boolean(required=False, missing=True, description="Turn on logging")
@@ -10,22 +12,23 @@ class BaseTaskShema(Schema):
         missing=None,
     )
 
+
 class SplitSetObjectSchema(Schema):
     ratio = fields.Int(required=True, description="Ratio of dataset", example=60)
     file = fields.String(
         required=True, description="File indices", example="./data/indices.csv"
     )
 
+
 class SplitObjectSchema(Schema):
     train = fields.Nested(SplitSetObjectSchema, required=True)
     val = fields.Nested(SplitSetObjectSchema, required=False, missing=None)
     test = fields.Nested(SplitSetObjectSchema, required=True)
 
+
 class SplitTaskSchema(BaseTaskShema):
     root = fields.String(
-        required=True,
-        description="Dataset path on disk",
-        example="./data/tmp/",
+        required=True, description="Dataset path on disk", example="./data/tmp/",
     )
     split = fields.Nested(
         SplitObjectSchema,
@@ -33,9 +36,13 @@ class SplitTaskSchema(BaseTaskShema):
         missing=None,
     )
 
+
 class TrainTaskSchema(BaseTaskShema):
-    dataset_config = fields.Nested(nested=ObjectConfig, required=True,
-                                   description="Train dataset type and configuration.")
+    dataset_config = fields.Nested(
+        nested=ObjectConfig,
+        required=True,
+        description="Train dataset type and configuration.",
+    )
     epochs = fields.Int(
         required=True, description="Number of epochs used in training", example=50
     )
@@ -79,15 +86,24 @@ class TrainAndEvaluateTaskSchema(BaseTaskShema):
         description="File path to the model to be resumed",
         example="/tmp/model/checkpoint.pth.tar",
     )
-    train_dataset_config = fields.Nested(nested=ObjectConfig, required=True,
-                                       description="Validation dataset type and configuration.")
-    val_dataset_config = fields.Nested(nested=ObjectConfig, required=True,
-                                   description="Validation dataset type and configuration.")
+    train_dataset_config = fields.Nested(
+        nested=ObjectConfig,
+        required=True,
+        description="Train dataset type and configuration.",
+    )
+    val_dataset_config = fields.Nested(
+        nested=ObjectConfig,
+        required=True,
+        description="Validation dataset type and configuration.",
+    )
 
 
 class EvaluateTaskSchema(BaseTaskShema):
-    dataset_config = fields.Nested(nested=ObjectConfig, required=True,
-                                   description="Dataset type and configuration.")
+    dataset_config = fields.Nested(
+        nested=ObjectConfig,
+        required=True,
+        description="Dataset type and configuration.",
+    )
     model_path = fields.String(
         required=True,
         description="Path to the model",
@@ -126,4 +142,9 @@ class PredictTaskSchema(BaseTaskShema):
     output_path = fields.String(
         missing="predictions.csv",
         description="File or folder path where the csv or plot predictions will be stored",
+    )
+    dataset_config = fields.Nested(
+        nested=ObjectConfig,
+        required=True,
+        description="Dataset type and configuration.",
     )

@@ -7,4 +7,5 @@ from .multi_label_classifier import BaseMultilabelClassifier
 from .schemas import BaseClassifierSchema, BaseDatasetSchema
 from .segmentation import BaseSegmentation
 from .tasks import BaseTask
+from .transforms import BaseTransforms
 from .visualizations import BaseVisualization

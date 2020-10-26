@@ -58,17 +58,3 @@ CLASSES_TO_IDX = {
 class Resisc45Dataset(MultiClassCsvDataset):
 
     classes_to_idx = CLASSES_TO_IDX
-
-    def __init__(self, config):
-        # now call the constuctor to validate the schema and split the data
-        MultiClassCsvDataset.__init__(self, config)
-
-    def load_transforms(self):
-        return transforms.Compose(
-            [
-                transforms.ToPILImage(),
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-            ]
-        )

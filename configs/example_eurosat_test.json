@@ -3,36 +3,27 @@
         "classname": "aitlas.models.ShallowCNNNet",
         "config": {
             "num_classes": 10,
-            "learning_rate": 0.001
-        }
-    },
-    "dataset": {
-        "classname": "aitlas.datasets.EurosatDataset",
-        "config": {
-            "mode": "rgb",
-            "root": "./data/EuroSAT/2750",
-            "override": false,
-            "split": {
-                "train": {
-                    "ratio": 80,
-                    "file": "./data/train.csv"
-                },
-                "val": {
-                    "ratio": 10,
-                    "file": "./data/val.csv"
-                },
-                "test": {
-                    "ratio": 10,
-                    "file": "./data/test.csv"
-                }
-            }
+            "learning_rate": 0.001,
+             "pretrained": true
         }
     },
     "task": {
         "classname": "aitlas.tasks.EvaluateTask",
         "config": {
-             "model_path": "./examples/experiment/eurosat/checkpoint.pth.tar",
-             "metrics":["aitlas.metrics.PrecisionScore","aitlas.metrics.AccuracyScore", "aitlas.metrics.RecallScore", "aitlas.metrics.F1Score"]
+            "model_path": "./examples/experiment/eurosat/checkpoint.pth.tar",
+            "id": "eurosat",
+            "dataset_config":{
+                "classname": "aitlas.datasets.EurosatDataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "download": false,
+                    "csv_file_path": "./data/Eurosat/2750/test.csv",
+                    "transforms": "aitlas.transforms.DefaultTransforms"
+                }
+            },
+            "metrics":["aitlas.metrics.PrecisionScore","aitlas.metrics.AccuracyScore", "aitlas.metrics.RecallScore", "aitlas.metrics.F1Score"]
         }
     }
-  }
+}

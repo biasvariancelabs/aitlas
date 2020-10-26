@@ -6,35 +6,19 @@
             "learning_rate": 0.001
         }
     },
-    "dataset": {
-        "classname": "aitlas.datasets.EurosatDataset",
-        "config": {
-            "mode": "rgb",
-            "root": "./data/EuroSAT/2750",
-            "override": false,
-            "split": {
-                "train": {
-                    "ratio": 80,
-                    "file": "./data/train_eurosat.csv"
-                },
-                "val": {
-                    "ratio": 10,
-                    "file": "./data/val_eurosat.csv"
-                },
-                "test": {
-                    "ratio": 10,
-                    "file": "./data/test_eurosat.csv"
-                }
-            }
-        }
-    },
     "task": {
         "classname": "aitlas.tasks.PredictTask",
         "config": {
             "model_path": "./examples/experiment/eurosat/checkpoint.pth.tar",
             "dir": "./data/test/",
             "output_path": "./examples/",
-            "output_format": "plot"
+            "output_format": "plot",
+            "dataset_config":{
+                "classname": "aitlas.datasets.EurosatDataset",
+                "config": {
+                    "transforms": "aitlas.transforms.DefaultTransforms"
+                }
+            }
         }
     }
   }

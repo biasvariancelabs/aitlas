@@ -2,8 +2,6 @@ import csv
 import logging
 import os
 
-from torch.utils.data import DataLoader
-
 from ..base import BaseDataset, BaseModel, BaseTask, Configurable
 from ..utils import get_class, pil_loader, stringify
 from ..visualizations import display_image_labels
@@ -13,11 +11,13 @@ from .schemas import PredictTaskSchema
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
-class TestFolderDataset:
-    def __init__(self, root, labels, dataset):
+class TestFolderDataset(BaseDataset):
+    def __init__(self, root, labels, transform):
+        BaseDataset.__init__(self, {})
+
         self.root = root
         self.labels = labels
-        self.dataset = dataset
+        self.transform = transform
 
         self.data = []
         self.fnames = []
@@ -30,20 +30,20 @@ class TestFolderDataset:
 
     def __getitem__(self, index):
         img = self.data[index]
-        return self.dataset.transform(pil_loader(img)), 1
+        return (
+            self.transform(pil_loader(img)),
+            0,
+        )  # returning `0` because we have no target
 
     def __len__(self):
         return len(self.data)
-
-    def test_loader(self):
-        return DataLoader(self)
 
 
 class PredictTask(BaseTask):
     schema = PredictTaskSchema
 
-    def __init__(self, model: BaseModel, dataset: BaseDataset, config):
-        super().__init__(model, dataset, config)
+    def __init__(self, model: BaseModel, config):
+        super().__init__(model, config)
 
         self.dir = self.config.dir
         self.output_path = self.config.output_path
@@ -52,10 +52,10 @@ class PredictTask(BaseTask):
     def run(self):
         """Do something awesome here"""
 
-        # prepare the dataset
-        self.dataset.prepare()
+        # load the dataset
+        dataset = self.create_dataset(self.config.dataset_config)
 
-        test_dataset = TestFolderDataset(self.dir, self.dataset.labels(), self.dataset)
+        test_dataset = TestFolderDataset(self.dir, dataset.labels(), dataset.transform)
 
         # run predictions
         _, y_true, y_pred, y_probs, _ = self.model.evaluate(

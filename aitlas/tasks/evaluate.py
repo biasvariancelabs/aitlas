@@ -11,14 +11,16 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 class EvaluateTask(BaseTask):
     schema = EvaluateTaskSchema
 
-    def __init__(self, model: BaseModel, dataset: BaseDataset, config):
-        super().__init__(model, dataset, config)
+    def __init__(self, model: BaseModel, config):
+        super().__init__(model, config)
 
     def run(self):
-        """Do something awesome here"""
+        """Evaluate the dataset against a given model"""
 
-        # prepare the dataset
-        self.dataset.prepare()
+        # load the dataset
+        dataset = self.create_dataset(self.config.dataset_config)
+
+        dataset.prepare()
 
         # get metric classes
         metrics = []
@@ -26,7 +28,7 @@ class EvaluateTask(BaseTask):
             metrics.append(get_class(metric))
 
         calculated_metrics, y_true, y_pred, y_probs, loss = self.model.evaluate(
-            dataset=self.dataset, model_path=self.config.model_path, metrics=metrics,
+            dataset=dataset, model_path=self.config.model_path, metrics=metrics,
         )
 
         # get metric classes
@@ -35,7 +37,7 @@ class EvaluateTask(BaseTask):
             "y_pred": y_pred,
             "y_probs": y_probs,
             "loss": loss,
-            "dataset": self.dataset,
+            "labels": dataset.labels(),
         }
         for vis in self.config.visualizations:
             viz_cls = get_class(vis)

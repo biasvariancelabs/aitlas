@@ -2,6 +2,7 @@ import os
 
 import torchvision.transforms as transforms
 
+from ..transforms import DefaultTransforms
 from .multi_class_csv import MultiClassCsvDataset
 
 
@@ -26,13 +27,3 @@ class EurosatDataset(MultiClassCsvDataset):
     def __init__(self, config):
         # now call the constuctor to validate the schema and load the data
         MultiClassCsvDataset.__init__(self, config)
-
-    def load_transforms(self):
-        return transforms.Compose(
-            [
-                transforms.ToPILImage(),
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-            ]
-        )

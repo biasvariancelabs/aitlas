@@ -1,5 +1,5 @@
 from ..base import BaseDataset, BaseModel, BaseTask
-from .schemas import TrainTaskSchema, TrainAndEvaluateTaskSchema
+from .schemas import TrainAndEvaluateTaskSchema, TrainTaskSchema
 
 
 class TrainTask(BaseTask):
@@ -12,7 +12,7 @@ class TrainTask(BaseTask):
         """Do something awesome here"""
         dataset = self.create_dataset(self.config.dataset_config)
 
-        #self.dataset.prepare()
+        dataset.prepare()
 
         self.model.train_model(
             train_dataset=dataset,
@@ -36,7 +36,7 @@ class TrainAndEvaluateTask(BaseTask):
         train_dataset = self.create_dataset(self.config.train_dataset_config)
         val_dataset = self.create_dataset(self.config.val_dataset_config)
 
-        #self.dataset.prepare()
+        # self.dataset.prepare()
 
         self.model.train_and_evaluate_model(
             train_dataset=train_dataset,

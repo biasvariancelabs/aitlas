@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 
+from ..utils import get_class
 from .config import Configurable
 from .schemas import BaseDatasetSchema
 
@@ -20,7 +21,8 @@ class BaseDataset(Dataset, Configurable):
         self.num_workers = self.config.num_workers
 
         # get the transformations to be applied
-        self.transform = self.load_transforms()
+        transforms_cls = get_class(self.config.transforms)
+        self.transform = transforms_cls()
 
     def __getitem__(self, index):
         """ Implement here what you want to return"""
@@ -36,10 +38,6 @@ class BaseDataset(Dataset, Configurable):
     def prepare(self):
         """Implement if something needs to happen to the dataset after object creation"""
         return True
-
-    def load_transforms(self):
-        """Transformations that might be applied on the dataset"""
-        return transforms.Compose([])
 
     def dataloader(self):
         return torch.utils.data.DataLoader(

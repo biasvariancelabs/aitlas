@@ -1,14 +1,19 @@
 from .config import Configurable
-from .schemas import BaseTranformsSchema
+from .schemas import BaseTransformsSchema
 
 
 class BaseTransforms(Configurable):
     """Base class for implementing configurable transformations"""
 
-    schema = BaseTranformsSchema
+    schema = BaseTransformsSchema
 
-    def __init__(self, config):
-        Configurable.__init__(self, config)
+    def __init__(self, config=None):
+        Configurable.__init__(self, config if config else {})
 
-    def __call__(self, input, target):
+        self.transform = self.load_transforms()
+
+    def __call__(self, input, target=None):
         raise NotImplementedError("Please implement the `__call__` method")
+
+    def load_transforms(self):
+        raise NotImplementedError("Please implement your transformations")
