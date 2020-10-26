@@ -9,6 +9,7 @@ from torch.utils.data import Subset as TorchSubset
 from torch.utils.data import random_split
 from torchvision import transforms
 
+from ..utils import DatasetStage
 from .config import Configurable
 from .schemas import BaseDatasetSchema, CsvDatasetSchema, SplitableDatasetSchema
 
@@ -23,7 +24,7 @@ class Subset(TorchSubset):
     def __getitem__(self, idx):
         item, target = self.dataset[self.indices[idx]]
         if self.transform:
-            item = self.transform(item)
+            item, target = self.transform(item, target)
         return item, target
 
 
@@ -36,7 +37,7 @@ class BaseDataset(Dataset, Configurable):
 
     train_indices_inverted = []
 
-    state = DatasetState.TRAIN
+    stage = DatasetStage.TRAIN
 
     def __init__(self, config):
         Dataset.__init__(self)

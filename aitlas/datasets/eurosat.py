@@ -2,7 +2,7 @@ import os
 
 import torchvision.transforms as transforms
 
-from ..base import DatasetFolderMixin, SplitableDataset
+from ..base import BaseTransforms, DatasetFolderMixin, SplitableDataset
 from ..utils import pil_loader, tiff_loader
 from .schemas import EurosatDatasetSchema
 
@@ -49,14 +49,7 @@ class EurosatDataset(SplitableDataset, DatasetFolderMixin):
         self.transform = self.train_transform()
 
     def default_transform(self):
-        return transforms.Compose(
-            [
-                transforms.ToPILImage(),
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-            ]
-        )
+        return EurosatTransforms({})
 
     def get_item_name(self, index):
         return self.data[index][0]
@@ -79,3 +72,20 @@ class EurosatDataset(SplitableDataset, DatasetFolderMixin):
 
     def labels(self):
         return list(self.classes_to_idx.keys())
+
+
+class EurosatTransforms(BaseTransforms):
+    def __init__(self, config):
+        BaseTransforms.__init__(self, config)
+
+        self.transform = transforms.Compose(
+            [
+                transforms.ToPILImage(),
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+            ]
+        )
+
+    def __call__(self, input, target):
+        return self.transform(input), target
