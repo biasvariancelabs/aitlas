@@ -6,6 +6,7 @@ import torch.optim as optim
 
 from ..metrics import F1Score
 from .models import BaseModel
+from .schemas import BaseClassifierSchema
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -13,6 +14,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 class BaseMultilabelClassifier(BaseModel):
     """The multilabel """
+    schema = BaseClassifierSchema
 
     def load_optimizer(self):
         """Load the optimizer"""
