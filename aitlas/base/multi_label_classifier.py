@@ -5,12 +5,14 @@ import torch.nn as nn
 import torch.optim as optim
 
 from .models import BaseModel
+from .schemas import BaseClassifierSchema
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 class BaseMultilabelClassifier(BaseModel):
     """The multilabel """
+    schema = BaseClassifierSchema
 
     def load_optimizer(self):
         """Load the optimizer"""

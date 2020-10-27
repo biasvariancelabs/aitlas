@@ -306,6 +306,7 @@ class BigEarthNetRGBCsvDataset(BaseDataset):
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
         BaseDataset.__init__(self, config)
+        torch.multiprocessing.set_sharing_strategy('file_system')
 
         self.root = self.config.root
         self.num_workers = self.config.num_workers
@@ -348,6 +349,7 @@ class BigEarthNetRGBCsvDataset(BaseDataset):
                 csv_reader = csv.reader(f)
                 for row in csv_reader:
                     patch_names.append(row[0])
+        return patch_names
 
 
 class BigEarthNetRGBDataset(BaseBigEarthNetDataset):
