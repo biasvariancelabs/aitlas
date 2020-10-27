@@ -4,10 +4,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from ..metrics import F1Score
 from .models import BaseModel
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
 
 class BaseMultilabelClassifier(BaseModel):
     """The multilabel """
@@ -30,15 +32,5 @@ class BaseMultilabelClassifier(BaseModel):
         predicted = predicted_probs >= 0.5
         return predicted_probs, predicted
 
-    def log_additional_metrics(
-        self,
-        val_eval,
-        y_true,
-        y_pred,
-        val_loss,
-        dataset,
-        model_directory,
-        run_id,
-        epoch,
-    ):
-        return True  # let's don't log anything for this
+    def metrics(self):
+        return F1Score

@@ -8,15 +8,13 @@ class MultiClassCsvDatasetSchema(BaseDatasetSchema):
         missing=False, description="Whether to download the dataset", example=True
     )
     csv_file_path = fields.String(
-        missing="./data/train.csv",
-        description="CSV file on disk",
-        example="./data/train.csv",
+        missing=None, description="CSV file on disk", example="./data/train.csv",
     )
 
 
 class BigEarthNetSchema(BaseDatasetSchema):
     csv_file_path = fields.String(
-        required=True, description="CSV file on disk", example="./data/train.csv"
+        missing=None, description="CSV file on disk", example="./data/train.csv"
     )
     lmdb_path = fields.String(required=True, description="Path to the lmdb storage")
     root = fields.String(

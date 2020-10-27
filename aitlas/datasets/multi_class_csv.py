@@ -17,7 +17,6 @@ class MultiClassCsvDataset(BaseDataset):
         # now call the constructor to validate the schema and split the data
         BaseDataset.__init__(self, config)
 
-    def prepare(self):
         self.data = self.load_dataset(self.config.csv_file_path)
 
     def __getitem__(self, index):
@@ -47,10 +46,11 @@ class MultiClassCsvDataset(BaseDataset):
                 "You need to implement the classes to index mapping for the dataset"
             )
         data = []
-        with open(file_path, "r") as f:
-            csv_reader = csv.reader(f)
-            for index, row in enumerate(csv_reader):
-                path = row[0]
-                item = (path, self.classes_to_idx[row[1]])
-                data.append(item)
+        if file_path:
+            with open(file_path, "r") as f:
+                csv_reader = csv.reader(f)
+                for index, row in enumerate(csv_reader):
+                    path = row[0]
+                    item = (path, self.classes_to_idx[row[1]])
+                    data.append(item)
         return data

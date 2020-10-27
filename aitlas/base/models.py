@@ -88,14 +88,14 @@ class BaseModel(nn.Module, Configurable):
             calculated = self.evaluate_model(
                 train_loader, metrics=metrics, criterion=self.criterion
             )
-            self.log_metrics(calculated)
+            self.log_metrics(calculated, "train", self.writer, epoch + 1)
 
             # evaluate against a validation set if there is one
             if val_loader:
                 calculated = self.evaluate_model(
                     val_loader, metrics=metrics, criterion=self.criterion
                 )
-                self.log_metrics(calculated)
+                self.log_metrics(calculated, "val", self.writer, epoch + 1)
                 _, _, _, _, val_loss = calculated
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
 
@@ -229,10 +229,24 @@ class BaseModel(nn.Module, Configurable):
         """
         raise NotImplementedError("Please implement `get_predicted` for your model. ")
 
-    def log_metrics(self, output):
+    def metrics(self):
+        """Metrics we want to log for the model"""
+        return ()
+
+    def log_metrics(self, output, tag="train", writer=None, epoch=0):
         """Log the calculated metrics"""
-        val_eval, y_true, y_pred, y_probs, val_loss = output
-        logging.info(stringify(val_eval))
+        calculated_metrics, y_true, y_pred, y_probs, val_loss = output
+        logging.info(stringify(calculated_metrics))
+        if writer:
+            for metric_name in calculated_metrics:
+                metric = calculated_metrics[metric_name]
+                if isinstance(metric, dict):
+                    for sub in metric:
+                        writer.add_scalar(
+                            f"{metric_name}-{sub}/{tag}", metric[sub], epoch
+                        )
+                else:
+                    writer.add_scalar(f"{metric_name}/{tag}", metric, epoch)
 
     def allocate_device(self, opts=None):
         """
@@ -309,6 +323,7 @@ class BaseModel(nn.Module, Configurable):
         resume_model: str = None,
         val_dataset: BaseDataset = None,
         run_id: str = None,
+        metrics: tuple = (),
         **kwargs,
     ):
         return self.fit(
@@ -319,6 +334,7 @@ class BaseModel(nn.Module, Configurable):
             iterations_log=iterations_log,
             resume_model=resume_model,
             run_id=run_id,
+            metrics=metrics,
             **kwargs,
         )
 
@@ -332,6 +348,7 @@ class BaseModel(nn.Module, Configurable):
         resume_model: str = None,
         val_dataset: BaseDataset = None,
         run_id: str = None,
+        metrics: tuple = (),
         **kwargs,
     ):
         return self.fit(
@@ -343,5 +360,6 @@ class BaseModel(nn.Module, Configurable):
             resume_model=resume_model,
             val_dataset=val_dataset,
             run_id=run_id,
+            metrics=metrics,
             **kwargs,
         )

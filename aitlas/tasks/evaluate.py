@@ -20,8 +20,6 @@ class EvaluateTask(BaseTask):
         # load the dataset
         dataset = self.create_dataset(self.config.dataset_config)
 
-        dataset.prepare()
-
         # get metric classes
         metrics = []
         for metric in self.config.metrics:

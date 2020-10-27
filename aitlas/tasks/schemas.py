@@ -148,3 +148,11 @@ class PredictTaskSchema(BaseTaskShema):
         required=True,
         description="Dataset type and configuration.",
     )
+
+
+class PrepareTaskSchema(BaseTaskShema):
+    dataset_config = fields.Nested(
+        nested=ObjectConfig,
+        required=True,
+        description="Dataset type and configuration.",
+    )

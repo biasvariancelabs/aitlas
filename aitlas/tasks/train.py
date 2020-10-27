@@ -22,6 +22,7 @@ class TrainTask(BaseTask):
             resume_model=self.config.resume_model,
             run_id=self.id,
             iterations_log=self.config.iterations_log,
+            metrics=self.model.metrics(),
         )
 
 
@@ -36,8 +37,6 @@ class TrainAndEvaluateTask(BaseTask):
         train_dataset = self.create_dataset(self.config.train_dataset_config)
         val_dataset = self.create_dataset(self.config.val_dataset_config)
 
-        # self.dataset.prepare()
-
         self.model.train_and_evaluate_model(
             train_dataset=train_dataset,
             val_dataset=val_dataset,
@@ -47,4 +46,5 @@ class TrainAndEvaluateTask(BaseTask):
             resume_model=self.config.resume_model,
             run_id=self.id,
             iterations_log=self.config.iterations_log,
+            metrics=self.model.metrics(),
         )

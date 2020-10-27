@@ -204,7 +204,7 @@ def read_scale_raster(file_path, scale=1):
 
 
 class BaseBigEarthNetDataset(BaseDataset):
-    """BigEartNet dataset adaptation"""
+    """BigEarthNet dataset adaptation"""
 
     schema = BigEarthNetSchema
 
@@ -214,7 +214,6 @@ class BaseBigEarthNetDataset(BaseDataset):
 
         self.root = self.config.root
         self.num_workers = self.config.num_workers
-        self.should_prepare = self.config.import_to_lmdb
 
         self.db = lmdb.open(config.lmdb_path)
         self.patches = self.load_patches(self.root)
@@ -253,8 +252,7 @@ class BaseBigEarthNetDataset(BaseDataset):
 
     def prepare(self):
         super().prepare()
-        if self.should_prepare:
-            self.process_to_lmdb()
+        self.process_to_lmdb()
 
     def process_to_lmdb(self):
         datagen = PrepBigEarthNetDataset(
@@ -451,50 +449,3 @@ class PrepBigEarthNetDataset(Dataset):
             imgNm,
             BigEartNet_19_labels_multiHot,
         )
-
-
-class NormalizeRGB(object):
-    def __init__(self, bands_mean, bands_std):
-        self.bands10_mean = bands_mean
-        self.bands10_std = bands_std
-
-    def __call__(self, sample):
-        bands10, multihots = sample
-
-        for t, m, s in zip(bands10, self.bands10_mean, self.bands10_std):
-            t.sub_(m).div_(s)
-
-        return bands10, multihots
-
-
-class ToTensorRGB(object):
-    def __call__(self, sample):
-        bands10, multihots = sample
-
-        return torch.tensor(bands10), multihots
-
-
-class NormalizeAllBands(object):
-    def __init__(self, bands10_mean, bands10_std, bands20_mean, bands20_std):
-        self.bands10_mean = bands10_mean
-        self.bands10_std = bands10_std
-        self.bands20_mean = bands20_mean
-        self.bands20_std = bands20_std
-
-    def __call__(self, sample):
-        bands10, bands20, multihots = sample
-
-        for t, m, s in zip(bands10, self.bands10_mean, self.bands10_std):
-            t.sub_(m).div_(s)
-
-        for t, m, s in zip(bands20, self.bands20_mean, self.bands20_std):
-            t.sub_(m).div_(s)
-
-        return bands10, bands20, multihots
-
-
-class ToTensorAllBands(object):
-    def __call__(self, sample):
-        bands10, bands20, multihots = sample
-
-        return torch.tensor(bands10), torch.tensor(bands20), multihots

@@ -1,4 +1,5 @@
 from .big_earth_net import (
+    BaseBigEarthNetDataset,
     BigEarthNetAllBandsDataset,
     BigEarthNetRGBCsvDataset,
     BigEarthNetRGBDataset,

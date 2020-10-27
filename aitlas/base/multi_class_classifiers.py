@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as nnf
 import torch.optim as optim
 
+from ..metrics import AccuracyScore, F1Score
 from .models import BaseModel
 from .schemas import BaseClassifierSchema
 
@@ -23,7 +24,10 @@ class BaseMulticlassClassifier(BaseModel):
         predicted_probs, predicted = probs.topk(1, dim=1)
         return probs, predicted
 
-    def log_additional_metrics(
+    def metrics(self):
+        return (F1Score, AccuracyScore)
+
+    def visualizations(
         self,
         val_eval,
         y_true,
