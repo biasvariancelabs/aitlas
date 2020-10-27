@@ -243,7 +243,7 @@ class BaseModel(nn.Module, Configurable):
                 if isinstance(metric, dict):
                     for sub in metric:
                         writer.add_scalar(
-                            f"{metric_name}-{sub}/{tag}", metric[sub], epoch
+                            f"{metric_name}/{sub}/{tag}", metric[sub], epoch
                         )
                 else:
                     writer.add_scalar(f"{metric_name}/{tag}", metric, epoch)
