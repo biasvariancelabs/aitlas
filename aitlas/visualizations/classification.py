@@ -71,10 +71,10 @@ class ImageLabelsVisualization(BaseVisualization):
         return fig
 
 
-def confusion_matrix(dataset, y_true, y_pred, output_file):
+def confusion_matrix(labels, y_true, y_pred, output_file):
     """Wrapper for the call for easier usage"""
     viz = ConfusionMatrix(
-        dataset=dataset, y_true=y_true, y_pred=y_pred, file=output_file,
+        labels=labels, y_true=y_true, y_pred=y_pred, file=output_file,
     )
     return viz.plot()
 

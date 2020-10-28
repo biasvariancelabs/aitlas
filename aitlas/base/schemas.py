@@ -7,9 +7,15 @@ class BaseDatasetSchema(Schema):
         missing=True, description="Should shuffle dataset", example=False
     )
     num_workers = fields.Int(missing=4, description="Number of workers", example=4)
-    transforms = fields.String(
-        missing="aitlas.transforms.DefaultTransforms",
-        description="Class to run transformations.",
+    transforms = fields.List(
+        fields.String,
+        missing=[
+            "torchvision.transforms.ToPILImage",
+            "torchvision.transforms.Resize",
+            "torchvision.transforms.CenterCrop",
+            "torchvision.transforms.ToTensor",
+        ],
+        description="Classes to run transformations.",
     )
 
 

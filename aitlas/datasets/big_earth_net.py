@@ -238,9 +238,6 @@ class BaseBigEarthNetDataset(BaseDataset):
     def __len__(self):
         return len(self.patches)
 
-    def load_transforms(self):
-        return transforms.Compose([ToTensorRGB()])
-
     def load_patches(self, root):
         dir = os.path.expanduser(root)
         if os.path.isdir(dir):
@@ -301,7 +298,7 @@ class BigEarthNetRGBCsvDataset(BaseDataset):
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
         BaseDataset.__init__(self, config)
-        torch.multiprocessing.set_sharing_strategy('file_system')
+        torch.multiprocessing.set_sharing_strategy("file_system")
 
         self.root = self.config.root
         self.num_workers = self.config.num_workers
@@ -330,14 +327,6 @@ class BigEarthNetRGBCsvDataset(BaseDataset):
 
     def __len__(self):
         return len(self.patches)
-
-    def load_transforms(self):
-        return transforms.Compose(
-            [
-                ToTensorRGB(),
-                NormalizeRGB(self.config.bands10_mean, self.config.bands10_std),
-            ]
-        )
 
     def load_patches(self):
         patch_names = []

@@ -2,18 +2,22 @@ from .config import Configurable
 from .schemas import BaseTransformsSchema
 
 
-class BaseTransforms(Configurable):
+TRANSFORMS_PARAMS = {"torch.transforms.Resize": 256, "torch.transforms.CenterCrop": 224}
+
+
+class BaseTransforms(object):
     """Base class for implementing configurable transformations"""
 
     schema = BaseTransformsSchema
 
-    def __init__(self, config=None):
-        Configurable.__init__(self, config if config else {})
+    configurables = None
 
+    def __init__(self, *args, **kwargs):
         self.transform = self.load_transforms()
 
     def __call__(self, input, target=None):
         raise NotImplementedError("Please implement the `__call__` method")
 
     def load_transforms(self):
-        raise NotImplementedError("Please implement your transformations")
+        return []
+        # raise NotImplementedError("Please implement your transformations")

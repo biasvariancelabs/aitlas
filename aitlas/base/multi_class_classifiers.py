@@ -41,7 +41,7 @@ class BaseMulticlassClassifier(BaseModel):
         from ..visualizations import confusion_matrix
 
         fig = confusion_matrix(
-            dataset,
+            dataset.labels(),
             y_true,
             y_pred,
             os.path.join(model_directory, run_id, f"cm_{epoch + 1}.png"),

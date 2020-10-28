@@ -86,3 +86,7 @@ class PredictTask(BaseTask):
                 obj["image"] = fname
 
                 writer.writerow(obj)
+
+
+class PredictSegmentationTask(BaseTask):
+    schema = ""

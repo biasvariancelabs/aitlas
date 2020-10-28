@@ -7,27 +7,27 @@
             "pretrained": false
         }
     },
-    "dataset": {
-        "classname": "aitlas.datasets.BigEarthNetRGBCsvDataset",
-        "config": {
-            "lmdb_path": "/media/hdd/BigEarthNet/lmdb/BigEarthNet-19.lmdb",
-            "import_to_lmdb": false,
-            "train_csv": "/media/hdd/BigEarthNet/bigearthnet-19-models/splits/train.csv",
-            "val_csv": "/media/hdd/BigEarthNet/bigearthnet-19-models/splits/val.csv",
-            "test_csv": "/media/hdd/BigEarthNet/bigearthnet-19-models/splits/test.csv",
-            "root": "/media/hdd/BigEarthNet/BigEarthNet-v1.0/",
-            "bands10_mean": [429.9430203,614.21682446,590.23569706],
-            "bands10_std": [572.41639287,582.87945694,675.88746967],
-            "num_workers": 8,
-            "batch_size": 256
-        }
-    },
     "task": {
         "classname": "aitlas.tasks.TrainTask",
         "config": {
             "epochs": 50,
-            "model_directory": "./examples/experiment",
-            "save_epochs": 1
+            "model_directory": "./examples/experiment/bigearthnet",
+            "save_epochs": 1,
+            "id": "bigearthnet",
+            "dataset_config":{
+                "classname": "aitlas.datasets.BigEarthNetRGBCsvDataset",
+                "config": {
+                    "root": "./data/BigEarthNet/",
+                    "lmdb_path": "./data/lmbd/",
+                    "batch_size": 256,
+                    "shuffle": true,
+                    "num_workers": 8,
+                    "csv_file_path": "./data/Eurosat/2750/train.csv",
+                    "bands10_mean": [429.9430203, 614.21682446, 590.23569706],
+                    "bands10_std": [572.41639287, 582.87945694, 675.88746967],
+                    "transforms": ["aitlas.transforms.ToTensorRGB", "aitlas.transforms.NormalizeRGB"]
+                }
+            }
         }
     }
   }

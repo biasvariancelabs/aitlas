@@ -5,6 +5,7 @@ from torchvision import transforms
 from ..utils import get_class
 from .config import Configurable
 from .schemas import BaseDatasetSchema
+from .transforms import TRANSFORMS_PARAMS
 
 
 class BaseDataset(Dataset, Configurable):
@@ -21,8 +22,7 @@ class BaseDataset(Dataset, Configurable):
         self.num_workers = self.config.num_workers
 
         # get the transformations to be applied
-        transforms_cls = get_class(self.config.transforms)
-        self.transform = transforms_cls()
+        self.transform = self.load_transforms(self.config.transforms)
 
     def __getitem__(self, index):
         """ Implement here what you want to return"""
@@ -48,7 +48,32 @@ class BaseDataset(Dataset, Configurable):
         )
 
     def labels(self):
-        """Implent this if you want to return the complete set of labels of the dataset"""
+        """Implement this if you want to return the complete set of labels of the dataset"""
         raise NotImplementedError(
             "Please implement the `labels` method for your dataset"
         )
+
+    def load_transforms(self, class_names):
+        """Loads transformation classes and make a composition of them"""
+
+        lst_transforms = []
+
+        # check all transformation classes
+        for name in class_names:
+            cls = get_class(name)  # get class
+            args = TRANSFORMS_PARAMS.get(name, None)  # get params, if specified
+            if args:
+                transfrm = cls(args)
+            else:
+                if cls.configurables:
+                    kwargs = {}
+                    for key in cls.configurables:
+                        kwargs[key] = getattr(self.config, key)
+                    transfrm = cls(**kwargs)
+                else:
+                    transfrm = cls()
+
+            lst_transforms.append(transfrm)
+
+        # return as composition
+        return transforms.Compose(lst_transforms)
