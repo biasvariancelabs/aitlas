@@ -4,8 +4,8 @@ import os
 
 from ..base import BaseDataset, BaseModel, BaseTask, Configurable
 from ..utils import get_class, pil_loader, stringify
-from ..visualizations import display_image_labels
-from .schemas import PredictTaskSchema
+from ..visualizations import display_image_labels, display_image_segmentation
+from .schemas import PredictLabelsTask, PredictTaskSchema
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -40,7 +40,7 @@ class TestFolderDataset(BaseDataset):
 
 
 class PredictTask(BaseTask):
-    schema = PredictTaskSchema
+    schema = PredictLabelsTask
 
     def __init__(self, model: BaseModel, config):
         super().__init__(model, config)
@@ -58,7 +58,7 @@ class PredictTask(BaseTask):
         test_dataset = TestFolderDataset(self.dir, dataset.labels(), dataset.transform)
 
         # run predictions
-        _, y_true, y_pred, y_probs, _ = self.model.evaluate(
+        _, y_true, y_pred, y_prob, _ = self.model.evaluate(
             dataset=test_dataset, model_path=self.config.model_path, metrics=(),
         )
 
@@ -67,12 +67,18 @@ class PredictTask(BaseTask):
                 plot_path = os.path.join(
                     self.output_path, f"{test_dataset.fnames[i]}_plot.png"
                 )
+                # y_true, y_pred, y_prob, labels, file
                 display_image_labels(
-                    image_path, y_probs[i], test_dataset.labels, plot_path
+                    image_path,
+                    y_true[i],
+                    y_pred[i],
+                    y_prob[i],
+                    test_dataset.labels,
+                    plot_path,
                 )
         else:
             self.export_predictions_to_csv(
-                self.output_path, test_dataset.fnames, y_probs, test_dataset.labels
+                self.output_path, test_dataset.fnames, y_prob, test_dataset.labels
             )
 
     def export_predictions_to_csv(self, file, fnames, probs, labels):
@@ -89,4 +95,33 @@ class PredictTask(BaseTask):
 
 
 class PredictSegmentationTask(BaseTask):
-    schema = ""
+    schema = PredictTaskSchema
+
+    def run(self):
+        """Do something awesome here"""
+
+        # load the dataset
+        dataset = self.create_dataset(self.config.dataset_config)
+
+        test_dataset = TestFolderDataset(
+            self.config.dir, dataset.labels(), dataset.transform
+        )
+
+        # run predictions
+        _, y_true, y_pred, y_prob, _ = self.model.evaluate(
+            dataset=test_dataset, model_path=self.config.model_path, metrics=(),
+        )
+
+        # plot predictions
+        for i, image_path in enumerate(test_dataset.data):
+            plot_path = os.path.join(
+                self.config.output_path, f"{test_dataset.fnames[i]}_plot.png"
+            )
+            display_image_segmentation(
+                image_path,
+                y_true[i],
+                y_pred[i],
+                y_prob[i],
+                test_dataset.labels,
+                plot_path,
+            )

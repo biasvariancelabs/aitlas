@@ -15,6 +15,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 class BaseMultilabelClassifier(BaseModel):
     """The multilabel """
+
     schema = BaseClassifierSchema
 
     def load_optimizer(self):
@@ -32,7 +33,7 @@ class BaseMultilabelClassifier(BaseModel):
 
     def get_predicted(self, outputs, threshold=None):
         predicted_probs = torch.sigmoid(outputs)
-        predicted = (predicted_probs >= 0.5).type(predicted_probs.dtype)
+        predicted = (predicted_probs >= self.config.threshold).type(predicted_probs.dtype)
         return predicted_probs, predicted
 
     def metrics(self):
