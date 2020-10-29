@@ -134,11 +134,6 @@ class PredictTaskSchema(BaseTaskShema):
         description="Path to the model",
         example="/tmp/model/checkpoint.pth.tar",
     )
-    output_format = fields.String(
-        missing="plot",
-        description="Whether to output the predictions to csv or plots",
-        validate=validate.OneOf(["plot", "csv"]),
-    )
     output_path = fields.String(
         missing="predictions.csv",
         description="File or folder path where the csv or plot predictions will be stored",
@@ -147,6 +142,14 @@ class PredictTaskSchema(BaseTaskShema):
         nested=ObjectConfig,
         required=True,
         description="Dataset type and configuration.",
+    )
+
+
+class PredictLabelsTask(PredictTaskSchema):
+    output_format = fields.String(
+        missing="plot",
+        description="Whether to output the predictions to csv or plots",
+        validate=validate.OneOf(["plot", "csv"]),
     )
 
 

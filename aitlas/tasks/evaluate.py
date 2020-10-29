@@ -25,20 +25,12 @@ class EvaluateTask(BaseTask):
         for metric in self.config.metrics:
             metrics.append(get_class(metric))
 
-        calculated_metrics, y_true, y_pred, y_probs, loss = self.model.evaluate(
+        calculated_metrics, y_true, y_pred, y_prob, loss = self.model.evaluate(
             dataset=dataset, model_path=self.config.model_path, metrics=metrics,
         )
 
-        # get metric classes
-        visualuzation_conf = {
-            "y_true": y_true,
-            "y_pred": y_pred,
-            "y_probs": y_probs,
-            "loss": loss,
-            "labels": dataset.labels(),
-        }
-        for vis in self.config.visualizations:
-            viz_cls = get_class(vis)
-            viz_cls(**visualuzation_conf).plot()
-
+        # log the metrics
         logging.info(stringify(calculated_metrics))
+
+        # generate a report
+        self.model.report(y_true, y_pred, y_prob, dataset.labels(), id=self.id)

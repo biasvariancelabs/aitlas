@@ -233,6 +233,10 @@ class BaseModel(nn.Module, Configurable):
         """Metrics we want to log for the model"""
         return ()
 
+    def report(self, y_true, y_pred, y_prob, labels, **kwargs):
+        """The report we want to generate for the model"""
+        return ()
+
     def log_metrics(self, output, tag="train", writer=None, epoch=0):
         """Log the calculated metrics"""
         calculated_metrics, y_true, y_pred, y_probs, val_loss = output
@@ -243,7 +247,7 @@ class BaseModel(nn.Module, Configurable):
                 if isinstance(metric, dict):
                     for sub in metric:
                         writer.add_scalar(
-                            f"{metric_name}/{sub}/{tag}", metric[sub], epoch
+                            f"{metric_name}_{sub}/{tag}", metric[sub], epoch
                         )
                 else:
                     writer.add_scalar(f"{metric_name}/{tag}", metric, epoch)

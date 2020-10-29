@@ -27,26 +27,16 @@ class BaseMulticlassClassifier(BaseModel):
     def metrics(self):
         return (F1Score, AccuracyScore)
 
-    def visualizations(
-        self,
-        val_eval,
-        y_true,
-        y_pred,
-        val_loss,
-        dataset,
-        model_directory,
-        run_id,
-        epoch,
-    ):
-        from ..visualizations import confusion_matrix
+    def report(self, y_true, y_pred, y_prob, labels, **kwargs):
+        """Report for multiclass classification"""
+        run_id = kwargs.get("id", "experiment")
+        from ..visualizations import confusion_matrix, precision_recall_curve
 
-        fig = confusion_matrix(
-            dataset.labels(),
-            y_true,
-            y_pred,
-            os.path.join(model_directory, run_id, f"cm_{epoch + 1}.png"),
-        )
-        self.writer.add_figure("Confusion matrix", fig, epoch + 1)
+        # plot confusion matrix for model evaluation
+        confusion_matrix(y_true, y_pred, y_prob, labels, f"{run_id}_cm.png")
+
+        # plot roc curve for model evaluation
+        precision_recall_curve(y_true, y_pred, y_prob, labels, f"{run_id}_pr.png")
 
     def load_optimizer(self):
         """Load the optimizer"""

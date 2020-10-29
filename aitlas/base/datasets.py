@@ -65,7 +65,7 @@ class BaseDataset(Dataset, Configurable):
             if args:
                 transfrm = cls(args)
             else:
-                if cls.configurables:
+                if getattr(cls, "configurables", None):
                     kwargs = {}
                     for key in cls.configurables:
                         kwargs[key] = getattr(self.config, key)

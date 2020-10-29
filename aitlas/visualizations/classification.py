@@ -1,51 +1,66 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from sklearn.metrics import confusion_matrix as sk_confusion_matrix
+import sklearn.metrics as skmetrics
 
 from ..base import BaseVisualization
 from ..utils import pil_loader
 
 
 class ConfusionMatrix(BaseVisualization):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.labels = kwargs.get("labels")
-        self.y_true = kwargs.get("y_true")
-        self.y_pred = kwargs.get("y_pred")
-        self.output_file = kwargs.get("file", "cm.png")
+    def __init__(self, y_true, y_pred, y_prob, labels, file, **kwargs):
+        super().__init__(y_true, y_pred, y_prob, labels, file, **kwargs)
 
     def plot(self):
         # get the confusion matrix
-        cm = sk_confusion_matrix(self.y_true, self.y_pred)
+        cm = skmetrics.confusion_matrix(self.y_true, self.y_pred)
         df_cm = pd.DataFrame(cm, index=self.labels, columns=self.labels)
 
         # plot confusion matrix
         figure = plt.figure()
         ax = plt.axes()
         ax.set_title("Confusion matrix of predictions")
-        sns.set(font_scale=0.9)
-        sns.heatmap(df_cm, cmap="PiYG", ax=ax)
+        sns.set(font_scale=1)
+        sns.heatmap(df_cm, cmap="YlGnBu", ax=ax)
         plt.yticks(rotation=0)
 
-        confusion_matrix_plot_name = self.output_file
-        figure.savefig(confusion_matrix_plot_name, format="png")
-        # plt.clf()
+        figure.savefig(self.output_file, format="png")
+
+        return figure
+
+
+class PrecisionRecallCurve(BaseVisualization):
+    def plot(self):
+        """Generate plot"""
+        figure = plt.figure()
+
+        # plot pr curve for each class
+        for i in range(len(self.labels)):
+            filtered_true = [1 if x == i else 0 for x in self.y_true]
+            filtered_pred = [1 if x == i else 0 for x in self.y_pred]
+            precision, recall, _ = skmetrics.precision_recall_curve(
+                filtered_true, filtered_pred
+            )
+            plt.plot(recall, precision, lw=2, label=self.labels[i])
+
+        plt.xlabel("Recall")
+        plt.ylabel("Precision")
+        plt.legend(loc="best")
+        plt.title("precision vs. recall curve")
+
+        figure.savefig(self.output_file, format="png")
 
         return figure
 
 
 class ImageLabelsVisualization(BaseVisualization):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, y_true, y_pred, y_prob, labels, file, **kwargs):
+        super().__init__(y_true, y_pred, y_prob, labels, file, **kwargs)
         self.image = kwargs.get("image")
-        self.probs = kwargs.get("probs")
-        self.labels = kwargs.get("labels")
-        self.output_file = kwargs.get("file", "classification.png")
 
     def plot(self):
         image = pil_loader(self.image)
-        fig = self.plot_prediction(image, self.probs, self.labels)
+        fig = self.plot_prediction(image, self.y_prob, self.labels)
         fig.savefig(self.output_file, format="png")
 
     def plot_prediction(self, img, probs, classes):
@@ -71,16 +86,19 @@ class ImageLabelsVisualization(BaseVisualization):
         return fig
 
 
-def confusion_matrix(labels, y_true, y_pred, output_file):
+def confusion_matrix(y_true, y_pred, y_prob, labels, output_file):
     """Wrapper for the call for easier usage"""
-    viz = ConfusionMatrix(
-        labels=labels, y_true=y_true, y_pred=y_pred, file=output_file,
-    )
+    viz = ConfusionMatrix(y_true, y_pred, y_prob, labels, output_file)
     return viz.plot()
 
 
-def display_image_labels(image, probs, labels, output_file):
+def display_image_labels(image, y_true, y_pred, y_prob, labels, output_file):
     viz = ImageLabelsVisualization(
-        image=image, probs=probs, labels=labels, file=output_file
+        y_true, y_pred, y_prob, labels, output_file, image=image
     )
+    viz.plot()
+
+
+def precision_recall_curve(y_true, y_pred, y_prob, labels, output_file):
+    viz = PrecisionRecallCurve(y_true, y_pred, y_prob, labels, output_file)
     viz.plot()

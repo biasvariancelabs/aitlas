@@ -28,6 +28,9 @@ class BaseClassifierSchema(Schema):
     pretrained = fields.Bool(
         missing=False, description="Whether to use a pretrained network or not."
     )
+    threshold = fields.Float(
+        missing=0.5, description="Prediction threshold if needed", example=0.5
+    )
 
 
 class BaseTransformsSchema(Schema):
