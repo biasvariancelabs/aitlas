@@ -12,6 +12,14 @@ class MultiClassCsvDatasetSchema(BaseDatasetSchema):
     )
 
 
+class SegmentationDatasetSchema(BaseDatasetSchema):
+    root = fields.String(
+        required=True, description="Dataset path on disk", example="./data/BigEarthNet/"
+    )
+    csv_file_path = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv",
+    )
+
 class BigEarthNetSchema(BaseDatasetSchema):
     csv_file_path = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv"

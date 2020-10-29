@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -31,8 +32,8 @@ class BaseMultilabelClassifier(BaseModel):
 
     def get_predicted(self, outputs, threshold=None):
         predicted_probs = torch.sigmoid(outputs)
-        predicted = predicted_probs >= 0.5
+        predicted = (predicted_probs >= 0.5).type(predicted_probs.dtype)
         return predicted_probs, predicted
 
     def metrics(self):
-        return F1Score
+        return (F1Score)

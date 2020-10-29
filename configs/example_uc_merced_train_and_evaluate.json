@@ -11,7 +11,7 @@
         "classname": "aitlas.tasks.TrainAndEvaluateTask",
         "config": {
             "epochs": 50,
-            "model_directory": "D:\\models",
+            "model_directory": "examples/experiments/",
             "save_epochs": 5,
             "id": "uc_merced",
             "train_dataset_config":{
@@ -21,7 +21,7 @@
                     "shuffle": true,
                     "num_workers": 4,
                     "download": false,
-                    "csv_file_path": "D:\\datasets\\UcMerced\\train.csv"
+                    "csv_file_path": "/media/hdd/UCMerced/train.csv"
                 }
             },
             "val_dataset_config":{
@@ -31,7 +31,7 @@
                       "shuffle": false,
                       "num_workers": 4,
                       "download": false,
-                      "csv_file_path": "D:\\datasets\\UcMerced\\val.csv"
+                      "csv_file_path": "/media/hdd/UCMerced/val.csv"
                   }
               }
         }

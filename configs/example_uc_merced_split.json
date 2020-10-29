@@ -5,18 +5,18 @@
             "split": {
                 "train": {
                     "ratio": 80,
-                    "file": "D:/datasets/UcMerced/train.csv"
+                    "file": "/media/hdd/UCMerced/train.csv"
                 },
                 "val": {
                     "ratio": 20,
-                    "file": "D:/datasets/UcMerced/val.csv"
+                    "file": "/media/hdd/UCMerced/val.csv"
                 },
                 "test": {
                     "ratio": 0,
-                    "file": "D:/datasets/UcMerced/test.csv"
+                    "file": "/media/hdd/UCMerced/test.csv"
                 }
             },
-            "root": "D:/datasets/UcMerced"
+            "root": "/media/hdd/UCMerced"
         }
     }
 }

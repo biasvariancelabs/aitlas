@@ -21,9 +21,11 @@ def current_ts():
     return int(time())
 
 
-def pil_loader(file):
+def pil_loader(file, convert_to_grayscale=False):
     """open an image from disk"""
     with open(file, "rb") as f:
+        if convert_to_grayscale:
+            return np.asarray(Image.open(f).convert('L'))
         return np.asarray(Image.open(f))
 
 
@@ -32,10 +34,10 @@ def tiff_loader(file):
     return tifffile.imread(file)
 
 
-def image_loader(file_path):
+def image_loader(file_path, convert_to_grayscale=False):
     filename, file_extension = os.path.splitext(file_path)
     if file_extension in [".jpg", ".png"]:
-        return pil_loader(file_path)
+        return pil_loader(file_path, convert_to_grayscale)
     elif file_extension in [".tif", ".tiff"]:
         return tiff_loader(file_path)
     else:

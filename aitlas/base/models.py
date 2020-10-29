@@ -106,7 +106,6 @@ class BaseModel(nn.Module, Configurable):
         start = current_ts()
         running_loss = 0.0
         total_loss = 0.0
-        total = 0
 
         self.model.train()
         for i, data in enumerate(tqdm(dataloader, desc="training")):
@@ -130,8 +129,8 @@ class BaseModel(nn.Module, Configurable):
             optimizer.step()
 
             # log statistics
-            running_loss += loss.item()
-            total_loss += running_loss
+            running_loss += loss.item()*inputs.size(0)
+            total_loss += loss.item()*inputs.size(0)
 
             if (
                 i % iterations_log == iterations_log - 1
@@ -141,9 +140,7 @@ class BaseModel(nn.Module, Configurable):
                 )
                 running_loss = 0.0
 
-            total += 1
-
-        total_loss = total_loss / (total * iterations_log)
+        total_loss = total_loss / len(dataloader.dataset)
         logging.info(
             f"epoch: {epoch + 1}, time: {current_ts() - start}, loss: {total_loss: .5f}"
         )
@@ -182,37 +179,48 @@ class BaseModel(nn.Module, Configurable):
 
         # initialize loss if applicable
         total_loss = 0.0
-        total = 0
 
         # evaluate
         with torch.no_grad():
             for i, data in enumerate(tqdm(dataloader, desc="validation")):
-                images, labels = data
-                outputs = self.predict(images.to(self.device))
+                inputs, labels = data
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device)
+
+                outputs = self.predict(inputs)
 
                 # check if outputs is OrderedDict for segmentation
                 if isinstance(outputs, collections.Mapping):
                     outputs = outputs["out"]
 
                 if criterion:
-                    batch_loss = criterion(outputs, labels.to(self.device))
-                    total_loss += batch_loss.item()
-                    total += 1
+                    batch_loss = criterion(outputs, labels)
+                    total_loss += batch_loss.item()*inputs.size(0)
 
                 predicted_probs, predicted = self.get_predicted(outputs)
+                #print('Labels ', labels.cpu().detach().numpy())
+                #print('Predicted ', predicted.cpu().detach().numpy())
 
-                y_pred_probs += list(predicted_probs.cpu().detach().numpy())
-                y_pred += list(predicted.cpu().detach().numpy())
-                y_true += list(labels.cpu().detach().numpy())
+                #y_pred_probs += list(predicted_probs.cpu().detach().numpy())
+                #y_pred += list(predicted.cpu().detach().numpy())
+                #y_true += list(labels.cpu().detach().numpy())
+
+                y_pred_probs += list(predicted_probs)
+                y_pred += list(predicted)
+                y_true += list(labels)
 
         calculated_metrics = {}
 
         for metric_cls in metrics:
             metric = metric_cls()
+            print(metric.calculate(y_true, y_pred))
             calculated_metrics[metric.name] = metric.calculate(y_true, y_pred)
+            #for i, item in enumerate(y_true):
+            #    calculated_metrics[metric.name] += metric.calculate(y_true[i], y_pred[i])
+            #calculated_metrics[metric.name] /= len(y_true)
 
         if criterion:
-            total_loss = total_loss / total
+            total_loss = total_loss / len(dataloader.dataset)
 
         return (calculated_metrics, y_true, y_pred, y_pred_probs, total_loss)
 

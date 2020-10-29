@@ -3,13 +3,13 @@ import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
-from ..base import BaseSegmentation
+from ..base import BaseSegmentationClassifier
 
 
-class FastRCNN(BaseSegmentation):
+class FastRCNN(BaseSegmentationClassifier):
 
     def __init__(self, config):
-        BaseSegmentation.__init__(self, config)
+        BaseSegmentationClassifier.__init__(self, config)
 
         # load an instance segmentation model pre-trained pre-trained on COCO
         self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(
