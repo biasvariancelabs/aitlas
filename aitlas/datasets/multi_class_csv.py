@@ -1,7 +1,4 @@
 import csv
-import os
-
-import torchvision.transforms as transforms
 
 from ..base import BaseDataset
 from ..utils import image_loader

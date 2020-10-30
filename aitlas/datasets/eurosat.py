@@ -1,8 +1,3 @@
-import os
-
-import torchvision.transforms as transforms
-
-from ..transforms import DefaultTransforms
 from .multi_class_csv import MultiClassCsvDataset
 
 

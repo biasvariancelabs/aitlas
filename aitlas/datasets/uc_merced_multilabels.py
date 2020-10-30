@@ -1,10 +1,9 @@
 import os
 
 import numpy as np
-import torchvision.transforms as transforms
 
 from ..base import BaseDataset
-from ..utils import pil_loader, tiff_loader
+from ..utils import tiff_loader
 from .schemas import PascalVOCMultilabelDatasetSchema
 
 

@@ -1,6 +1,3 @@
-import torchvision.transforms as transforms
-
-from ..utils import pil_loader
 from .multi_class_csv import MultiClassCsvDataset
 
 

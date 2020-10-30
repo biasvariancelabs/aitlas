@@ -8,7 +8,6 @@ import pyarrow as pa
 import torch
 from skimage.transform import resize
 from torch.utils.data import DataLoader, Dataset
-from torchvision import transforms
 
 from ..base import BaseDataset
 from .schemas import BigEarthNetSchema

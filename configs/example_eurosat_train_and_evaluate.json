@@ -33,7 +33,7 @@
                       "download": false,
                       "csv_file_path": "D:\\datasets\\EuroSAT\\val.csv"
                   }
-              }
+            }
         }
     }
 }
