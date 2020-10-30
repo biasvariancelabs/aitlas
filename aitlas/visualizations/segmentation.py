@@ -21,6 +21,7 @@ class ImageMaskPredictionVisualization(BaseVisualization):
         fig = plt.figure(figsize=(10, 10))
 
         # plot image
+        print(img.shape)
         plt.subplot(141)
         plt.imshow(img[0, ...].transpose(1, 2, 0))
         plt.title("Image")

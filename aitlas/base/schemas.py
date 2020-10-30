@@ -26,7 +26,7 @@ class BaseClassifierSchema(Schema):
     )
     use_cuda = fields.Bool(missing=True, description="Whether to use CUDA if possible")
     pretrained = fields.Bool(
-        missing=False, description="Whether to use a pretrained network or not."
+        missing=True, description="Whether to use a pretrained network or not."
     )
     threshold = fields.Float(
         missing=0.5, description="Prediction threshold if needed", example=0.5

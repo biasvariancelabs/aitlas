@@ -65,3 +65,7 @@ class SegmentationDataset(BaseDataset):
         self.masks = [os.path.join(root_dir, 'masks', image_id) for image_id in ids]
 
 
+    def labels(self):
+        return list(CLASSES_TO_IDX.keys())
+
+

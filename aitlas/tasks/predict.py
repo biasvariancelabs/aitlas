@@ -3,7 +3,7 @@ import logging
 import os
 
 from ..base import BaseDataset, BaseModel, BaseTask, Configurable
-from ..utils import get_class, pil_loader, stringify
+from ..utils import get_class, image_loader, stringify
 from ..visualizations import display_image_labels, display_image_segmentation
 from .schemas import PredictLabelsTask, PredictTaskSchema
 
@@ -30,8 +30,9 @@ class TestFolderDataset(BaseDataset):
 
     def __getitem__(self, index):
         img = self.data[index]
+        print(img)
         return (
-            self.transform(pil_loader(img)),
+            self.transform(image_loader(img)),
             0,
         )  # returning `0` because we have no target
 
