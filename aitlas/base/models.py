@@ -86,14 +86,20 @@ class BaseModel(nn.Module, Configurable):
 
             # evaluate against the train set
             calculated = self.evaluate_model(
-                train_loader, metrics=metrics, criterion=self.criterion
+                train_loader,
+                metrics=metrics,
+                criterion=self.criterion,
+                description="testing on train set",
             )
             self.log_metrics(calculated, "train", self.writer, epoch + 1)
 
             # evaluate against a validation set if there is one
             if val_loader:
                 calculated = self.evaluate_model(
-                    val_loader, metrics=metrics, criterion=self.criterion
+                    val_loader,
+                    metrics=metrics,
+                    criterion=self.criterion,
+                    description="testing on validation set",
                 )
                 self.log_metrics(calculated, "val", self.writer, epoch + 1)
                 _, _, _, _, val_loss = calculated
@@ -163,15 +169,25 @@ class BaseModel(nn.Module, Configurable):
         dataloader = dataset.dataloader()
 
         # evaluate model on data
-        result = self.evaluate_model(dataloader, metrics)
+        result = self.evaluate_model(
+            dataloader, metrics, description="testing on test set"
+        )
 
         return result
 
-    def evaluate_model(self, dataloader, metrics=(), criterion=None):
+    def evaluate_model(
+        self,
+        dataloader,
+        metrics=(),
+        criterion=None,
+        description="testing on validation set",
+    ):
         """
         Evaluates the current model against the specified dataloader for the specified metrics
         :param dataloader:
         :param metrics: list of metric keys to calculate
+        :criterion: Criterion to calculate loss
+        :description: What to show in the progress bar
         :return: tuple of (metrics, y_true, y_pred)
         """
         self.model.eval()
@@ -186,7 +202,7 @@ class BaseModel(nn.Module, Configurable):
 
         # evaluate
         with torch.no_grad():
-            for i, data in enumerate(tqdm(dataloader, desc="validation")):
+            for i, data in enumerate(tqdm(dataloader, desc=description)):
                 inputs, labels = data
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
