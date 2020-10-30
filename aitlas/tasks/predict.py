@@ -18,6 +18,7 @@ class TestFolderDataset(BaseDataset):
         self.root = root
         self.labels = labels
         self.transform = transform
+        self.shuffle = False
 
         self.data = []
         self.fnames = []
@@ -30,9 +31,8 @@ class TestFolderDataset(BaseDataset):
 
     def __getitem__(self, index):
         img = self.data[index]
-        print(img)
         return (
-            self.transform(image_loader(img)),
+            self.transform(image_loader(img))[0],
             0,
         )  # returning `0` because we have no target
 
