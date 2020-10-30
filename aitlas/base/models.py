@@ -210,7 +210,7 @@ class BaseModel(nn.Module, Configurable):
         calculated_metrics = {}
 
         for metric_cls in metrics:
-            metric = metric_cls()
+            metric = metric_cls(self.device)
             calculated_metrics[metric.name] = metric.calculate(y_true, y_pred)
 
         if criterion:

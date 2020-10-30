@@ -1,7 +1,7 @@
-import torch
-from ..base import BaseMetric
-
 import numpy as np
+import torch
+
+from ..base import BaseMetric
 
 
 class F1ScoreSample(BaseMetric):
@@ -18,15 +18,15 @@ class F1ScoreSample(BaseMetric):
             predictions = torch.from_numpy(np.array(y_pred[i]))
             labels = torch.from_numpy(np.array(y_true[i]))
 
-            predictions = predictions.to("cuda")
-            labels = labels.to("cuda")
+            predictions = predictions.to(self.device)
+            labels = labels.to(self.device)
 
             tp = torch.sum(labels * predictions)
             fp = torch.sum(predictions) - tp
             fn = torch.sum(labels) - tp
 
-            total_score += ((1 + beta ** 2) * tp + eps) \
-                    / ((1 + beta ** 2) * tp + beta ** 2 * fn + fp + eps)
+            total_score += ((1 + beta ** 2) * tp + eps) / (
+                (1 + beta ** 2) * tp + beta ** 2 * fn + fp + eps
+            )
 
         return float(total_score / len(y_true))
-
