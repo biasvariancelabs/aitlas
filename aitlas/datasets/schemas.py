@@ -22,8 +22,7 @@ class SegmentationDatasetSchema(BaseDatasetSchema):
     transforms = fields.List(
         fields.String,
         missing=[
-            "aitlas.transforms.BaseSegmentation",
-            "torchvision.transforms.ToTensor",
+            "aitlas.transforms.BaseSegmentation"
         ],
         description="Classes to run transformations.",
     )

@@ -23,14 +23,14 @@ class ImageMaskPredictionVisualization(BaseVisualization):
         # plot image
         print(img.shape)
         plt.subplot(141)
-        plt.imshow(img[0, ...].transpose(1, 2, 0))
+        plt.imshow(img)
         plt.title("Image")
         plt.axis("off")
 
         # plot masks
-        for i in range(probs[0]):
+        for i in range(len(probs)):
             plt.subplot(1, 4, i + 2)
-            plt.imshow(probs[0][i])
+            plt.imshow(probs[i])
             plt.title(labels[i])
             plt.axis("off")
 

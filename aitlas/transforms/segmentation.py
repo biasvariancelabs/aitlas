@@ -1,3 +1,4 @@
+import torch
 import torchvision.transforms as transforms
 
 from ..base import BaseTransforms
