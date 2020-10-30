@@ -19,6 +19,15 @@ class SegmentationDatasetSchema(BaseDatasetSchema):
     csv_file_path = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv",
     )
+    transforms = fields.List(
+        fields.String,
+        missing=[
+            "aitlas.transforms.BaseSegmentation",
+            "torchvision.transforms.ToTensor",
+        ],
+        description="Classes to run transformations.",
+    )
+
 
 class BigEarthNetSchema(BaseDatasetSchema):
     csv_file_path = fields.String(

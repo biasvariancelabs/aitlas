@@ -7,12 +7,11 @@ from ..base import BaseSegmentationClassifier
 
 
 class DeepLabV3(BaseSegmentationClassifier):
-
     def __init__(self, config):
         BaseSegmentationClassifier.__init__(self, config)
 
         self.model = models.segmentation.deeplabv3_resnet101(
-            pretrained=config.pretrained, progress=True
+            pretrained=self.config.pretrained, progress=True
         )
 
         # change last layer to work with different number of classes
@@ -20,4 +19,3 @@ class DeepLabV3(BaseSegmentationClassifier):
 
     def forward(self, x):
         return self.model.forward(x)
-

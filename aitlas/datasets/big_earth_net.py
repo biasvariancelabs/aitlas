@@ -220,7 +220,6 @@ class BaseBigEarthNetDataset(BaseDataset):
 
     def __getitem__(self, index):
         patch_name = self.patches[index]
-        print(patch_name)
 
         with self.db.begin(write=False) as txn:
             byteflow = txn.get(patch_name.encode())

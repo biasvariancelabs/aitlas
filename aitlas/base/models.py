@@ -100,6 +100,10 @@ class BaseModel(nn.Module, Configurable):
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
 
         self.writer.close()
+
+        # save the model in the end
+        self.save_model(model_directory, epochs, self.optimizer, loss, start, run_id)
+
         logging.info(f"finished training. training time: {current_ts() - start}")
 
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
@@ -129,8 +133,8 @@ class BaseModel(nn.Module, Configurable):
             optimizer.step()
 
             # log statistics
-            running_loss += loss.item()*inputs.size(0)
-            total_loss += loss.item()*inputs.size(0)
+            running_loss += loss.item() * inputs.size(0)
+            total_loss += loss.item() * inputs.size(0)
 
             if (
                 i % iterations_log == iterations_log - 1
@@ -195,15 +199,15 @@ class BaseModel(nn.Module, Configurable):
 
                 if criterion:
                     batch_loss = criterion(outputs, labels)
-                    total_loss += batch_loss.item()*inputs.size(0)
+                    total_loss += batch_loss.item() * inputs.size(0)
 
                 predicted_probs, predicted = self.get_predicted(outputs)
-                #print('Labels ', labels.cpu().detach().numpy())
-                #print('Predicted ', predicted.cpu().detach().numpy())
+                # print('Labels ', labels.cpu().detach().numpy())
+                # print('Predicted ', predicted.cpu().detach().numpy())
 
-                #y_pred_probs += list(predicted_probs.cpu().detach().numpy())
-                #y_pred += list(predicted.cpu().detach().numpy())
-                #y_true += list(labels.cpu().detach().numpy())
+                # y_pred_probs += list(predicted_probs.cpu().detach().numpy())
+                # y_pred += list(predicted.cpu().detach().numpy())
+                # y_true += list(labels.cpu().detach().numpy())
 
                 y_pred_probs += list(predicted_probs)
                 y_pred += list(predicted)
@@ -215,9 +219,9 @@ class BaseModel(nn.Module, Configurable):
             metric = metric_cls()
             print(metric.calculate(y_true, y_pred))
             calculated_metrics[metric.name] = metric.calculate(y_true, y_pred)
-            #for i, item in enumerate(y_true):
+            # for i, item in enumerate(y_true):
             #    calculated_metrics[metric.name] += metric.calculate(y_true[i], y_pred[i])
-            #calculated_metrics[metric.name] /= len(y_true)
+            # calculated_metrics[metric.name] /= len(y_true)
 
         if criterion:
             total_loss = total_loss / len(dataloader.dataset)

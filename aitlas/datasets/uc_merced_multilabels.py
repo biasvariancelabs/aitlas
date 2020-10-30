@@ -5,6 +5,7 @@ import torchvision.transforms as transforms
 
 from ..base import BaseDataset
 from ..utils import pil_loader, tiff_loader
+from .schemas import SegmentationDatasetSchema
 
 
 CLASSES_TO_IDX = {
@@ -29,6 +30,8 @@ CLASSES_TO_IDX = {
 
 
 class UcMercedMultiLabelsDataset(BaseDataset):
+
+    schema = SegmentationDatasetSchema
 
     url = "https://drive.google.com/file/d/1DtKiauowCB0ykjFe8v0OVvT76rEfOk0v/view"
 
@@ -58,23 +61,12 @@ class UcMercedMultiLabelsDataset(BaseDataset):
         # this ensures the image always have the same index numbers
         for root, _, fnames in sorted(os.walk(dir)):
             for fname in sorted(fnames):
-                if self.has_file_allowed_extension(fname, extensions):
-                    path = os.path.join(root, fname)
-                    multi_hot_label = multi_hot_labels[fname[: fname.find(extensions)]]
-                    item = (path, multi_hot_label)
-                    images.append(item)
+                path = os.path.join(root, fname)
+                multi_hot_label = multi_hot_labels[fname[: fname.find(extensions)]]
+                item = (path, multi_hot_label)
+                images.append(item)
 
         return images
-
-    def default_transform(self):
-        return transforms.Compose(
-            [
-                transforms.ToPILImage(),
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-            ]
-        )
 
     def __getitem__(self, index):
         """

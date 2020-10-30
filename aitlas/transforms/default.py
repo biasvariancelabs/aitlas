@@ -5,10 +5,7 @@ from ..base import BaseTransforms
 
 class DefaultTransforms(BaseTransforms):
     def __call__(self, input, target=None):
-        return self.transform(input)
-
-    def load_transforms(self):
-        return transforms.Compose(
+        transform = transforms.Compose(
             [
                 transforms.ToPILImage(),
                 transforms.Resize(256),
@@ -16,3 +13,4 @@ class DefaultTransforms(BaseTransforms):
                 transforms.ToTensor(),
             ]
         )
+        return transform(input)
