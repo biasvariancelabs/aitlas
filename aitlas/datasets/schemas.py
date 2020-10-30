@@ -12,6 +12,12 @@ class MultiClassCsvDatasetSchema(BaseDatasetSchema):
     )
 
 
+class PascalVOCMultilabelDatasetSchema(BaseDatasetSchema):
+    root = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
+    )
+
+
 class SegmentationDatasetSchema(BaseDatasetSchema):
     root = fields.String(
         missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
@@ -21,9 +27,7 @@ class SegmentationDatasetSchema(BaseDatasetSchema):
     )
     transforms = fields.List(
         fields.String,
-        missing=[
-            "aitlas.transforms.BaseSegmentation"
-        ],
+        missing=["aitlas.transforms.BaseSegmentation"],
         description="Classes to run transformations.",
     )
 

@@ -5,7 +5,7 @@ import torchvision.transforms as transforms
 
 from ..base import BaseDataset
 from ..utils import pil_loader, tiff_loader
-from .schemas import SegmentationDatasetSchema
+from .schemas import PascalVOCMultilabelDatasetSchema
 
 
 CLASSES_TO_IDX = {
@@ -31,13 +31,11 @@ CLASSES_TO_IDX = {
 
 class UcMercedMultiLabelsDataset(BaseDataset):
 
-    schema = SegmentationDatasetSchema
+    schema = PascalVOCMultilabelDatasetSchema
 
     url = "https://drive.google.com/file/d/1DtKiauowCB0ykjFe8v0OVvT76rEfOk0v/view"
 
     classes_to_idx = CLASSES_TO_IDX
-
-    schema = SegmentationDatasetSchema
 
     def __init__(self, config):
         # now call the constuctor to validate the schema and split the data
