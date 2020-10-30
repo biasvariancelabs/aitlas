@@ -5,7 +5,7 @@ import torchvision.transforms as transforms
 
 from ..base import BaseDataset
 from ..utils import pil_loader, tiff_loader
-
+from .schemas import SegmentationDatasetSchema
 
 CLASSES_TO_IDX = {
     "airplane": 0,
@@ -34,6 +34,8 @@ class UcMercedMultiLabelsDataset(BaseDataset):
 
     classes_to_idx = CLASSES_TO_IDX
 
+    schema = SegmentationDatasetSchema
+
     def __init__(self, config):
         # now call the constuctor to validate the schema and split the data
         BaseDataset.__init__(self, config)
@@ -58,23 +60,12 @@ class UcMercedMultiLabelsDataset(BaseDataset):
         # this ensures the image always have the same index numbers
         for root, _, fnames in sorted(os.walk(dir)):
             for fname in sorted(fnames):
-                if self.has_file_allowed_extension(fname, extensions):
-                    path = os.path.join(root, fname)
-                    multi_hot_label = multi_hot_labels[fname[: fname.find(extensions)]]
-                    item = (path, multi_hot_label)
-                    images.append(item)
+                path = os.path.join(root, fname)
+                multi_hot_label = multi_hot_labels[fname[: fname.find(extensions)]]
+                item = (path, multi_hot_label)
+                images.append(item)
 
         return images
-
-    def default_transform(self):
-        return transforms.Compose(
-            [
-                transforms.ToPILImage(),
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-            ]
-        )
 
     def __getitem__(self, index):
         """
@@ -86,6 +77,7 @@ class UcMercedMultiLabelsDataset(BaseDataset):
         """
         # load image
         img = self.image_loader(self.data[index][0])
+        img = self.transform(img)
         target = self.data[index][1]
         return img, target
 

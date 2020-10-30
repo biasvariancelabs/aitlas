@@ -40,7 +40,6 @@ class SegmentationDataset(BaseDataset):
         #mask = torch.from_numpy(mask.transpose(2, 0, 1))
         #print(image.size(), mask.size())
 
-
         # return image, mask
         return torch.from_numpy(image.transpose(2, 0, 1).astype('float32') / 255), torch.from_numpy(mask.transpose(2, 0, 1))
 

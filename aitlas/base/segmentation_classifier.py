@@ -22,7 +22,7 @@ class BaseSegmentationClassifier(BaseModel):
 
     def get_predicted(self, outputs, threshold=None):
         predicted_probs = torch.tanh(outputs)
-        predicted = (predicted_probs >= 0.5).type(predicted_probs.dtype)
+        predicted = (predicted_probs >= 0.3).type(predicted_probs.dtype)
         return predicted_probs, predicted
 
     def metrics(self):

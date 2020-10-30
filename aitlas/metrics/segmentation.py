@@ -1,6 +1,8 @@
 import torch
 from ..base import BaseMetric
 
+import numpy as np
+
 
 class F1score_segmentation(BaseMetric):
     name = "F1 Score"
@@ -11,14 +13,20 @@ class F1score_segmentation(BaseMetric):
         self.method = None
 
     def calculate(self, y_true, y_pred, beta=1, eps=1e-7):
-        y_true = y_true[0]
-        y_pred = y_pred[0]
-        tp = torch.sum(y_true * y_pred)
-        fp = torch.sum(y_pred) - tp
-        fn = torch.sum(y_true) - tp
+        total_score = 0.0
+        for i, item in enumerate(y_true):
+            predictions = torch.from_numpy(np.array(y_pred[i]))
+            labels = torch.from_numpy(np.array(y_true[i]))
 
-        score = ((1 + beta ** 2) * tp + eps) \
-                / ((1 + beta ** 2) * tp + beta ** 2 * fn + fp + eps)
+            predictions = predictions.to("cuda")
+            labels = labels.to("cuda")
 
-        return {"F1 Score": score}
+            tp = torch.sum(labels * predictions)
+            fp = torch.sum(predictions) - tp
+            fn = torch.sum(labels) - tp
+
+            total_score += ((1 + beta ** 2) * tp + eps) \
+                    / ((1 + beta ** 2) * tp + beta ** 2 * fn + fp + eps)
+
+        return total_score / len(y_true)
 
