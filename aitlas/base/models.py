@@ -11,8 +11,6 @@ from tqdm import tqdm
 from ..utils import current_ts, stringify
 from .config import Configurable
 from .datasets import BaseDataset
-from ..metrics import F1score_segmentation
-
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -208,7 +206,6 @@ class BaseModel(nn.Module, Configurable):
 
         for metric_cls in metrics:
             metric = metric_cls()
-            print(metric.calculate(y_true, y_pred))
             calculated_metrics[metric.name] = metric.calculate(y_true, y_pred)
 
         if criterion:

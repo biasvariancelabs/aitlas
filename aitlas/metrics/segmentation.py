@@ -4,7 +4,7 @@ from ..base import BaseMetric
 import numpy as np
 
 
-class F1score_segmentation(BaseMetric):
+class F1ScoreSample(BaseMetric):
     name = "F1 Score"
     key = "f1_score"
 
@@ -28,5 +28,5 @@ class F1score_segmentation(BaseMetric):
             total_score += ((1 + beta ** 2) * tp + eps) \
                     / ((1 + beta ** 2) * tp + beta ** 2 * fn + fp + eps)
 
-        return total_score / len(y_true)
+        return float(total_score / len(y_true))
 
