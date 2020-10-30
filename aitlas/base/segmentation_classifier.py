@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from ..metrics import F1score_segmentation, F1Score
+from ..metrics import F1ScoreSample
 from .models import BaseModel
 from .schemas import BaseClassifierSchema
 
@@ -22,11 +22,11 @@ class BaseSegmentationClassifier(BaseModel):
 
     def get_predicted(self, outputs, threshold=None):
         predicted_probs = torch.tanh(outputs)
-        predicted = (predicted_probs >= 0.5).type(predicted_probs.dtype)
+        predicted = (predicted_probs >= self.config.threshold).type(predicted_probs.dtype)
         return predicted_probs, predicted
 
     def metrics(self):
-        return [F1score_segmentation]
+        return (F1ScoreSample, )
 
     def load_optimizer(self):
         """Load the optimizer"""
@@ -40,8 +40,3 @@ class BaseSegmentationClassifier(BaseModel):
 
     def load_lr_scheduler(self):
         return None
-
-    #def load_lr_scheduler(self):
-    #    return torch.optim.lr_scheduler.StepLR(
-    #        self.load_optimizer(), step_size=3, gamma=0.1
-    #    )

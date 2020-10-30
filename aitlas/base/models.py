@@ -202,26 +202,16 @@ class BaseModel(nn.Module, Configurable):
                     total_loss += batch_loss.item() * inputs.size(0)
 
                 predicted_probs, predicted = self.get_predicted(outputs)
-                # print('Labels ', labels.cpu().detach().numpy())
-                # print('Predicted ', predicted.cpu().detach().numpy())
 
-                # y_pred_probs += list(predicted_probs.cpu().detach().numpy())
-                # y_pred += list(predicted.cpu().detach().numpy())
-                # y_true += list(labels.cpu().detach().numpy())
-
-                y_pred_probs += list(predicted_probs)
-                y_pred += list(predicted)
-                y_true += list(labels)
+                y_pred_probs += list(predicted_probs.cpu().detach().numpy())
+                y_pred += list(predicted.cpu().detach().numpy())
+                y_true += list(labels.cpu().detach().numpy())
 
         calculated_metrics = {}
 
         for metric_cls in metrics:
             metric = metric_cls()
-            print(metric.calculate(y_true, y_pred))
             calculated_metrics[metric.name] = metric.calculate(y_true, y_pred)
-            # for i, item in enumerate(y_true):
-            #    calculated_metrics[metric.name] += metric.calculate(y_true[i], y_pred[i])
-            # calculated_metrics[metric.name] /= len(y_true)
 
         if criterion:
             total_loss = total_loss / len(dataloader.dataset)

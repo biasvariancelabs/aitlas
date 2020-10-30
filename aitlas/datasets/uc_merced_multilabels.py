@@ -37,6 +37,8 @@ class UcMercedMultiLabelsDataset(BaseDataset):
 
     classes_to_idx = CLASSES_TO_IDX
 
+    schema = SegmentationDatasetSchema
+
     def __init__(self, config):
         # now call the constuctor to validate the schema and split the data
         BaseDataset.__init__(self, config)
@@ -78,6 +80,7 @@ class UcMercedMultiLabelsDataset(BaseDataset):
         """
         # load image
         img = self.image_loader(self.data[index][0])
+        img = self.transform(img)
         target = self.data[index][1]
         return img, target
 

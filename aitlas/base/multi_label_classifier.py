@@ -37,4 +37,4 @@ class BaseMultilabelClassifier(BaseModel):
         return predicted_probs, predicted
 
     def metrics(self):
-        return (F1Score)
+        return (F1Score, )

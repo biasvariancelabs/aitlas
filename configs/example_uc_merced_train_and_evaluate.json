@@ -4,7 +4,7 @@
         "config": {
             "num_classes": 21,
             "learning_rate": 0.001,
-             "pretrained": true
+            "pretrained": true
         }
     },
     "task": {

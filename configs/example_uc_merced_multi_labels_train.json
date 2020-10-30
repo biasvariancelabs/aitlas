@@ -4,28 +4,8 @@
         "config": {
             "num_classes": 17,
             "learning_rate": 0.001,
-             "pretrained": true
-        }
-    },
-    "dataset": {
-        "classname": "aitlas.datasets.UcMercedMultiLabelsDataset",
-        "config": {
-            "root": "/media/hdd/UCMerced_multilabels",
-            "override": true,
-            "split": {
-                "train": {
-                    "ratio": 80,
-                    "file": "./data/train.csv"
-                },
-                "val": {
-                    "ratio": 20,
-                    "file": "./data/val.csv"
-                },
-                "test": {
-                    "ratio": 0,
-                    "file": "./data/test.csv"
-                }
-            }
+            "pretrained": true,
+            "threshold": 0.5
         }
     },
     "task": {
@@ -33,7 +13,16 @@
         "config": {
             "epochs": 50,
             "model_directory": "./examples/experiment",
-            "save_epochs": 5
+            "save_epochs": 5,
+            "dataset_config": {
+                "classname": "aitlas.datasets.UcMercedMultiLabelsDataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "root": "/media/hdd/UCMerced_multilabels"
+                }
+            }
         }
     }
 }
