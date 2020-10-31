@@ -16,11 +16,10 @@
                 "classname": "aitlas.datasets.EurosatDataset",
                 "config": {
                     "batch_size": 16,
-                    "shuffle": true,
+                    "shuffle": false,
                     "num_workers": 4,
                     "download": false,
-                    "csv_file_path": "./data/Eurosat/2750/test.csv",
-                    "transforms": "aitlas.transforms.DefaultTransforms"
+                    "csv_file_path": "./data/Eurosat/2750/test.csv"
                 }
             },
             "metrics":["aitlas.metrics.PrecisionScore","aitlas.metrics.AccuracyScore", "aitlas.metrics.RecallScore", "aitlas.metrics.F1Score"]

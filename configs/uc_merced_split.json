@@ -1,0 +1,22 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.SplitTask",
+        "config": {
+            "split": {
+                "train": {
+                    "ratio": 80,
+                    "file": "/media/hdd/UCMerced/train.csv"
+                },
+                "val": {
+                    "ratio": 20,
+                    "file": "/media/hdd/UCMerced/val.csv"
+                },
+                "test": {
+                    "ratio": 0,
+                    "file": "/media/hdd/UCMerced/test.csv"
+                }
+            },
+            "root": "/media/hdd/UCMerced"
+        }
+    }
+}

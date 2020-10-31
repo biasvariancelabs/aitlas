@@ -1,0 +1,47 @@
+{
+    "model": {
+        "classname": "aitlas.models.VGG16MultiLabel",
+        "config": {
+            "num_classes": 19,
+            "learning_rate": 0.001,
+            "pretrained": false
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+          "config": {
+              "epochs": 50,
+              "model_directory": "examples/experiments/",
+              "save_epochs": 5,
+              "id": "bigearthnet",
+              "train_dataset_config":{
+                  "classname": "aitlas.datasets.BigEarthNetRGBCsvDataset",
+                  "config": {
+                      "batch_size": 256,
+                      "shuffle": true,
+                      "num_workers": 8,
+                      "lmdb_path": "/media/hdd/BigEarthNet/lmdb/BigEarthNet-19.lmdb",
+                      "import_to_lmdb": false,
+                      "csv_file_path": "/media/hdd/BigEarthNet/bigearthnet-19-models/splits/train.csv",
+                      "root": "/media/hdd/BigEarthNet/BigEarthNet-v1.0/",
+                      "bands10_mean": [429.9430203,614.21682446,590.23569706],
+                      "bands10_std": [572.41639287,582.87945694,675.88746967]
+                  }
+              },
+              "val_dataset_config":{
+                    "classname": "aitlas.datasets.BigEarthNetRGBCsvDataset",
+                    "config": {
+                        "batch_size": 16,
+                        "shuffle": false,
+                        "num_workers": 8,
+                        "lmdb_path": "/media/hdd/BigEarthNet/lmdb/BigEarthNet-19.lmdb",
+                        "import_to_lmdb": false,
+                        "csv_file_path": "/media/hdd/BigEarthNet/bigearthnet-19-models/splits/val.csv",
+                        "root": "/media/hdd/BigEarthNet/BigEarthNet-v1.0/",
+                        "bands10_mean": [429.9430203,614.21682446,590.23569706],
+                        "bands10_std": [572.41639287,582.87945694,675.88746967]
+                    }
+                }
+        }
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.PrepareTask",
+        "config": {
+            "dataset_config":{
+                "classname": "aitlas.datasets.BaseBigEarthNetDataset",
+                "config": {
+                    "root": "./data/BigEarthNet/",
+                    "lmdb_path": "./data/lmbd/",
+                    "num_workers": 8,
+                    "batch_size": 256
+                }
+            }
+        }
+    }
+}

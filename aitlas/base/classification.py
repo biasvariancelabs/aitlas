@@ -14,6 +14,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class BaseMulticlassClassifier(BaseModel):
+    """Base class for a multiclass classifier"""
+
     schema = BaseClassifierSchema
 
     def __init__(self, config):
@@ -53,7 +55,7 @@ class BaseMulticlassClassifier(BaseModel):
 
 
 class BaseMultilabelClassifier(BaseModel):
-    """The multilabel """
+    """Base class for a multilabel classifier"""
 
     schema = BaseClassifierSchema
 
