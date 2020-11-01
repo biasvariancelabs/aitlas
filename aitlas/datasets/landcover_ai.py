@@ -7,11 +7,12 @@ from ..base import BaseDataset
 from ..utils import image_loader
 from .schemas import SegmentationDatasetSchema
 
-#CLASSES_TO_IDX = {"Background": 0, "Buildings": 1, "Woodlands": 2, "Water": 3}
+#"Background": 0
+#"Buildings": 1
+#"Woodlands": 2
+#"Water": 3
 
-#CLASSES_TO_IDX = {'sky': 0, 'road': 3, 'car': 8}
-CLASSES_TO_IDX = {'car': 8}
-
+CLASSES_TO_IDX = {"Buildings": 1}
 
 class SegmentationDataset(BaseDataset):
 
@@ -29,17 +30,12 @@ class SegmentationDataset(BaseDataset):
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
-        mask = image_loader(self.masks[index], False)
-        #print(image.shape, mask.shape)
+        mask = image_loader(self.masks[index], True)
 
-        # extract certain classes from mask (e.g. cars)
+        # extract certain classes from mask (e.g. Buildings)
         masks = [(mask == v) for v in self.class_values]
         mask = np.stack(masks, axis=-1).astype('float32')
-        #print(image.shape, mask.shape)
-        #image = torch.from_numpy(image.transpose(2, 0, 1).astype('float32') / 255)
-        #mask = torch.from_numpy(mask.transpose(2, 0, 1))
-        #print(image.size(), mask.size())
-        image, mask = self.transform(image, mask)
+        image, mask = self.transform({"image": image, "mask": mask})
         return image, mask
 
     def __len__(self):
@@ -53,16 +49,11 @@ class SegmentationDataset(BaseDataset):
                 "You need to implement the classes to index mapping for the dataset"
             )
 
-        #with open(file_path, "r") as f:
-        #    csv_reader = csv.reader(f)
-        #    for index, row in enumerate(csv_reader):
-        #        self.images.append(os.path.join(root_dir, row[0] + '.jpg'))
-        #        self.masks.append(os.path.join(root_dir, row[0] + '_m.png'))
-
-        ids = os.listdir(os.path.join(root_dir, 'images'))
-        self.images = [os.path.join(root_dir, 'images', image_id) for image_id in ids]
-        self.masks = [os.path.join(root_dir, 'masks', image_id) for image_id in ids]
-
+        with open(file_path, "r") as f:
+            csv_reader = csv.reader(f)
+            for index, row in enumerate(csv_reader):
+                self.images.append(os.path.join(root_dir, row[0] + '.jpg'))
+                self.masks.append(os.path.join(root_dir, row[0] + '_m.png'))
 
     def labels(self):
         return list(CLASSES_TO_IDX.keys())

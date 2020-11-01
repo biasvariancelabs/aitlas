@@ -21,7 +21,8 @@
                       "shuffle": true,
                       "num_workers": 1,
                       "csv_file_path": "/media/hdd/landcover.ai/train.txt",
-                      "root": "/media/hdd/CamVid/train"
+                      "root": "/media/hdd/landcover.ai/images",
+                      "transforms": ["aitlas.transforms.BaseSegmentation"]
                   }
               },
               "val_dataset_config":{
@@ -31,7 +32,8 @@
                         "shuffle": false,
                         "num_workers": 1,
                         "csv_file_path": "/media/hdd/landcover.ai/val.txt",
-                        "root": "/media/hdd/CamVid/val"
+                        "root": "/media/hdd/landcover.ai/images",
+                        "transforms": ["aitlas.transforms.BaseSegmentation"]
                     }
               }
         }
