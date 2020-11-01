@@ -1,6 +1,6 @@
 {
     "model": {
-        "classname": "aitlas.models.ShallowCNNNet",
+        "classname": "aitlas.models.ResNet50",
         "config": {
             "num_classes": 10,
             "learning_rate": 0.001
@@ -16,7 +16,11 @@
             "dataset_config":{
                 "classname": "aitlas.datasets.EurosatDataset",
                 "config": {
-                    "transforms": "aitlas.transforms.DefaultTransforms"
+                    "batch_size": 4,
+                    "shuffle": false,
+                    "num_workers": 4,
+                    "download": false,
+                    "csv_file_path": "/media/hdd/EuroSAT/test.csv"
                 }
             }
         }

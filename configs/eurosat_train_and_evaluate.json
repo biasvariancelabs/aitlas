@@ -1,6 +1,6 @@
 {
     "model": {
-        "classname": "aitlas.models.ShallowCNNNet",
+        "classname": "aitlas.models.ResNet50",
         "config": {
             "num_classes": 10,
             "learning_rate": 0.001,
@@ -17,11 +17,11 @@
             "train_dataset_config":{
                 "classname": "aitlas.datasets.EurosatDataset",
                 "config": {
-                    "batch_size": 16,
+                    "batch_size": 64,
                     "shuffle": true,
                     "num_workers": 4,
                     "download": false,
-                    "csv_file_path": "./data/Eurosat/2750/train.csv"
+                    "csv_file_path": "/media/hdd/EuroSAT/train.csv"
                 }
             },
             "val_dataset_config":{
@@ -31,7 +31,7 @@
                       "shuffle": false,
                       "num_workers": 4,
                       "download": false,
-                      "csv_file_path": "./data/Eurosat/2750/val.csv"
+                      "csv_file_path": "/media/hdd/EuroSAT/val.csv"
                   }
             }
         }

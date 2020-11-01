@@ -1,7 +1,6 @@
 import csv
 import os
 import numpy as np
-import torch
 
 from ..base import BaseDataset
 from ..utils import image_loader

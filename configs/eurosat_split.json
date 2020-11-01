@@ -4,19 +4,19 @@
         "config": {
             "split": {
                 "train": {
-                    "ratio": 60,
-                    "file": "./data/EuroSAT/2750/train.csv"
+                    "ratio": 80,
+                    "file": "/media/hdd/EuroSAT/train.csv"
                 },
                 "val": {
-                    "ratio": 20,
-                    "file": "./data/EuroSAT/2750/val.csv"
+                    "ratio": 10,
+                    "file": "/media/hdd/EuroSAT/val.csv"
                 },
                 "test": {
-                    "ratio": 20,
-                    "file": "./data/EuroSAT/2750/test.csv"
+                    "ratio": 10,
+                    "file": "/media/hdd/EuroSAT/test.csv"
                 }
             },
-            "root": "./data/EuroSAT/2750/"
+            "root": "/media/hdd/EuroSAT"
         }
     }
 }
