@@ -13,7 +13,7 @@ class ConfusionMatrix(BaseVisualization):
 
     def plot(self):
         # get the confusion matrix
-        cm = skmetrics.confusion_matrix(self.y_true, self.y_pred, normalize='true')
+        cm = skmetrics.confusion_matrix(self.y_true, self.y_pred, normalize="true")
         df_cm = pd.DataFrame(cm, index=self.labels, columns=self.labels)
 
         # plot confusion matrix
@@ -21,7 +21,7 @@ class ConfusionMatrix(BaseVisualization):
         ax = plt.axes()
         ax.set_title("Confusion matrix of predictions")
         sns.set(font_scale=1)
-        sns.heatmap(df_cm, cmap="YlGnBu", ax=ax)
+        sns.heatmap(df_cm, cmap="YlGnBu", ax=ax, annot=True)
         plt.yticks(rotation=0)
 
         figure.savefig(self.output_file, format="png")
