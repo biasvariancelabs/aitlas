@@ -5,11 +5,10 @@ from ..base import BaseTransforms
 
 
 class BaseSegmentation(BaseTransforms):
-    def __call__(self, input, target=None):
-        if target:
-            return (
-                input.transpose(2, 0, 1).astype("float32") / 255,
-                target.transpose(2, 0, 1),
-            )
+    def __call__(self, sample):
+        image = sample.get("image", None)
+        mask = sample.get("mask", None)
+        if mask:
+            return (image.transpose(2, 0, 1).astype("float32") / 255, mask)
         else:
-            input.transpose(2, 0, 1).astype("float32") / 255
+            image.transpose(2, 0, 1).astype("float32") / 255

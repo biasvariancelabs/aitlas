@@ -18,5 +18,5 @@ class BaseTransforms(object):
     def __init__(self, *args, **kwargs):
         pass
 
-    def __call__(self, input, target=None):
+    def __call__(self, sample):
         raise NotImplementedError("Please implement the `__call__` method")
