@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class TestFolderDataset(BaseDataset):
-    def __init__(self, root, labels, transform):
+    def __init__(self, root, labels, transform, input_format):
         BaseDataset.__init__(self, {})
 
         self.root = root
@@ -22,6 +22,7 @@ class TestFolderDataset(BaseDataset):
 
         self.data = []
         self.fnames = []
+        self.input_format = input_format
 
         dir = os.path.expanduser(self.root)
         for root, _, fnames in sorted(os.walk(dir)):
@@ -32,7 +33,7 @@ class TestFolderDataset(BaseDataset):
     def __getitem__(self, index):
         img = self.data[index]
         return (
-            self.transform(image_loader(img)),
+            self.transform(self.input_format(image_loader(img))),
             0,
         )  # returning `0` because we have no target
 
@@ -56,7 +57,12 @@ class PredictTask(BaseTask):
         # load the dataset
         dataset = self.create_dataset(self.config.dataset_config)
 
-        test_dataset = TestFolderDataset(self.dir, dataset.labels(), dataset.transform)
+        def input_format(img):
+            return img
+
+        test_dataset = TestFolderDataset(
+            self.dir, dataset.labels(), dataset.transform, input_format=input_format
+        )
 
         # run predictions
         _, y_true, y_pred, y_prob, _ = self.model.evaluate(
@@ -104,8 +110,14 @@ class PredictSegmentationTask(BaseTask):
         # load the dataset
         dataset = self.create_dataset(self.config.dataset_config)
 
+        def input_format(img):
+            return {"image": img}
+
         test_dataset = TestFolderDataset(
-            self.config.dir, dataset.labels(), dataset.transform
+            self.config.dir,
+            dataset.labels(),
+            dataset.transform,
+            input_format=input_format,
         )
 
         # run predictions
