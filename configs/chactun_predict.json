@@ -10,7 +10,7 @@
     "task": {
         "classname": "aitlas.tasks.PredictSegmentationTask",
         "config": {
-            "model_path": "/media/hdd/aitlas/examples/experiments/chactun/checkpoint_1604282318.pth.tar",
+            "model_path": "/media/hdd/aitlas/examples/experiments/chactun/checkpoint_1604298478.pth.tar",
             "dir": "/media/hdd/predict/chactun",
             "output_path": "./examples/",
             "dataset_config":{
