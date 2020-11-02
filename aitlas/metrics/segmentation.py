@@ -40,7 +40,7 @@ class IoU(BaseMetric):
         BaseMetric.__init__(self, **kwargs)
         self.method = None
 
-    def calculate(self, y_true, y_pred, beta=1, eps=1e-7):
+    def calculate(self, y_true, y_pred, eps=1e-7):
         total_score = 0.0
         for i, item in enumerate(y_true):
             predictions = torch.from_numpy(np.array(y_pred[i]))
@@ -64,7 +64,7 @@ class Accuracy(BaseMetric):
         BaseMetric.__init__(self, **kwargs)
         self.method = None
 
-    def calculate(self, y_true, y_pred, beta=1, eps=1e-7):
+    def calculate(self, y_true, y_pred):
         total_score = 0.0
         for i, item in enumerate(y_true):
             predictions = torch.from_numpy(np.array(y_pred[i]))
