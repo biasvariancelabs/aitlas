@@ -43,7 +43,7 @@ class ChactunDataset(BaseDataset):
 
     def check_masks(self, masks_for_image):
         for mask in masks_for_image:
-            if np.count_nonzero(image_loader(mask, True)):
+            if np.count_nonzero(image_loader(mask, True) == 0):
                 return True
         return False
 

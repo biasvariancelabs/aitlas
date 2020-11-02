@@ -10,13 +10,14 @@
     "task": {
         "classname": "aitlas.tasks.PredictSegmentationTask",
         "config": {
-            "model_path": "/media/hdd/aitlas/examples/experiments/camvid/checkpoint_1604282318.pth.tar",
-            "dir": "/media/hdd/predict/camvid",
+            "model_path": "/media/hdd/aitlas/examples/experiments/chactun/checkpoint_1604282318.pth.tar",
+            "dir": "/media/hdd/predict/chactun",
             "output_path": "./examples/",
             "dataset_config":{
-                "classname": "aitlas.datasets.CamVidDataset",
+                "classname": "aitlas.datasets.ChactunDataset",
                 "config": {
-                  "root": "/media/hdd/CamVid/train"
+                  "root": "/media/hdd/Chactun/train",
+                  "transforms": ["aitlas.transforms.BaseSegmentationModified"]
                 }
             }
         }
