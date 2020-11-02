@@ -39,13 +39,6 @@ class ChactunDataset(BaseDataset):
     def __len__(self):
         return len(self.images)
 
-    def check_masks(self, masks_for_image):
-        for mask in masks_for_image:
-            mask = image_loader(mask, True)
-            if mask.shape[0]*mask.shape[1] - np.count_nonzero(mask):
-                return True
-        return False
-
     def load_dataset(self, root_dir):
         self.class_values = CLASSES_TO_IDX.values()
 
@@ -59,13 +52,12 @@ class ChactunDataset(BaseDataset):
             for i, fname in enumerate(sorted(fnames)):
                 path = os.path.join(root_dir, fname)
                 if i % 4 == 0:
-                    image_path = path
+                    self.images.append(path)
                     masks_for_image = []
                 else:
                     masks_for_image.append(path)
-                    if i % 4 == 3 and self.check_masks(masks_for_image):
+                    if i % 4 == 3:
                         self.masks.append(masks_for_image)
-                        self.images.append(image_path)
 
     def labels(self):
         return list(CLASSES_TO_IDX.keys())
