@@ -5,4 +5,5 @@ from .utils import (
     pil_loader,
     stringify,
     tiff_loader,
+    image_invert,
 )

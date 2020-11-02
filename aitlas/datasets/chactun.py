@@ -3,8 +3,9 @@ import os
 import numpy as np
 
 from ..base import BaseDataset
-from ..utils import image_loader
+from ..utils import image_loader, image_invert
 from .schemas import SegmentationDatasetSchema
+
 
 #Aguada
 #Building
@@ -30,7 +31,9 @@ class ChactunDataset(BaseDataset):
 
         mask = np.zeros(shape=(len(self.masks[index]), image.shape[0], image.shape[1]), dtype=np.float)
         for i, path in enumerate(self.masks[index]):
-            mask[i] = image_loader(path, True)
+            mask[i] = image_invert(path, True)
+
+        #print(image.shape, mask.shape)
 
         image, mask = self.transform({"image": image, "mask": mask})
         return image, mask

@@ -10,17 +10,15 @@
         "classname": "aitlas.tasks.PredictTask",
         "config": {
             "model_path": "./examples/experiment/eurosat/checkpoint.pth.tar",
-            "dir": "./data/test/",
+            "dir": "/media/hdd/predict/EuroSAT",
             "output_path": "./examples/",
             "output_format": "plot",
             "dataset_config":{
                 "classname": "aitlas.datasets.EurosatDataset",
                 "config": {
-                    "batch_size": 4,
+                    "batch_size": 1,
                     "shuffle": false,
-                    "num_workers": 4,
-                    "download": false,
-                    "csv_file_path": "/media/hdd/EuroSAT/test.csv"
+                    "num_workers": 4
                 }
             }
         }

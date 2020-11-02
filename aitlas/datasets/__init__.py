@@ -10,3 +10,5 @@ from .resisc45 import Resisc45Dataset
 from .uc_merced import UcMercedDataset
 from .uc_merced_multilabels import UcMercedMultiLabelsDataset
 from .landcover_ai import SegmentationDataset
+from .chactun import ChactunDataset
+from .camvid import CamVidDataset

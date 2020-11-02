@@ -20,7 +20,7 @@
                     "batch_size": 16,
                     "shuffle": true,
                     "num_workers": 4,
-                    "root": "./data/UCMerced_multilabels"
+                    "root": "/media/hdd/UCMerced_multilabels"
                 }
             }
         }

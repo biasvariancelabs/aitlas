@@ -3,10 +3,8 @@ import os
 from time import time
 
 import numpy as np
-import six
 import tifffile
-from PIL import Image
-from torch.utils.model_zoo import tqdm
+from PIL import Image, ImageOps
 
 
 def get_class(class_name):
@@ -44,6 +42,13 @@ def image_loader(file_path, convert_to_grayscale=False):
         raise ValueError(
             "Invalid image. It should be `.jpg, .png, .tif, .tiff`"
         )
+
+
+def image_invert(file_path, convert_to_grayscale=False):
+    img = Image.open(file_path).convert('L')
+    if convert_to_grayscale:
+        img = ImageOps.invert(img)
+    return np.asarray(img)
 
 
 def stringify(obj):

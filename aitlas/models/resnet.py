@@ -54,5 +54,5 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
 
     def get_predicted(self, outputs):
         predicted_probs = torch.sigmoid(outputs)
-        predicted = predicted_probs >= 0.5
+        predicted = predicted_probs >= self.config.threshold
         return predicted_probs, predicted

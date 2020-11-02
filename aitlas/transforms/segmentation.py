@@ -9,7 +9,8 @@ class BaseSegmentation(BaseTransforms):
         image = sample.get("image", None)
         mask = sample.get("mask", None)
         if mask is None:
-            image.transpose(2, 0, 1).astype("float32") / 255
+            return image.transpose(2, 0, 1).astype("float32") / 255
         else:
             return (image.transpose(2, 0, 1).astype("float32") / 255, mask.transpose(2, 0, 1).astype("float32"))
+            #return (image.transpose(2, 0, 1).astype("float32") / 255, mask.astype("float32"))
 

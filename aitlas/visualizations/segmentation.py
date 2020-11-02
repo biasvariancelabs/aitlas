@@ -28,7 +28,7 @@ class ImageMaskPredictionVisualization(BaseVisualization):
 
         # plot masks
         for i in range(len(probs)):
-            plt.subplot(1, len(labels), i + 2)
+            plt.subplot(1, len(labels) + 1, i + 2)
             plt.imshow(probs[i])
             plt.title(labels[i])
             plt.axis("off")

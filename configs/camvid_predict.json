@@ -10,14 +10,13 @@
     "task": {
         "classname": "aitlas.tasks.PredictSegmentationTask",
         "config": {
-            "model_path": "/media/hdd/aitlas/examples/experiments/checkpoint.pth.tar",
-            "dir": "/media/hdd/landcover.ai/predict",
+            "model_path": "/media/hdd/aitlas/examples/experiments/camvid/checkpoint_1604279671.pth.tar",
+            "dir": "/media/hdd/predict/camvid",
             "output_path": "./examples/",
             "dataset_config":{
-                "classname": "aitlas.datasets.SegmentationDataset",
+                "classname": "aitlas.datasets.CamVidDataset",
                 "config": {
-                  "csv_file_path": "/media/hdd/landcover.ai/train.txt",
-                  "root": "/media/hdd/landcover.ai/images"
+                  "root": "/media/hdd/CamVid/train"
                 }
             }
         }

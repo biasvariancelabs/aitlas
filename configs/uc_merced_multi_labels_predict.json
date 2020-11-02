@@ -10,8 +10,8 @@
     "task": {
         "classname": "aitlas.tasks.PredictTask",
         "config": {
-            "model_path": "/media/hdd/aitlas/examples/experiment/checkpoint.pth.tar",
-            "dir": "/media/hdd/UCMerced_multilabels/predict",
+            "model_path": "/media/hdd/aitlas/examples/experiment/checkpoint_uc_merced.pth.tar",
+            "dir": "/media/hdd/predict/UC_merced",
             "output_path": "./examples/",
             "output_format": "plot",
             "dataset_config":{
