@@ -4,11 +4,13 @@ from .big_earth_net import (
     BigEarthNetRGBCsvDataset,
     BigEarthNetRGBDataset,
 )
+from .camvid import CamVidDataset
+from .chactun import ChactunDataset
 from .eurosat import EurosatDataset
+from .generic_multiclass import GenericMulticlassDataset
+from .generic_multilabel import GenericMultiLabelsDataset
+from .landcover_ai import SegmentationDataset
 from .pattern_net import PatternNetDataset
 from .resisc45 import Resisc45Dataset
 from .uc_merced import UcMercedDataset
 from .uc_merced_multilabels import UcMercedMultiLabelsDataset
-from .landcover_ai import SegmentationDataset
-from .chactun import ChactunDataset
-from .camvid import CamVidDataset

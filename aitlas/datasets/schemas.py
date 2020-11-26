@@ -3,16 +3,19 @@ from marshmallow import fields, validate
 from ..base.schemas import BaseDatasetSchema
 
 
-class MultiClassCsvDatasetSchema(BaseDatasetSchema):
+class GenericMulticlassDatasetSchema(BaseDatasetSchema):
     download = fields.Bool(
         missing=False, description="Whether to download the dataset", example=True
     )
     csv_file_path = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv",
     )
+    labels = fields.Dict(
+        missing=None, description="Labels needed to tag the predictions.",
+    )
 
 
-class PascalVOCMultilabelDatasetSchema(BaseDatasetSchema):
+class GenericMultiLabelsDatasetSchema(BaseDatasetSchema):
     root = fields.String(
         missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
     )

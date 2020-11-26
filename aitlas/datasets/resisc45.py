@@ -1,4 +1,4 @@
-from .multi_class_csv import MultiClassCsvDataset
+from .generic_multiclass import GenericMulticlassDataset
 
 
 CLASSES_TO_IDX = {
@@ -50,6 +50,6 @@ CLASSES_TO_IDX = {
 }
 
 
-class Resisc45Dataset(MultiClassCsvDataset):
+class Resisc45Dataset(GenericMulticlassDataset):
 
     classes_to_idx = CLASSES_TO_IDX

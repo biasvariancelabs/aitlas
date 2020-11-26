@@ -1,4 +1,4 @@
-from .multi_class_csv import MultiClassCsvDataset
+from .generic_multiclass import GenericMulticlassDataset
 
 
 CLASSES_TO_IDX = {
@@ -15,10 +15,10 @@ CLASSES_TO_IDX = {
 }
 
 
-class EurosatDataset(MultiClassCsvDataset):
+class EurosatDataset(GenericMulticlassDataset):
 
     classes_to_idx = CLASSES_TO_IDX
 
     def __init__(self, config):
         # now call the constuctor to validate the schema and load the data
-        MultiClassCsvDataset.__init__(self, config)
+        GenericMulticlassDataset.__init__(self, config)
