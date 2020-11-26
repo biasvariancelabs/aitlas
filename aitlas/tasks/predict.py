@@ -12,17 +12,17 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class TestFolderDataset(BaseDataset):
-    def __init__(self, root, labels, transform, input_format):
+    def __init__(self, root, labels, transforms, to_dict):
         BaseDataset.__init__(self, {})
 
         self.root = root
         self.labels = labels
-        self.transform = transform
+        self.transform = self.load_transforms(transforms)
         self.shuffle = False
 
         self.data = []
         self.fnames = []
-        self.input_format = input_format
+        self.to_dict = to_dict
 
         dir = os.path.expanduser(self.root)
         for root, _, fnames in sorted(os.walk(dir)):
@@ -30,10 +30,16 @@ class TestFolderDataset(BaseDataset):
                 self.data.append(os.path.join(root, fname))
                 self.fnames.append(fname)
 
+    def input_format(self, img):
+        if self.to_dict:
+            return {"image": img}
+        else:
+            return img
+
     def __getitem__(self, index):
         img = self.data[index]
         return (
-            self.transform(self.input_format(image_loader(img))),
+            self.transform(image_loader(img)),
             0,
         )  # returning `0` because we have no target
 
@@ -54,15 +60,16 @@ class PredictTask(BaseTask):
     def run(self):
         """Do something awesome here"""
 
-        # load the dataset
-        dataset = self.create_dataset(self.config.dataset_config)
+        # load the configs
+        if self.config.dataset_config:
+            dataset = self.create_dataset(self.config.dataset_config)
+            labels = dataset.labels()
+            transforms = dataset.transform
+        else:
+            labels = self.config.labels
+            transforms = self.config.transforms
 
-        def input_format(img):
-            return img
-
-        test_dataset = TestFolderDataset(
-            self.dir, dataset.labels(), dataset.transform, input_format=input_format
-        )
+        test_dataset = TestFolderDataset(self.dir, labels, transforms, False)
 
         # run predictions
         _, y_true, y_pred, y_prob, _ = self.model.evaluate(
@@ -110,14 +117,8 @@ class PredictSegmentationTask(BaseTask):
         # load the dataset
         dataset = self.create_dataset(self.config.dataset_config)
 
-        def input_format(img):
-            return {"image": img}
-
         test_dataset = TestFolderDataset(
-            self.config.dir,
-            dataset.labels(),
-            dataset.transform,
-            input_format=input_format,
+            self.config.dir, dataset.labels(), dataset.transform, True,
         )
 
         # run predictions

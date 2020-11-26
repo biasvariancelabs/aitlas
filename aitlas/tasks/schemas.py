@@ -139,9 +139,22 @@ class PredictTaskSchema(BaseTaskShema):
         description="File or folder path where the csv or plot predictions will be stored",
     )
     dataset_config = fields.Nested(
+        missing=None,
         nested=ObjectConfig,
-        required=True,
         description="Dataset type and configuration.",
+    )
+    labels = fields.Dict(
+        missing=None, description="Labels needed to tag the predictions.",
+    )
+    transforms = fields.List(
+        fields.String,
+        missing=[
+            "torchvision.transforms.ToPILImage",
+            "torchvision.transforms.Resize",
+            "torchvision.transforms.CenterCrop",
+            "torchvision.transforms.ToTensor",
+        ],
+        description="Classes to run transformations.",
     )
 
 

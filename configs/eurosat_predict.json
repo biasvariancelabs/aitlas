@@ -9,17 +9,21 @@
     "task": {
         "classname": "aitlas.tasks.PredictTask",
         "config": {
-            "model_path": "./examples/experiment/eurosat/checkpoint.pth.tar",
-            "dir": "/media/hdd/predict/EuroSAT",
+            "model_path": "./experiment/eurosat/checkpoint.pth.tar",
+            "dir": "./data/test/",
             "output_path": "./examples/",
             "output_format": "plot",
-            "dataset_config":{
-                "classname": "aitlas.datasets.EurosatDataset",
-                "config": {
-                    "batch_size": 1,
-                    "shuffle": false,
-                    "num_workers": 4
-                }
+            "labels": {
+                "AnnualCrop": 0,
+                "Forest": 1,
+                "HerbaceousVegetation": 2,
+                "Highway": 3,
+                "Industrial": 4,
+                "Pasture": 5,
+                "PermanentCrop": 6,
+                "Residential": 7,
+                "River": 8,
+                "SeaLake": 9
             }
         }
     }
