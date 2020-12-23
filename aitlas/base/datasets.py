@@ -1,11 +1,9 @@
 import torch
 from torch.utils.data import Dataset
-from torchvision import transforms
 
-from ..utils import get_class
 from .config import Configurable
 from .schemas import BaseDatasetSchema
-from .transforms import TRANSFORMS_PARAMS
+from .transforms import load_transforms
 
 
 class BaseDataset(Dataset, Configurable):
@@ -55,25 +53,4 @@ class BaseDataset(Dataset, Configurable):
 
     def load_transforms(self, class_names):
         """Loads transformation classes and make a composition of them"""
-
-        lst_transforms = []
-
-        # check all transformation classes
-        for name in class_names:
-            cls = get_class(name)  # get class
-            args = TRANSFORMS_PARAMS.get(name, None)  # get params, if specified
-            if args:
-                transfrm = cls(args)
-            else:
-                if getattr(cls, "configurables", None):
-                    kwargs = {}
-                    for key in cls.configurables:
-                        kwargs[key] = getattr(self.config, key)
-                    transfrm = cls(**kwargs)
-                else:
-                    transfrm = cls()
-
-            lst_transforms.append(transfrm)
-
-        # return as composition
-        return transforms.Compose(lst_transforms)
+        return load_transforms(class_names, self.config)

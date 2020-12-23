@@ -20,7 +20,7 @@ class BaseDatasetSchema(Schema):
 
 
 class BaseClassifierSchema(Schema):
-    num_classes = fields.Int(required=True, description="Number of classes", example=2)
+    num_classes = fields.Int(missing=2, description="Number of classes", example=2)
     learning_rate = fields.Float(
         missing=None, description="Learning rate used in training.", example=0.01
     )
@@ -30,6 +30,10 @@ class BaseClassifierSchema(Schema):
     )
     threshold = fields.Float(
         missing=0.5, description="Prediction threshold if needed", example=0.5
+    )
+    extract_feature_only = fields.Bool(
+        missing=False,
+        description="Whether to use the network without the classification layer.",
     )
 
 

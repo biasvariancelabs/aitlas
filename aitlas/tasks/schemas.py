@@ -172,3 +172,25 @@ class PrepareTaskSchema(BaseTaskShema):
         required=True,
         description="Dataset type and configuration.",
     )
+
+
+class ExtractFeaturesTaskSchema(BaseTaskShema):
+    dir = fields.String(
+        required=True,
+        description="Directory with images to extract features from",
+        example="/tmp/test/",
+    )
+    output_dir = fields.String(
+        missing="predictions.csv",
+        description="Folder path where the features will be saved",
+    )
+    transforms = fields.List(
+        fields.String,
+        missing=[
+            "torchvision.transforms.ToPILImage",
+            "torchvision.transforms.Resize",
+            "torchvision.transforms.CenterCrop",
+            "torchvision.transforms.ToTensor",
+        ],
+        description="Classes to run transformations.",
+    )
