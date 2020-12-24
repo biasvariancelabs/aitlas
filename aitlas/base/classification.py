@@ -5,7 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as nnf
 import torch.optim as optim
 
-from ..metrics import AccuracyScore, F1Score
 from .models import BaseModel
 from .schemas import BaseClassifierSchema
 
@@ -27,6 +26,8 @@ class BaseMulticlassClassifier(BaseModel):
         return probs, predicted
 
     def metrics(self):
+        from ..metrics import AccuracyScore, F1Score
+
         return (F1Score, AccuracyScore)
 
     def report(self, y_true, y_pred, y_prob, labels, **kwargs):
@@ -80,4 +81,6 @@ class BaseMultilabelClassifier(BaseModel):
         return predicted_probs, predicted
 
     def metrics(self):
+        from ..metrics import F1Score
+
         return (F1Score,)
