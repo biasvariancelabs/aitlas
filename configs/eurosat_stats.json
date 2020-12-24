@@ -1,0 +1,16 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.StatsTask",
+        "config": {
+            "dataset_config":{
+                "classname": "aitlas.datasets.EurosatDataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "csv_file_path": "./data/Eurosat/2750/train.csv"
+                }
+            }
+        }
+    }
+}
