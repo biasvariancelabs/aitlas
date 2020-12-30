@@ -18,39 +18,27 @@ def fc_init_weights(m):
 
 
 class VGG16MultiLabel(BaseMultilabelClassifier):
-
     def __init__(self, config):
         BaseMultilabelClassifier.__init__(self, config)
 
         if self.config.pretrained:
+            self.model = models.vgg16(self.config.pretrained, False)
+            self.model.classifier = self.model.classifier[:-1]  # remove final layer
+            self.model.classifier.add_module(
+                "6", nn.Linear(4096, self.config.num_classes, bias=True)
+            )
+
+        else:
             self.model = models.vgg16(
                 self.config.pretrained, False, num_classes=self.config.num_classes
             )
-        else:
-            self.model = models.vgg16(self.config.pretrained, False)
 
-            self.model.encoder = nn.Sequential(
-                nn.Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
-                *self.model.features[1:]
-            )
-            self.model.classifier = nn.Sequential(
-                nn.Linear(4608, 4096, bias=True),
-                nn.ReLU(inplace=True),
-                nn.Dropout(),
-                nn.Linear(4096, 4096, bias=True),
-                nn.ReLU(inplace=True),
-                nn.Dropout(),
-                nn.Linear(4096, self.config.num_classes, bias=True),
-            )
-
-            self.model.apply(weights_init_kaiming)
-            self.model.apply(fc_init_weights)
+        # remove final layers if we only need to extract features
+        if self.config.extract_feature_only:
+            self.model.classifier = self.model.classifier[:-3]
 
     def forward(self, x):
-        x = self.model.encoder(x)
-        x = x.view(x.size(0), -1)
-        x = self.model.classifier(x)
-        return x
+        return self.model.forward(x)
 
     def load_criterion(self):
         return nn.BCEWithLogitsLoss()

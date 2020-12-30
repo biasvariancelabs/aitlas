@@ -1,0 +1,20 @@
+{
+    "model": {
+        "classname": "aitlas.models.VGG16MultiLabel",
+        "config": {
+            "pretrained": true,
+            "extract_feature_only": true
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.ExtractFeaturesTask",
+        "config": {
+            "dir": "./data/test/",
+            "output_dir": "./experiment/uc_merced/",
+            "transforms": ["torchvision.transforms.ToPILImage",
+                "torchvision.transforms.Resize",
+                "torchvision.transforms.CenterCrop",
+                "torchvision.transforms.ToTensor"]
+        }
+    }
+}

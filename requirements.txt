@@ -18,3 +18,4 @@ pyarrow<1.0.2
 tqdm<4.50.3
 scikit-image<0.17.3
 jupyter<1.0.1
+eo-learn-core<0.8.1
