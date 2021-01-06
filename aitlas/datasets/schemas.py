@@ -1,6 +1,10 @@
+from eolearn.core import FeatureType
 from marshmallow import fields, validate
 
 from ..base.schemas import BaseDatasetSchema
+
+
+_valid_types = [t.value for t in FeatureType]
 
 
 class GenericMulticlassDatasetSchema(BaseDatasetSchema):
@@ -57,4 +61,43 @@ class BigEarthNetSchema(BaseDatasetSchema):
         missing=[572.41639287, 582.87945694, 675.88746967],
         required=False,
         description="List of std values for the 3 channels",
+    )
+
+
+class EOPatchDatasetSchema(BaseDatasetSchema):
+    root = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/EOPatches/"
+    )
+    input_feature_type = fields.String(
+        description="Feature type of the input feature.",
+        required=True,
+        validate=validate.OneOf(_valid_types),
+    )
+    input_feature_name = fields.String(
+        description="Name of the input feature.", required=True
+    )
+    # input_feature_axis = fields.List(fields.Int, description="Height and width axis for the input features",
+    #                                  required=True, example=[1, 2])
+    input_feature_shape = fields.List(
+        fields.Int,
+        description="Shape of the input feature. Use -1 for unknown dimesnions.",
+        required=True,
+        example=[-1, 100, 100, 3],
+    )
+
+    labels_feature_type = fields.String(
+        description="Feature type of the labels feature.",
+        required=True,
+        validate=validate.OneOf(_valid_types),
+    )
+    labels_feature_name = fields.String(
+        description="Name of the labels feature.", required=True
+    )
+    # labels_feature_axis = fields.List(fields.Int, description="Height and width axis for the labels", required=True,
+    #                                   example=[1, 2])
+    labels_feature_shape = fields.List(
+        fields.Int,
+        description="Shape of the labels feature. Use -1 for unknown dimesnions.",
+        required=True,
+        example=[-1, 100, 100, 3],
     )

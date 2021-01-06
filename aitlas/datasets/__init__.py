@@ -6,6 +6,7 @@ from .big_earth_net import (
 )
 from .camvid import CamVidDataset
 from .chactun import ChactunDataset
+from .eopatch import EOPatchDataset
 from .eurosat import EurosatDataset
 from .generic_multiclass import GenericMulticlassDataset
 from .generic_multilabel import GenericMultiLabelsDataset

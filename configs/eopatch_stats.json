@@ -1,0 +1,22 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.StatsTask",
+        "config": {
+            "dataset_config":{
+                "classname": "aitlas.datasets.EOPatchDataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "root": "./data/EOPatches/",
+                    "input_feature_type": "data",
+                    "input_feature_name": "CLP",
+                    "input_feature_shape": [23, -1, -1, 9],
+                    "labels_feature_type": "mask_timeless",
+                    "labels_feature_name": "LULC",
+                    "labels_feature_shape": [-1, -1, 1]
+                }
+            }
+        }
+    }
+}
