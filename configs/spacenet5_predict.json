@@ -1,0 +1,32 @@
+{
+    "model": {
+        "classname": "aitlas.models.UNetResnet34",
+        "config": {
+            "num_classes": 8,
+            "pretrained": true
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.SpaceNet5PredictTask",
+        "config": {
+            "model_path": "./examples/experiments/spacenet5_baseline/checkpoint_1611463163.pth.tar",
+            "dir": "",
+            "output_path": "/home/stefan/Downloads/Spacenet5Data/results_root/predicts",
+            "dataset_config": {
+                "classname": "aitlas.datasets.SpaceNet5Dataset",
+                "config": {
+                    "batch_size": 4,
+                    "shuffle": true,
+                    "num_workers": 1,
+                    "filenames": "/home/stefan/Downloads/Spacenet5Data/split/test.csv",
+                    "image_root": "/home/stefan/Downloads/Spacenet5Data/prepare_imagery",
+                    "cont_mask_root": "/home/stefan/Downloads/Spacenet5Data/output_mask_dir_contin",
+                    "mc_mask_root": "/home/stefan/Downloads/Spacenet5Data/output_mask_multidim_dir",
+                    "transforms": [
+                        "aitlas.transforms.SpaceNet5Transforms"
+                    ]
+                }
+            }
+        }
+    }
+}

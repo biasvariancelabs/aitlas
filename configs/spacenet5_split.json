@@ -1,0 +1,22 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.SpaceNet5SplitTask",
+        "config": {
+            "split": {
+                "train": {
+                    "ratio": 80,
+                    "file": "/home/stefan/Downloads/Spacenet5Data/split/train.csv"
+                },
+                "val": {
+                    "ratio": 10,
+                    "file": "/home/stefan/Downloads/Spacenet5Data/split/val.csv"
+                },
+                "test": {
+                    "ratio": 10,
+                    "file": "/home/stefan/Downloads/Spacenet5Data/split/test.csv"
+                }
+            },
+            "root": "/home/stefan/Downloads/Spacenet5Data/prepare_imagery"
+        }
+    }
+}

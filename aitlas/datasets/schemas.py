@@ -58,3 +58,21 @@ class BigEarthNetSchema(BaseDatasetSchema):
         required=False,
         description="List of std values for the 3 channels",
     )
+
+
+class SpaceNet5DatasetSchema(BaseDatasetSchema):
+    filenames = fields.String(
+        missing="",
+        description="File path to the {train, test, val}.csv output file by the SpaceNet5SplitTask"
+    )
+    image_root = fields.String(
+        missing="", description="File path to the root directory with the output images by the PrepareImageryTask"
+    )
+    cont_mask_root = fields.String(
+        missing="",
+        description="File path to the root directory with the output continuous masks by the PrepareSpeedMasksTask"
+    )
+    mc_mask_root = fields.String(
+        missing="",
+        description="File path to the root directory with the output multi-channel masks by the PrepareSpeedMasksTask"
+    )
