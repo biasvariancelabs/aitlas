@@ -1,0 +1,48 @@
+{
+    "model": {
+        "classname": "aitlas.models.UNetResnet34",
+        "config": {
+            "num_classes": 8,
+            "pretrained": true
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+        "config": {
+            "epochs": 1,
+            "model_directory": "examples/experiments/",
+            "save_epochs": 1,
+            "id": "spacenet5_baseline",
+            "train_dataset_config": {
+                "classname": "aitlas.datasets.SpaceNet5Dataset",
+                "config": {
+                    "batch_size": 4,
+                    "shuffle": true,
+                    "num_workers": 1,
+                    "filenames": "/home/stefan/Downloads/Spacenet5Data/split/train.csv",
+                    "image_root": "/home/stefan/Downloads/Spacenet5Data/prepare_imagery",
+                    "cont_mask_root": "/home/stefan/Downloads/Spacenet5Data/output_mask_dir_contin",
+                    "mc_mask_root": "/home/stefan/Downloads/Spacenet5Data/output_mask_multidim_dir",
+                    "transforms": [
+                        "aitlas.transforms.SpaceNet5Transforms"
+                    ]
+                }
+            },
+            "val_dataset_config": {
+                "classname": "aitlas.datasets.SpaceNet5Dataset",
+                "config": {
+                    "batch_size": 1,
+                    "shuffle": false,
+                    "num_workers": 1,
+                    "filenames": "/home/stefan/Downloads/Spacenet5Data/split/val.csv",
+                    "image_root": "/home/stefan/Downloads/Spacenet5Data/prepare_imagery",
+                    "cont_mask_root": "/home/stefan/Downloads/Spacenet5Data/output_mask_dir_contin",
+                    "mc_mask_root": "/home/stefan/Downloads/Spacenet5Data/output_mask_multidim_dir",
+                    "transforms": [
+                        "aitlas.transforms.SpaceNet5Transforms"
+                    ]
+                }
+            }
+        }
+    }
+}

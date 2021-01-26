@@ -1,0 +1,20 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.SpaceNet5SkeletonizeTask",
+        "config": {
+           "min_spur_length_m": 10,
+            "min_subgraph_length_pix": 20,
+            "GSD": 0.3,
+            "use_medial_axis": 0,
+            "path_results_root": "/home/stefan/Downloads/Spacenet5Data/results_root",
+            "test_results_dir": "test_results_dir",
+            "wkt_submission": "wkt_submission_nospeed.csv",
+            "skeleton_dir": "skeleton",
+            "skeleton_pkl_dir": "skeleton_pkl",
+            "skeleton_thresh": 0.3,
+            "skeleton_band": 7,
+            "num_classes": 8,
+            "masks_dir": "/home/stefan/Downloads/Spacenet5Data/results_root/predicts"
+        }
+    }
+}
