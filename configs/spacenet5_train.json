@@ -9,9 +9,9 @@
     "task": {
         "classname": "aitlas.tasks.TrainTask",
         "config": {
-            "epochs": 1,
+            "epochs": 30,
             "model_directory": "examples/experiments/",
-            "save_epochs": 1,
+            "save_epochs": 3,
             "id": "spacenet5_baseline",
             "dataset_config": {
                 "classname": "aitlas.datasets.SpaceNet5Dataset",
@@ -19,10 +19,10 @@
                     "batch_size": 4,
                     "shuffle": true,
                     "num_workers": 1,
-                    "filenames": "/home/stefan/Downloads/Spacenet5Data/split/train.csv",
-                    "image_root": "/home/stefan/Downloads/Spacenet5Data/prepare_imagery",
-                    "cont_mask_root": "/home/stefan/Downloads/Spacenet5Data/output_mask_dir_contin",
-                    "mc_mask_root": "/home/stefan/Downloads/Spacenet5Data/output_mask_multidim_dir",
+                    "filenames": "/home/dkocev/sp/SpaceNetChallenge5/results/split/train.csv",
+                    "image_root": "/home/dkocev/sp/SpaceNetChallenge5/results/prepare_imagery",
+                    "cont_mask_root": "/home/dkocev/sp/SpaceNetChallenge5/results/output_mask_dir_contin",
+                    "mc_mask_root": "/home/dkocev/sp/SpaceNetChallenge5/results/output_mask_multidim_dir",
                     "transforms": [
                         "aitlas.transforms.SpaceNet5Transforms"
                     ]
