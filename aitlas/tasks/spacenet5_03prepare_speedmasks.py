@@ -3,8 +3,6 @@ Notes
 -----
     Based on the implementation at:
         https://github.com/CosmiQ/cresi/blob/master/cresi/data_prep/speed_masks.py
-    Tutorial for installing GDAL on Linux systems:
-        https://ljvmiranda921.github.io/notebook/2019/04/13/install-gdal/#using-your-package-manager
 """
 
 import os

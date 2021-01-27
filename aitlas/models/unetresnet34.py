@@ -4,6 +4,7 @@ Notes
     Based on the implementation at:
         https://github.com/CosmiQ/cresi/tree/master/cresi/net
 """
+import torch
 import torch.nn as nn
 import torchvision.models as models
 from torch import cat
@@ -54,6 +55,8 @@ class Resnet34:
 
     def forward(self, x):
         """The forward pass through the model."""
+        if torch.cuda.is_available():
+            self.model.cuda()
         self.model.forward(x)
 
     def skip_connection(self, layer):
@@ -71,23 +74,24 @@ class Resnet34:
             result : nn.module
                 the output from the model at the corresponding layer
         """
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         if layer == 0:
             return nn.Sequential(
                 self.model.conv1,
                 self.model.bn1,
                 self.model.relu
-            )
+            ).to(device)
         elif layer == 1:
             return nn.Sequential(
                 self.model.maxpool,
                 self.model.layer1
-            )
+            ).to(device)
         elif layer == 2:
-            return self.model.layer2
+            return self.model.layer2.to(device)
         elif layer == 3:
-            return self.model.layer3
+            return self.model.layer3.to(device)
         elif layer == 4:
-            return self.model.layer4
+            return self.model.layer4.to(device)
 
 
 class ConvolutionBottleneckBlock(nn.Module):
@@ -114,6 +118,8 @@ class ConvolutionBottleneckBlock(nn.Module):
 
     def forward(self, decoder, encoder):
         """The forward pass through the block."""
+        if torch.cuda.is_available():
+            self.block.cuda()
         x = cat([decoder, encoder], dim=1)
         return self.block(x)
 
@@ -142,6 +148,8 @@ class UNetDecoderBlock(nn.Module):
 
     def forward(self, x):
         """The forward pass through the model."""
+        if torch.cuda.is_available():
+            self.block.cuda()
         return self.block(x)
 
 
@@ -178,7 +186,7 @@ class UNetResnet34(BaseSegmentationClassifier):
                       out_channels=config.num_classes,
                       kernel_size=3,
                       padding=1)
-        )
+        ).to(self.device)
         # Initialize bottleneck and decoder weights, encoder comes pretrained
         self.initialize_weights()
         # Set up the encoder and the skip connections

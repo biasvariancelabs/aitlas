@@ -5,18 +5,18 @@
             "split": {
                 "train": {
                     "ratio": 80,
-                    "file": "/home/stefan/Downloads/Spacenet5Data/split/train.csv"
+                    "file": "/home/dkocev/sp/SpaceNetChallenge5/results/split/train.csv"
                 },
                 "val": {
-                    "ratio": 10,
-                    "file": "/home/stefan/Downloads/Spacenet5Data/split/val.csv"
+                    "ratio": 20,
+                    "file": "/home/dkocev/sp/SpaceNetChallenge5/results/split/val.csv"
                 },
                 "test": {
-                    "ratio": 10,
-                    "file": "/home/stefan/Downloads/Spacenet5Data/split/test.csv"
+                    "ratio": 0,
+                    "file": "/home/dkocev/sp/SpaceNetChallenge5/results/split/test.csv"
                 }
             },
-            "root": "/home/stefan/Downloads/Spacenet5Data/prepare_imagery"
+            "root": "/home/dkocev/sp/SpaceNetChallenge5/results/prepare_imagery"
         }
     }
 }
