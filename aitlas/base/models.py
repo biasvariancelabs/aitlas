@@ -93,7 +93,9 @@ class BaseModel(nn.Module, Configurable):
                 criterion=self.criterion,
                 description="testing on train set",
             )
-            self.log_metrics(self.running_metrics.get_scores(), "train", self.writer, epoch + 1)
+            self.log_metrics(
+                self.running_metrics.get_scores(), "train", self.writer, epoch + 1
+            )
             self.running_metrics.reset()
 
             # evaluate against a validation set if there is one
@@ -104,7 +106,9 @@ class BaseModel(nn.Module, Configurable):
                     criterion=self.criterion,
                     description="testing on validation set",
                 )
-                self.log_metrics(self.running_metrics.get_scores(), "val", self.writer, epoch + 1)
+                self.log_metrics(
+                    self.running_metrics.get_scores(), "val", self.writer, epoch + 1
+                )
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
 
         self.writer.close()
@@ -225,9 +229,7 @@ class BaseModel(nn.Module, Configurable):
         return total_loss
 
     def predict(
-        self,
-        dataloader,
-        description="running prediction",
+        self, dataloader, model_path: str = None, description="running prediction",
     ):
         """
         Predicts using a model against the specified dataloader
@@ -236,6 +238,10 @@ class BaseModel(nn.Module, Configurable):
         :description: What to show in the progress bar
         :return: tuple of (y_true, y_pred, y_pred_probs)
         """
+        # load the model
+        self.load_model(model_path)
+
+        # turn on eval mode
         self.model.eval()
 
         # initialize counters

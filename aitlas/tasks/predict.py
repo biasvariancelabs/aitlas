@@ -39,7 +39,7 @@ class TestFolderDataset(BaseDataset):
     def __getitem__(self, index):
         img = self.data[index]
         return (
-            self.transform(image_loader(img)),
+            self.transform(self.input_format(image_loader(img))),
             0,
         )  # returning `0` because we have no target
 
@@ -64,7 +64,7 @@ class PredictTask(BaseTask):
         if self.config.dataset_config:
             dataset = self.create_dataset(self.config.dataset_config)
             labels = dataset.labels()
-            transforms = dataset.transform
+            transforms = self.config.dataset_config.tranforms
         else:
             labels = self.config.labels
             transforms = self.config.transforms
@@ -118,18 +118,16 @@ class PredictSegmentationTask(BaseTask):
         if self.config.dataset_config:
             dataset = self.create_dataset(self.config.dataset_config)
             labels = dataset.labels()
-            transforms = dataset.transform
+            transforms = self.config.dataset_config.config.transforms
         else:
             labels = self.config.labels
             transforms = self.config.transforms
 
-        test_dataset = TestFolderDataset(
-            self.config.dir, labels, transforms, True,
-        )
+        test_dataset = TestFolderDataset(self.config.dir, labels, transforms, True,)
 
         # run predictions
         y_true, y_pred, y_prob = self.model.predict(
-            dataset=test_dataset, model_path=self.config.model_path,
+            dataloader=test_dataset.dataloader(), model_path=self.config.model_path,
         )
 
         # plot predictions
