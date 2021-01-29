@@ -11,6 +11,7 @@ from tqdm import tqdm
 from ..utils import current_ts, stringify
 from .config import Configurable
 from .datasets import BaseDataset
+from .metrics import runningScore1
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -28,6 +29,7 @@ class BaseModel(nn.Module, Configurable):
             device_name = "cuda"
 
         self.device = torch.device(device_name)
+        self.running_metrics = runningScore1(self.metrics(), self.device)
 
     def fit(
         self,
@@ -85,24 +87,24 @@ class BaseModel(nn.Module, Configurable):
                 self.lr_scheduler.step()
 
             # evaluate against the train set
-            calculated = self.evaluate_model(
+            train_loss = self.evaluate_model(
                 train_loader,
                 metrics=metrics,
                 criterion=self.criterion,
                 description="testing on train set",
             )
-            self.log_metrics(calculated, "train", self.writer, epoch + 1)
+            self.log_metrics(self.running_metrics.get_scores(), "train", self.writer, epoch + 1)
+            self.running_metrics.reset()
 
             # evaluate against a validation set if there is one
             if val_loader:
-                calculated = self.evaluate_model(
+                val_loss = self.evaluate_model(
                     val_loader,
                     metrics=metrics,
                     criterion=self.criterion,
                     description="testing on validation set",
                 )
-                self.log_metrics(calculated, "val", self.writer, epoch + 1)
-                _, _, _, _, val_loss = calculated
+                self.log_metrics(self.running_metrics.get_scores(), "val", self.writer, epoch + 1)
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
 
         self.writer.close()
@@ -128,7 +130,7 @@ class BaseModel(nn.Module, Configurable):
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = self.predict(inputs)
+            outputs = self.predict_batch(inputs)
 
             # check if outputs is OrderedDict for segmentation
             if isinstance(outputs, collections.Mapping):
@@ -156,7 +158,7 @@ class BaseModel(nn.Module, Configurable):
         )
         return total_loss
 
-    def predict(self, *input, **kwargs):
+    def predict_batch(self, *input, **kwargs):
         return self(*input)
 
     def evaluate(
@@ -192,11 +194,6 @@ class BaseModel(nn.Module, Configurable):
         """
         self.model.eval()
 
-        # initialize counters
-        y_true = []
-        y_pred = []
-        y_pred_probs = []
-
         # initialize loss if applicable
         total_loss = 0.0
 
@@ -207,7 +204,7 @@ class BaseModel(nn.Module, Configurable):
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
 
-                outputs = self.predict(inputs)
+                outputs = self.predict_batch(inputs)
 
                 # check if outputs is OrderedDict for segmentation
                 if isinstance(outputs, collections.Mapping):
@@ -218,21 +215,53 @@ class BaseModel(nn.Module, Configurable):
                     total_loss += batch_loss.item() * inputs.size(0)
 
                 predicted_probs, predicted = self.get_predicted(outputs)
-
-                y_pred_probs += list(predicted_probs.cpu().detach().numpy())
-                y_pred += list(predicted.cpu().detach().numpy())
-                y_true += list(labels.cpu().detach().numpy())
-
-        calculated_metrics = {}
-
-        for metric_cls in metrics:
-            metric = metric_cls(device=self.device)
-            calculated_metrics[metric.name] = metric.calculate(y_true, y_pred)
+                y_pred = list(predicted.cpu().detach().numpy())
+                y_true = list(labels.cpu().detach().numpy())
+                self.running_metrics.update(y_true, y_pred)
 
         if criterion:
             total_loss = total_loss / len(dataloader.dataset)
 
-        return (calculated_metrics, y_true, y_pred, y_pred_probs, total_loss)
+        return total_loss
+
+    def predict(
+        self,
+        dataloader,
+        description="running prediction",
+    ):
+        """
+        Predicts using a model against the specified dataloader
+        :param dataloader:
+        :criterion: Criterion to calculate loss
+        :description: What to show in the progress bar
+        :return: tuple of (y_true, y_pred, y_pred_probs)
+        """
+        self.model.eval()
+
+        # initialize counters
+        y_true = []
+        y_pred = []
+        y_pred_probs = []
+
+        # evaluate
+        with torch.no_grad():
+            for i, data in enumerate(tqdm(dataloader, desc=description)):
+                inputs, labels = data
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device)
+
+                outputs = self.predict_batch(inputs)
+
+                # check if outputs is OrderedDict for segmentation
+                if isinstance(outputs, collections.Mapping):
+                    outputs = outputs["out"]
+
+                predicted_probs, predicted = self.get_predicted(outputs)
+                y_pred_probs += list(predicted_probs.cpu().detach().numpy())
+                y_pred += list(predicted.cpu().detach().numpy())
+                y_true += list(labels.cpu().detach().numpy())
+
+        return y_true, y_pred, y_pred_probs
 
     def forward(self, *input, **kwargs):
         """

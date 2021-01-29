@@ -25,12 +25,12 @@ class EvaluateTask(BaseTask):
         for metric in self.config.metrics:
             metrics.append(get_class(metric))
 
-        calculated_metrics, y_true, y_pred, y_prob, loss = self.model.evaluate(
+        loss = self.model.evaluate(
             dataset=dataset, model_path=self.config.model_path, metrics=metrics,
         )
 
         # log the metrics
-        logging.info(stringify(calculated_metrics))
+        logging.info(stringify(self.model.running_metrics.get_scores()))
 
         # generate a report
-        self.model.report(y_true, y_pred, y_prob, dataset.labels(), id=self.id)
+        #self.model.report(y_true, y_pred, y_prob, dataset.labels(), id=self.id)
