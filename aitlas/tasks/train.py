@@ -22,7 +22,7 @@ class TrainTask(BaseTask):
             resume_model=self.config.resume_model,
             run_id=self.id,
             iterations_log=self.config.iterations_log,
-            metrics=self.model.metrics(),
+            metrics=self.model.metrics,
         )
 
 
@@ -46,5 +46,5 @@ class TrainAndEvaluateTask(BaseTask):
             resume_model=self.config.resume_model,
             run_id=self.id,
             iterations_log=self.config.iterations_log,
-            metrics=self.model.metrics(),
+            metrics=self.model.metrics,
         )

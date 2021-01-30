@@ -25,11 +25,6 @@ class BaseMulticlassClassifier(BaseModel):
         predicted_probs, predicted = probs.topk(1, dim=1)
         return probs, predicted
 
-    def metrics(self):
-        from ..metrics import AccuracyScore, F1Score
-
-        return (F1Score, AccuracyScore)
-
     def report(self, y_true, y_pred, y_prob, labels, **kwargs):
         """Report for multiclass classification"""
         run_id = kwargs.get("id", "experiment")
@@ -79,8 +74,3 @@ class BaseMultilabelClassifier(BaseModel):
             predicted_probs.dtype
         )
         return predicted_probs, predicted
-
-    def metrics(self):
-        from ..metrics import F1Score
-
-        return (F1Score,)

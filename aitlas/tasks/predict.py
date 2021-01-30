@@ -127,7 +127,7 @@ class PredictSegmentationTask(BaseTask):
 
         # run predictions
         y_true, y_pred, y_prob = self.model.predict(
-            dataloader=test_dataset.dataloader(), model_path=self.config.model_path,
+            dataset=test_dataset, model_path=self.config.model_path,
         )
 
         # plot predictions

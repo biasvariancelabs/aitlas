@@ -11,19 +11,49 @@ class BaseMetric:
         raise NotImplementedError("Please implement you metric calculation logic here.")
 
 
-class runningScore1(object):
-    def __init__(self, metrics, device):
+class RunningScore(object):
+    """Generic metric container class. This class contains metrics that are averaged over batches. """
+
+    def __init__(self, metrics, num_classes, device):
         self.calculated_metrics = {}
         self.metrics = metrics
         self.device = device
+        self.num_classes = num_classes
+        self.confusion_matrix = np.zeros((num_classes, num_classes))
         for metric_cls in self.metrics:
             metric = metric_cls(device=self.device)
             self.calculated_metrics[metric.name] = []
 
     def update(self, y_true, y_pred):
+        """Updates stats on each batch"""
+
+        # update metrics
         for metric_cls in self.metrics:
             metric = metric_cls(device=self.device)
-            self.calculated_metrics[metric.name].append(metric.calculate(y_true, y_pred))
+            calculated = metric.calculate(y_true, y_pred)
+            if isinstance(calculated, dict):
+                if isinstance(self.calculated_metrics[metric.name], list):
+                    self.calculated_metrics[metric.name] = {}
+                for k, v in calculated.items():
+                    if not k in self.calculated_metrics[metric.name]:
+                        self.calculated_metrics[metric.name][k] = []
+                    self.calculated_metrics[metric.name][k].append(v)
+            else:
+                self.calculated_metrics[metric.name].append(calculated)
+
+        # update confusion matrix
+        for lt, lp in zip(y_true, y_pred):
+            self.confusion_matrix += self._fast_hist(
+                lt.flatten(), lp.flatten(), self.num_classes
+            )
+
+    def _fast_hist(self, label_true, label_pred, n_class):
+        mask = (label_true >= 0) & (label_true < n_class)
+        hist = np.bincount(
+            n_class * label_true[mask].astype(int) + label_pred[mask],
+            minlength=n_class ** 2,
+        ).reshape(n_class, n_class)
+        return hist
 
     def reset(self):
         for metric_cls in self.metrics:
@@ -34,8 +64,21 @@ class runningScore1(object):
         metrics_summary = {}
         for metric_cls in self.metrics:
             metric = metric_cls(device=self.device)
-            metrics_summary[metric.name] = np.nanmean(self.calculated_metrics[metric.name])
+            if isinstance(self.calculated_metrics[metric.name], dict):
+                metrics_summary[metric.name] = {}
+                for k, v in self.calculated_metrics[metric.name].items():
+                    metrics_summary[metric.name][k] = np.nanmean(
+                        self.calculated_metrics[metric.name][k]
+                    )
+            else:
+                metrics_summary[metric.name] = np.nanmean(
+                    self.calculated_metrics[metric.name]
+                )
         return metrics_summary
+
+    def get_confusion_matrix(self):
+        return self.confusion_matrix
+
 
 class runningScore(object):
     def __init__(self, n_classes):
@@ -45,13 +88,16 @@ class runningScore(object):
     def _fast_hist(self, label_true, label_pred, n_class):
         mask = (label_true >= 0) & (label_true < n_class)
         hist = np.bincount(
-            n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2
+            n_class * label_true[mask].astype(int) + label_pred[mask],
+            minlength=n_class ** 2,
         ).reshape(n_class, n_class)
         return hist
 
     def update(self, label_trues, label_preds):
         for lt, lp in zip(label_trues, label_preds):
-            self.confusion_matrix += self._fast_hist(lt.flatten(), lp.flatten(), self.n_classes)
+            self.confusion_matrix += self._fast_hist(
+                lt.flatten(), lp.flatten(), self.n_classes
+            )
 
     def get_scores(self):
         """Returns accuracy score evaluation result.

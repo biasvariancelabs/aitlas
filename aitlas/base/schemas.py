@@ -19,12 +19,25 @@ class BaseDatasetSchema(Schema):
     )
 
 
-class BaseClassifierSchema(Schema):
+class BaseModelSchema(Schema):
     num_classes = fields.Int(missing=2, description="Number of classes", example=2)
+    use_cuda = fields.Bool(missing=True, description="Whether to use CUDA if possible")
+    metrics = fields.List(
+        fields.String,
+        missing=["aitlas.metrics.F1Score"],
+        description="Classes of metrics you want to calculate",
+        example=[
+            "aitlas.metrics.PrecisionScore",
+            "aitlas.metrics.AccuracyScore",
+            "aitlas.metrics.F1Score",
+        ],
+    )
+
+
+class BaseClassifierSchema(BaseModelSchema):
     learning_rate = fields.Float(
         missing=None, description="Learning rate used in training.", example=0.01
     )
-    use_cuda = fields.Bool(missing=True, description="Whether to use CUDA if possible")
     pretrained = fields.Bool(
         missing=True, description="Whether to use a pretrained network or not."
     )
@@ -34,6 +47,15 @@ class BaseClassifierSchema(Schema):
     extract_feature_only = fields.Bool(
         missing=False,
         description="Whether to use the network without the classification layer.",
+    )
+
+
+class BaseSegmentationClassifierSchema(BaseClassifierSchema):
+    metrics = fields.List(
+        fields.String,
+        missing=["aitlas.metrics.F1ScoreSample"],
+        description="Classes of metrics you want to calculate",
+        example=["aitlas.metrics.F1ScoreSample", "aitlas.metrics.Accuracy"],
     )
 
 

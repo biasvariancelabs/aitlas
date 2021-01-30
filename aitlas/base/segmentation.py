@@ -8,14 +8,14 @@ import torch.optim as optim
 
 from ..metrics import F1ScoreSample
 from .models import BaseModel
-from .schemas import BaseClassifierSchema
+from .schemas import BaseSegmentationClassifierSchema
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 class BaseSegmentationClassifier(BaseModel):
-    schema = BaseClassifierSchema
+    schema = BaseSegmentationClassifierSchema
 
     def __init__(self, config):
         super().__init__(config)
@@ -26,9 +26,6 @@ class BaseSegmentationClassifier(BaseModel):
             predicted_probs.dtype
         )
         return predicted_probs, predicted
-
-    def metrics(self):
-        return (F1ScoreSample,)
 
     def load_optimizer(self):
         """Load the optimizer"""

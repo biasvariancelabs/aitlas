@@ -8,10 +8,10 @@ import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from ..utils import current_ts, stringify
+from ..utils import current_ts, get_class, stringify
 from .config import Configurable
 from .datasets import BaseDataset
-from .metrics import runningScore1
+from .metrics import RunningScore
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -29,7 +29,10 @@ class BaseModel(nn.Module, Configurable):
             device_name = "cuda"
 
         self.device = torch.device(device_name)
-        self.running_metrics = runningScore1(self.metrics(), self.device)
+        self.metrics = [get_class(m) for m in self.config.metrics]
+        self.running_metrics = RunningScore(
+            self.metrics, self.config.num_classes, self.device
+        )
 
     def fit(
         self,
@@ -134,7 +137,7 @@ class BaseModel(nn.Module, Configurable):
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = self.predict_batch(inputs)
+            outputs = self(inputs)
 
             # check if outputs is OrderedDict for segmentation
             if isinstance(outputs, collections.Mapping):
@@ -161,9 +164,6 @@ class BaseModel(nn.Module, Configurable):
             f"epoch: {epoch + 1}, time: {current_ts() - start}, loss: {total_loss: .5f}"
         )
         return total_loss
-
-    def predict_batch(self, *input, **kwargs):
-        return self(*input)
 
     def evaluate(
         self, dataset: BaseDataset = None, model_path: str = None, metrics: list = (),
@@ -201,27 +201,18 @@ class BaseModel(nn.Module, Configurable):
         # initialize loss if applicable
         total_loss = 0.0
 
-        # evaluate
-        with torch.no_grad():
-            for i, data in enumerate(tqdm(dataloader, desc=description)):
-                inputs, labels = data
-                inputs = inputs.to(self.device)
-                labels = labels.to(self.device)
+        for inputs, outputs, labels in self.predict_output_per_batch(
+            dataloader, description
+        ):
+            if criterion:
+                batch_loss = criterion(outputs, labels)
+                total_loss += batch_loss.item() * inputs.size(0)
 
-                outputs = self.predict_batch(inputs)
-
-                # check if outputs is OrderedDict for segmentation
-                if isinstance(outputs, collections.Mapping):
-                    outputs = outputs["out"]
-
-                if criterion:
-                    batch_loss = criterion(outputs, labels)
-                    total_loss += batch_loss.item() * inputs.size(0)
-
-                predicted_probs, predicted = self.get_predicted(outputs)
-                y_pred = list(predicted.cpu().detach().numpy())
-                y_true = list(labels.cpu().detach().numpy())
-                self.running_metrics.update(y_true, y_pred)
+            predicted_probs, predicted = self.get_predicted(outputs)
+            y_pred = list(predicted.cpu().detach().numpy())
+            y_true = list(labels.cpu().detach().numpy())
+            self.running_metrics.update(y_true, y_pred)
+            print(self.running_metrics.get_confusion_matrix())
 
         if criterion:
             total_loss = total_loss / len(dataloader.dataset)
@@ -229,45 +220,55 @@ class BaseModel(nn.Module, Configurable):
         return total_loss
 
     def predict(
-        self, dataloader, model_path: str = None, description="running prediction",
+        self,
+        dataset: BaseDataset = None,
+        model_path: str = None,
+        description="running prediction",
     ):
         """
-        Predicts using a model against the specified dataloader
-        :param dataloader:
-        :criterion: Criterion to calculate loss
-        :description: What to show in the progress bar
+        Predicts using a model against for a specified dataset
+
         :return: tuple of (y_true, y_pred, y_pred_probs)
         """
         # load the model
         self.load_model(model_path)
-
-        # turn on eval mode
-        self.model.eval()
 
         # initialize counters
         y_true = []
         y_pred = []
         y_pred_probs = []
 
-        # evaluate
+        # predict
+        for inputs, outputs, labels in self.predict_output_per_batch(
+            dataset.dataloader(), description
+        ):
+            predicted_probs, predicted = self.get_predicted(outputs)
+            y_pred_probs += list(predicted_probs.cpu().detach().numpy())
+            y_pred += list(predicted.cpu().detach().numpy())
+            y_true += list(labels.cpu().detach().numpy())
+
+        return y_true, y_pred, y_pred_probs
+
+    def predict_output_per_batch(self, dataloader, description):
+        """Run predictions on a dataloader and return inputs, outputs, labels per batch"""
+
+        # turn on eval mode
+        self.model.eval()
+
+        # run predictions
         with torch.no_grad():
             for i, data in enumerate(tqdm(dataloader, desc=description)):
                 inputs, labels = data
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
 
-                outputs = self.predict_batch(inputs)
+                outputs = self(inputs)
 
                 # check if outputs is OrderedDict for segmentation
                 if isinstance(outputs, collections.Mapping):
                     outputs = outputs["out"]
 
-                predicted_probs, predicted = self.get_predicted(outputs)
-                y_pred_probs += list(predicted_probs.cpu().detach().numpy())
-                y_pred += list(predicted.cpu().detach().numpy())
-                y_true += list(labels.cpu().detach().numpy())
-
-        return y_true, y_pred, y_pred_probs
+                yield inputs, outputs, labels
 
     def forward(self, *input, **kwargs):
         """
@@ -282,17 +283,13 @@ class BaseModel(nn.Module, Configurable):
         """
         raise NotImplementedError("Please implement `get_predicted` for your model. ")
 
-    def metrics(self):
-        """Metrics we want to log for the model"""
-        return ()
-
     def report(self, y_true, y_pred, y_prob, labels, **kwargs):
         """The report we want to generate for the model"""
         return ()
 
     def log_metrics(self, output, tag="train", writer=None, epoch=0):
         """Log the calculated metrics"""
-        calculated_metrics, y_true, y_pred, y_probs, val_loss = output
+        calculated_metrics = output
         logging.info(stringify(calculated_metrics))
         if writer:
             for metric_name in calculated_metrics:
