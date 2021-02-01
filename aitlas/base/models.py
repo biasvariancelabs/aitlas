@@ -44,7 +44,6 @@ class BaseModel(nn.Module, Configurable):
         resume_model: str = None,
         val_dataset: BaseDataset = None,
         run_id: str = None,
-        metrics: tuple = (),
         **kwargs,
     ):
         logging.info("Starting training.")
@@ -92,7 +91,7 @@ class BaseModel(nn.Module, Configurable):
             # evaluate against the train set
             train_loss = self.evaluate_model(
                 train_loader,
-                metrics=metrics,
+                metrics=self.metrics,
                 criterion=self.criterion,
                 description="testing on train set",
             )
@@ -105,7 +104,7 @@ class BaseModel(nn.Module, Configurable):
             if val_loader:
                 val_loss = self.evaluate_model(
                     val_loader,
-                    metrics=metrics,
+                    metrics=self.metrics,
                     criterion=self.criterion,
                     description="testing on validation set",
                 )
@@ -166,13 +165,16 @@ class BaseModel(nn.Module, Configurable):
         return total_loss
 
     def evaluate(
-        self, dataset: BaseDataset = None, model_path: str = None, metrics: list = (),
+        self, dataset: BaseDataset = None, model_path: str = None,
     ):
         # load the model
         self.load_model(model_path)
 
         # get test data loader
         dataloader = dataset.dataloader()
+
+        # get metrics
+        metrics = self.metrics
 
         # evaluate model on data
         result = self.evaluate_model(
@@ -377,7 +379,6 @@ class BaseModel(nn.Module, Configurable):
         resume_model: str = None,
         val_dataset: BaseDataset = None,
         run_id: str = None,
-        metrics: tuple = (),
         **kwargs,
     ):
         return self.fit(
@@ -388,7 +389,6 @@ class BaseModel(nn.Module, Configurable):
             iterations_log=iterations_log,
             resume_model=resume_model,
             run_id=run_id,
-            metrics=metrics,
             **kwargs,
         )
 
@@ -402,7 +402,6 @@ class BaseModel(nn.Module, Configurable):
         resume_model: str = None,
         val_dataset: BaseDataset = None,
         run_id: str = None,
-        metrics: tuple = (),
         **kwargs,
     ):
         return self.fit(
@@ -414,6 +413,5 @@ class BaseModel(nn.Module, Configurable):
             resume_model=resume_model,
             val_dataset=val_dataset,
             run_id=run_id,
-            metrics=metrics,
             **kwargs,
         )
