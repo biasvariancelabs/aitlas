@@ -56,6 +56,7 @@ class RunningScore(object):
         return hist
 
     def reset(self):
+        self.confusion_matrix = np.zeros((self.num_classes, self.num_classes))
         for metric_cls in self.metrics:
             metric = metric_cls(device=self.device)
             self.calculated_metrics[metric.name] = []

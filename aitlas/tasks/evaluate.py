@@ -20,17 +20,10 @@ class EvaluateTask(BaseTask):
         # load the dataset
         dataset = self.create_dataset(self.config.dataset_config)
 
-        # get metric classes
-        metrics = []
-        for metric in self.config.metrics:
-            metrics.append(get_class(metric))
-
-        loss = self.model.evaluate(
-            dataset=dataset, model_path=self.config.model_path, metrics=metrics,
-        )
+        loss = self.model.evaluate(dataset=dataset, model_path=self.config.model_path)
 
         # log the metrics
         logging.info(stringify(self.model.running_metrics.get_scores()))
 
         # generate a report
-        #self.model.report(y_true, y_pred, y_prob, dataset.labels(), id=self.id)
+        self.model.report(dataset.labels(), id=self.id)

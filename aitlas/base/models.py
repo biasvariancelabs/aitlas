@@ -91,7 +91,6 @@ class BaseModel(nn.Module, Configurable):
             # evaluate against the train set
             train_loss = self.evaluate_model(
                 train_loader,
-                metrics=self.metrics,
                 criterion=self.criterion,
                 description="testing on train set",
             )
@@ -104,7 +103,6 @@ class BaseModel(nn.Module, Configurable):
             if val_loader:
                 val_loss = self.evaluate_model(
                     val_loader,
-                    metrics=self.metrics,
                     criterion=self.criterion,
                     description="testing on validation set",
                 )
@@ -173,22 +171,13 @@ class BaseModel(nn.Module, Configurable):
         # get test data loader
         dataloader = dataset.dataloader()
 
-        # get metrics
-        metrics = self.metrics
-
         # evaluate model on data
-        result = self.evaluate_model(
-            dataloader, metrics, description="testing on test set"
-        )
+        result = self.evaluate_model(dataloader, description="testing on test set")
 
         return result
 
     def evaluate_model(
-        self,
-        dataloader,
-        metrics=(),
-        criterion=None,
-        description="testing on validation set",
+        self, dataloader, criterion=None, description="testing on validation set",
     ):
         """
         Evaluates the current model against the specified dataloader for the specified metrics
@@ -214,7 +203,6 @@ class BaseModel(nn.Module, Configurable):
             y_pred = list(predicted.cpu().detach().numpy())
             y_true = list(labels.cpu().detach().numpy())
             self.running_metrics.update(y_true, y_pred)
-            print(self.running_metrics.get_confusion_matrix())
 
         if criterion:
             total_loss = total_loss / len(dataloader.dataset)
@@ -285,7 +273,7 @@ class BaseModel(nn.Module, Configurable):
         """
         raise NotImplementedError("Please implement `get_predicted` for your model. ")
 
-    def report(self, y_true, y_pred, y_prob, labels, **kwargs):
+    def report(self, labels, **kwargs):
         """The report we want to generate for the model"""
         return ()
 

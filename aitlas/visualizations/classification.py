@@ -3,18 +3,18 @@ import pandas as pd
 import seaborn as sns
 import sklearn.metrics as skmetrics
 
-from ..base import BaseVisualization
+from ..base import BaseDetailedVisualization, BaseVisualization
 from ..utils import pil_loader
 
 
 class ConfusionMatrix(BaseVisualization):
-    def __init__(self, y_true, y_pred, y_prob, labels, file, **kwargs):
-        super().__init__(y_true, y_pred, y_prob, labels, file, **kwargs)
+    def __init__(self, cm, labels, file, **kwargs):
+        super().__init__(cm, labels, file, **kwargs)
 
     def plot(self):
         # get the confusion matrix
         cm = skmetrics.confusion_matrix(self.y_true, self.y_pred, normalize="true")
-        df_cm = pd.DataFrame(cm, index=self.labels, columns=self.labels)
+        df_cm = pd.DataFrame(self.cm, index=self.labels, columns=self.labels)
 
         # plot confusion matrix
         figure = plt.figure()
@@ -53,7 +53,7 @@ class PrecisionRecallCurve(BaseVisualization):
         return figure
 
 
-class ImageLabelsVisualization(BaseVisualization):
+class ImageLabelsVisualization(BaseDetailedVisualization):
     def __init__(self, y_true, y_pred, y_prob, labels, file, **kwargs):
         super().__init__(y_true, y_pred, y_prob, labels, file, **kwargs)
         self.image = kwargs.get("image")
@@ -64,7 +64,7 @@ class ImageLabelsVisualization(BaseVisualization):
         fig.savefig(self.output_file, format="png")
 
     def plot_prediction(self, img, probs, classes):
-        """Display image and preditions from model"""
+        """Display image and predictions from model"""
 
         # Convert results to dataframe for plotting
         result = pd.DataFrame({"p": probs}, index=classes)
@@ -86,9 +86,9 @@ class ImageLabelsVisualization(BaseVisualization):
         return fig
 
 
-def confusion_matrix(y_true, y_pred, y_prob, labels, output_file):
-    """Wrapper for the call for easier usage"""
-    viz = ConfusionMatrix(y_true, y_pred, y_prob, labels, output_file)
+def confusion_matrix(cm, labels, output_file):
+    """Wrapper for easier usage"""
+    viz = ConfusionMatrix(cm, labels, output_file)
     return viz.plot()
 
 
@@ -99,6 +99,6 @@ def display_image_labels(image, y_true, y_pred, y_prob, labels, output_file):
     viz.plot()
 
 
-def precision_recall_curve(y_true, y_pred, y_prob, labels, output_file):
-    viz = PrecisionRecallCurve(y_true, y_pred, y_prob, labels, output_file)
+def precision_recall_curve(cm, labels, output_file):
+    viz = PrecisionRecallCurve(cm, labels, output_file)
     viz.plot()

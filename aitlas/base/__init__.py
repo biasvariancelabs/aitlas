@@ -7,4 +7,4 @@ from .schemas import BaseClassifierSchema, BaseDatasetSchema
 from .segmentation import BaseSegmentationClassifier
 from .tasks import BaseTask
 from .transforms import BaseTransforms, load_transforms
-from .visualizations import BaseVisualization
+from .visualizations import BaseDetailedVisualization, BaseVisualization
