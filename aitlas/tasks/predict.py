@@ -64,7 +64,7 @@ class PredictTask(BaseTask):
         if self.config.dataset_config:
             dataset = self.create_dataset(self.config.dataset_config)
             labels = dataset.labels()
-            transforms = self.config.dataset_config.tranforms
+            transforms = dataset.config.tranforms
         else:
             labels = self.config.labels
             transforms = self.config.transforms
@@ -118,7 +118,7 @@ class PredictSegmentationTask(BaseTask):
         if self.config.dataset_config:
             dataset = self.create_dataset(self.config.dataset_config)
             labels = dataset.labels()
-            transforms = self.config.dataset_config.config.transforms
+            transforms = dataset.config.transforms
         else:
             labels = self.config.labels
             transforms = self.config.transforms
