@@ -77,8 +77,28 @@ class RunningScore(object):
                 )
         return metrics_summary
 
-    def get_confusion_matrix(self):
-        return self.confusion_matrix
+    def get_accuracy(self):
+        hist = self.confusion_matrix
+        accuracy = np.diag(hist).sum() / hist.sum()
+        accuracy_per_class = np.diag(hist) / hist.sum(axis=1)
+        accuracy_per_class = np.nanmean(accuracy_per_class)
+
+        return {"accuracy": accuracy, "accuracy_per_class": accuracy_per_class}
+
+    def get_iu(self):
+        hist = self.confusion_matrix
+        intersection_over_union = np.diag(hist) / (
+            hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist)
+        )
+        mean_intersection_over_union = np.nanmean(intersection_over_union)
+        intersection_over_union_per_class = dict(
+            zip(range(self.num_classes), intersection_over_union)
+        )
+
+        return {
+            "intersection_over_union": intersection_over_union,
+            "intersection_over_union_per_class": intersection_over_union_per_class,
+        }
 
 
 class runningScore(object):

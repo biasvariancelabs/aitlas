@@ -4,7 +4,7 @@ from ..base import BaseMetric
 
 
 class AccuracyScore(BaseMetric):
-    name = "Accuracy"
+    name = "accuracy"
     key = "accuracy"
 
     def __init__(self, **kwargs):
@@ -24,11 +24,11 @@ class AveragedScore(BaseMetric):
         macro = self.method(y_true, y_pred, average="macro")
         weighted = self.method(y_true, y_pred, average="weighted")
 
-        return {"Micro": micro, "Macro": macro, "Weighted": weighted}
+        return {"micro": micro, "macro": macro, "weighted": weighted}
 
 
 class PrecisionScore(AveragedScore):
-    name = "Precision"
+    name = "precision"
     key = "precision"
 
     def __init__(self, **kwargs):
@@ -37,7 +37,7 @@ class PrecisionScore(AveragedScore):
 
 
 class RecallScore(AveragedScore):
-    name = "Recall"
+    name = "recall"
     key = "recall"
 
     def __init__(self, **kwargs):
@@ -46,7 +46,7 @@ class RecallScore(AveragedScore):
 
 
 class F1Score(AveragedScore):
-    name = "F1 Score"
+    name = "f1 score"
     key = "f1_score"
 
     def __init__(self, **kwargs):

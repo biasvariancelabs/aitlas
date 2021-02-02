@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from ..metrics import F1ScoreSample
+from ..utils import stringify
 from .models import BaseModel
 from .schemas import BaseSegmentationClassifierSchema
 
@@ -37,3 +38,16 @@ class BaseSegmentationClassifier(BaseModel):
 
     def load_lr_scheduler(self):
         return None
+
+    def report(self, labels, **kwargs):
+        """Report for multiclass classification"""
+        run_id = kwargs.get("id", "experiment")
+        from ..visualizations import confusion_matrix, precision_recall_curve
+
+        logging.info(stringify(self.running_metrics.get_accuracy()))
+        logging.info(stringify(self.running_metrics.get_iu()))
+
+        # plot confusion matrix for model evaluation
+        confusion_matrix(
+            self.running_metrics.confusion_matrix, labels, f"{run_id}_cm.png"
+        )

@@ -13,7 +13,6 @@ class ConfusionMatrix(BaseVisualization):
 
     def plot(self):
         # get the confusion matrix
-        cm = skmetrics.confusion_matrix(self.y_true, self.y_pred, normalize="true")
         df_cm = pd.DataFrame(self.cm, index=self.labels, columns=self.labels)
 
         # plot confusion matrix
@@ -29,7 +28,7 @@ class ConfusionMatrix(BaseVisualization):
         return figure
 
 
-class PrecisionRecallCurve(BaseVisualization):
+class PrecisionRecallCurve(BaseDetailedVisualization):
     def plot(self):
         """Generate plot"""
         figure = plt.figure()
@@ -99,6 +98,6 @@ def display_image_labels(image, y_true, y_pred, y_prob, labels, output_file):
     viz.plot()
 
 
-def precision_recall_curve(cm, labels, output_file):
-    viz = PrecisionRecallCurve(cm, labels, output_file)
+def precision_recall_curve(y_true, y_pred, y_prob, labels, output_file):
+    viz = PrecisionRecallCurve(y_true, y_pred, y_prob, labels, output_file)
     viz.plot()

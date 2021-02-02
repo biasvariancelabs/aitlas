@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as nnf
 import torch.optim as optim
 
+from ..utils import stringify
 from .models import BaseModel
 from .schemas import BaseClassifierSchema
 
@@ -30,13 +31,12 @@ class BaseMulticlassClassifier(BaseModel):
         run_id = kwargs.get("id", "experiment")
         from ..visualizations import confusion_matrix, precision_recall_curve
 
+        logging.info(stringify(self.running_metrics.get_accuracy()))
+
         # plot confusion matrix for model evaluation
         confusion_matrix(
             self.running_metrics.confusion_matrix, labels, f"{run_id}_cm.png"
         )
-
-        # plot roc curve for model evaluation
-        # precision_recall_curve(self.running_metrics.confusion_matrix, labels, f"{run_id}_pr.png")
 
     def load_optimizer(self):
         """Load the optimizer"""
