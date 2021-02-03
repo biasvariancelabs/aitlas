@@ -184,6 +184,11 @@ class ExtractFeaturesTaskSchema(BaseTaskShema):
         missing="predictions.csv",
         description="Folder path where the features will be saved",
     )
+    model_path = fields.String(
+        missing=None,
+        description="Path to the model that will generate the features",
+        example="/tmp/model/extractor.pth.tar",
+    )
     transforms = fields.List(
         fields.String,
         missing=[

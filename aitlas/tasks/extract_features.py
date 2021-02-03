@@ -26,6 +26,10 @@ class ExtractFeaturesTask(BaseTask):
     def run(self):
         """Do something awesome here"""
 
+        # load the model from disk if specified
+        if self.config.model_path:
+            self.model.load_model(self.config.model_path)
+
         # set model in eval model
         self.model.eval()
 
