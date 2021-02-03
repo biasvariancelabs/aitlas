@@ -335,6 +335,12 @@ class BaseModel(nn.Module, Configurable):
         # replace last checkpoint
         copyfile(checkpoint, os.path.join(model_directory, "checkpoint.pth.tar"))
 
+    def extract_features(self, *input, **kwargs):
+        """
+        Abstract for trim the model to extract feature. Extending classes should override this method.
+        """
+        return self.extract_features
+
     def load_model(self, file_path, optimizer=None):
         """Loads a model from a checkpoint"""
         if os.path.isfile(file_path):

@@ -31,6 +31,8 @@ class ExtractFeaturesTask(BaseTask):
         if self.config.model_path:
             self.model.load_model(self.config.model_path)
 
+        self.model.extract_features()
+
         # allocate device
         self.model.allocate_device()
 
