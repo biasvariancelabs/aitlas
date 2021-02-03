@@ -44,13 +44,17 @@ class ExtractFeaturesTask(BaseTask):
                 for fname in sorted(fnames):
                     full_path = os.path.join(root, fname)
                     img = image_loader(full_path)
-                    input = load_transforms(self.transforms, self.config)(img)
-                    input = input.to(device)
+                    input = load_transforms(self.transforms, self.config)(img).to(
+                        device
+                    )
                     feats = self.model(input.unsqueeze(0))
 
+                    # move the features to cpu if not there
+                    if device != "cpu":
+                        feats = feats.cpu()
+
                     np.savetxt(
-                        os.path.join(self.output_dir, f"{fname}.feat"),
-                        feats.cpu().numpy(),
+                        os.path.join(self.output_dir, f"{fname}.feat"), feats.numpy(),
                     )
 
         logging.info(f"And that's it! The features are in {self.output_dir}")
