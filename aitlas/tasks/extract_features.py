@@ -25,10 +25,14 @@ class ExtractFeaturesTask(BaseTask):
 
     def run(self):
         """Do something awesome here"""
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         # load the model from disk if specified
         if self.config.model_path:
             self.model.load_model(self.config.model_path)
+
+        # allocate device
+        self.model.allocate_device()
 
         # set model in eval model
         self.model.eval()
@@ -40,12 +44,13 @@ class ExtractFeaturesTask(BaseTask):
                 for fname in sorted(fnames):
                     full_path = os.path.join(root, fname)
                     img = image_loader(full_path)
-                    feats = self.model(
-                        load_transforms(self.transforms, self.config)(img).unsqueeze(0)
-                    )
+                    input = load_transforms(self.transforms, self.config)(img)
+                    input = input.to(device)
+                    feats = self.model(input.unsqueeze(0))
 
                     np.savetxt(
-                        os.path.join(self.output_dir, f"{fname}.feat"), feats.numpy()
+                        os.path.join(self.output_dir, f"{fname}.feat"),
+                        feats.cpu().numpy(),
                     )
 
         logging.info(f"And that's it! The features are in {self.output_dir}")
