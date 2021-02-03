@@ -44,10 +44,6 @@ class BaseClassifierSchema(BaseModelSchema):
     threshold = fields.Float(
         missing=0.5, description="Prediction threshold if needed", example=0.5
     )
-    extract_feature_only = fields.Bool(
-        missing=False,
-        description="Whether to use the network without the classification layer.",
-    )
 
 
 class BaseSegmentationClassifierSchema(BaseClassifierSchema):

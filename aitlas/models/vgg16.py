@@ -45,7 +45,7 @@ class VGG16MultiLabel(BaseMultilabelClassifier):
         )
 
     def extract_features(self):
-        # remove final layers if we only need to extract features
-        if self.config.extract_feature_only:
-            self.model.classifier = self.model.classifier[:-3]
+        """ Remove final layers if we only need to extract features """
+        self.model.classifier = self.model.classifier[:-3]
+
         return self.model

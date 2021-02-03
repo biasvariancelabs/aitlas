@@ -339,7 +339,7 @@ class BaseModel(nn.Module, Configurable):
         """
         Abstract for trim the model to extract feature. Extending classes should override this method.
         """
-        return self.extract_features
+        return self.model
 
     def load_model(self, file_path, optimizer=None):
         """Loads a model from a checkpoint"""
