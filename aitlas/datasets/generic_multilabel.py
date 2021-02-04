@@ -32,7 +32,7 @@ class GenericMultiLabelsDataset(BaseDataset):
             lines = f.readlines()
             for line in lines[1:]:
                 line = line.decode("utf-8")
-                labels_list = line[line.find("\t") + 1 :].split("\t")
+                labels_list = line[line.find("\t") + 1:].split("\t")
                 multi_hot_labels[line[: line.find("\t")]] = np.asarray(
                     list((map(float, labels_list)))
                 )
