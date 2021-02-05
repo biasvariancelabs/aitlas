@@ -4,9 +4,9 @@
         "config": {
             "geojson_dir": "/home/dkocev/sp/SpaceNetChallenge5/data/nfs/data/cosmiq/spacenet/competitions/SN5_roads/tiles_upload/train/AOI_8_Mumbai/geojson_roads_speed",
             "image_dir": "/home/dkocev/sp/SpaceNetChallenge5/data/nfs/data/cosmiq/spacenet/competitions/SN5_roads/tiles_upload/train/AOI_8_Mumbai/PS-MS",
-            "output_conversion_csv_binned": "/home/dkocev/sp/SpaceNetChallenge5/results/SN5_roads_train_speed_conversion_multi_channel.csv",
-            "output_mask_dir_contin": "/home/dkocev/sp/SpaceNetChallenge5/results/output_mask_contin",
-            "output_mask_multidim_dir": "/home/dkocev/sp/SpaceNetChallenge5/results/output_mask_multidim_dir"
+            "output_conversion_csv_binned": "/home/dkocev/sp/SpaceNetChallenge5/results/train/SN5_roads_train_speed_conversion_multi_channel.csv",
+            "output_mask_dir_contin": "/home/dkocev/sp/SpaceNetChallenge5/results/train/output_mask_contin_dir",
+            "output_mask_multidim_dir": "/home/dkocev/sp/SpaceNetChallenge5/results/train/output_mask_multidim_dir"
         }
     }
 }

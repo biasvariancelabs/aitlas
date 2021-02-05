@@ -187,8 +187,16 @@ class CenterCrop(BaseTransforms):
     def __call__(self, sample):
         image = sample.get("image", None)
         mask = sample.get("mask", None)
-        image = image[138:1162, 138:1162, :]
-        mask = mask[138:1162, 138:1162, :]
+        if image is not None:
+            h, w = image.shape[0], image.shape[1]
+            delta_h = int((h - self.size) / 2.0)
+            delta_w = int((w - self.size) / 2.0)
+            image = image[delta_h : h - delta_h, delta_w : w - delta_w, :]
+        if mask is not None:
+            h, w = mask.shape[0], mask.shape[1]
+            delta_h = int((h - self.size) / 2.0)
+            delta_w = int((w - self.size) / 2.0)
+            mask = mask[delta_h: h - delta_h, delta_w: w - delta_w, :]
         return image, mask
 
 
@@ -228,6 +236,7 @@ class SpaceNet5Transforms(BaseTransforms):
         return CompositeTransforms([
             RandomFlip(),
             RandomShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=30),
-            CenterCrop(1024),
+            CenterCrop(512),
             Transpose()  # because of the transpose operation
         ])(sample)
+

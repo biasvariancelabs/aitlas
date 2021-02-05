@@ -4,7 +4,6 @@ Notes
     Based on the implementation at:
         https://github.com/CosmiQ/cresi/tree/master/cresi/net
 """
-import torch
 import torch.nn as nn
 import torchvision.models as models
 from torch import cat
@@ -55,8 +54,6 @@ class Resnet34:
 
     def forward(self, x):
         """The forward pass through the model."""
-        if torch.cuda.is_available():
-            self.model.cuda()
         self.model.forward(x)
 
     def skip_connection(self, layer):
@@ -74,24 +71,23 @@ class Resnet34:
             result : nn.module
                 the output from the model at the corresponding layer
         """
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         if layer == 0:
             return nn.Sequential(
                 self.model.conv1,
                 self.model.bn1,
                 self.model.relu
-            ).to(device)
+            )
         elif layer == 1:
             return nn.Sequential(
                 self.model.maxpool,
                 self.model.layer1
-            ).to(device)
+            )
         elif layer == 2:
-            return self.model.layer2.to(device)
+            return self.model.layer2
         elif layer == 3:
-            return self.model.layer3.to(device)
+            return self.model.layer3
         elif layer == 4:
-            return self.model.layer4.to(device)
+            return self.model.layer4
 
 
 class ConvolutionBottleneckBlock(nn.Module):
@@ -118,8 +114,6 @@ class ConvolutionBottleneckBlock(nn.Module):
 
     def forward(self, decoder, encoder):
         """The forward pass through the block."""
-        if torch.cuda.is_available():
-            self.block.cuda()
         x = cat([decoder, encoder], dim=1)
         return self.block(x)
 
@@ -148,8 +142,6 @@ class UNetDecoderBlock(nn.Module):
 
     def forward(self, x):
         """The forward pass through the model."""
-        if torch.cuda.is_available():
-            self.block.cuda()
         return self.block(x)
 
 
@@ -173,14 +165,15 @@ class UNetResnet34(BaseSegmentationClassifier):
         self.bottlenecks = nn.ModuleList([
             ConvolutionBottleneckBlock(in_channels=f * 2,
                                        out_channels=f) for f in reversed(filters[:-1])
-        ])
+        ]).to(self.device)
         # Specify decoder layers
         self.decoder = nn.ModuleList([
             UNetDecoderBlock(in_channels=filters[layer],
                              out_channels=filters[max(layer - 1, 0)]) for layer in range(1, len(filters))
-        ])
+        ]).to(self.device)
         # Specify final layers
-        self.last_upsample_layer = UNetDecoderBlock(in_channels=filters[0], out_channels=filters[0] // 2)
+        self.last_upsample_layer = UNetDecoderBlock(in_channels=filters[0], out_channels=filters[0] // 2).to(
+            self.device)
         self.final_layer = nn.Sequential(
             nn.Conv2d(in_channels=filters[0] // 2,
                       out_channels=config.num_classes,
@@ -194,7 +187,7 @@ class UNetResnet34(BaseSegmentationClassifier):
                                                     pretrained=config.pretrained))
         self.encoder_skip_connections = nn.ModuleList([
             self.encoder.skip_connection(layer) for layer in range(len(filters))
-        ])
+        ]).to(self.device)
 
     def initialize_weights(self):
         """
@@ -243,3 +236,4 @@ class UNetResnet34(BaseSegmentationClassifier):
                                    weights=[0.75, 0.25]).calculate(y_pred=y_pred, y_true=y_true)
 
         return custom_loss
+
