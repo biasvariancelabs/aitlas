@@ -13,4 +13,6 @@ from .landcover_ai import SegmentationDataset
 from .pattern_net import PatternNetDataset
 from .resisc45 import Resisc45Dataset
 from .uc_merced import UcMercedDataset
-from .uc_merced_multilabels import UcMercedMultiLabelsDataset
+from .uc_merced_multilabel import UcMercedMultiLabelDataset
+from .aid_multilabel import AIDMultiLabelDataset
+from .dfc15_multilabel import DFC15MultiLabelDataset

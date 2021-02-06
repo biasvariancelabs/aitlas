@@ -22,7 +22,7 @@ CLASSES_TO_IDX = {
 }
 
 
-class UcMercedMultiLabelsDataset(GenericMultiLabelsDataset):
-    url = "https://drive.google.com/file/d/1DtKiauowCB0ykjFe8v0OVvT76rEfOk0v/view"
+class AIDMultiLabelDataset(GenericMultiLabelsDataset):
+    url = "https://github.com/Hua-YS/AID-Multilabel-Dataset"
 
     classes_to_idx = CLASSES_TO_IDX

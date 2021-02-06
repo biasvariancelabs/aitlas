@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from ..base import BaseDataset
-from ..utils import tiff_loader
+from ..utils import image_loader
 from .schemas import GenericMultiLabelsDatasetSchema
 
 
@@ -20,12 +20,12 @@ class GenericMultiLabelsDataset(BaseDataset):
             self.classes_to_idx = self.config.labels
 
         # this can be overridden if needed
-        self.image_loader = tiff_loader
+        self.image_loader = image_loader
 
         # load the data
         self.data = self.make_dataset(self.config.root)
 
-    def make_dataset(self, dir, extensions=".tif"):
+    def make_dataset(self, dir):
         # read labels
         multi_hot_labels = {}
         with open(dir + "/multilabels.txt", "rb") as f:
@@ -43,7 +43,7 @@ class GenericMultiLabelsDataset(BaseDataset):
         for root, _, fnames in sorted(os.walk(dir)):
             for fname in sorted(fnames):
                 path = os.path.join(root, fname)
-                multi_hot_label = multi_hot_labels[fname[: fname.find(extensions)]]
+                multi_hot_label = multi_hot_labels[fname[: fname.find(".")]]
                 item = (path, multi_hot_label)
                 images.append(item)
 

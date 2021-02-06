@@ -18,6 +18,7 @@ class BaseDataset(Dataset, Configurable):
         self.shuffle = self.config.shuffle
         self.batch_size = self.config.batch_size
         self.num_workers = self.config.num_workers
+        self.pin_memory = self.config.pin_memory
 
         # get the transformations to be applied
         self.transform = self.load_transforms(self.config.transforms)
@@ -43,6 +44,7 @@ class BaseDataset(Dataset, Configurable):
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
         )
 
     def labels(self):

@@ -7,6 +7,7 @@ class BaseDatasetSchema(Schema):
         missing=True, description="Should shuffle dataset", example=False
     )
     num_workers = fields.Int(missing=4, description="Number of workers", example=4)
+    pin_memory = fields.Bool(missing=False, description="Whether to use page-locked memory")
     transforms = fields.List(
         fields.String,
         missing=[
