@@ -1,16 +1,13 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.models as models
 
-import numpy as np
-
-
 from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class ResNet50(BaseMulticlassClassifier):
-
     def __init__(self, config):
         BaseMulticlassClassifier.__init__(self, config)
 
@@ -28,7 +25,6 @@ class ResNet50(BaseMulticlassClassifier):
 
 
 class ResNet50MultiLabel(BaseMultilabelClassifier):
-
     def __init__(self, config):
         BaseMultilabelClassifier.__init__(self, config)
 
@@ -46,11 +42,13 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
 
     def load_criterion(self):
         """Load the loss function"""
-        return nn.BCEWithLogitsLoss()
+        return nn.BCEWithLogitsLoss(weight=self.weights)
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4)
+        return optim.Adam(
+            self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4
+        )
 
     def get_predicted(self, outputs):
         predicted_probs = torch.sigmoid(outputs)

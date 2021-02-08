@@ -46,7 +46,7 @@ class BaseMulticlassClassifier(BaseModel):
 
     def load_criterion(self):
         """Load the loss function"""
-        return nn.CrossEntropyLoss()
+        return nn.CrossEntropyLoss(weight=self.weights)
 
     def load_lr_scheduler(self):
         return None

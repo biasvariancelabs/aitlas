@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class BaseModel(nn.Module, Configurable):
-    def __init__(self, config):
+    def __init__(self, config=None):
         Configurable.__init__(self, config)
         super(BaseModel, self).__init__()
 
@@ -29,10 +29,20 @@ class BaseModel(nn.Module, Configurable):
             device_name = "cuda"
 
         self.device = torch.device(device_name)
+
         self.metrics = [get_class(m) for m in self.config.metrics]
         self.running_metrics = RunningScore(
             self.metrics, self.config.num_classes, self.device
         )
+        self.weights = self.config.weights
+
+    def prepare(self):
+        """Prepare the model before using it """
+
+        # load loss, optimizer and lr scheduler
+        self.criterion = self.load_criterion()
+        self.optimizer = self.load_optimizer()
+        self.lr_scheduler = self.load_lr_scheduler()
 
     def fit(
         self,
@@ -50,11 +60,6 @@ class BaseModel(nn.Module, Configurable):
 
         start_epoch = 0
         start = current_ts()
-
-        # load loss, optimizer and lr scheduler
-        self.criterion = self.load_criterion()
-        self.optimizer = self.load_optimizer()
-        self.lr_scheduler = self.load_lr_scheduler()
 
         # load the model if needs to resume training
         if resume_model:
@@ -362,6 +367,19 @@ class BaseModel(nn.Module, Configurable):
             return (start_epoch, loss, start, run_id)
         else:
             raise ValueError(f"No checkpoint found at {file_path}")
+
+    def load_optimizer(self):
+        """Load the optimizer"""
+        raise NotImplementedError("Please implement `load_optimizer` for your model. ")
+
+    def load_criterion(self):
+        """Load the loss function"""
+        raise NotImplementedError("Please implement `load_criterion` for your model. ")
+
+    def load_lr_scheduler(self):
+        raise NotImplementedError(
+            "Please implement `load_lr_scheduler` for your model. "
+        )
 
     def train_model(
         self,

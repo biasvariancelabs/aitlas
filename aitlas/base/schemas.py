@@ -7,7 +7,9 @@ class BaseDatasetSchema(Schema):
         missing=True, description="Should shuffle dataset", example=False
     )
     num_workers = fields.Int(missing=4, description="Number of workers", example=4)
-    pin_memory = fields.Bool(missing=False, description="Whether to use page-locked memory")
+    pin_memory = fields.Bool(
+        missing=False, description="Whether to use page-locked memory"
+    )
     transforms = fields.List(
         fields.String,
         missing=[
@@ -32,6 +34,12 @@ class BaseModelSchema(Schema):
             "aitlas.metrics.AccuracyScore",
             "aitlas.metrics.F1Score",
         ],
+    )
+    weights = fields.List(
+        fields.Float,
+        missing=None,
+        description="Classes weights you want to apply for the loss",
+        example=[1.0, 2.3, 1.0],
     )
 
 

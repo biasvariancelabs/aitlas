@@ -21,6 +21,7 @@ def main(config_file):
     if config.model:
         model_cls = get_class(config.model.classname)
         model = model_cls(config.model.config)
+        model.prepare()
 
     # load task
     task_cls = get_class(config.task.classname)
