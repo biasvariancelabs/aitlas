@@ -347,13 +347,22 @@ class BaseModel(nn.Module, Configurable):
             logging.info(f"Loading checkpoint {file_path}")
             checkpoint = torch.load(file_path)
 
-            self.model.load_state_dict(checkpoint["state_dict"])
-            self.allocate_device()
+            if "state_dict" in checkpoint:
+                self.model.load_state_dict(checkpoint["state_dict"])
+                self.allocate_device()
 
-            start_epoch = checkpoint["epoch"]
-            loss = checkpoint["loss"]
-            start = checkpoint["start"]
-            run_id = checkpoint["id"]
+                start_epoch = checkpoint["epoch"]
+                loss = checkpoint["loss"]
+                start = checkpoint["start"]
+                run_id = checkpoint["id"]
+            else:
+                self.model.load_state_dict(checkpoint)
+                self.allocate_device()
+
+                start_epoch = 1
+                loss = 0
+                start = 0
+                run_id = ''
 
             if optimizer:
                 optimizer.load_state_dict(checkpoint["optimizer"])
