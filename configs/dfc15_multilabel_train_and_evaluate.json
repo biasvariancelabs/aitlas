@@ -3,7 +3,7 @@
         "classname": "aitlas.models.VGG16MultiLabel",
         "config": {
             "num_classes": 8,
-            "learning_rate": 0.001,
+            "learning_rate": 0.0001,
             "pretrained": true,
             "threshold": 0.5
         }
