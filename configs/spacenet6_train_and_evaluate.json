@@ -1,0 +1,112 @@
+{
+    "model": {
+        "classname": "aitlas.models.UNetEfficientNet",
+        "config": {
+            "num_classes": 1,
+            "learning_rate": 0.0001,
+            "net": "b5",
+            "stride": 32,
+            "extra_num": 1,
+            "glob": true,
+            "bn": true,
+            "aspp": true,
+            "ocr": true,
+            "aux": true,
+            "box1x1": true,
+            "use_cuda": false
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.SpaceNet6TrainAndEvaluateTask",
+        "config": {
+            "root_directory": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam",
+            "segmentation_directory": "/home/stefan/Downloads/Spacenet6Data/results/segmentation_directory",
+            "fold_path": "/home/stefan/Downloads/Spacenet6Data/results/fold_directory/folds.csv",
+            "epochs": 10,
+            "warm_up_dec_epochs": 0,
+            "loss_eps": 1e-6,
+            "focal_gamma": 3,
+            "wd": 1e-2,
+            "lr": 2e-4,
+            "input_scale": 1.0,
+            "direction_scale": 1.0,
+            "coord_scale": 1.0,
+            "b_count_weight": 0.5,
+            "b_rev_size_weight": 0.0,
+            "pos_weight": 0.5,
+            "focal_weight": 1.0,
+            "edge_weight": 0.25,
+            "contact_weight": 0.1,
+            "aux_scale": 0.0,
+            "apex": true,
+            "clip_grad_norm_value": 1.2,
+            "snapshot_last": "snapshot_last",
+            "snapshot_best": "snapshot_best",
+            "start_val_epoch": 20,
+            "val": true,
+            "test": false,
+            "pred_folder": "/home/stefan/Downloads/Spacenet6Data/results/pred_folder",
+            "pred_csv": "/home/stefan/Downloads/Spacenet6Data/results/fold_directory/pred_csv{0}.csv",
+            "gt_csv": "/home/stefan/Downloads/Spacenet6Data/results/fold_directory/gt_csv{0}.csv",
+            "model_directory": "examples/experiments/spacenet6_winning_solution",
+            "train_dataset_config": {
+                "classname": "aitlas.datasets.SpaceNet6Dataset",
+                "config": {
+                    "batch_size": 4,
+                    "shuffle": true,
+                    "num_workers": 1,
+                    "train": true,
+                    "color": true,
+                    "crop_size": 512,
+                    "reorder_bands": 3,
+                    "rot_prob": 0.7,
+                    "scale_prob": 1,
+                    "color_aug_prob": 1,
+                    "gamma_aug_prob": 0,
+                    "gauss_aug_prob": 0,
+                    "elastic_aug_prob": 0,
+                    "flipud_prob": 0,
+                    "fliplr_prob": 0.5,
+                    "rot90_prob": 0,
+                    "channel_swap_prob": 0,
+                    "train_min_building_size": 0,
+                    "rot_out_path": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv",
+                    "transforms": [
+                        "aitlas.transforms.SpaceNet6Transforms"
+                    ]
+                }
+            },
+            "val_dataset_config": {
+                "classname": "aitlas.datasets.SpaceNet6Dataset",
+                "config": {
+                    "batch_size": 4,
+                    "shuffle": true,
+                    "num_workers": 1,
+                    "filenames": "/home/stefan/Downloads/Spacenet6Data/results/split/val.csv",
+                    "rgb_image_path_root": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam/PS-RGB",
+                    "sar_image_path_root": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam/SAR-Intensity",
+                    "label_path_root": "/home/stefan/Downloads/Spacenet6Data/results/segmentation_directory",
+                    "train": false,
+                    "color": true,
+                    "crop_size": 512,
+                    "reorder_bands": 3,
+                    "rot_prob": 0.7,
+                    "scale_prob": 1,
+                    "color_aug_prob": 1,
+                    "gamma_aug_prob": 0,
+                    "gauss_aug_prob": 0,
+                    "elastic_aug_prob": 0,
+                    "flipud_prob": 0,
+                    "fliplr_prob": 0.5,
+                    "rot90_prob": 0,
+                    "channel_swap_prob": 0,
+                    "train_min_building_size": 0,
+                    "rot_out_path": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv",
+                    "transforms": [
+                        "aitlas.transforms.SpaceNet6Transforms"
+                    ]
+                }
+            }
+        }
+    }
+}

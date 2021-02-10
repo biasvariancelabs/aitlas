@@ -50,3 +50,27 @@ class BigEarthNetSchema(BaseDatasetSchema):
         required=False,
         description="List of std values for the 3 channels",
     )
+
+
+class SpaceNet6DatasetSchema(BaseDatasetSchema):
+    train = fields.Bool(required=True, description="some")
+    color = fields.Bool(required=True, description="some")
+
+    crop_size = fields.Int(required=True, description="some")
+
+    reorder_bands = fields.Int(required=True, description="some")
+
+    rot_prob = fields.Float(required=True, description="some")
+    scale_prob = fields.Float(required=True, description="some")
+    color_aug_prob = fields.Float(required=True, description="some")
+    gamma_aug_prob = fields.Float(required=True, description="some")
+    gauss_aug_prob = fields.Float(required=True, description="some")
+    elastic_aug_prob = fields.Float(required=True, description="some")
+    flipud_prob = fields.Float(required=True, description="some")
+    fliplr_prob = fields.Float(required=True, description="some")
+    rot90_prob = fields.Float(required=True, description="some")
+    channel_swap_prob = fields.Float(required=True, description="some")
+
+    train_min_building_size = fields.Float(required=True, description="some")
+
+    rot_out_path = fields.String(required=True, description="some")

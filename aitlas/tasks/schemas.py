@@ -199,3 +199,71 @@ class ExtractFeaturesTaskSchema(BaseTaskShema):
         ],
         description="Classes to run transformations.",
     )
+
+
+class SpaceNet6PreprocessTaskSchema(BaseTaskShema):
+    # TODO: Write descriptions
+    root_directory = fields.String(required=True, description="The root directory of the downloaded data")
+    ############################
+    fold_directory = fields.String(required=True, description="The root directory of the downloaded data")
+    segmentation_directory = fields.String(required=True, description="Some target directory")
+    edge_width = fields.Int(required=True, description="description", default=9)
+    contact_width = fields.Int(required=True, description="description", default=3)
+    rotation_input_path = fields.String(required=True, description="some")
+    rotation_output_path = fields.String(required=True, description="some")
+    #############################
+    num_threads = fields.Int(required=False, missing=1, description="Number of threads")
+
+
+class SpaceNet6TrainAndEvaluateTaskSchema(BaseTaskShema):
+    # TODO: Write descriptions
+    loss_eps = fields.Float(required=True, description="some")
+    focal_gamma = fields.Float(required=True, description="some")
+    wd = fields.Float(required=True, description="some")
+    lr = fields.Float(required=True, description="some")
+
+    root_directory = fields.String(required=True, description="The root directory of the downloaded data")
+    fold_path = fields.String(required=True, description="The root directory of the downloaded data")
+    segmentation_directory = fields.String(required=True, description="Some target directory")
+
+    train = fields.Bool(required=False, default=True, description="some")
+
+    warm_up_dec_epochs = fields.Int(required=True, description="some")
+
+    input_scale = fields.Float(required=True, description="some")
+    direction_scale = fields.Float(required=True, description="some")
+    coord_scale = fields.Float(required=True, description="some")
+
+    b_count_weight = fields.Float(required=True, description="some")
+    b_rev_size_weight = fields.Float(required=True, description="some")
+    pos_weight = fields.Float(required=True, description="some")
+    focal_weight = fields.Float(required=True, description="some")
+    edge_weight = fields.Float(required=True, description="some")
+    contact_weight = fields.Float(required=True, description="some")
+
+    aux_scale = fields.Float(required=True, description="some")
+
+    apex = fields.Bool(required=True, description="some")
+
+    clip_grad_norm_value = fields.Float(required=True, description="some")
+
+    # models_folder = fields.String(required=True, description="some")
+    snapshot_last = fields.String(required=True, description="some")
+    snapshot_best = fields.String(required=True, description="some")
+
+    start_val_epoch = fields.Int(required=True, description="some")
+
+    val = fields.Bool(required=True, description="some")
+    test = fields.Bool(required=True, description="some")
+
+    pred_folder = fields.String(required=True, description="some")
+    train_dataset_config = fields.Nested(
+        nested=ObjectConfig,
+        required=True,
+        description="Train dataset type and configuration.",
+    )
+    val_dataset_config = fields.Nested(
+        nested=ObjectConfig,
+        required=True,
+        description="Validation dataset type and configuration.",
+    )
