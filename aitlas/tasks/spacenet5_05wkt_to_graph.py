@@ -1,3 +1,9 @@
+"""
+Notes
+-----
+    Based on the implementation at:
+        https://github.com/CosmiQ/cresi/blob/master/cresi/05_wkt_to_G.py
+"""
 import logging
 import os
 import time
@@ -192,6 +198,8 @@ def pixel_to_geo_coord(params):
         perform_reprojection = True
     if geom_transform == '':
         src_raster = gdal.Open(input_raster)
+        if src_raster is None:
+            print (f"Input raster: {input_raster}")
         geom_transform = src_raster.GetGeoTransform()
         source_sr = osr.SpatialReference()
         source_sr.ImportFromWkt(src_raster.GetProjectionRef())

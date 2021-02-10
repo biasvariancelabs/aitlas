@@ -13,3 +13,4 @@ from .spacenet5_05wkt_to_graph import SpaceNet5WktToGraphTask
 from .spacenet5_06infer_speed import SpaceNet5InferSpeedTask
 from .spacenet5_evaluate import SpaceNet5EvaluateTask
 from .spacenet5_predict import SpaceNet5PredictTask
+from .spacenet5_08plot_graph_over_image import SpaceNet5PlotGraphOverImageTask

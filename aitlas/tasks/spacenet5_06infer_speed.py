@@ -1,3 +1,9 @@
+"""
+Notes
+-----
+    Based on the implementation at:
+        https://github.com/CosmiQ/cresi/blob/master/cresi/06_infer_speed.py
+"""
 import logging
 import os
 import time
@@ -31,8 +37,8 @@ def plot_graph_on_im_yuge(g_, im_test_file, fig_size=(12, 12), show_end_nodes=Fa
                           super_verbose=False):
     """
     Copied verbatim from apls_tools.py
-    Overlay graph on image,
-    if width_key == int, use a constant width
+
+    Overlay graph on image, if width_key == int, use a constant width
     """
     # Set dpi to approximate native resolution
     # mpl can handle a max of 2^29 pixels, or 23170 on a side
@@ -311,14 +317,13 @@ def get_patch_speed_multichannel(patch, conv_dict, min_z=128, weighted=True, per
 def get_edge_time_properties(mask, edge_data, conv_dict, min_z=128, dx=4, dy=4, percentile=80, max_speed_band=-2,
                              use_weighted_mean=True, variable_edge_speed=False, verbose=True):
     """
-    Get speed estimate from proposal mask and graph edge_data by
-    inferring the speed along each segment based on the coordinates in the output mask,
+    Get speed estimate from proposal mask and graph edge_data by inferring the speed along each segment
+    based on the coordinates in the output mask.
+
     min_z is the minimum mask value to consider a hit for speed
     dx, dy is the patch size to average for speed
-    if totband, the final band of the mask is assumed to just be a binary
-        road mask and not correspond to a speed bin
-    if weighted_mean, sompeu the weighted mean of speeds in the multichannel
-        case
+    if totband, the final band of the mask is assumed to just be a binary road mask and not correspond to a speed bin
+    if weighted_mean, sum up? the weighted mean of speeds in the multichannel case
     """
     meters_to_miles = 0.000621371
     if len(mask.shape) > 2:
@@ -437,7 +442,7 @@ def infer_travel_time(params):
       the local speed
     """
     g_, mask, conv_dict, min_z, dx, dy, percentile, max_speed_band, use_weighted_mean, variable_edge_speed, verbose, \
-    out_file, save_shapefiles, im_root, graph_dir_out = params
+    out_file, save_geo_packages, im_root, graph_dir_out = params
     print("im_root:", im_root)
     mph_to_mps = 0.44704  # miles per hour to meters per second
     pickle_protocol = 4
@@ -461,11 +466,19 @@ def infer_travel_time(params):
     g = g_.to_undirected()
     # Save graph
     nx.write_gpickle(g, out_file, protocol=pickle_protocol)
-    # Save shapefile as well?
-    if save_shapefiles:
+    # Save GeoPackage as well?
+    if save_geo_packages:
         g_out = g
-        logger.info("Saving shapefile to directory: {}".format(graph_dir_out))
-        ox.save_graph_shapefile(g_out, filename=im_root, folder=graph_dir_out, encoding='utf-8')
+        logger.info("Saving geoPackage to directory: {}".format(graph_dir_out))
+        filename = im_root + '.gpkg'  # append GeoPackage extension to the filename so it doesn't raise warnings
+        filepath = os.path.join(graph_dir_out, filename)
+        # https://github.com/gboeing/osmnx/issues/638
+        for node, data in g_out.nodes(data=True):
+            if 'osmid' in data:
+                data['osmid_original'] = data.pop('osmid')
+        # shapefile format is proprietary and deprecated, docs suggests using GeoPackage
+        # ox.save_graph_shapefile(g_out, filepath, encoding='utf-8')
+        ox.save_graph_geopackage(g_out, filepath, encoding='utf-8')
     return g_
 
 
@@ -501,7 +514,7 @@ def infer_travel_time_single_threaded(g_, mask, conv_dict, min_z=128, dx=4, dy=4
 
 def add_travel_time_dir(graph_dir, mask_dir, conv_dict, graph_dir_out, min_z=128, dx=4, dy=4, percentile=90,
                         max_speed_band=-2, use_weighted_mean=True, variable_edge_speed=False, mask_prefix='',
-                        save_shapefiles=True, n_threads=12, verbose=False):
+                        save_geopackages=True, n_threads=12, verbose=False):
     """Update graph properties to include travel time for entire directory."""
     t0 = time.time()
     pickle_protocol = 4  # 4 is most recent, python 2.7 can't read 4
@@ -534,7 +547,7 @@ def add_travel_time_dir(graph_dir, mask_dir, conv_dict, graph_dir_out, min_z=128
             nx.write_gpickle(g_raw, out_file, protocol=pickle_protocol)
             continue
         params.append((g_raw, mask, conv_dict, min_z, dx, dy, percentile, max_speed_band, use_weighted_mean,
-                       variable_edge_speed, verbose, out_file, save_shapefiles, im_root, graph_dir_out))
+                       variable_edge_speed, verbose, out_file, save_geopackages, im_root, graph_dir_out))
     # Execute
     if n_threads > 1:
         pool = Pool(n_threads)
@@ -549,11 +562,6 @@ def add_travel_time_dir(graph_dir, mask_dir, conv_dict, graph_dir_out, min_z=128
 class SpaceNet5InferSpeedTask(BaseTask):
     """
     Implements the functionality of step 06 in the CRESI framework.
-
-    Attributes
-    ----------
-        schema : BaseTaskShema
-            The schema for this task.
     """
     schema = SpaceNet5InferSpeedTaskSchema
 
@@ -569,7 +577,6 @@ class SpaceNet5InferSpeedTask(BaseTask):
     def run(self):
         """
         Implements the main logic behind the task.
-        TODO: Implement this task
         """
         t0 = time.time()
         percentile = 85  # percentile filter (default = 85)
@@ -581,7 +588,7 @@ class SpaceNet5InferSpeedTask(BaseTask):
             max_speed_band = self.config.skeleton_band - 1
         else:
             max_speed_band = self.config.num_channels - 1
-        save_shapefiles = True
+        save_geopackages = True
         use_weighted_mean = True
         variable_edge_speed = False
         verbose = False
@@ -589,30 +596,10 @@ class SpaceNet5InferSpeedTask(BaseTask):
         # Input directories
         res_root_dir = os.path.join(self.config.path_results_root, self.config.test_results_dir)
         graph_dir = os.path.join(res_root_dir, self.config.graph_dir)
-        # Get mask location, check if we are stitching together large images or not
-        # out_dir_mask_norm = os.path.join(self.config.path_results_root,
-        #                                  self.config.test_results_dir,
-        #                                  self.config.stitched_dir_norm)
-        # folds_dir = os.path.join(self.config.path_results_root,
-        #                          self.config.test_results_dir,
-        #                          self.config.folds_save_dir)
-        # merge_dir = os.path.join(self.config.path_results_root,
-        #                          self.config.test_results_dir,
-        #                          self.config.merged_dir)
-        # mask_prefix = ''
-        # if os.path.exists(out_dir_mask_norm):
-        #     mask_dir = out_dir_mask_norm
-        # else:
-        #     if self.config.num_folds > 1:
-        #         mask_dir = merge_dir
-        #     else:
-        #         mask_dir = folds_dir
-        #         mask_prefix = 'fold0_'
         # Output dirs
         graph_speed_dir = os.path.join(res_root_dir, self.config.graph_dir + '_speed')
         os.makedirs(graph_speed_dir, exist_ok=True)
         logger.info("graph_speed_dir: " + graph_speed_dir)
-
         # Speed conversion dataframes (see _speed_data_prep.ipynb)
         speed_conversion_file = self.config.speed_conversion_file
         # Get the conversion diction between pixel mask values and road speed (mph)
@@ -624,8 +611,8 @@ class SpaceNet5InferSpeedTask(BaseTask):
         # Add travel time to entire dir
         add_travel_time_dir(graph_dir, self.config.masks_dir, conv_dict, graph_speed_dir, min_z=min_z, dx=dx, dy=dy,
                             percentile=percentile, max_speed_band=max_speed_band, use_weighted_mean=use_weighted_mean,
-                            variable_edge_speed=variable_edge_speed,
-                            save_shapefiles=save_shapefiles, n_threads=n_threads, verbose=verbose)
+                            variable_edge_speed=variable_edge_speed, save_geopackages=save_geopackages,
+                            n_threads=n_threads, verbose=verbose)
         t1 = time.time()
         logger.info("Time to execute add_travel_time_dir(): {x} seconds".format(x=t1 - t0))
         # Plot a few
@@ -635,8 +622,8 @@ class SpaceNet5InferSpeedTask(BaseTask):
             fig_size = (12, 12)
             # Best colors
             node_color, edge_color = '#cc9900', '#ffbf00'  # gold
-            default_node_size = 2  #
-            plot_width_key, plot_width_multiplier = 'inferred_speed_mph', 0.085  # 0.08  # variable width
+            default_node_size = 2
+            plot_width_key, plot_width_multiplier = 'inferred_speed_mph', 0.085
             # Define output dir
             graph_speed_plots_dir = os.path.join(res_root_dir, self.config.graph_dir + '_speed_plots')
             os.makedirs(graph_speed_plots_dir, exist_ok=True)

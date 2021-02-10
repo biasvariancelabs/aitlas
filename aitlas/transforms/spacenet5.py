@@ -237,6 +237,6 @@ class SpaceNet5Transforms(BaseTransforms):
             RandomFlip(),
             RandomShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=30),
             CenterCrop(512),
-            Transpose()  # because of the transpose operation
+            Transpose()
         ])(sample)
 

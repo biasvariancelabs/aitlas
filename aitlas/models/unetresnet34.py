@@ -4,12 +4,12 @@ Notes
     Based on the implementation at:
         https://github.com/CosmiQ/cresi/tree/master/cresi/net
 """
+import torch
 import torch.nn as nn
 import torchvision.models as models
 from torch import cat
 
 from aitlas.base import BaseSegmentationClassifier
-from aitlas.metrics import CompositeMetric, FocalLoss, DiceCoefficient
 
 filters = [64, 64, 128, 256, 512]
 
@@ -145,6 +145,50 @@ class UNetDecoderBlock(nn.Module):
         return self.block(x)
 
 
+class FocalLoss2d(nn.Module):
+    def __init__(self, gamma=2, ignore_index=255, eps=1e-6):
+        super().__init__()
+        self.gamma = gamma
+        self.ignore_index = ignore_index
+        self.eps = eps
+
+    def forward(self, outputs, targets):
+        outputs = torch.sigmoid(outputs)
+        outputs = outputs.contiguous()
+        targets = targets.contiguous()
+
+        non_ignored = targets.view(-1) != self.ignore_index
+        targets = targets.view(-1)[non_ignored].float()
+        outputs = outputs.contiguous().view(-1)[non_ignored]
+
+        outputs = torch.clamp(outputs, self.eps, 1. - self.eps)
+        targets = torch.clamp(targets, self.eps, 1. - self.eps)
+
+        pt = (1 - targets) * (1 - outputs) + targets * outputs
+        return (-(1. - pt) ** self.gamma * torch.log(pt)).mean()
+
+
+class DiceLoss(nn.Module):
+    def __init__(self, weight=None, size_average=True, per_image=False, eps=1e-6):
+        super().__init__()
+        self.size_average = size_average
+        self.register_buffer('weight', weight)
+        self.per_image = per_image
+        self.eps = eps
+
+    def forward(self, outputs, targets):
+        outputs = torch.sigmoid(outputs)
+        batch_size = outputs.size()[0]
+        if not self.per_image:
+            batch_size = 1
+        dice_target = targets.contiguous().view(batch_size, -1).float()
+        dice_output = outputs.contiguous().view(batch_size, -1)
+        intersection = torch.sum(dice_output * dice_target, dim=1)
+        union = torch.sum(dice_output, dim=1) + torch.sum(dice_target, dim=1) + self.eps
+        loss = (1 - (2 * intersection + self.eps) / union).mean()
+        return loss
+
+
 class UNetResnet34(BaseSegmentationClassifier):
     """
     Implements a UNet-like neural network that uses a Resnet34 as an
@@ -188,6 +232,8 @@ class UNetResnet34(BaseSegmentationClassifier):
         self.encoder_skip_connections = nn.ModuleList([
             self.encoder.skip_connection(layer) for layer in range(len(filters))
         ]).to(self.device)
+        self.focal = FocalLoss2d()
+        self.dice = DiceLoss()
 
     def initialize_weights(self):
         """
@@ -229,11 +275,15 @@ class UNetResnet34(BaseSegmentationClassifier):
         return x
 
     def load_criterion(self):
-        """Loads the custom loss function, a composite metric of 75% FocalLoss and 25% DiceCoefficient."""
+        """Loads custom loss function: 25% dice coefficient + 75% focal loss"""
 
-        def custom_loss(y_pred, y_true):
-            return CompositeMetric(metrics=[FocalLoss(logits=True), DiceCoefficient()],
-                                   weights=[0.75, 0.25]).calculate(y_pred=y_pred, y_true=y_true)
+        def criterion(y_pred, y_true):
+            return self.focal(y_pred, y_true) * 0.25 + self.dice(y_pred, y_true) * 0.75
 
-        return custom_loss
+        return criterion
 
+    def load_optimizer(self):
+        return torch.optim.Adam(self.parameters())
+
+    def load_lr_scheduler(self):
+        return torch.optim.lr_scheduler.MultiStepLR(optimizer=self.load_optimizer(), milestones=[20, 25], gamma=0.2)

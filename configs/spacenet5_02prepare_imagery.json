@@ -2,8 +2,8 @@
     "task": {
         "classname": "aitlas.tasks.SpaceNet5PrepareImageryTask",
         "config": {
-            "in_dir": "/home/dkocev/sp/SpaceNetChallenge5/data/nfs/data/cosmiq/spacenet/competitions/SN5_roads/tiles_upload/train/AOI_8_Mumbai/PS-MS",
-            "out_dir": "/home/dkocev/sp/SpaceNetChallenge5/results/train/prepare_imagery",
+            "in_dir": "/home/stefan/Downloads/Spacenet5Data/nfs/data/cosmiq/spacenet/competitions/SN5_roads/tiles_upload/train/AOI_8_Mumbai/PS-MS",
+            "out_dir": "/home/stefan/Downloads/Spacenet5Data/prepare_imagery",
             "rescale_type": "perc",
             "percentiles": "2,98",
             "band_order": "5,3,2",

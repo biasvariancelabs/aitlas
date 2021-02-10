@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 
@@ -7,6 +8,8 @@ from skimage import io
 
 from aitlas.base import BaseTask
 from aitlas.tasks.schemas import PredictTaskSchema
+
+logger = logging.getLogger(__name__)
 
 
 class SpaceNet5PredictTask(BaseTask):
@@ -18,7 +21,7 @@ class SpaceNet5PredictTask(BaseTask):
         Parameters
         ----------
             model : BaseModel
-                Which is to be evaluated.
+                Which is to be used for prediction.
             config : Config
                 Specifying the details for this task.
         """
@@ -56,21 +59,21 @@ class SpaceNet5PredictTask(BaseTask):
         # Run predictions
         with torch.no_grad():
             n = dataset.__len__()
-            indices = list(range(0, n)) # create indices
+            indices = list(range(0, n))  # create indices
             if dataset.shuffle:
-                random.shuffle(indices) # shuffle indices
-            batches = create_batched_indices(indices, dataset.batch_size) # create batches of indices
+                random.shuffle(indices)  # shuffle indices
+            batches = create_batched_indices(indices, dataset.batch_size)  # create batches of indices
             for batch in batches:
                 # Transform a list of indices to a tensor of batched images
                 input_images = list()
                 for index in batch:
-                    image, _ = dataset.__getitem__(index=index)
+                    image = dataset.get_image(index=index)
                     input_images.append(image)
                 input_images = torch.tensor(np.array(input_images))
                 # Run the prediction
-                output_masks = self.model.predict(input_images)
+                output_masks = torch.sigmoid(self.model(input_images))
                 for (output_mask_index, output_mask) in enumerate(output_masks):
                     # Save the predicted mask
-                    fp = os.path.join(self.config.output_path, dataset.get_filename(batch[output_mask_index]))
-                    print (f"Saving at {fp}")
-                    io.imsave(fp, (output_mask * 255).numpy().astype(np.uint8), compress=1)
+                    filepath = os.path.join(self.config.output_path, dataset.get_filename(batch[output_mask_index]))
+                    logger.info(f"Saving prediction at {filepath}")
+                    io.imsave(filepath, (output_mask * 255).numpy().astype(np.uint8), compress=1)

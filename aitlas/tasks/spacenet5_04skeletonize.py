@@ -1,3 +1,9 @@
+"""
+Notes
+-----
+    Based on the implementation at:
+        https://github.com/CosmiQ/cresi/blob/master/cresi/04_skeletonize.py
+"""
 import logging
 import os
 import time

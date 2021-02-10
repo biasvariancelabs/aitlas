@@ -5,12 +5,12 @@ Notes
         https://github.com/CosmiQ/cresi/blob/master/cresi/data_prep/speed_masks.py
 """
 
+import math
 import os
 import warnings
 
 import cv2
 import geopandas as gpd
-import math
 import numpy as np
 import osmnx as osmnx_funcs
 import pandas as pd
@@ -279,7 +279,7 @@ class SpaceNet5PrepareSpeedMasksTask(BaseTask):
         dissolve_by = 'inferred_speed_mps'
         bin_conversion_key = 'inferred_speed_mph'
         verbose = True
-        # Skimage throws an annoying "low contrast warning, so ignore"
+        # skimage throws an annoying "low contrast warning, so ignore"
         warnings.filterwarnings("ignore")
         # Continuous case, skips converting to multi-channel
         if len(self.config.output_mask_multidim_dir) == 0:
@@ -291,25 +291,21 @@ class SpaceNet5PrepareSpeedMasksTask(BaseTask):
             # Placeholder variables for binned case
             channel_value_multiplier, n_channels, channel_burn_value, append_total_band = 0, 0, 0, 0
             # Make output dir
-            os.makedirs(self.config.output_mask_dir_contin, exist_ok=True)
+            os.makedirs(self.config.output_mask_contin_dir, exist_ok=True)
 
-            def speed_to_burn_func(speed):
+            def speed_to_burn_value(speed):
                 """Convert speed estimate to mask burn value between 0 and mask_max"""
                 bw = mask_max - min_road_burn_val
                 burn_val = min(min_road_burn_val + bw * (
                         (speed - min_speed_continuous) / (max_speed_continuous - min_speed_continuous)), mask_max)
                 return max(burn_val, min_road_burn_val)
 
-            speed_arr_continuous = np.arange(min_speed_continuous, max_speed_continuous + 1, 1)
-            burn_val_arr = [speed_to_burn_func(s) for s in speed_arr_continuous]
-            d = {'burn_val': burn_val_arr, 'speed': speed_arr_continuous}
-            df_s = pd.DataFrame(d)
-            # Make conversion dataframe (optional)
-            if not os.path.exists(self.config.output_conversion_csv_contin):
-                print("Write burn_val -> speed conversion to:", self.config.output_conversion_csv_contin)
-                df_s.to_csv(self.config.output_conversion_csv_contin)
-            else:
-                print("Path already exists, not overwriting...", self.config.output_conversion_csv_contin)
+            speed_array_values = np.arange(min_speed_continuous, max_speed_continuous + 1, 1)
+            burn_values_array = [speed_to_burn_value(s) for s in speed_array_values]
+            df = pd.DataFrame({
+                "burn_value": burn_values_array,
+                "speed_value": speed_array_values
+            })
         # Multi-channel case
         else:
             min_speed_bin = 1
@@ -319,40 +315,38 @@ class SpaceNet5PrepareSpeedMasksTask(BaseTask):
             append_total_band = True
             speed_arr_bin = np.arange(min_speed_bin, max_speed_bin + 1, 1)
             # Make output dir
-            if len(self.config.output_mask_dir_contin) > 0:
-                os.makedirs(self.config.output_mask_dir_contin, exist_ok=True)
+            if len(self.config.output_mask_contin_dir) > 0:
+                os.makedirs(self.config.output_mask_contin_dir, exist_ok=True)
             if len(self.config.output_mask_multidim_dir) > 0:
                 os.makedirs(self.config.output_mask_multidim_dir, exist_ok=True)
             bin_size_mph = 10.0
 
-            def speed_to_burn_func(speed_mph):
+            def speed_to_burn_value(speed_mph):
                 """
                 Bin every 10 mph or so.
                 Convert speed estimate to appropriate channel bin = 0 if speed = 0.
                 """
                 return int(int(math.ceil(speed_mph / bin_size_mph)) * channel_value_multiplier)
 
-            n_channels = len(np.unique([int(speed_to_burn_func(z)) for z in speed_arr_bin]))
-            print("n_channels:", n_channels)
+            n_channels = len(np.unique([int(speed_to_burn_value(z)) for z in speed_arr_bin]))
             channel_value_multiplier = int(255 / n_channels)
             # Make conversion dataframe
-            print("speed_arr_bin:", speed_arr_bin)
-            burn_val_arr = np.array([speed_to_burn_func(s) for s in speed_arr_bin])
-            print("burn_val_arr:", burn_val_arr)
-            d = {'burn_val': burn_val_arr, 'speed': speed_arr_bin}
-            df_s_bin = pd.DataFrame(d)
-            # Add a couple columns, first the channel that the speed corresponds to
-            channel_val = (burn_val_arr / channel_value_multiplier).astype(int) - 1
-            print("channel_val:", channel_val)
-            df_s_bin['channel'] = channel_val
-            # Make conversion dataframe (optional)
-            if not os.path.exists(self.config.output_conversion_csv_binned):
-                print("Write burn_val -> speed conversion to:", self.config.output_conversion_csv_binned)
-                df_s_bin.to_csv(self.config.output_conversion_csv_binned)
-            else:
-                print("path already exists, not overwriting...", self.config.output_conversion_csv_binned)
-        speed_masks(self.config.geojson_dir, self.config.image_dir, self.config.output_mask_dir_contin,
-                    speed_to_burn_func, mask_burn_val_key=mask_burn_val_key,
+            burn_values_array = np.array([speed_to_burn_value(s) for s in speed_arr_bin])
+            df = pd.DataFrame({
+                "burn_value": burn_values_array,
+                "speed_value": speed_arr_bin
+            })
+            # Add a channel column, for the channel that the speed corresponds to
+            channel_value = (burn_values_array / channel_value_multiplier).astype(int) - 1
+            df["channel"] = channel_value
+        # Make conversion dataframe
+        if not os.path.exists(self.config.output_conversion_csv):
+            print(f"Writing speed<->burn conversion to: {self.config.output_conversion_csv}")
+            df.to_csv(self.config.output_conversion_csv)
+        else:
+            print(f"Path {self.config.output_conversion_csv} for speed<->burn conversion already exists")
+        speed_masks(self.config.geojson_dir, self.config.image_dir, self.config.output_mask_contin_dir,
+                    speed_to_burn_value, mask_burn_val_key=mask_burn_val_key,
                     buffer_distance_meters=self.config.buffer_distance_meters, buffer_roundness=buffer_roundness,
                     dissolve_by=dissolve_by, bin_conversion_key=bin_conversion_key, verbose=verbose,
                     output_dir_multidim=self.config.output_mask_multidim_dir,

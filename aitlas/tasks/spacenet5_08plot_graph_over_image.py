@@ -1,7 +1,8 @@
 """
-TODO: This task
-plotting adapted from:
-    https://github.com/gboeing/osmnx/blob/master/osmnx/plot.py
+Notes
+-----
+    Based on the implementation at:
+        https://github.com/CosmiQ/cresi/blob/master/cresi/08_plot_graph_plus_im.py
 """
 import logging
 import os
@@ -37,7 +38,7 @@ def graph_to_geo_dfs_pix(g, nodes=True, edges=True, node_geometry=True, fill_edg
     
     Parameters
     ----------
-    g : networkx multidigraph
+    g : networkx MultiDiGraph
     nodes : bool
         if True, convert graph nodes to a GeoDataFrame and return it
     edges : bool
@@ -55,7 +56,7 @@ def graph_to_geo_dfs_pix(g, nodes=True, edges=True, node_geometry=True, fill_edg
     """
     if not (nodes or edges):
         raise ValueError('You must request nodes or edges, or both.')
-    to_return = []
+    result = list()
     if nodes:
         start_time = time.time()
         nodes = {node: data for node, data in g.nodes(data=True)}
@@ -65,7 +66,7 @@ def graph_to_geo_dfs_pix(g, nodes=True, edges=True, node_geometry=True, fill_edg
         gdf_nodes.crs = g.graph['crs']
         gdf_nodes.gdf_name = '{}_nodes'.format(g.graph['name'])
         gdf_nodes['osmid'] = gdf_nodes['osmid'].astype(np.int64).map(str)
-        to_return.append(gdf_nodes)
+        result.append(gdf_nodes)
         log('Created GeoDataFrame "{}" from graph in {:,.2f} seconds'.format(gdf_nodes.gdf_name,
                                                                              time.time() - start_time))
     if edges:
@@ -90,13 +91,13 @@ def graph_to_geo_dfs_pix(g, nodes=True, edges=True, node_geometry=True, fill_edg
         gdf_edges = gpd.GeoDataFrame(edges)
         gdf_edges.crs = g.graph['crs']
         gdf_edges.gdf_name = '{}_edges'.format(g.graph['name'])
-        to_return.append(gdf_edges)
+        result.append(gdf_edges)
         log('Created GeoDataFrame "{}" from graph in {:,.2f} seconds'.format(gdf_edges.gdf_name,
                                                                              time.time() - start_time))
-    if len(to_return) > 1:
-        return tuple(to_return)
+    if len(result) > 1:
+        return tuple(result)
     else:
-        return to_return[0]
+        return result[0]
 
 
 def plot_graph_pix(g, image=None, bbox=None, fig_height=6, fig_width=None, margin=0.02, axis_off=True,
@@ -111,12 +112,11 @@ def plot_graph_pix(g, image=None, bbox=None, fig_height=6, fig_width=None, margi
     
     Parameters
     ----------
-    g : networkx multidigraph
+    g : networkx MultiDiGraph
     image : image
     bbox : tuple
-        bounding box as north,south,east,west - if None will calculate from
-        spatial extents of data. if passing a bbox, you probably also want to
-        pass margin=0 to constrain it.
+        bounding box as north,south,east,west - if None will calculate from spatial extents of data.
+        If passing a bbox, you probably also want to pass margin=0 to constrain it.
     fig_height : int
         matplotlib figure height in inches
     fig_width : int
@@ -164,15 +164,12 @@ def plot_graph_pix(g, image=None, bbox=None, fig_height=6, fig_width=None, margi
     edge_color_key : str
     color_dict : dict
     edge_width_key : str
-        optional: key in edge propwerties to determine edge width,
-        supercedes edge_linewidth, default to "speed_mph"
+        optional: key in edge properties to determine edge width, supersedes edge_linewidth, default to "speed_mph"
     edge_width_multiplier : float
-        factor to rescale width for plotting, default to 1./25, which gives
-        a line width of 1 for 25 mph speed limit.
+        factor to rescale width for plotting, default to 1./25, which gives a line width of 1 for 25 mph speed limit.
     use_geom : bool
-        if True, use the spatial geometry attribute of the edges to draw
-        geographically accurate edges, rather than just lines straight from node
-        to node
+        if True, use the spatial geometry attribute of the edges to draw geographically accurate edges,
+        rather than just lines straight from node to node
     invert_x_axis : bool
     invert_y_axis : bool
     fig
@@ -307,7 +304,7 @@ def plot_graph_route_pix(g, route, image=None, bbox=None, fig_height=6, fig_widt
 
     Parameters
     ----------
-    g : networkx multidigraph
+    g : networkx MultiDiGraph
     route : list
         the route as a list of nodes
     image : image
@@ -423,7 +420,7 @@ def plot_graph_route_pix(g, route, image=None, bbox=None, fig_height=6, fig_widt
     for u, v in edge_nodes:
         # If there are parallel edges, select the shortest in length
         data = min(g.get_edge_data(u, v).values(), key=lambda x: x['length'])
-        # If it has a geometry attribute (ie, a list of line segments)
+        # If it has a geometry attribute (i.e., a list of line segments)
         if 'geometry_pix' in data and use_geom:
             # Add them to the list of lines to plot
             xs, ys = data['geometry_pix'].xy
@@ -574,11 +571,6 @@ def make_color_dict_list(max_speed=80, verbose=False):
 class SpaceNet5PlotGraphOverImageTask(BaseTask):
     """
     Implements the functionality of step 08 in the CRESI framework.
-
-    Attributes
-    ----------
-        schema : BaseTaskShema
-            The schema for this task.
     """
     schema = SpaceNet5PlotGraphOverImageTaskSchema
 
@@ -592,33 +584,34 @@ class SpaceNet5PlotGraphOverImageTask(BaseTask):
         super().__init__(model, config)
 
     def run(self):
-        """Implements the main logic of the task."""
+        """
+        Implements the main logic of the task.
+
+        Plotting adapted from:
+            https://github.com/gboeing/osmnx/blob/master/osmnx/plot.py"""
         # Output files
         res_root_dir = os.path.join(self.config.path_results_root, self.config.test_results_dir)
         path_images_8bit = os.path.join(self.config.test_data_refined_dir)
         graph_dir = os.path.join(res_root_dir, self.config.graph_dir + '_speed')
         out_dir = graph_dir.strip() + '_plots'
-        # dar tutorial settings
+        # Initialize variables
         save_only_route_png = False
         fig_height = 12
         fig_width = 12
-        node_color = '#66ccff'  # light blue
+        node_color = '#66ccff'
         node_size = 0.4
         node_alpha = 0.6
-        edge_color = '#bfefff'  # lightblue1
+        edge_color = '#bfefff'
         edge_line_width = 0.5
         edge_alpha = 0.6
         edge_color_key = 'inferred_speed_mph'
-        orig_destination_node_size = 8 * node_size
-        max_plots = 3
         shuffle = True
         invert_x_axis = False
         invert_y_axis = False
-        route_color = 'blue'
-        orig_destination_node_color = 'blue'
-        route_line_width = 4 * edge_line_width
         # Iterate through images and graphs, plot routes
         im_list = sorted([z for z in os.listdir(path_images_8bit) if z.endswith('.tif')])
+        # Modify this variable to control the number of plots produced
+        max_plots = len(im_list)
         if shuffle:
             random.shuffle(im_list)
         for i, im_root in enumerate(im_list):
@@ -634,6 +627,8 @@ class SpaceNet5PlotGraphOverImageTask(BaseTask):
             print("  graph_pkl:", graph_pkl)
             # gpickle?
             print("Reading gpickle...")
+            if not os.path.exists(graph_pkl):
+                continue
             G = nx.read_gpickle(graph_pkl)
             # Get one node, check longitude
             node = list(G.nodes())[-1]
@@ -651,13 +646,6 @@ class SpaceNet5PlotGraphOverImageTask(BaseTask):
                         data[attr_key] = wkt.loads(data[attr_key])
                     else:
                         continue
-            # Print a node
-            node = list(G.nodes())[-1]
-            print(node, "random node props:", G.nodes[node])
-            # Print an edge
-            edge_tmp = list(G.edges())[-1]
-            print(edge_tmp, "random edge props:",
-                  G.edges([edge_tmp[0], edge_tmp[1]]))  # G.edge[edge_tmp[0]][edge_tmp[1]])
             # Read in image, cv2 fails on large files
             print("Read in image...")
             try:
@@ -686,64 +674,9 @@ class SpaceNet5PlotGraphOverImageTask(BaseTask):
                 # Plot with speed
                 out_file_plot_speed = os.path.join(out_dir, im_root_no_ext + '_ox_plot_speed.tif')
                 print("outfile_plot_speed:", out_file_plot_speed)
-                # width_key = 'inferred_speed_mph'
                 color_dict, color_list = make_color_dict_list()
                 plot_graph_pix(G, im, fig_height=fig_height, fig_width=fig_width, node_size=int(node_size),
                                node_alpha=node_alpha, node_color=node_color, edge_line_width=edge_line_width,
                                edge_alpha=edge_alpha, edge_color=edge_color, filename=out_file_plot_speed,
                                default_dpi=dpi, show=False, save=True, invert_y_axis=invert_y_axis,
                                invert_x_axis=invert_x_axis, edge_color_key=edge_color_key, color_dict=color_dict)
-            # Plot graph route
-            print("\nPlot a random route on the graph...")
-            t0 = time.time()
-            # Set source
-            source_idx = np.random.randint(0, len(G.nodes()))
-            source = list(G.nodes())[source_idx]
-            # Get routes
-            lengths, paths = nx.single_source_dijkstra(G, source=source, weight='length')
-            # Random target
-            target_idx = np.random.randint(0, len(list(lengths.keys())))
-            target = list(lengths.keys())[target_idx]
-            # Specific route
-            route = paths[target]
-            print("source:", source)
-            print("target:", target)
-            print("route:", route)
-            # Plot route
-            out_file_route = os.path.join(out_dir, im_root_no_ext + '_ox_route_r0_length.tif')
-            print("outfile_route:", out_file_route)
-            plot_graph_route_pix(G, route, image=im, fig_height=fig_height, fig_width=fig_width,
-                                 node_size=int(node_size),
-                                 node_alpha=node_alpha, node_color=node_color, edge_line_width=edge_line_width,
-                                 edge_alpha=edge_alpha, edge_color=edge_color,
-                                 orig_destination_node_size=int(orig_destination_node_size), route_color=route_color,
-                                 orig_destination_node_color=orig_destination_node_color,
-                                 route_line_width=int(route_line_width), filename=out_file_route, default_dpi=dpi,
-                                 show=False, save=True, invert_y_axis=invert_y_axis, invert_x_axis=invert_x_axis,
-                                 edge_color_key="")
-            t1 = time.time()
-            print("Time to run plot_graph_route_pix():", t1 - t0, "seconds")
-            # Plot graph route (speed)
-            print("\nPlot a random route on the graph...")
-            t0 = time.time()
-            # Get routes
-            lengths, paths = nx.single_source_dijkstra(G, source=source, weight='Travel Time (h)')
-            # Specific route
-            route = paths[target]
-            print("source:", source)
-            print("target:", target)
-            print("route:", route)
-            # Plot route
-            out_file_route = os.path.join(out_dir, im_root_no_ext + '_ox_route_r0_speed.tif')
-            print("outfile_route:", out_file_route)
-            plot_graph_route_pix(G, route, image=im, fig_height=fig_height, fig_width=fig_width,
-                                 node_size=int(node_size),
-                                 node_alpha=node_alpha, node_color=node_color, edge_line_width=edge_line_width,
-                                 edge_alpha=edge_alpha, edge_color=edge_color,
-                                 orig_destination_node_size=int(orig_destination_node_size), route_color=route_color,
-                                 orig_destination_node_color=orig_destination_node_color,
-                                 route_line_width=int(route_line_width), filename=out_file_route, default_dpi=dpi,
-                                 show=False, save=True, invert_y_axis=invert_y_axis, invert_x_axis=invert_x_axis,
-                                 edge_color_key=edge_color_key, color_dict=color_dict)
-            t1 = time.time()
-            print("Time to run plot_graph_route_pix():", t1 - t0, "seconds")

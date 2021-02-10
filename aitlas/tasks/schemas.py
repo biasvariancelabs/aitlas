@@ -217,21 +217,24 @@ class SpaceNet5PrepareSpeedMasksTaskSchema(BaseTaskShema):
     geojson_dir = fields.String(required=True, description="Input directory containing the GeoJSON files")
     image_dir = fields.String(required=True,
                               description="Directory of input images (output of the PrepareImagery task)")
-    output_conversion_csv_binned = fields.String(required=True, description="Some description")
-    output_mask_dir_contin = fields.String(required=True,
+    output_conversion_csv = fields.String(required=True,
+                                          description="Output csv filepath for the speed<->burn value conversion")
+    output_mask_contin_dir = fields.String(required=True,
                                            description="Output directory for saving the continuous speed masks")
     output_mask_multidim_dir = fields.String(required=True,
                                              description="Output directory for saving the multi-channel masks, "
                                                          "leave it empty if you don't want to generate them")
-    # TODO: Write better description
-    buffer_distance_meters = fields.String(required=False, missing=2, description="Road buffer")
+    buffer_distance_meters = fields.String(required=False, missing=2,
+                                           description="Road buffer (in meters), "
+                                                       "assigned for each road center-line prediction")
 
 
 class SpaceNet5SkeletonizeTaskSchema(BaseTaskShema):
-    # TODO: Write better descriptions
-    min_spur_length_m = fields.Int(required=True, description="Some description")
-    min_subgraph_length_pix = fields.Int(required=True, description="Some description")
+    min_spur_length_m = fields.Int(required=True, description="Minimum length (in meters) for edge filtering")
+    min_subgraph_length_pix = fields.Int(required=True, description="Minimum number of pixels for edge filtering")
+    # TODO: Write better description
     GSD = fields.Float(required=True, description="Some description")
+    # TODO: Write better description
     use_medial_axis = fields.Int(required=True, description="Some description")
     path_results_root = fields.String(required=True, description="Root directory for the output files")
     test_results_dir = fields.String(required=True, description="Directory for the results from this task")
@@ -239,16 +242,15 @@ class SpaceNet5SkeletonizeTaskSchema(BaseTaskShema):
                                    description="CSV file with a list of road segments")
     skeleton_dir = fields.String(required=True, description="Directory for the resulting skeleton masks")
     skeleton_pkl_dir = fields.String(required=True, description="Directory for the pickled resulting skeleton masks")
-    masks_dir = fields.String(required=True, description="Directory with the masks which are to be skeletonized")
+    masks_dir = fields.String(required=True, description="Directory with the input masks which are to be skeletonized")
     skeleton_thresh = fields.Float(required=True, description="Threshold for skeletonization")
-    skeleton_band = fields.Int(required=True, description="Bands")
-    num_classes = fields.Int(required=True, description="The number of classes")
+    skeleton_band = fields.Int(required=True, description="Which channel to use to extract a mask skeleton")
+    num_classes = fields.Int(required=True, description="The number of classes (i.e. output channels)")
 
 
 class SpaceNet5WktToGraphTaskSchema(BaseTaskShema):
-    # TODO: Write better descriptions
-    min_subgraph_length_pix = fields.Int(required=True, description="Some description")
-    min_spur_length_m = fields.Int(required=True, description="Some description")
+    min_subgraph_length_pix = fields.Int(required=True, description="Minimum length (in meters) for edge filtering")
+    min_spur_length_m = fields.Int(required=True, description="Minimum number of pixels for edge filtering")
     path_results_root = fields.String(required=True, description="Root directory for the output files")
     test_results_dir = fields.String(required=True, description="Directory for the results from this task")
     test_data_refined_dir = fields.String(required=True,
@@ -256,24 +258,27 @@ class SpaceNet5WktToGraphTaskSchema(BaseTaskShema):
     wkt_submission = fields.String(required=True,
                                    description="CSV file with a list of road segments (output of the Skeletonize task)")
     graph_dir = fields.String(required=True, description="Output directory for the graph pickles")
-    num_channels = fields.Int(required=True, description="Num channels")
-    rdp_epsilon = fields.Int(required=True, description="rdp epsilon")
+    num_channels = fields.Int(required=False, missing=3, description="Number of input channels")
+    # TODO: Write better description
+    rdp_epsilon = fields.Int(required=False, missing=1, description="rdp epsilon")
 
 
 class SpaceNet5InferSpeedTaskSchema(BaseTaskShema):
-    # TODO: Write better descriptions
     path_results_root = fields.String(required=True, description="Root directory for the output files")
     test_results_dir = fields.String(required=True, description="Directory for the results from this task")
     test_data_refined_dir = fields.String(required=True,
                                           description="Directory of input images (output of the PrepareImagery task)")
     graph_dir = fields.String(required=True, description="Input directory for the graph pickles")
-    num_channels = fields.Int(required=True, description="Num channels")
+    num_channels = fields.Int(required=True, description="Number of input channels")
     speed_conversion_file = fields.String(required=True, description="Output of the PrepareMasks task")
     masks_dir = fields.String(required=True, description="Directory with the target masks")
-    skeleton_band = fields.Int(required=True, description="Bands")
-    num_classes = fields.Int(required=True, description="The number of classes")
+    skeleton_band = fields.Int(required=True, description="Which channel to use to extract a mask skeleton")
+    num_classes = fields.Int(required=True, description="The number of classes (i.e. output channels)")
 
 
 class SpaceNet5PlotGraphOverImageTaskSchema(BaseTaskShema):
-    # TODO: Set descriptions
-    some_field = fields.String(required=True, description="Some description")
+    path_results_root = fields.String(required=True, description="Root directory for the output files")
+    test_results_dir = fields.String(required=True, description="Directory for the results from this task")
+    test_data_refined_dir = fields.String(required=True,
+                                          description="Directory of input images (output of the PrepareImagery task)")
+    graph_dir = fields.String(required=True, description="Input directory for the graph pickles")
