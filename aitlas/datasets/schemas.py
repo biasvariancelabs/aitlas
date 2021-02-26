@@ -74,3 +74,4 @@ class SpaceNet6DatasetSchema(BaseDatasetSchema):
     train_min_building_size = fields.Float(required=True, description="some")
 
     rot_out_path = fields.String(required=True, description="some")
+    root_directory = fields.String(required=True, description="some")

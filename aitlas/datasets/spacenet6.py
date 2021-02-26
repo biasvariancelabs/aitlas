@@ -5,11 +5,11 @@ Notes
         https://github.com/SpaceNetChallenge/SpaceNet_SAR_Buildings_Solutions/blob/master/1-zbigniewwojna/main.py#L412
 """
 import os
+import random
 
 import numpy as np
 import pandas as pd
 import torch
-from _csv import reader
 from skimage import io, measure
 
 from aitlas.base import BaseDataset
@@ -83,11 +83,16 @@ class SpaceNet6Dataset(BaseDataset):
                 Specifying which item to return.
         """
         image, mask = None, None
-        image_path = os.path.join(self.config.image_paths[index])
-        mask_path = os.path.join(self.config.label_paths[index])
+        image_path = os.path.join(self.image_paths[index])
+        mask_path = os.path.join(self.mask_paths[index])
         if self.config.color:
-            image_path = os.path.join(self.config.root_directory,
-                                      os.path.basename(image_path).replace('SAR-Intensity', 'PS-RGB'))
+            rgb_path = self.config.root_directory + "/PS-RGB"
+            print(f"RGB path : {rgb_path}")
+            print(f"Image path: {os.path.basename(self.image_paths[index]).replace('SAR-Intensity', 'PS-RGB')}")
+            image_path = os.path.join(rgb_path,
+                                      os.path.basename(self.image_paths[index])
+                                      .replace('SAR-Intensity', 'PS-RGB')
+                                      )
             image = io.imread(image_path)
             image = image[:, :, [2, 0, 0, 1]]
         else:
@@ -120,6 +125,9 @@ class SpaceNet6Dataset(BaseDataset):
                 "channel_swap_prob": self.config.channel_swap_prob
             })
             ############################################################
+        else: # val, do crop to same size
+            mask = io.imread(mask_path)
+            mask = mask[y_min: y_max, x_min: x_max]
         direction, strip, coordinate = parse_img_id(image_path, self.orients)
         if direction.item():
             image = np.fliplr(np.flipud(image))
@@ -162,8 +170,8 @@ class SpaceNet6Dataset(BaseDataset):
             "direction": direction,
             "coordinate": coordinate,
             "image_path": image_path,
-            "y_min": y_min,
-            "x_min": x_min,
+            "ymin": y_min,
+            "xmin": x_min,
             "b_count": region_count,
             "weights": weights
         }

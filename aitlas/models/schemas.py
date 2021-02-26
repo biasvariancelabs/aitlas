@@ -13,4 +13,4 @@ class UNetEfficientNetModelSchema(BaseSegmentationClassifierSchema):
     aspp = fields.Bool(required=True, description="some")
     ocr = fields.Bool(required=True, description="some")
     aux = fields.Bool(required=True, description="some")
-    box1x1 = fields.Bool(required=True, description="some")
+    bot1x1 = fields.Bool(required=True, description="some")

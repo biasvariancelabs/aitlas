@@ -227,13 +227,17 @@ class SpaceNet6TrainAndEvaluateTaskSchema(BaseTaskShema):
     segmentation_directory = fields.String(required=True, description="Some target directory")
 
     train = fields.Bool(required=False, default=True, description="some")
+    val = fields.Bool(required=True, description="some")
+    test = fields.Bool(required=True, description="some")
 
     warm_up_dec_epochs = fields.Int(required=True, description="some")
 
     input_scale = fields.Float(required=True, description="some")
+    strip_scale = fields.Float(required=True, description="some")
     direction_scale = fields.Float(required=True, description="some")
     coord_scale = fields.Float(required=True, description="some")
 
+    b_count_div = fields.Float(required=True, description="some")
     b_count_weight = fields.Float(required=True, description="some")
     b_rev_size_weight = fields.Float(required=True, description="some")
     pos_weight = fields.Float(required=True, description="some")
@@ -253,10 +257,21 @@ class SpaceNet6TrainAndEvaluateTaskSchema(BaseTaskShema):
 
     start_val_epoch = fields.Int(required=True, description="some")
 
-    val = fields.Bool(required=True, description="some")
-    test = fields.Bool(required=True, description="some")
+    gt_csv = fields.String(required=True, description="some")
+    pred_csv = fields.String(required=True, description="some")
 
     pred_folder = fields.String(required=True, description="some")
+    merged_pred_dir = fields.String(required=True, description="some")
+    solution_file = fields.String(required=True, description="some")
+
+    epochs = fields.Int(
+        required=True, description="Number of epochs used in training", example=50
+    )
+    model_directory = fields.String(
+        required=True,
+        description="Directory of the model output",
+        example="/tmp/model/",
+    )
     train_dataset_config = fields.Nested(
         nested=ObjectConfig,
         required=True,

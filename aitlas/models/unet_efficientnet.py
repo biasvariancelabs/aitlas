@@ -227,7 +227,7 @@ class UNetEfficientNet(BaseSegmentationClassifier):
         self.dec3 = mod(dec_ch[2], dec_ch[1])
         self.dec4 = mod(dec_ch[1], dec_ch[0])
 
-        if self.config.box1x1:
+        if self.config.bot1x1:
             self.bot1x10 = mod(enc_ch[3], enc_ch[3], 1)
             self.bot1x11 = mod(enc_ch[2], enc_ch[2], 1)
             self.bot1x12 = mod(enc_ch[1], enc_ch[1], 1)
@@ -308,12 +308,12 @@ class UNetEfficientNet(BaseSegmentationClassifier):
             x = self.dec4(x)
             return self.final(x), self.upps(self.upps(out_aux))
 
-        if self.stride == 32:
+        if self.config.stride == 32:
             x = self.dec0(self.up(x + (0 if self.config.extra_num <= 0 else self.bot0extra(ex)))) + (
                 self.global_f(x) if self.config.glob else 0)
             x = torch.cat([x, enc3], dim=1)
             x = self.bot0(x)
-        if self.stride == 32 or self.stride == 16:
+        if self.config.stride == 32 or self.config.stride == 16:
             x = self.dec1(self.up(x + (0 if self.config.extra_num <= 1 else self.bot1extra(ex))))
             x = torch.cat([x, enc2], dim=1)
             x = self.bot1(x)
