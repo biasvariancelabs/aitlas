@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.utils.data.sampler import Sampler
 
 from ..base import BaseMulticlassClassifier
-from ..clustering import Kmeans, cluster_assign
+from ..clustering import PIC, Kmeans, cluster_assign
 from .schemas import UnsupervisedDeepMulticlassClassifierSchema
 
 
@@ -47,10 +47,9 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
         clustering_loss = self.deepcluster.cluster(features)
 
         # assign pseudo-labels
-        train_dataset = cluster_assign(
-            self.deepcluster.images_lists, list(range(len(dataset)))
-        )
+        train_dataset = cluster_assign(self.deepcluster.images_lists, dataset.data)
 
+        print(train_dataset.__getitem__(0))
         # uniformely sample per target
         sampler = UnifLabelSampler(
             int(self.reassign * len(train_dataset)), self.deepcluster.images_lists
@@ -87,14 +86,14 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
         )
 
         return super().train_epoch(
-            train_dataloader, self.model, criterion, optimizers, epoch
+            epoch, train_dataloader, optimizers, criterion, iterations_log
         )
 
     def forward(self, x):
-        self.model.forward(x)
+        return self.model.forward(x)
 
 
-def compute_features(dataloader, model, N, batch=256):
+def compute_features(dataloader, model, N, batch=64):
     """Computer features for images"""
     model.eval()
     # discard the label information in the dataloader

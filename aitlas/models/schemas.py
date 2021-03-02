@@ -9,5 +9,5 @@ class UnsupervisedDeepMulticlassClassifierSchema(BaseModelSchema):
     )
     weight_decay = fields.Float(missing=-5, description="Weight decay for optimizer.")
     number_of_clusters = fields.Integer(
-        missing=10000, description="Number of clusters to use during traning."
+        missing=100, description="Number of clusters to use during traning."
     )

@@ -70,6 +70,9 @@ class ReassignedDataset(data.Dataset):
 
     def __init__(self, image_indexes, pseudolabels, dataset, transform=None):
         self.imgs = self.make_dataset(image_indexes, pseudolabels, dataset)
+        self.label_to_idx = {label: idx for idx, label in enumerate(set(pseudolabels))}
+        self.pseudolabels = pseudolabels
+        self.dataset = dataset
         self.transform = transform
 
     def make_dataset(self, image_indexes, pseudolabels, dataset):
@@ -88,11 +91,11 @@ class ReassignedDataset(data.Dataset):
         Returns:
             tuple: (image, pseudolabel) where pseudolabel is the cluster of index datapoint
         """
-        path, pseudolabel = self.imgs[index]
-        img = image_loader(path)
-        if self.transform is not None:
+        img, target = self.dataset.__getitem__(index)
+        img = image_loader(img)
+        if self.transform:
             img = self.transform(img)
-        return img, pseudolabel
+        return img, self.label_to_idx[self.pseudolabels[index]]
 
     def __len__(self):
         return len(self.imgs)
@@ -118,7 +121,15 @@ def cluster_assign(images_lists, dataset):
     normalize = transforms.Normalize(
         mean=[0.192, 0.237, 0.161], std=[0.098, 0.101, 0.129]
     )
-    t = transforms.Compose([transforms.ToTensor(), normalize])
+    t = transforms.Compose(
+        [
+            transforms.ToPILImage(),
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            normalize,
+        ]
+    )
 
     return ReassignedDataset(image_indexes, pseudolabels, dataset, t)
 
@@ -134,18 +145,12 @@ def run_kmeans(x, nmb_clusters, verbose=False):
     n_data, d = x.shape
 
     # faiss implementation of k-means
-    clus = faiss.Clustering(d, nmb_clusters)
-    clus.niter = 20
-    clus.max_points_per_centroid = 10000000
-    res = faiss.StandardGpuResources()
-    flat_config = faiss.GpuIndexFlatConfig()
-    flat_config.useFloat16 = False
-    flat_config.device = 0
-    index = faiss.GpuIndexFlatL2(res, d, flat_config)
+    clus = faiss.Kmeans(d, nmb_clusters)
+    index = faiss.IndexFlatL2(d)
 
     # perform the training
-    clus.train(x, index)
-    _, I = index.search(x, 1)
+    clus.train(x)
+    dists, I = clus.index.search(x, 1)
     losses = faiss.vector_to_array(clus.obj)
     if verbose:
         print("k-means loss evolution: {0}".format(losses))
