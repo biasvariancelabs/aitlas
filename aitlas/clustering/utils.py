@@ -68,21 +68,16 @@ class ReassignedDataset(data.Dataset):
                                         transformed version
     """
 
-    def __init__(self, image_indexes, pseudolabels, dataset, transform=None):
-        self.imgs = self.make_dataset(image_indexes, pseudolabels, dataset)
-        self.label_to_idx = {label: idx for idx, label in enumerate(set(pseudolabels))}
-        self.pseudolabels = pseudolabels
+    def __init__(self, image_indexes, pseudolabels, dataset):
+        self.pseudolabels = self.make_dataset(image_indexes, pseudolabels)
         self.dataset = dataset
-        self.transform = transform
 
-    def make_dataset(self, image_indexes, pseudolabels, dataset):
+    def make_dataset(self, image_indexes, pseudolabels):
         label_to_idx = {label: idx for idx, label in enumerate(set(pseudolabels))}
-        images = []
+        pseudolabels = []
         for j, idx in enumerate(image_indexes):
-            path = dataset[idx][0]
-            pseudolabel = label_to_idx[pseudolabels[j]]
-            images.append((path, pseudolabel))
-        return images
+            pseudolabels.append(label_to_idx[pseudolabels[j]])
+        return pseudolabels
 
     def __getitem__(self, index):
         """
@@ -91,14 +86,10 @@ class ReassignedDataset(data.Dataset):
         Returns:
             tuple: (image, pseudolabel) where pseudolabel is the cluster of index datapoint
         """
-        img, target = self.dataset.__getitem__(index)
-        img = image_loader(img)
-        if self.transform:
-            img = self.transform(img)
-        return img, self.label_to_idx[self.pseudolabels[index]]
+        return self.dataset.__getitem__(index)[0], self.pseudolabels[index]
 
     def __len__(self):
-        return len(self.imgs)
+        return len(self.pseudolabels)
 
 
 def cluster_assign(images_lists, dataset):
@@ -118,20 +109,7 @@ def cluster_assign(images_lists, dataset):
         image_indexes.extend(images)
         pseudolabels.extend([cluster] * len(images))
 
-    normalize = transforms.Normalize(
-        mean=[0.192, 0.237, 0.161], std=[0.098, 0.101, 0.129]
-    )
-    t = transforms.Compose(
-        [
-            transforms.ToPILImage(),
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            normalize,
-        ]
-    )
-
-    return ReassignedDataset(image_indexes, pseudolabels, dataset, t)
+    return ReassignedDataset(image_indexes, pseudolabels, dataset)
 
 
 def run_kmeans(x, nmb_clusters, verbose=False):

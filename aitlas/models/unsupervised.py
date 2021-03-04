@@ -41,16 +41,21 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
         dataset = dataloader.dataset
 
         # get the features for the whole dataset
-        features = compute_features(dataloader, self.model, len(dataloader))
+        features = compute_features(
+            dataloader,
+            self.model,
+            len(dataloader),
+            dataset.config.batch_size,
+            self.device,
+        )
 
         # cluster the features]
         clustering_loss = self.deepcluster.cluster(features)
 
         # assign pseudo-labels
-        train_dataset = cluster_assign(self.deepcluster.images_lists, dataset.data)
+        train_dataset = cluster_assign(self.deepcluster.images_lists, dataset)
 
-        print(train_dataset.__getitem__(0))
-        # uniformely sample per target
+        # uniformly sample per target
         sampler = UnifLabelSampler(
             int(self.reassign * len(train_dataset)), self.deepcluster.images_lists
         )
@@ -93,12 +98,13 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
         return self.model.forward(x)
 
 
-def compute_features(dataloader, model, N, batch=64):
-    """Computer features for images"""
+def compute_features(dataloader, model, N, batch, device):
+    """Compute features for images"""
     model.eval()
+
     # discard the label information in the dataloader
     for i, (input_tensor, _) in enumerate(dataloader):
-        input_var = torch.autograd.Variable(input_tensor.cuda(), volatile=True)
+        input_var = torch.autograd.Variable(input_tensor.to(device), volatile=True)
         aux = model(input_var).data.cpu().numpy()
 
         if i == 0:
