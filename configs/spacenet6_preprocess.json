@@ -2,14 +2,14 @@
     "task": {
         "classname": "aitlas.tasks.SpaceNet6PreprocessTask",
         "config": {
-            "root_directory": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam",
-            "segmentation_directory": "/home/stefan/Downloads/Spacenet6Data/results/segmentation_directory",
-            "fold_directory": "/home/stefan/Downloads/Spacenet6Data/results/fold_directory",
+            "root_dir": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam",
+            "segmentation_masks_dir": "/home/stefan/Downloads/Spacenet6Data/results/segmentation_directory",
+            "folds_dir": "/home/stefan/Downloads/Spacenet6Data/results/fold_directory",
+            "num_threads": 12,
             "edge_width": 3,
             "contact_width": 9,
-            "num_threads": 12,
-            "rotation_input_path": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.txt",
-            "rotation_output_path": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv"
+            "orientations_input": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.txt",
+            "orientations_output": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv"
         }
     }
 }

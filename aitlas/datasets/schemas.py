@@ -53,25 +53,18 @@ class BigEarthNetSchema(BaseDatasetSchema):
 
 
 class SpaceNet6DatasetSchema(BaseDatasetSchema):
-    train = fields.Bool(required=True, description="some")
-    color = fields.Bool(required=True, description="some")
-
-    crop_size = fields.Int(required=True, description="some")
-
-    reorder_bands = fields.Int(required=True, description="some")
-
-    rot_prob = fields.Float(required=True, description="some")
-    scale_prob = fields.Float(required=True, description="some")
-    color_aug_prob = fields.Float(required=True, description="some")
-    gamma_aug_prob = fields.Float(required=True, description="some")
-    gauss_aug_prob = fields.Float(required=True, description="some")
-    elastic_aug_prob = fields.Float(required=True, description="some")
-    flipud_prob = fields.Float(required=True, description="some")
-    fliplr_prob = fields.Float(required=True, description="some")
-    rot90_prob = fields.Float(required=True, description="some")
-    channel_swap_prob = fields.Float(required=True, description="some")
-
-    train_min_building_size = fields.Float(required=True, description="some")
-
-    rot_out_path = fields.String(required=True, description="some")
-    root_directory = fields.String(required=True, description="some")
+    crop_size = fields.Int(required=True,
+                           description="Crop size for the images/masks")
+    rot_prob = fields.Float(required=False,
+                            missing=0.7,
+                            description="Probability to apply rotation to image/mask")
+    flip_lr_prob = fields.Float(required=False,
+                                missing=0.5,
+                                description="Probability to apply left/right flip to image/mask")
+    orients = fields.String(required=True,
+                            example="path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.csv",
+                            description="Absolute path pointing to the SAR orientations text file "
+                                        "(output of the pre-processing task")
+    apply_transforms = fields.Bool(required=True,
+                                   description="Whether to apply transforms to the images/masks, "
+                                               "True for training data False otherwise")

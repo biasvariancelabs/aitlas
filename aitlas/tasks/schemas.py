@@ -202,83 +202,72 @@ class ExtractFeaturesTaskSchema(BaseTaskShema):
 
 
 class SpaceNet6PreprocessTaskSchema(BaseTaskShema):
-    # TODO: Write descriptions
-    root_directory = fields.String(required=True, description="The root directory of the downloaded data")
-    ############################
-    fold_directory = fields.String(required=True, description="The root directory of the downloaded data")
-    segmentation_directory = fields.String(required=True, description="Some target directory")
-    edge_width = fields.Int(required=True, description="description", default=9)
-    contact_width = fields.Int(required=True, description="description", default=3)
-    rotation_input_path = fields.String(required=True, description="some")
-    rotation_output_path = fields.String(required=True, description="some")
-    #############################
-    num_threads = fields.Int(required=False, missing=1, description="Number of threads")
+    root_dir = fields.String(required=True,
+                             example="path/to/data/train/AOI_11_Rotterdam/",
+                             description="Root directory for the raw SpaceNet6 data set")
+    segmentation_masks_dir = fields.String(required=True,
+                                           example="path/to/results/segmentation",
+                                           description="Destination directory for saving the target segmentation masks")
+    folds_dir = fields.String(required=True,
+                              example="path/to/results/folds",
+                              description="Destination directory for saving the fold csv files")
+    num_folds = fields.Int(required=False,
+                           missing=10,
+                           description="Number of fold splits for the data set")
+    orientations_input = fields.String(required=True,
+                                       example="path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.txt",
+                                       description="Absolute path pointing to the input SAR orientations text file")
+    orientations_output = fields.String(required=True,
+                                        example="path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.txt",
+                                        description="Absolute path pointing to the output SAR orientations csv file")
+    num_threads = fields.Int(required=False,
+                             missing=1,
+                             description="Number of threads for parallel execution")
+    edge_width = fields.Int(required=False,
+                            default=3,
+                            description="Width of the edge of buildings (in pixels)")
+    contact_width = fields.Int(required=False,
+                               default=9,
+                               description="Width of the contact between (in pixels)")
 
 
-class SpaceNet6TrainAndEvaluateTaskSchema(BaseTaskShema):
-    # TODO: Write descriptions
-    loss_eps = fields.Float(required=True, description="some")
-    focal_gamma = fields.Float(required=True, description="some")
-    wd = fields.Float(required=True, description="some")
-    lr = fields.Float(required=True, description="some")
+class SpaceNet6TrainAndEvaluateTaskSchema(TrainAndEvaluateTaskSchema):
+    root_dir = fields.String(required=True,
+                                   example="path/to/data/train/AOI_11_Rotterdam/",
+                                   description="Root directory for the raw SpaceNet6 data set")
+    folds_path = fields.String(required=True,
+                               example="path/to/results/folds",
+                               description="Source directory with the fold csv files")
+    segmentation_masks_dir = fields.String(required=True,
+                                           example="path/to/results/segmentation",
+                                           description="Source directory with the target segmentation masks")
+    start_val_epoch = fields.Int(required=True,
+                                 description="From which epoch should the validation period start")
+    gt_csv = fields.String(required=True,
+                           description="Source file containing the ground truth segmentation data on the buildings")
+    pred_csv = fields.String(required=True,
+                             description="Destination file for saving the predictions from the current fold")
+    pred_folder = fields.String(required=True,
+                                description="Destination directory for saving the predictions from all folds")
+    edge_weight = fields.Int(required=True,
+                             description="Weight for the building edges pixels")
+    contact_weight = fields.Int(required=True,
+                                description="Weight for the building contact pixels")
 
-    root_directory = fields.String(required=True, description="The root directory of the downloaded data")
-    fold_path = fields.String(required=True, description="The root directory of the downloaded data")
-    segmentation_directory = fields.String(required=True, description="Some target directory")
 
-    train = fields.Bool(required=False, default=True, description="some")
-    val = fields.Bool(required=True, description="some")
-    test = fields.Bool(required=True, description="some")
-
-    warm_up_dec_epochs = fields.Int(required=True, description="some")
-
-    input_scale = fields.Float(required=True, description="some")
-    strip_scale = fields.Float(required=True, description="some")
-    direction_scale = fields.Float(required=True, description="some")
-    coord_scale = fields.Float(required=True, description="some")
-
-    b_count_div = fields.Float(required=True, description="some")
-    b_count_weight = fields.Float(required=True, description="some")
-    b_rev_size_weight = fields.Float(required=True, description="some")
-    pos_weight = fields.Float(required=True, description="some")
-    focal_weight = fields.Float(required=True, description="some")
-    edge_weight = fields.Float(required=True, description="some")
-    contact_weight = fields.Float(required=True, description="some")
-
-    aux_scale = fields.Float(required=True, description="some")
-
-    apex = fields.Bool(required=True, description="some")
-
-    clip_grad_norm_value = fields.Float(required=True, description="some")
-
-    # models_folder = fields.String(required=True, description="some")
-    snapshot_last = fields.String(required=True, description="some")
-    snapshot_best = fields.String(required=True, description="some")
-
-    start_val_epoch = fields.Int(required=True, description="some")
-
-    gt_csv = fields.String(required=True, description="some")
-    pred_csv = fields.String(required=True, description="some")
-
-    pred_folder = fields.String(required=True, description="some")
-    merged_pred_dir = fields.String(required=True, description="some")
-    solution_file = fields.String(required=True, description="some")
-
-    epochs = fields.Int(
-        required=True, description="Number of epochs used in training", example=50
-    )
-    model_directory = fields.String(
-        required=True,
-        description="Directory of the model output",
-        example="/tmp/model/",
-    )
-    train_dataset_config = fields.Nested(
-        nested=ObjectConfig,
-        required=True,
-        description="Train dataset type and configuration.",
-    )
-    val_dataset_config = fields.Nested(
-        nested=ObjectConfig,
-        required=True,
-        description="Validation dataset type and configuration.",
-    )
+class SpaceNet6TestTaskSchema(EvaluateTaskSchema):
+    root_directory = fields.String(required=True,
+                                   example="path/to/data/train/AOI_11_Rotterdam/",
+                                   description="Root directory for the raw SpaceNet6 data set")
+    fold_path = fields.String(required=True,
+                              example="path/to/data/train/AOI_11_Rotterdam/",
+                              description="Root directory for the raw SpaceNet6 data set")
+    pred_folder = fields.String(required=True,
+                                example="path/to/data/train/AOI_11_Rotterdam/",
+                                description="Root directory for the raw SpaceNet6 data set")
+    merged_pred_dir = fields.String(required=True,
+                                    example="path/to/data/train/AOI_11_Rotterdam/",
+                                    description="Root directory for the raw SpaceNet6 data set")
+    solution_file = fields.String(required=True,
+                                  example="path/to/data/train/AOI_11_Rotterdam/",
+                                  description="Root directory for the raw SpaceNet6 data set")

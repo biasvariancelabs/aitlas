@@ -4,6 +4,7 @@ from time import time
 
 import numpy as np
 import tifffile
+import torch
 from PIL import Image, ImageOps
 
 
@@ -61,3 +62,17 @@ def stringify(obj):
         response = str(obj)
 
     return response
+
+
+def parse_img_id(file_path, orients):
+    """Parses direction, strip and coordinate components from a SpaceNet6 image filepath."""
+    file_name = file_path.split("/")[-1]
+    strip_name = "_".join(file_name.split("_")[-4:-2])
+    direction = int(orients.loc[strip_name]["direction"])
+    direction = torch.from_numpy(np.reshape(np.asarray([direction]), (1, 1, 1))).float()
+    val = int(orients.loc[strip_name]["val"])
+    strip = torch.Tensor(np.zeros((len(orients.index), 1, 1))).float()
+    strip[val] = 1
+    coord = np.asarray([orients.loc[strip_name]["coord_y"]])
+    coord = torch.from_numpy(np.reshape(coord, (1, 1, 1))).float() - 0.5
+    return direction, strip, coord

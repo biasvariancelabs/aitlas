@@ -1,0 +1,32 @@
+{
+    "model": {
+        "classname": "aitlas.models.UNetEfficientNet",
+        "config": {
+            "net": "b5",
+            "stride": 32
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.SpaceNet6TestTask",
+        "config": {
+            "root_directory": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam",
+            "fold_path": "/home/dkocev/stefanp/spaceNetChallenge6/results/fold/folds.csv",
+            "pred_folder": "/home/dkocev/stefanp/spaceNetChallenge6/results/pred-test{}",
+            "merged_pred_dir": "/home/dkocev/stefanp/spaceNetChallenge6/results/merged_pred",
+            "solution_file": "solution.csv",
+            "model_path": "examples/experiments/spacenet6_winning_solution/best_model",
+            "dataset_config": {
+                "classname": "aitlas.datasets.SpaceNet6Dataset",
+                "config": {
+                    "batch_size": 1,
+                    "shuffle": false,
+                    "num_workers": 1,
+                    "crop_size": 512,
+                    "rot_prob": 0.7,
+                    "flip_lr_prob": 0.5,
+                    "orients": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv"
+                }
+            }
+        }
+    }
+}

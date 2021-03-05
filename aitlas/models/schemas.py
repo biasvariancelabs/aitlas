@@ -1,16 +1,12 @@
-from marshmallow import fields
+from marshmallow import fields, validate
 
 from aitlas.base.schemas import BaseSegmentationClassifierSchema
 
 
 class UNetEfficientNetModelSchema(BaseSegmentationClassifierSchema):
-    # TODO: Write better descriptions
-    net = fields.String(required=True, description="some", example="b5")
-    stride = fields.Int(required=True, description="some")
-    extra_num = fields.Int(required=True, description="some")
-    glob = fields.Bool(required=True, description="some")
-    bn = fields.Bool(required=True, description="some")
-    aspp = fields.Bool(required=True, description="some")
-    ocr = fields.Bool(required=True, description="some")
-    aux = fields.Bool(required=True, description="some")
-    bot1x1 = fields.Bool(required=True, description="some")
+    net = fields.String(required=True,
+                        description="Which neural network architecture to use",
+                        validate=validate.OneOf(["b4", "b5", "b6", "b7", "l2"]))
+    stride = fields.Int(required=True,
+                        description="Controls how the filters convolve the input",
+                        validate=validate.OneOf([16, 32]))
