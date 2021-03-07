@@ -6,12 +6,8 @@ from ..base import BaseDataset
 from ..utils import image_loader, image_invert
 from .schemas import SegmentationDatasetSchema
 
-
-#Aguada
-#Building
-#Platform
-
 CLASSES_TO_IDX = {"Aguada": 0, "Building": 1, "Platform": 2}
+
 
 class ChactunDataset(BaseDataset):
 
@@ -28,7 +24,6 @@ class ChactunDataset(BaseDataset):
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
-
         mask = np.zeros(shape=(len(self.masks[index]), image.shape[0], image.shape[1]), dtype=np.float)
         for i, path in enumerate(self.masks[index]):
             mask[i] = image_invert(path, True)

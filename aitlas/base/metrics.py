@@ -1,5 +1,5 @@
 import numpy as np
-
+from ignite.metrics.multilabel_confusion_matrix import MultiLabelConfusionMatrix
 
 class BaseMetric:
     """Base class for implementing metrics """
@@ -19,44 +19,17 @@ class RunningScore(object):
         self.metrics = metrics
         self.device = device
         self.num_classes = num_classes
-        self.confusion_matrix = np.zeros((num_classes, num_classes))
+        self.confusion_matrix = MultiLabelConfusionMatrix(num_classes=self.num_classes, device=self.device)
         for metric_cls in self.metrics:
             metric = metric_cls(device=self.device)
             self.calculated_metrics[metric.name] = []
 
     def update(self, y_true, y_pred):
         """Updates stats on each batch"""
-
-        # update metrics
-        for metric_cls in self.metrics:
-            metric = metric_cls(device=self.device)
-            calculated = metric.calculate(y_true, y_pred)
-            if isinstance(calculated, dict):
-                if isinstance(self.calculated_metrics[metric.name], list):
-                    self.calculated_metrics[metric.name] = {}
-                for k, v in calculated.items():
-                    if not k in self.calculated_metrics[metric.name]:
-                        self.calculated_metrics[metric.name][k] = []
-                    self.calculated_metrics[metric.name][k].append(v)
-            else:
-                self.calculated_metrics[metric.name].append(calculated)
-
-        # update confusion matrix
-        for lt, lp in zip(y_true, y_pred):
-            self.confusion_matrix += self._fast_hist(
-                lt.flatten(), lp.flatten(), self.num_classes
-            )
-
-    def _fast_hist(self, label_true, label_pred, n_class):
-        mask = (label_true >= 0) & (label_true < n_class)
-        hist = np.bincount(
-            n_class * label_true[mask].astype(int) + label_pred[mask].astype(int),
-            minlength=n_class ** 2,
-        ).reshape(n_class, n_class)
-        return hist
+        self.confusion_matrix.update((y_pred, y_true))
 
     def reset(self):
-        self.confusion_matrix = np.zeros((self.num_classes, self.num_classes))
+        self.confusion_matrix.reset()
         for metric_cls in self.metrics:
             metric = metric_cls(device=self.device)
             self.calculated_metrics[metric.name] = []
@@ -84,6 +57,44 @@ class RunningScore(object):
         accuracy_per_class = np.nanmean(accuracy_per_class)
 
         return {"accuracy": accuracy, "accuracy_per_class": accuracy_per_class}
+
+    def get_f1score(self):
+        cm = self.confusion_matrix.compute().cpu().detach().numpy()
+        tn_overall = np.sum(cm[:, 0, 0])
+        tp_overall = np.sum(cm[:, 1, 1])
+        fn_overall = np.sum(cm[:, 1, 0])
+        fp_overall = np.sum(cm[:, 0, 1])
+        precision_overall = tp_overall / (tp_overall + fp_overall)
+        recall_overall = tp_overall / (tp_overall + fn_overall)
+        micro_f1score = (2 * precision_overall * recall_overall) / (precision_overall + recall_overall)
+
+        macro_f1score = []
+        weights = []
+        total_samples = np.sum(cm[:, 0, 1]) + np.sum(cm[:, 1, 1])
+        f1score_per_class = []
+        for i in range(self.num_classes):
+            tn = cm[i, 0, 0]
+            tp = cm[i, 1, 1]
+            fn = cm[i, 1, 0]
+            fp = cm[i, 0, 1]
+            precision = tp / (tp + fp)
+            recall = tp / (tp + fn)
+            print(tn, tp, fn, fp, precision, recall)
+            weights.append((tp + fp) / total_samples)
+            macro_f1score.append((2 * precision * recall) / (precision + recall))
+            f1score_per_class.append((2 * precision * recall) / (precision + recall))
+        macro_f1score = np.array(macro_f1score)
+        macro_f1score[np.isnan(macro_f1score)] = 0
+        # calculate weighted F1 score
+        weighted_f1score = macro_f1score * weights
+
+        f1score_per_class = np.array(f1score_per_class)
+        f1score_per_class[np.isnan(f1score_per_class)] = 0
+
+        return {"Micro F1-score": micro_f1score,
+                "Macro F1-score": np.mean(macro_f1score),
+                "Weighted F1-score": np.sum(weighted_f1score),
+                "F1-score per class:": np.array(f1score_per_class)}
 
     def get_iu(self):
         hist = self.confusion_matrix

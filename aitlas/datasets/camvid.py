@@ -6,8 +6,9 @@ from ..base import BaseDataset
 from ..utils import image_loader
 from .schemas import SegmentationDatasetSchema
 
-CLASSES_TO_IDX = {'sky': 0, 'road': 3, 'car': 8}
-#CLASSES_TO_IDX = {'car': 8}
+CLASSES_TO_IDX = {'sky': 0, 'building': 1, 'column_pole': 2, 'road': 3, 'sidewalk': 4, 'tree': 5, 'sign': 6, 'fence': 7,
+                  'car': 8, 'pedestrian': 9, 'byciclist': 10, 'void': 11}
+
 
 class CamVidDataset(BaseDataset):
 
@@ -47,5 +48,3 @@ class CamVidDataset(BaseDataset):
 
     def labels(self):
         return list(CLASSES_TO_IDX.keys())
-
-

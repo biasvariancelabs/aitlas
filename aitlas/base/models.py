@@ -2,11 +2,11 @@ import collections
 import logging
 import os
 from shutil import copyfile
-
+from tqdm import tqdm
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
 
 from ..utils import current_ts, get_class, stringify
 from .config import Configurable
@@ -100,7 +100,7 @@ class BaseModel(nn.Module, Configurable):
                 description="testing on train set",
             )
             self.log_metrics(
-                self.running_metrics.get_scores(), "train", self.writer, epoch + 1
+                self.running_metrics.get_f1score(), dataset.labels(), "train", self.writer, epoch + 1
             )
             self.running_metrics.reset()
 
@@ -112,9 +112,10 @@ class BaseModel(nn.Module, Configurable):
                     description="testing on validation set",
                 )
                 self.log_metrics(
-                    self.running_metrics.get_scores(), "val", self.writer, epoch + 1
+                    self.running_metrics.get_f1score(), dataset.labels(), "val", self.writer, epoch + 1
                 )
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
+                self.running_metrics.reset()
 
         self.writer.close()
 
@@ -205,9 +206,11 @@ class BaseModel(nn.Module, Configurable):
                 total_loss += batch_loss.item() * inputs.size(0)
 
             predicted_probs, predicted = self.get_predicted(outputs)
-            y_pred = list(predicted.cpu().detach().numpy())
-            y_true = list(labels.cpu().detach().numpy())
-            self.running_metrics.update(y_true, y_pred)
+            # if segmentation reshape the predictions and labels
+            if len(predicted.shape) > 2:
+                predicted = predicted.T.reshape(predicted.shape[0] * predicted.shape[2] * predicted.shape[3], predicted.shape[1])
+                labels = labels.T.reshape(labels.shape[0] * labels.shape[2] * labels.shape[3], labels.shape[1])
+            self.running_metrics.update(predicted.type(torch.uint8), labels.type(torch.uint8))
 
         if criterion:
             total_loss = total_loss / len(dataloader.dataset)
@@ -282,17 +285,17 @@ class BaseModel(nn.Module, Configurable):
         """The report we want to generate for the model"""
         return ()
 
-    def log_metrics(self, output, tag="train", writer=None, epoch=0):
+    def log_metrics(self, output, labels, tag="train", writer=None, epoch=0):
         """Log the calculated metrics"""
         calculated_metrics = output
         logging.info(stringify(calculated_metrics))
         if writer:
             for metric_name in calculated_metrics:
                 metric = calculated_metrics[metric_name]
-                if isinstance(metric, dict):
-                    for sub in metric:
+                if isinstance(metric, np.ndarray):
+                    for i, sub in enumerate(metric):
                         writer.add_scalar(
-                            f"{metric_name}/{sub}/{tag}", metric[sub], epoch
+                            f"{metric_name}/{labels[i]}/{tag}", sub, epoch
                         )
                 else:
                     writer.add_scalar(f"{metric_name}/{tag}", metric, epoch)

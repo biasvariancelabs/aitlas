@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 
-from ..base import BaseVisualization
+from ..base import BaseDetailedVisualization
 from ..utils import pil_loader
 
 
-class ImageMaskPredictionVisualization(BaseVisualization):
+class ImageMaskPredictionVisualization(BaseDetailedVisualization):
     def __init__(self, y_true, y_pred, y_prob, labels, file, **kwargs):
         super().__init__(y_true, y_pred, y_prob, labels, file, **kwargs)
         self.image = kwargs.get("image")
