@@ -64,7 +64,7 @@ class PredictTask(BaseTask):
         if self.config.dataset_config:
             dataset = self.create_dataset(self.config.dataset_config)
             labels = dataset.labels()
-            transforms = dataset.config.tranforms
+            transforms = dataset.config.transforms
         else:
             labels = self.config.labels
             transforms = self.config.transforms
