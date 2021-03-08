@@ -79,7 +79,6 @@ class RunningScore(object):
             fp = cm[i, 0, 1]
             precision = tp / (tp + fp)
             recall = tp / (tp + fn)
-            print(tn, tp, fn, fp, precision, recall)
             weights.append((tp + fp) / total_samples)
             macro_f1score.append((2 * precision * recall) / (precision + recall))
             f1score_per_class.append((2 * precision * recall) / (precision + recall))
@@ -94,7 +93,7 @@ class RunningScore(object):
         return {"Micro F1-score": micro_f1score,
                 "Macro F1-score": np.mean(macro_f1score),
                 "Weighted F1-score": np.sum(weighted_f1score),
-                "F1-score per class:": np.array(f1score_per_class)}
+                "F1-score per class": np.array(f1score_per_class)}
 
     def get_iu(self):
         hist = self.confusion_matrix
