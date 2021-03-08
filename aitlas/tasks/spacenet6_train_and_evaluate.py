@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from aitlas.base import BaseTask
-from .base_solaris import Evaluator
+from solaris.eval.base import Evaluator
 from .schemas import SpaceNet6TrainAndEvaluateTaskSchema
 
 import warnings
