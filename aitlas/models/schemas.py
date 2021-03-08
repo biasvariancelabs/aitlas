@@ -11,3 +11,6 @@ class UnsupervisedDeepMulticlassClassifierSchema(BaseModelSchema):
     number_of_clusters = fields.Integer(
         missing=100, description="Number of clusters to use during traning."
     )
+    sobel = fields.Boolean(
+        missing=False, description="Whether to turn on on sobel filtering."
+    )
