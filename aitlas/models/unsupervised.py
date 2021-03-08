@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.utils.data.sampler import Sampler
 
 from ..base import BaseMulticlassClassifier
-from ..clustering import PIC, Kmeans, cluster_assign
+from ..clustering import Kmeans, cluster_assign
 from .schemas import UnsupervisedDeepMulticlassClassifierSchema
 
 
@@ -18,13 +18,15 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
 
     def __init__(self, config):
         BaseMulticlassClassifier.__init__(self, config)
-        self.model = vgg16()
-        self.fd = int(self.model.top_layer.weight.size()[1])
-        self.model.top_layer = None
 
         self.learning_rate = self.config.learning_rate
         self.weight_decay = self.config.weight_decay
         self.number_of_clusters = self.config.number_of_clusters
+        self.sobel = self.config.sobel
+
+        self.model = vgg16(sobel=self.sobel)
+        self.fd = int(self.model.top_layer.weight.size()[1])
+        self.model.top_layer = None
 
         self.deepcluster = Kmeans(self.number_of_clusters)
 
@@ -70,12 +72,12 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
 
         # set last fully connected layer
         mlp = list(self.model.classifier.children())
-        mlp.append(nn.ReLU(inplace=True).cuda())
+        mlp.append(nn.ReLU(inplace=True).to(self.device))
         self.model.classifier = nn.Sequential(*mlp)
         self.model.top_layer = nn.Linear(self.fd, len(self.deepcluster.images_lists))
         self.model.top_layer.weight.data.normal_(0, 0.01)
         self.model.top_layer.bias.data.zero_()
-        self.model.top_layer.cuda()
+        self.model.top_layer.to(self.device)
 
         # create an optimizer for the last fc layer
         optimizer_tl = torch.optim.SGD(
@@ -163,7 +165,6 @@ class VGG(nn.Module):
     def _initialize_weights(self):
         for y, m in enumerate(self.modules()):
             if isinstance(m, nn.Conv2d):
-                # print(y)
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 for i in range(m.out_channels):
                     m.weight.data[i].normal_(0, math.sqrt(2.0 / n))
