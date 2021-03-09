@@ -11,7 +11,6 @@ from ..utils import stringify
 from .models import BaseModel
 from .schemas import BaseSegmentationClassifierSchema
 
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
@@ -30,7 +29,7 @@ class BaseSegmentationClassifier(BaseModel):
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.Adam([dict(params=self.model.parameters(), lr=0.0001),])
+        return optim.Adam([dict(params=self.model.parameters(), lr=self.config.learning_rate), ])
 
     def load_criterion(self):
         """Load the loss function"""

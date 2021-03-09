@@ -6,9 +6,10 @@ from tqdm import tqdm
 import numpy as np
 import torch
 import torch.nn as nn
+from torchvision import transforms
 from torch.utils.tensorboard import SummaryWriter
 
-from ..utils import current_ts, get_class, stringify
+from ..utils import current_ts, get_class, stringify, image_loader
 from .config import Configurable
 from .datasets import BaseDataset
 from .metrics import RunningScore
@@ -244,6 +245,39 @@ class BaseModel(nn.Module, Configurable):
             y_pred_probs += list(predicted_probs.cpu().detach().numpy())
             y_pred += list(predicted.cpu().detach().numpy())
             y_true += list(labels.cpu().detach().numpy())
+
+        return y_true, y_pred, y_pred_probs
+
+    def predict_image(
+        self,
+        image=None,
+        data_transforms=None,
+        description="running prediction for single image",
+    ):
+        """
+        Predicts using a model against for a specified image
+
+        :return: tuple of (y_true, y_pred, y_pred_probs)
+        """
+        # load the image and apply transformations, if transforms in None convert only to Tensor
+        if data_transforms:
+            image = data_transforms(image)
+        else:
+            data_transforms = transforms.Compose([
+                transforms.ToTensor(),
+            ])
+            image = data_transforms(image)
+        # convert to batch of size 1
+        inputs = image.unsqueeze(0).to(self.device)
+        outputs = self(inputs)
+        # check if outputs is OrderedDict for segmentation
+        if isinstance(outputs, collections.Mapping):
+            outputs = outputs["out"]
+
+        predicted_probs, predicted = self.get_predicted(outputs)
+        y_pred_probs = list(predicted_probs.cpu().detach().numpy())
+        y_pred = list(predicted.cpu().detach().numpy())
+        y_true = None
 
         return y_true, y_pred, y_pred_probs
 

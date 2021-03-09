@@ -38,7 +38,7 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
             )
 
     def forward(self, x):
-        return self.model.forward(x)
+        return self.model(x)
 
     def load_criterion(self):
         """Load the loss function"""
