@@ -260,6 +260,7 @@ class BaseModel(nn.Module, Configurable):
         :return: tuple of (y_true, y_pred, y_pred_probs)
         """
         # load the image and apply transformations, if transforms in None convert only to Tensor
+        self.model.eval()
         if data_transforms:
             image = data_transforms(image)
         else:
