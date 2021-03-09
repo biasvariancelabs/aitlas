@@ -58,3 +58,30 @@ class BigEarthNetSchema(BaseDatasetSchema):
         required=False,
         description="List of std values for the 3 channels",
     )
+
+
+class BreizhCropsSchema(BaseDatasetSchema):
+    region = fields.String(
+        missing=None, description="Brittany region (frh01..frh04)", example="frh01"
+    )
+    root = fields.String(
+        required=True, description="Dataset path on disk", example="./breizhcrops_dataset"
+    )
+    year = fields.Integer(required=True, description="year")
+    filter_length = fields.Integer(required=True, description="filter_length")
+    level = fields.String(
+        required=True, description="L1C or L2A", example="L1C"
+    )
+    verbose = fields.Bool(
+        missing=False, description="verbose"
+    )
+
+    load_timeseries = fields.Bool(
+        missing=False, description="load_timeseries"
+    )    
+    recompile_h5_from_csv = fields.Bool(
+        missing=False, description="recompile_h5_from_csv"
+    )    
+    preload_ram = fields.Bool(
+        missing=False, description="preload_ram"
+    )
