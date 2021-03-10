@@ -221,7 +221,6 @@ class BaseModel(nn.Module, Configurable):
     def predict(
         self,
         dataset: BaseDataset = None,
-        model_path: str = None,
         description="running prediction",
     ):
         """
@@ -229,9 +228,6 @@ class BaseModel(nn.Module, Configurable):
 
         :return: tuple of (y_true, y_pred, y_pred_probs)
         """
-        # load the model
-        self.load_model(model_path)
-
         # initialize counters
         y_true = []
         y_pred = []

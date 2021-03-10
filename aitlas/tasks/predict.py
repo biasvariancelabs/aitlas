@@ -71,9 +71,12 @@ class PredictTask(BaseTask):
 
         test_dataset = TestFolderDataset(self.dir, labels, transforms, False)
 
+        # load the model
+        self.model.load_model(self.config.model_path)
+
         # run predictions
         y_true, y_pred, y_prob = self.model.predict(
-            dataset=test_dataset, model_path=self.config.model_path,
+            dataset=test_dataset,
         )
 
         if self.output_format == "plot":
@@ -125,9 +128,12 @@ class PredictSegmentationTask(BaseTask):
 
         test_dataset = TestFolderDataset(self.config.dir, labels, transforms, True,)
 
+        # load the model
+        self.model.load_model(self.config.model_path)
+
         # run predictions
         y_true, y_pred, y_prob = self.model.predict(
-            dataset=test_dataset, model_path=self.config.model_path,
+            dataset=test_dataset,
         )
 
         # plot predictions
