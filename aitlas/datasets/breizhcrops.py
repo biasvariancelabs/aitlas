@@ -93,38 +93,6 @@ TO DO ELENA: move the following to transforms
 
 """
 
-def get_default_transform(level):
-
-    #padded_value = PADDING_VALUE
-    sequencelength = 45
-
-    bands = BANDS[level]
-    if level == "L1C":
-        selected_bands = ['B1', 'B10', 'B11', 'B12', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9']
-    elif level == "L2A":
-        selected_bands = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11', 'B12']
-
-    selected_band_idxs = np.array([bands.index(b) for b in selected_bands])
-
-    def transform(x):
-        #x = x[x[:, 0] != padded_value, :]  # remove padded values
-
-        # choose selected bands
-        x = x[:, selected_band_idxs] * 1e-4  # scale reflectances to 0-1
-
-        # choose with replacement if sequencelength smaller als choose_t
-        replace = False if x.shape[0] >= sequencelength else True
-        idxs = np.random.choice(x.shape[0], sequencelength, replace=replace)
-        idxs.sort()
-
-        x = x[idxs]
-
-        return torch.from_numpy(x).type(torch.FloatTensor)
-    return transform
-
-def get_default_target_transform():
-    return lambda y: torch.tensor(y, dtype=torch.long)
-
 
 class BreizhCropsDataset(BaseDataset):
     """BreizhCrops - a crop type classification dataset"""
@@ -157,20 +125,6 @@ class BreizhCropsDataset(BaseDataset):
         # :param bool load_timeseries: if False, no time series data will be loaded. Only index file and class initialization. Used mostly for tests
         # :param bool recompile_h5_from_csv: downloads raw csv files and recompiles the h5 databases. Only required when dealing with new datasets
         # :param bool preload_ram: loads all time series data in RAM at initialization. Can speed up training if data is stored on HDD.
-
-        """
-        
-        TO DO ELENA: move transforms to config arguments
-        
-        """
-
-        transform=None
-        target_transform=None
-
-        if transform is None:
-            self.transform = get_default_transform(config.level)
-        if target_transform is None:
-            self.target_transform = get_default_target_transform()
 
         """
         
@@ -216,6 +170,7 @@ class BreizhCropsDataset(BaseDataset):
 
         self.index = pd.read_csv(self.indexfile, index_col=None)
         self.index = self.index.loc[self.index["CODE_CULTU"].isin(self.mapping.index)]
+        # self.index = self.index.iloc[:1000] # for testing, to speed up training
         if config.verbose:
             print(f"kept {len(self.index)} time series references from applying class mapping")
 
@@ -273,11 +228,8 @@ class BreizhCropsDataset(BaseDataset):
         #npad = self.maxseqlength - X.shape[0]
         #X = np.pad(X, [(0, npad), (0, 0)], 'constant', constant_values=PADDING_VALUE)
 
-        if self.transform is not None:
-            # print(self.transform)
-            X = self.transform(X)
-        if self.target_transform is not None:
-            y = self.target_transform(y)
+        if self.transform:
+            X,y = self.transform((X,y))
 
         return X, y #, row.id
 

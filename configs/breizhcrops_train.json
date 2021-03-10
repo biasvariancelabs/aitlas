@@ -9,7 +9,7 @@
     "task": {
         "classname": "aitlas.tasks.TrainTask",
         "config": {
-            "epochs": 1,
+            "epochs": 10,
             "model_directory": "./examples/experiment",
             "save_epochs": 5,
             "id": "breizhcrops",
@@ -27,7 +27,8 @@
                     "preload_ram":false,
                     "batch_size": 16,
                     "shuffle": true,
-                    "num_workers": 4
+                    "num_workers": 4,
+                    "transforms": ["aitlas.transforms.SelectBands"]
                 }
             }
         }
