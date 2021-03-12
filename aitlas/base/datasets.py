@@ -10,6 +10,7 @@ class BaseDataset(Dataset, Configurable):
 
     schema = BaseDatasetSchema
     labels = None  # need to put the labels here
+    name = None
 
     def __init__(self, config):
         Dataset.__init__(self)
@@ -39,6 +40,12 @@ class BaseDataset(Dataset, Configurable):
         raise NotImplementedError(
             "Please implement the `__len__` method for your dataset"
         )
+
+    def get_name(self):
+        if self.name:
+            return self.name
+        else:
+            return ""
 
     def prepare(self):
         """Implement if something needs to happen to the dataset after object creation"""

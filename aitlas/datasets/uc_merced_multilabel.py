@@ -8,3 +8,5 @@ class UcMercedMultiLabelDataset(MultiLabelClassificationDataset):
     url = "https://drive.google.com/file/d/1DtKiauowCB0ykjFe8v0OVvT76rEfOk0v/view"
 
     labels = LABELS
+    name = "UC Merced multilabel"
+

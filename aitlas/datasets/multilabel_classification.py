@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-
+from itertools import compress
 from ..base import BaseDataset
 from ..utils import image_loader
 from .schemas import MultiLabelClassificationDatasetSchema
@@ -69,8 +69,9 @@ class MultiLabelClassificationDataset(BaseDataset):
         return df.head(20)
 
     def show_image(self, index):
+        labels_list = list(compress(self.labels, self[index][1]))
         fig = plt.figure(figsize=(8, 6))
-        plt.title(f"Random image from dataset")
+        plt.title(f"Image with index {index} from the dataset {self.get_name()}, with labels: {labels_list}")
         plt.axis('off')
         plt.imshow(self[index][0])
         return fig
