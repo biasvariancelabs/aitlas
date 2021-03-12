@@ -1,9 +1,9 @@
 {
     "model": {
-        "classname": "aitlas.models.VGG16MultiLabel",
+        "classname": "aitlas.models.ResNet50MultiLabel",
         "config": {
             "num_classes": 17,
-            "learning_rate": 0.001,
+            "learning_rate": 0.0001,
             "threshold": 0.5
         }
     },
