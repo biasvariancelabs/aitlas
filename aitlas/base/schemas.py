@@ -11,14 +11,13 @@ class BaseDatasetSchema(Schema):
         missing=False, description="Whether to use page-locked memory"
     )
     transforms = fields.List(
-        fields.String,
-        missing=[
-            "torchvision.transforms.ToPILImage",
-            "torchvision.transforms.Resize",
-            "torchvision.transforms.CenterCrop",
-            "torchvision.transforms.ToTensor",
-        ],
-        description="Classes to run transformations.",
+        fields.String, missing=None, description="Classes to run transformations.",
+    )
+    target_transforms = fields.List(
+        fields.String, missing=None, description="Classes to run transformations.",
+    )
+    labels = fields.List(
+        fields.String, missing=None, description="Labels for the dataset",
     )
 
 

@@ -7,9 +7,9 @@ from .big_earth_net import (
 from .camvid import CamVidDataset
 from .chactun import ChactunDataset
 from .eurosat import EurosatDataset
-from .generic_multiclass import GenericMulticlassDataset
-from .generic_multilabel import GenericMultiLabelsDataset
-from .landcover_ai import SegmentationDataset
+from .multiclass_classification import MultiClassClassificationDataset
+from .multilabel_classification import MultiLabelClassificationDataset
+from .landcover_ai import LandCoverAiDataset
 from .pattern_net import PatternNetDataset
 from .resisc45 import Resisc45Dataset
 from .uc_merced import UcMercedDataset

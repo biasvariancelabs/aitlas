@@ -1,21 +1,16 @@
 from ..base import BaseTransforms
 
 
-class BaseSegmentation(BaseTransforms):
+class MinMaxNormTransponse(BaseTransforms):
     def __call__(self, sample):
-        image = sample.get("image", None)
-        mask = sample.get("mask", None)
-        if mask is None:
-            return image.transpose(2, 0, 1).astype("float32") / 255
-        else:
-            return image.transpose(2, 0, 1).astype("float32") / 255, mask.transpose(2, 0, 1).astype("float32")
+        return sample.transpose(2, 0, 1).astype("float32") / 255
 
 
-class BaseSegmentationModified(BaseTransforms):
+class Transponse(BaseTransforms):
     def __call__(self, sample):
-        image = sample.get("image", None)
-        mask = sample.get("mask", None)
-        if mask is None:
-            return image.transpose(2, 0, 1).astype("float32") / 255
-        else:
-            return image.transpose(2, 0, 1).astype("float32") / 255, mask.astype("float32") / 255
+        return sample.transpose(2, 0, 1).astype("float32")
+
+
+class MinMaxNorm(BaseTransforms):
+    def __call__(self, sample):
+        return sample.astype("float32") / 255

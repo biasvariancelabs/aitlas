@@ -10,14 +10,15 @@
     "task": {
         "classname": "aitlas.tasks.PredictSegmentationTask",
         "config": {
-            "model_path": "/media/hdd/aitlas/examples/experiments/chactun/checkpoint_1604298478.pth.tar",
-            "dir": "/media/hdd/predict/chactun",
-            "output_path": "./examples/",
+            "model_path": "/media/ssd/chactun_new/experiments/checkpoint_1615078056.pth.tar",
+            "dir": "/media/ssd/chactun_new/predict",
+            "output_path": "/media/ssd/chactun_new/predict",
             "dataset_config":{
                 "classname": "aitlas.datasets.ChactunDataset",
                 "config": {
-                  "root": "/media/hdd/Chactun/train",
-                  "transforms": ["aitlas.transforms.BaseSegmentationModified"]
+                  "root": "/media/ssd/Chactun/train",
+                  "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
+                        "target_transforms": ["aitlas.transforms.MinMaxNorm"]
                 }
             }
         }

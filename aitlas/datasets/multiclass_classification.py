@@ -2,21 +2,22 @@ import csv
 
 from ..base import BaseDataset
 from ..utils import image_loader
-from .schemas import GenericMulticlassDatasetSchema
+from .schemas import MultiClassClassificationDatasetSchema
+
+"""
+The format of the multiclass classification dataset is:
+image_path1,label1
+image_path2,label2
+...
+"""
 
 
-class GenericMulticlassDataset(BaseDataset):
-    schema = GenericMulticlassDatasetSchema
-
-    classes_to_idx = None  # need to put your mapping here
+class MultiClassClassificationDataset(BaseDataset):
+    schema = MultiClassClassificationDatasetSchema
 
     def __init__(self, config):
-        # now call the constructor to validate the schema and split the data
+        # now call the constructor to validate the schema
         BaseDataset.__init__(self, config)
-
-        # get labels if provided in config and not set in class
-        if not self.classes_to_idx and self.config.labels:
-            self.classes_to_idx = self.config.labels
 
         # load the data
         self.data = self.load_dataset(self.config.csv_file_path)
@@ -32,20 +33,23 @@ class GenericMulticlassDataset(BaseDataset):
         # load image
         img = image_loader(self.data[index][0])
         # apply transformations
-        img = self.transform(img)
+        if self.transform:
+            img = self.transform(img)
         target = self.data[index][1]
+        if self.target_transform:
+            target = self.target_transform(self.data[index][1])
         return img, target
 
     def __len__(self):
         return len(self.data)
 
-    def labels(self):
-        return list(self.classes_to_idx.keys())
+    def get_labels(self):
+        return self.labels
 
     def load_dataset(self, file_path):
-        if not self.classes_to_idx:
+        if not self.labels:
             raise ValueError(
-                "You need to implement the classes to index mapping for the dataset"
+                "You need to provide the list of labels for the dataset"
             )
         data = []
         if file_path:
@@ -53,6 +57,6 @@ class GenericMulticlassDataset(BaseDataset):
                 csv_reader = csv.reader(f)
                 for index, row in enumerate(csv_reader):
                     path = row[0]
-                    item = (path, self.classes_to_idx[row[1]])
+                    item = (path, self.labels.index(row[1]))
                     data.append(item)
         return data

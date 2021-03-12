@@ -101,7 +101,7 @@ class BaseModel(nn.Module, Configurable):
                 description="testing on train set",
             )
             self.log_metrics(
-                self.running_metrics.get_f1score(), dataset.labels(), "train", self.writer, epoch + 1
+                self.running_metrics.get_f1score(), dataset.get_labels(), "train", self.writer, epoch + 1
             )
             self.running_metrics.reset()
 
@@ -113,7 +113,7 @@ class BaseModel(nn.Module, Configurable):
                     description="testing on validation set",
                 )
                 self.log_metrics(
-                    self.running_metrics.get_f1score(), dataset.labels(), "val", self.writer, epoch + 1
+                    self.running_metrics.get_f1score(), dataset.get_labels(), "val", self.writer, epoch + 1
                 )
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
                 self.running_metrics.reset()
