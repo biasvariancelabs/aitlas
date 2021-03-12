@@ -11,8 +11,8 @@ from .schemas import PredictLabelsTask, PredictTaskSchema
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
-class TestFolderDataset(BaseDataset):
-    def __init__(self, root, labels, transforms, to_dict):
+class ImageFolderDataset(BaseDataset):
+    def __init__(self, root, labels, transforms):
         BaseDataset.__init__(self, {})
 
         self.root = root
@@ -22,7 +22,6 @@ class TestFolderDataset(BaseDataset):
 
         self.data = []
         self.fnames = []
-        self.to_dict = to_dict
 
         dir = os.path.expanduser(self.root)
         for root, _, fnames in sorted(os.walk(dir)):
@@ -30,16 +29,10 @@ class TestFolderDataset(BaseDataset):
                 self.data.append(os.path.join(root, fname))
                 self.fnames.append(fname)
 
-    def input_format(self, img):
-        if self.to_dict:
-            return {"image": img}
-        else:
-            return img
-
     def __getitem__(self, index):
         img = self.data[index]
         return (
-            self.transform(self.input_format(image_loader(img))),
+            self.transform(image_loader(img)),
             0,
         )  # returning `0` because we have no target
 
@@ -69,7 +62,7 @@ class PredictTask(BaseTask):
             labels = self.config.labels
             transforms = self.config.transforms
 
-        test_dataset = TestFolderDataset(self.dir, labels, transforms, False)
+        test_dataset = ImageFolderDataset(self.dir, labels, transforms,)
 
         # load the model
         self.model.load_model(self.config.model_path)
@@ -126,7 +119,7 @@ class PredictSegmentationTask(BaseTask):
             labels = self.config.labels
             transforms = self.config.transforms
 
-        test_dataset = TestFolderDataset(self.config.dir, labels, transforms, True,)
+        test_dataset = ImageFolderDataset(self.config.dir, labels, transforms,)
 
         # load the model
         self.model.load_model(self.config.model_path)
