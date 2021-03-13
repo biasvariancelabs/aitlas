@@ -6,3 +6,4 @@ from .resnet import ResNet50MultiLabel
 from .vgg16 import VGG16MultiLabel
 from .transformer import TransformerModel
 from .lstm import LSTM
+from .msresnet import MSResNet
