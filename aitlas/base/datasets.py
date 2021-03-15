@@ -58,7 +58,7 @@ class BaseDataset(Dataset, Configurable):
             shuffle=self.shuffle,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
-            #drop_last=True,
+            # drop_last=True,
         )
 
     def get_labels(self):
@@ -79,7 +79,7 @@ class BaseDataset(Dataset, Configurable):
             "Please implement the `show_samples` method for your dataset"
         )
 
-    def show_image(self):
+    def show_image(self, index):
         """Implement this if you want to return the complete set of labels of the dataset"""
         raise NotImplementedError(
             "Please implement the `show_image` method for your dataset"

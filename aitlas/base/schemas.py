@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, validate
 
 
 class BaseDatasetSchema(Schema):
@@ -26,13 +26,12 @@ class BaseModelSchema(Schema):
     use_cuda = fields.Bool(missing=True, description="Whether to use CUDA if possible")
     metrics = fields.List(
         fields.String,
-        missing=["aitlas.metrics.F1Score"],
-        description="Classes of metrics you want to calculate",
-        example=[
-            "aitlas.metrics.PrecisionScore",
-            "aitlas.metrics.AccuracyScore",
-            "aitlas.metrics.F1Score",
-        ],
+        missing=["f1_score"],
+        description="Metrics you want to calculate",
+        example=["accuracy", "precision", "iou",],
+        validate=validate.ContainsOnly(
+            ["accuracy", "precision", "recall", "f1_score", "iou"]
+        ),
     )
     weights = fields.List(
         fields.Float,
