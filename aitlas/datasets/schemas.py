@@ -53,18 +53,39 @@ class BigEarthNetSchema(BaseDatasetSchema):
 
 
 class SpaceNet6DatasetSchema(BaseDatasetSchema):
-    crop_size = fields.Int(required=True,
-                           description="Crop size for the images/masks")
-    rot_prob = fields.Float(required=False,
-                            missing=0.7,
-                            description="Probability to apply rotation to image/mask")
-    flip_lr_prob = fields.Float(required=False,
-                                missing=0.5,
-                                description="Probability to apply left/right flip to image/mask")
     orients = fields.String(required=True,
                             example="path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.csv",
                             description="Absolute path pointing to the SAR orientations text file "
                                         "(output of the pre-processing task")
-    apply_transforms = fields.Bool(required=True,
-                                   description="Whether to apply transforms to the images/masks, "
-                                               "True for training data False otherwise")
+    root_directory = fields.String(required=False,
+                                   example="path/to/data/train/AOI_11_Rotterdam/",
+                                   description="Root directory for the raw SpaceNet6 data set")
+    start_val_epoch = fields.Int(required=False,
+                                 description="From which epoch should the validation period start")
+    # Train & val
+    folds_path = fields.String(required=True,
+                               example="path/to/results/folds",
+                               description="Source directory with the fold csv files")
+    segmentation_directory = fields.String(required=True,
+                                           example="path/to/results/segmentation",
+                                           description="Source directory with the target segmentation masks")
+    gt_csv = fields.String(required=True,
+                           description="Source file containing the ground truth segmentation data on the buildings")
+    pred_csv = fields.String(required=True,
+                             description="Destination file for saving the predictions from the current fold")
+    pred_folder = fields.String(required=True,
+                                description="Destination directory for saving the predictions from all folds")
+    edge_weight = fields.Int(required=True,
+                             description="Weight for the building edges pixels")
+    contact_weight = fields.Int(required=True,
+                                description="Weight for the building contact pixels")
+    # Test
+    test_directory = fields.String(required=False,
+                                   example="path/to/data/train/AOI_11_Rotterdam/",
+                                   description="Root directory for the raw SpaceNet6 data set")
+    merged_pred_dir = fields.String(required=True,
+                                    example="path/to/data/train/AOI_11_Rotterdam/",
+                                    description="Destination directory for merging the predictions from all folds")
+    solution_file = fields.String(required=True,
+                                  example="path/to/data/results/solution.csv",
+                                  description="SpaceNet6-compliant csv destination file used for grading the challenge")

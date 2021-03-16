@@ -82,7 +82,7 @@ class SpaceNet6TestTask(BaseTask):
 
     def run(self):
         """Implements the logic of this task."""
-        folds = [0, 3, 6, 9, 1, 2, 7, 8]
+        folds = [0]  # , 3, 6, 9, 1, 2, 7, 8]
         for fold in folds:
             pred_folder = self.config.pred_folder.format(fold)
             # Enforce a clean do-over everytime by re-creating the destination prediction directory

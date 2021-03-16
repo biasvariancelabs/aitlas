@@ -50,10 +50,10 @@ class SpaceNet6Transforms(BaseTransforms):
         image = sample.get("image", None)
         mask = sample.get("mask", None)
         # Crop size
-        crop_size = sample.get("crop_size", 0)
+        crop_size = 512
         # Transform probabilities
-        rot_prob = sample.get("rot_prob", 0)
-        flip_lr_prob = sample.get("flip_lr_prob", 0)
+        rot_prob = 0.7
+        flip_lr_prob = 0.5
         ###################################
         # Start transforms
         pad = max(0, crop_size - image.shape[0])

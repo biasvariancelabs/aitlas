@@ -9,16 +9,7 @@
     "task": {
         "classname": "aitlas.tasks.SpaceNet6TrainAndEvaluateTask",
         "config": {
-            "root_directory": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam",
-            "segmentation_directory": "/home/dkocev/stefanp/spaceNetChallenge6/results/segmentation",
-            "fold_path": "/home/dkocev/stefanp/spaceNetChallenge6/results/fold/folds.csv",
             "epochs": 30,
-            "edge_weight": 0.25,
-            "contact_weight": 0.1,
-            "start_val_epoch": 10,
-            "pred_folder": "/home/dkocev/stefanp/spaceNetChallenge6/results/pred{}",
-            "pred_csv": "/home/dkocev/stefanp/spaceNetChallenge6/results/fold/pred_csv{}.csv",
-            "gt_csv": "/home/dkocev/stefanp/spaceNetChallenge6/results/fold/gt_fold{}.csv",
             "model_directory": "examples/experiments/spacenet6_winning_solution",
             "train_dataset_config": {
                 "classname": "aitlas.datasets.SpaceNet6Dataset",
@@ -26,14 +17,16 @@
                     "batch_size": 4,
                     "shuffle": true,
                     "num_workers": 8,
-                    "crop_size": 512,
-                    "rot_prob": 0.7,
-                    "flip_lr_prob": 0.5,
-                    "orients": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv",
-                    "apply_transforms": true,
                     "transforms": [
                         "aitlas.transforms.SpaceNet6Transforms"
-                    ]
+                    ],
+                    "orients": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv",
+                    "pred_folder": "/home/dkocev/stefanp/spaceNetChallenge6/results/pred{}",
+                    "folds_path": "/home/dkocev/stefanp/spaceNetChallenge6/results/fold/folds.csv",
+                    "root_directory": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam",
+                    "segmentation_directory": "/home/dkocev/stefanp/spaceNetChallenge6/results/segmentation",
+                    "edge_weight": 0.25,
+                    "contact_weight": 0.1
                 }
             },
             "val_dataset_config": {
@@ -42,11 +35,12 @@
                     "batch_size": 1,
                     "shuffle": false,
                     "num_workers": 1,
-                    "crop_size": 512,
-                    "rot_prob": 0.7,
-                    "flip_lr_prob": 0.5,
                     "orients": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv",
-                    "apply_transforms": false
+                    "folds_path": "/home/dkocev/stefanp/spaceNetChallenge6/results/fold/folds.csv",
+                    "root_directory": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam",
+                    "start_val_epoch": 10,
+                    "pred_csv": "/home/dkocev/stefanp/spaceNetChallenge6/results/fold/pred_csv{}.csv",
+                    "gt_csv": "/home/dkocev/stefanp/spaceNetChallenge6/results/fold/gt_fold{}.csv"
                 }
             }
         }

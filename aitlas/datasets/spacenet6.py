@@ -51,7 +51,7 @@ class SpaceNet6Dataset(BaseDataset):
         # Remove black parts
         image = image[y_min: y_max, x_min: x_max]
         # Apply transformations, (should be available only for training data)
-        if self.config.apply_transforms:
+        if self.config.transforms:
             # Get mask path
             mask_path = self.mask_paths[index]
             # Read mask
@@ -59,20 +59,14 @@ class SpaceNet6Dataset(BaseDataset):
             # Remove black parts
             mask = mask[y_min: y_max, x_min: x_max]
             image, mask = self.transform({
-                # data
                 "image": image,
-                "mask": mask,
-                # crop size
-                "crop_size": self.config.crop_size,
-                # transform probabilities
-                "rot_prob": self.config.rot_prob,
-                "flip_lr_prob": self.config.flip_lr_prob,
+                "mask": mask
             })
         # Extract direction, strip and coordinates from image
         direction, strip, coordinate = parse_img_id(image_path, self.orients)
         if direction.item():
             image = np.fliplr(np.flipud(image))
-            if self.config.apply_transforms:
+            if self.config.transforms:
                 mask = np.fliplr(np.flipud(mask))
         image = (image - np.array([28.62501827, 36.09922463, 33.84483687, 26.21196667])) / np.array(
             [8.41487376, 8.26645475, 8.32328472, 8.63668993])
@@ -80,7 +74,7 @@ class SpaceNet6Dataset(BaseDataset):
         image = torch.from_numpy(image.transpose((2, 0, 1)).copy()).float()
         # Reorder bands
         image = image[[0, 3, 1, 2]]
-        if self.config.apply_transforms:
+        if self.config.transforms:
             weights = np.ones_like(mask[:, :, :1], dtype=float)
             region_labels, region_count = measure.label(mask[:, :, 0], background=0, connectivity=1,
                                                         return_num=True)
@@ -110,23 +104,23 @@ class SpaceNet6Dataset(BaseDataset):
     def __len__(self):
         return len(self.image_paths)
 
-    def load_directory(self, directory):
+    def load_directory(self):
         """Loads the *.tif images from the specified directory."""
-        self.image_paths = glob.glob(os.path.join(directory, "*.tif"))
+        self.image_paths = glob.glob(os.path.join(self.config.test_directory, "*.tif"))
         self.mask_paths = None
 
-    def load_other_folds(self, fold_path, fold, root_directory, segmentation_directory):
+    def load_other_folds(self, fold):
         """Loads all images (and masks) except the ones from this fold."""
-        df = pd.read_csv(fold_path)
-        self.image_paths = [os.path.join(root_directory, "SAR-Intensity", os.path.basename(x)) for x in
+        df = pd.read_csv(self.config.folds_path)
+        self.image_paths = [os.path.join(self.config.root_directory, "SAR-Intensity", os.path.basename(x)) for x in
                             df[np.logical_or(df["fold"] > (fold % 10) + 1, df["fold"] < (fold % 10) - 1)]["sar"].values]
-        self.mask_paths = [os.path.join(segmentation_directory, os.path.basename(x)) for x in
+        self.mask_paths = [os.path.join(self.config.segmentation_directory, os.path.basename(x)) for x in
                            df[np.logical_or(df["fold"] > (fold % 10) + 1, df["fold"] < (fold % 10) - 1)]["segm"].values]
 
-    def load_fold(self, fold_path, fold, root_directory):
+    def load_fold(self, fold):
         """Loads the images from this fold."""
-        df = pd.read_csv(fold_path)
-        self.image_paths = [os.path.join(root_directory, "SAR-Intensity", os.path.basename(x)) for x in
+        df = pd.read_csv(self.config.folds_path)
+        self.image_paths = [os.path.join(self.config.root_directory, "SAR-Intensity", os.path.basename(x)) for x in
                             df[df["fold"] == (fold % 10)]["sar"].values]
         self.mask_paths = None
 
