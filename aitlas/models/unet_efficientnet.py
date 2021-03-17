@@ -10,8 +10,7 @@ import os
 import shutil
 from functools import partial
 from math import ceil
-from multiprocessing import Pool
-from multiprocessing.queues import Queue
+from multiprocessing import Pool, Queue
 
 import cv2
 import gdal
@@ -356,7 +355,7 @@ class UNetEfficientNet(BaseSegmentationClassifier):
                     weights[target > 0.0] *= 0.5
                     for i in range(weights.shape[0]):
                         weights[i] = weights[i] * building_weight[i]
-                    output = self.model(images, strip, direction, coord)
+                    output = self.forward(images, strip, direction, coord)
                     if isinstance(output, tuple):
                         output = output[0]
                     l0 = focal_loss(output[:, 0], target[:, 0], weights[:, 0]) + dice_loss(output[:, 0], target[:, 0])
@@ -401,7 +400,7 @@ class UNetEfficientNet(BaseSegmentationClassifier):
                                                    mode="bilinear", align_corners=True)
                                 for fl in flips:
                                     for i, rot in enumerate(rots):
-                                        o = self.model(rot(fl(im)), strip, direction, coord)
+                                        o = self.forward(rot(fl(im)), strip, direction, coord)
                                         if isinstance(o, tuple):
                                             o = o[0]
                                         oos += F.interpolate(fl(rots2[i](o)), size=(h, w), mode="bilinear",
@@ -443,7 +442,6 @@ class UNetEfficientNet(BaseSegmentationClassifier):
         folds = [0]  # , 3, 6, 9, 1, 2, 7, 8]
         for fold in folds:
             # load data into the data set
-            # TODO: load fold or load directory?
             dataset.load_fold(fold)
             # get test data loader
             data_loader = dataset.dataloader()
@@ -474,7 +472,7 @@ class UNetEfficientNet(BaseSegmentationClassifier):
                                            align_corners=True)
                         for fl in flips:
                             for i, rot in enumerate(rots):
-                                o = self.model(rot(fl(im)), strip, direction, coord)
+                                o = self.forward(rot(fl(im)), strip, direction, coord)
                                 if isinstance(o, tuple):
                                     o = o[0]
                                 oos += F.interpolate(fl(rots2[i](o)), size=(h, w), mode="bilinear", align_corners=True)
@@ -504,3 +502,23 @@ class UNetEfficientNet(BaseSegmentationClassifier):
                 mask += used_mask.astype("float") / len(used_masks)
             io.imsave(os.path.join(dataset.config.merged_pred_dir, filename), mask)
         post_process(dataset.config.merged_pred_dir, dataset.config.solution_file)
+
+    def load_model(self, file_path, optimizer=None):
+        loaded = torch.load(file_path)
+
+        missing_keys = []
+        unexpected_keys = []
+
+        metadata = getattr(loaded["state_dict"], '_metadata', None)
+        state_dict = loaded["state_dict"].copy()
+        if metadata is not None:
+            state_dict._metadata = metadata
+
+        def load(module, prefix=''):
+            local_metadata = {} if metadata is None else metadata.get(prefix[:-1], {})
+            module._load_from_state_dict(state_dict, prefix, local_metadata, True, missing_keys, unexpected_keys, [])
+            for name, child in module._modules.items():
+                if child is not None:
+                    load(child, prefix + name + '.')
+
+        load(self.model)

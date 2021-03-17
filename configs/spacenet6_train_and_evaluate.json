@@ -7,10 +7,12 @@
         }
     },
     "task": {
-        "classname": "aitlas.tasks.SpaceNet6TrainAndEvaluateTask",
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
         "config": {
             "epochs": 30,
             "model_directory": "examples/experiments/spacenet6_winning_solution",
+            "save_epochs": 10,
+            "id": "spacenet6",
             "train_dataset_config": {
                 "classname": "aitlas.datasets.SpaceNet6Dataset",
                 "config": {
@@ -22,9 +24,9 @@
                     ],
                     "orients": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv",
                     "pred_folder": "/home/dkocev/stefanp/spaceNetChallenge6/results/pred{}",
-                    "folds_path": "/home/dkocev/stefanp/spaceNetChallenge6/results/fold/folds.csv",
+                    "folds_path": "/home/dkocev/stefanp/spaceNetChallenge6/results/folds/folds.csv",
                     "root_directory": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam",
-                    "segmentation_directory": "/home/dkocev/stefanp/spaceNetChallenge6/results/segmentation",
+                    "segmentation_directory": "/home/dkocev/stefanp/spaceNetChallenge6/results/segmentation_masks",
                     "edge_weight": 0.25,
                     "contact_weight": 0.1
                 }
@@ -36,11 +38,11 @@
                     "shuffle": false,
                     "num_workers": 1,
                     "orients": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv",
-                    "folds_path": "/home/dkocev/stefanp/spaceNetChallenge6/results/fold/folds.csv",
+                    "folds_path": "/home/dkocev/stefanp/spaceNetChallenge6/results/folds/folds.csv",
                     "root_directory": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam",
                     "start_val_epoch": 10,
-                    "pred_csv": "/home/dkocev/stefanp/spaceNetChallenge6/results/fold/pred_csv{}.csv",
-                    "gt_csv": "/home/dkocev/stefanp/spaceNetChallenge6/results/fold/gt_fold{}.csv"
+                    "pred_csv": "/home/dkocev/stefanp/spaceNetChallenge6/results/folds/pred_csv{}.csv",
+                    "gt_csv": "/home/dkocev/stefanp/spaceNetChallenge6/results/folds/gt_fold{}.csv"
                 }
             }
         }

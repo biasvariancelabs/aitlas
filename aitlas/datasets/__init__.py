@@ -16,3 +16,4 @@ from .uc_merced import UcMercedDataset
 from .uc_merced_multilabel import UcMercedMultiLabelDataset
 from .aid_multilabel import AIDMultiLabelDataset
 from .dfc15_multilabel import DFC15MultiLabelDataset
+from .spacenet6 import SpaceNet6Dataset
