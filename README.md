@@ -4,5 +4,13 @@
 
 The AiTLAS toolbox (Artificial Intelligence Toolbox for Earth Observation) includes state-of-the-art machine learning methods for exploratory and predictive analysis of satellite imagery as well as repository of AI-ready Earth Observation (EO) datasets. It can be easily applied for a variety of Earth Observation tasks, such as land use and cover classification, crop type prediction, localization of specific objects (semantic segmentation), etc. The main goal of AiTLAS is to facilitate better usability and adoption of novel AI methods (and models) by EO experts, while offering easy access and standardized format of EO datasets to AI experts which allows benchmarking of various existing and novel AI methods tailored for EO data.
 
-Demo: https://www.youtube.com/watch?v=lhDjiZg7RwU
+AiTLAS Introduction https://youtu.be/-3Son1NhdDg
+AiTLAS Software Architecture: https://youtu.be/cLfEZFQQiXc
+AiTLAS in a nutshell: https://www.youtube.com/watch?v=lhDjiZg7RwU
+
+AiTLAS examples:
+- Land use classification with multi-class classification with AiTLAS: https://youtu.be/JcJXrMch0Rc
+- Land use classification with multi-label classification: https://youtu.be/yzHkEMbDW7s
+- Maya archeological sites segmentation: https://youtu.be/LBFY4pCfzOU
+- Visualization of learning performance: https://youtu.be/wjMfstcWBSs
 
