@@ -9,3 +9,5 @@ from .lstm import LSTM
 from .msresnet import MSResNet
 from .inceptiontime import InceptionTime
 from .tempcnn import TempCNN
+from .starrnn import StarRNN
+from .omniscalecnn import OmniScaleCNN
