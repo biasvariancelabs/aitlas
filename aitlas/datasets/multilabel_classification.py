@@ -71,7 +71,8 @@ class MultiLabelClassificationDataset(BaseDataset):
     def show_image(self, index):
         labels_list = list(compress(self.labels, self[index][1]))
         fig = plt.figure(figsize=(8, 6))
-        plt.title(f"Image with index {index} from the dataset {self.get_name()}, with labels: {labels_list}")
+        plt.title(f"Image with index {index} from the dataset {self.get_name()}, with labels:\n {labels_list}\n",
+                  fontsize=14)
         plt.axis('off')
         plt.imshow(self[index][0])
         return fig
