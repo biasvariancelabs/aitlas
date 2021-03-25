@@ -6,6 +6,7 @@ import torch.nn.functional as nnf
 import torch.optim as optim
 
 from ..utils import stringify
+from .metrics import MultiClassRunningScore, MultiLabelRunningScore
 from .models import BaseModel
 from .schemas import BaseClassifierSchema
 
@@ -20,6 +21,8 @@ class BaseMulticlassClassifier(BaseModel):
 
     def __init__(self, config):
         super().__init__(config)
+
+        self.running_metrics = MultiClassRunningScore(self.num_classes, self.device)
 
     def get_predicted(self, outputs, threshold=None):
         probs = nnf.softmax(outputs.data, dim=1)
@@ -57,6 +60,11 @@ class BaseMultilabelClassifier(BaseModel):
 
     schema = BaseClassifierSchema
 
+    def __init__(self, config):
+        super().__init__(config)
+
+        self.running_metrics = MultiLabelRunningScore(self.num_classes, self.device)
+
     def load_optimizer(self):
         """Load the optimizer"""
         return optim.SGD(
@@ -65,7 +73,7 @@ class BaseMultilabelClassifier(BaseModel):
 
     def load_criterion(self):
         """Load the loss function"""
-        return nn.CrossEntropyLoss()
+        return nn.MSELoss(reduction="mean")
 
     def load_lr_scheduler(self):
         return None
