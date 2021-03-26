@@ -14,12 +14,16 @@ from ..utils import current_ts, get_class, image_loader, stringify
 from .config import Configurable
 from .datasets import BaseDataset
 from .metrics import RunningScore
+from .schemas import BaseModelSchema
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 class BaseModel(nn.Module, Configurable):
+
+    schema = BaseModelSchema
+
     def __init__(self, config=None):
         Configurable.__init__(self, config)
         super(BaseModel, self).__init__()
@@ -149,7 +153,11 @@ class BaseModel(nn.Module, Configurable):
             labels = labels.to(self.device)
 
             # zero the parameter gradients
-            optimizer.zero_grad()
+            if isinstance(optimizer, tuple):
+                for opt in optimizer:
+                    opt.zero_grad()
+            else:
+                optimizer.zero_grad()
 
             # forward + backward + optimize
             outputs = self(inputs)
@@ -162,7 +170,13 @@ class BaseModel(nn.Module, Configurable):
                 outputs, labels if len(labels.shape) == 1 else labels.type(torch.float)
             )  # TODO: Check this converion OUT!!!
             loss.backward()
-            optimizer.step()
+
+            # perform a single optimization step
+            if isinstance(optimizer, tuple):
+                for opt in optimizer:
+                    opt.step()
+            else:
+                optimizer.step()
 
             # log statistics
             running_loss += loss.item() * inputs.size(0)
