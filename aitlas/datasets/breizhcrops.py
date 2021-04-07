@@ -132,21 +132,19 @@ class BreizhCropsDataset(BaseDataset):
         
         """
 
-        assert config.year in [2017, 2018]
-        assert config.level in ["L1C", "L2A"]
-        assert config.region in ["frh01", "frh02", "frh03", "frh04", "belle-ile"]
+        assert self.config.region in ["frh01", "frh02", "frh03", "frh04", "belle-ile"]
 
-        self.region = config.region.lower()
-        self.bands = BANDS[config.level]
+        self.region = self.config.region.lower()
+        self.bands = BANDS[self.config.level]
 
-        self.verbose = config.verbose
-        self.year = config.year
-        self.level = config.level
+        self.verbose = self.config['verbose']
+        self.year = self.config.year
+        self.level = self.config.level
 
-        if config.verbose:
-            print(f"Initializing BreizhCrops region {config.region}, year {config.year}, level {config.level}")
+        if self.config.verbose:
+            print(f"Initializing BreizhCrops region {self.config.region}, year {self.config.year}, level {self.config.level}")
 
-        self.root = config.root
+        self.root = self.config.root
         self.h5path, self.indexfile, self.codesfile, self.shapefile, self.classmapping, self.csvfolder = \
             self.build_folder_structure(self.root, self.year, self.level, self.region)
 
@@ -154,29 +152,31 @@ class BreizhCropsDataset(BaseDataset):
         #self.classes_to_idx = self.get_classes_to_ind(self.classmapping)
         print("Path "+self.h5path)
         if os.path.exists(self.h5path):
-            h5_database_ok = os.path.getsize(self.h5path) == FILESIZES[config.year][config.level][config.region]
+            h5_database_ok = os.path.getsize(self.h5path) == FILESIZES[self.year][self.level][self.region]
         else:
             h5_database_ok = False
 
         if not os.path.exists(self.indexfile):
-            download_file(INDEX_FILE_URLs[config.year][config.level][config.region], self.indexfile)
+            download_file(INDEX_FILE_URLs[self.year][self.level][self.region], self.indexfile)
 
-        if not h5_database_ok and config.recompile_h5_from_csv and config.load_timeseries:
+        if not h5_database_ok and self.config.recompile_h5_from_csv and self.config.load_timeseries:
             self.download_csv_files()
             self.write_index()
             self.write_h5_database_from_csv(self.index)
-        if not h5_database_ok and not config.recompile_h5_from_csv and config.load_timeseries:
+        if not h5_database_ok and not self.config.recompile_h5_from_csv and self.config.load_timeseries:
             self.download_h5_database()
 
         self.index = pd.read_csv(self.indexfile, index_col=None)
         self.index = self.index.loc[self.index["CODE_CULTU"].isin(self.mapping.index)]
-        # self.index = self.index.iloc[:1000] # for testing, to speed up training
-        if config.verbose:
+        
+        self.index = self.index.iloc[:1000] # for testing, to speed up training
+        
+        if self.config.verbose:
             print(f"kept {len(self.index)} time series references from applying class mapping")
 
         # filter zero-length time series
         if self.index.index.name != "idx":
-            self.index = self.index.loc[self.index.sequencelength > config.filter_length].set_index("idx")
+            self.index = self.index.loc[self.index.sequencelength > self.config.filter_length].set_index("idx")
 
         self.maxseqlength = int(self.index["sequencelength"].max())
 
@@ -184,7 +184,7 @@ class BreizhCropsDataset(BaseDataset):
             download_file(CODESURL, self.codesfile)
         self.codes = pd.read_csv(self.codesfile, delimiter=";", index_col=0)
 
-        if config.preload_ram:
+        if self.config.preload_ram:
             self.X_list = list()
             with h5py.File(self.h5path, "r") as dataset:
                 for idx, row in tqdm(self.index.iterrows(), desc="loading data into RAM", total=len(self.index)):

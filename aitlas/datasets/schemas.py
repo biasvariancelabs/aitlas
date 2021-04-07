@@ -62,22 +62,26 @@ class BigEarthNetSchema(BaseDatasetSchema):
 
 class BreizhCropsSchema(BaseDatasetSchema):
     region = fields.String(
-        missing=None, description="Brittany region (frh01..frh04)", example="frh01"
+        required=True, description="Brittany region (frh01..frh04)", example="frh01",
+        validate=validate.OneOf(["frh01", "frh02", "frh03", "frh04", "belle-ile"])
     )
     root = fields.String(
         required=True, description="Dataset path on disk", example="./breizhcrops_dataset"
     )
-    year = fields.Integer(required=True, description="year")
-    filter_length = fields.Integer(required=True, description="filter_length")
+    year = fields.Integer(
+        missing=2017, description="year", validate=validate.OneOf([2017, 2018])
+    )
+    filter_length = fields.Integer(
+        missing=0, description="filter_length"
+    )
     level = fields.String(
-        required=True, description="L1C or L2A", example="L1C"
+        required=True, description="L1C or L2A", example="L1C", validate=validate.OneOf(['L1C', 'L2A'])
     )
     verbose = fields.Bool(
-        missing=False, description="verbose"
+        missing=False, description="verbose" #change to true
     )
-
     load_timeseries = fields.Bool(
-        missing=False, description="load_timeseries"
+        missing=True, description="load_timeseries"
     )    
     recompile_h5_from_csv = fields.Bool(
         missing=False, description="recompile_h5_from_csv"
