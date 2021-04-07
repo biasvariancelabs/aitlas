@@ -15,26 +15,31 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from ..base import BaseMulticlassClassifier
+from .schemas import TransformerModelSchema
 
 #__all__ = ['TransformerModel']
 
 class TransformerModel(BaseMulticlassClassifier):
     """Transformer Model for Multi-Class Classification"""
 
+    schema = TransformerModelSchema
+
     def __init__(self, config):
         BaseMulticlassClassifier.__init__(self, config)
 
-        input_dim=13
-        num_classes=config.num_classes
-        d_model=64
-        n_head=2
-        n_layers=5
-        d_inner=128
-        activation="relu"
-        dropout=0.017998950510888446
-        self.modelname = f"TransformerEncoder_input-dim={input_dim}_num-classes={num_classes}_" \
-                         f"d-model={d_model}_d-inner={d_inner}_n-layers={n_layers}_n-head={n_head}_" \
-                         f"dropout={dropout}"
+        input_dim=self.config.input_dim
+        num_classes=self.config.num_classes
+
+        d_model=self.config.d_model
+        n_head=self.config.n_head
+        n_layers=self.config.n_layers
+        d_inner=self.config.d_inner
+        activation=self.config.activation
+        dropout=self.config.dropout
+
+        #self.modelname = f"TransformerEncoder_input-dim={input_dim}_num-classes={num_classes}_" \
+        #                 f"d-model={d_model}_d-inner={d_inner}_n-layers={n_layers}_n-head={n_head}_" \
+        #                 f"dropout={dropout}"
 
         encoder_layer = TransformerEncoderLayer(d_model, n_head, d_inner, dropout, activation)
         encoder_norm = LayerNorm(d_model)
