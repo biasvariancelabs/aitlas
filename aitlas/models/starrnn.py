@@ -23,50 +23,43 @@ import torch.nn.init as init
 import math
 
 from ..base import BaseMulticlassClassifier
-
+from .schemas import StarRNNSchema
 
 #__all__ = ['StarRNN']
 
 class StarRNN(BaseMulticlassClassifier):
+
+    schema = StarRNNSchema
+
     def __init__(self, config):
 
         BaseMulticlassClassifier.__init__(self, config)
         
-        input_dim=13
-        num_classes=config.num_classes
-        hidden_dims=128
-        num_layers=3
-        dropout=0.5
-        bidirectional=False
-        use_batchnorm=False
-        use_layernorm=True
-        device=torch.device("cpu")
+        device=torch.device("cpu") # how to handle this?
 
         #self.modelname = f"StarRNN_input-dim={input_dim}_num-classes={num_classes}_" \
         #                 f"hidden-dims={hidden_dims}_num-layers={num_layers}_dropout={dropout}"
-        
-        self.nclasses=num_classes
-        self.use_batchnorm = use_batchnorm
-        self.use_layernorm = use_layernorm
 
-        self.d_model = num_layers*hidden_dims
+        self.d_model = self.config.num_layers*self.config.hidden_dims
         
-        if use_layernorm:
-            self.model.inlayernorm = nn.LayerNorm(input_dim)
-            self.model.clayernorm = nn.LayerNorm((hidden_dims + hidden_dims * bidirectional) )
+        if self.config.use_layernorm:
+            self.model.inlayernorm = nn.LayerNorm(self.config.input_dim)
+            self.model.clayernorm = nn.LayerNorm((self.config.hidden_dims + self.config.hidden_dims * self.config.bidirectional) )
 
         self.model.block = torch.nn.Sequential(
-            StarLayer(input_dim=input_dim, hidden_dim=hidden_dims, droput_factor=dropout, device=device),
-            *[StarLayer(input_dim=hidden_dims, hidden_dim=hidden_dims, droput_factor=dropout, device=device)] * (num_layers-1)
+            StarLayer(input_dim=self.config.input_dim, hidden_dim=self.config.hidden_dims, droput_factor=self.config.dropout, device=device),
+            *[StarLayer(input_dim=self.config.hidden_dims, hidden_dim=self.config.hidden_dims, droput_factor=self.config.dropout, device=device)] * (self.config.num_layers-1)
         )
 
-        if bidirectional:
-            hidden_dims = hidden_dims * 2
+        if self.config.bidirectional:
+            hidden_dims = self.config.hidden_dims * 2
+        else:
+            hidden_dims = self.config.hidden_dims
 
-        self.model.linear_class = nn.Linear(hidden_dims, num_classes, bias=True)
+        self.model.linear_class = nn.Linear(hidden_dims, self.config.num_classes, bias=True)
 
-        if use_batchnorm:
-            if bidirectional:
+        if self.config.use_batchnorm:
+            if self.config.bidirectional:
                 self.model.bn = nn.BatchNorm1d(hidden_dims*2)
             else:
                 self.model.bn = nn.BatchNorm1d(hidden_dims)
@@ -76,12 +69,12 @@ class StarRNN(BaseMulticlassClassifier):
     def _logits(self, x):
         #x = x.transpose(1,2)
 
-        if self.use_layernorm:
+        if self.config.use_layernorm:
             x = self.model.inlayernorm(x)
 
         outputs = self.model.block(x)
         
-        if self.use_batchnorm:
+        if self.config.use_batchnorm:
             outputs = outputs[:,-1:,:]
             b,t,d = outputs.shape
             o_ = outputs.view(b, -1, d).permute(0,2,1)
@@ -89,7 +82,7 @@ class StarRNN(BaseMulticlassClassifier):
 
         h=outputs[:,-1,:] 
         
-        if self.use_layernorm:
+        if self.config.use_layernorm:
             h = self.model.clayernorm(h)
 
         logits = self.model.linear_class.forward(h)

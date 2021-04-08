@@ -13,6 +13,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from ..base import BaseMulticlassClassifier
+from .schemas import OmniScaleCNNSchema 
+
 
 class SampaddingConv1D_BN(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
@@ -62,24 +64,18 @@ class build_layer_with_layer_parameter(nn.Module):
 class OmniScaleCNN(BaseMulticlassClassifier):
     """OmniScaleCNN Model for Multi-Class Classification"""
 
+    schema = OmniScaleCNNSchema
+
     def __init__(self,config):
         BaseMulticlassClassifier.__init__(self, config)
         
         #self.modelname = "OmniScaleCNN"
 
-        input_dim = 13
-        num_classes = config.num_classes
-        sequencelength = 45
-
-        paramenter_number_of_layer_list=[8 * 128, 5 * 128 * 256 + 2 * 256 * 128]
-        few_shot=False
-
-        receptive_field_shape = sequencelength//4
+        receptive_field_shape = self.config.sequence_length//4
 
         layer_parameter_list = generate_layer_parameter_list(1,receptive_field_shape,
-                                                             paramenter_number_of_layer_list, in_channel=input_dim)
+                                                             self.config.parameter_number_of_layer_list, in_channel=self.config.input_dim)
 
-        self.few_shot = few_shot
         self.layer_parameter_list = layer_parameter_list
         self.layer_list = []
 
@@ -95,7 +91,7 @@ class OmniScaleCNN(BaseMulticlassClassifier):
         for final_layer_parameters in layer_parameter_list[-1]:
             out_put_channel_numebr = out_put_channel_numebr + final_layer_parameters[1]
 
-        self.model.hidden = nn.Linear(out_put_channel_numebr, num_classes)
+        self.model.hidden = nn.Linear(out_put_channel_numebr, self.config.num_classes)
 
     def forward(self, X):
 
@@ -104,7 +100,7 @@ class OmniScaleCNN(BaseMulticlassClassifier):
         X = self.model.averagepool(X)
         X = X.squeeze_(-1)
 
-        if not self.few_shot:
+        if not self.config.few_shot:
             X = self.model.hidden(X)
         return X
 

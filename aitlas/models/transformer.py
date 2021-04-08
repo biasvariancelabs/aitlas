@@ -27,28 +27,18 @@ class TransformerModel(BaseMulticlassClassifier):
     def __init__(self, config):
         BaseMulticlassClassifier.__init__(self, config)
 
-        input_dim=self.config.input_dim
-        num_classes=self.config.num_classes
-
-        d_model=self.config.d_model
-        n_head=self.config.n_head
-        n_layers=self.config.n_layers
-        d_inner=self.config.d_inner
-        activation=self.config.activation
-        dropout=self.config.dropout
-
         #self.modelname = f"TransformerEncoder_input-dim={input_dim}_num-classes={num_classes}_" \
         #                 f"d-model={d_model}_d-inner={d_inner}_n-layers={n_layers}_n-head={n_head}_" \
         #                 f"dropout={dropout}"
 
-        encoder_layer = TransformerEncoderLayer(d_model, n_head, d_inner, dropout, activation)
-        encoder_norm = LayerNorm(d_model)
+        encoder_layer = TransformerEncoderLayer(self.config.d_model, self.config.n_head, self.config.d_inner, self.config.dropout, self.config.activation)
+        encoder_norm = LayerNorm(self.config.d_model)
 
-        self.model.inlinear = Linear(input_dim, d_model)
+        self.model.inlinear = Linear(self.config.dropout, self.config.d_model)
         self.model.relu = ReLU()
-        self.model.transformerencoder = TransformerEncoder(encoder_layer, n_layers, encoder_norm)
+        self.model.transformerencoder = TransformerEncoder(encoder_layer, self.config.n_layers, encoder_norm)
         self.model.flatten = Flatten()
-        self.model.outlinear = Linear(d_model, num_classes)
+        self.model.outlinear = Linear(self.config.d_model, self.config.num_classes)
 
     def forward(self,x):
         x = self.model.inlinear(x)
