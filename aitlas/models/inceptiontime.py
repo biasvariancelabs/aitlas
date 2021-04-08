@@ -14,28 +14,25 @@ import torch.utils.data
 import torch
 
 from ..base import BaseMulticlassClassifier
+from .schemas import InceptionTimeSchema
 
 #__all__ = ['InceptionTime']
 
 class InceptionTime(BaseMulticlassClassifier):
 
+    schema = InceptionTimeSchema
+
     def __init__(self, config):
         
         BaseMulticlassClassifier.__init__(self, config)
 
-        input_dim=13
-        num_classes=9
-        num_layers=4
-        hidden_dims=64
-        use_bias=False
-
         #self.modelname = f"InceptionTime_input-dim={input_dim}_num-classes={num_classes}_" \
         #                 f"hidden-dims={hidden_dims}_num-layers={num_layers}"
         
-        self.model.inlinear = nn.Linear(input_dim, hidden_dims*4)
-        self.num_layers = num_layers
-        self.model.inception_modules_list = [InceptionModule(kernel_size=32, num_filters=hidden_dims*4,
-                                                       use_bias=use_bias, device=self.device) for _ in range(num_layers)]
+        self.model.inlinear = nn.Linear(self.config.input_dim, self.config.hidden_dims*4)
+
+        self.model.inception_modules_list = [InceptionModule(kernel_size=32, num_filters=self.config.hidden_dims*4,
+                                                       use_bias=self.config.use_bias, device=self.device) for _ in range(self.config.num_layers)]
         
         # ? I don't see it used anywhere
         self.inception_modules = nn.Sequential(
@@ -43,7 +40,7 @@ class InceptionTime(BaseMulticlassClassifier):
         )
 
         self.model.avgpool = nn.AdaptiveAvgPool1d(1)
-        self.model.outlinear = nn.Linear(hidden_dims*4,num_classes)
+        self.model.outlinear = nn.Linear(self.config.hidden_dims*4,self.config.num_classes)
 
         #self.to(self.device)
 
@@ -53,7 +50,7 @@ class InceptionTime(BaseMulticlassClassifier):
 
         # expand dimensions
         x = self.model.inlinear(x.transpose(1, 2)).transpose(1, 2)
-        for i in range(self.num_layers):
+        for i in range(self.config.num_layers):
             x = self.model.inception_modules_list[i](x)
 
             #if self.use_residual and d % 3 == 2:

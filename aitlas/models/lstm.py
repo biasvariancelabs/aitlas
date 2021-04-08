@@ -15,11 +15,14 @@ import torch.utils.data
 import os
 
 from ..base import BaseMulticlassClassifier
+from .schemas import LSTMSchema
 
 #__all__ = ['LSTM']
 
 class LSTM(BaseMulticlassClassifier):
-    """Transformer Model for Multi-Class Classification"""
+    """LSTM Model for Multi-Class Classification"""
+
+    schema = LSTMSchema
 
     def __init__(self, config):
 
@@ -29,37 +32,30 @@ class LSTM(BaseMulticlassClassifier):
             TO DO ELENA: decide if input dim is determined from level and if all these go in schema
         """
 
-        input_dim=13
-        hidden_dims=128
-        num_layers=4
-        dropout=0.5713020228087161
-        bidirectional=True
-
-        num_classes = config.num_classes
-        self.use_layernorm = True
-
         #self.modelname = f"LSTM_input-dim={input_dim}_num-classes={num_classes}_hidden-dims={hidden_dims}_" \
         #                 f"num-layers={num_layers}_bidirectional={bidirectional}_use-layernorm={self.use_layernorm}" \
         #                 f"_dropout={dropout}"
 
         #self.d_model = num_layers * hidden_dims
 
-        if self.use_layernorm:
-            self.model.inlayernorm = nn.LayerNorm(input_dim)
-            self.model.clayernorm = nn.LayerNorm((hidden_dims + hidden_dims * bidirectional) * num_layers)
+        if self.config.use_layernorm:
+            self.model.inlayernorm = nn.LayerNorm(self.config.input_dim)
+            self.model.clayernorm = nn.LayerNorm((self.config.hidden_dims + self.config.hidden_dims * self.config.bidirectional) * self.config.num_layers)
 
-        self.model.lstm = nn.LSTM(input_size=input_dim, hidden_size=hidden_dims, num_layers=num_layers,
-                            bias=False, batch_first=True, dropout=dropout, bidirectional=bidirectional)
+        self.model.lstm = nn.LSTM(input_size=self.config.input_dim, hidden_size=self.config.hidden_dims, num_layers=self.config.num_layers,
+                            bias=False, batch_first=True, dropout=self.config.dropout, bidirectional=self.config.bidirectional)
 
-        if bidirectional:
-            hidden_dims = hidden_dims * 2
+        if self.config.bidirectional:
+            hidden_dims = self.config.hidden_dims * 2
+        else:
+            hidden_dims = self.config.hidden_dims
 
-        self.model.linear_class = nn.Linear(hidden_dims * num_layers, num_classes, bias=True)
+        self.model.linear_class = nn.Linear(hidden_dims * self.config.num_layers, self.config.num_classes, bias=True)
 
 
     def logits(self, x):
 
-        if self.use_layernorm:
+        if self.config.use_layernorm:
             x = self.model.inlayernorm(x)
 
         outputs, last_state_list = self.model.lstm.forward(x)
