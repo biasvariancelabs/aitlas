@@ -90,7 +90,7 @@ def evaluation(prediction_csv, gt_csv):
         fp += entry["FalsePos"]
         fn += entry["FalseNeg"]
     f1score = (2 * tp) / (2 * tp + fp + fn)
-    print("Validation F1 {} tp {} fp {} fn {}".format(f1score, tp, fp, fn))
+    # print("Validation F1 {} tp {} fp {} fn {}".format(f1score, tp, fp, fn))
     return f1score
 
 
@@ -316,192 +316,167 @@ class UNetEfficientNet(BaseSegmentationClassifier):
         """Overridden method for training on the SpaceNet6 data set."""
         contact_weight = train_dataset.config.contact_weight
         edge_weight = train_dataset.config.edge_weight
-        folds = [0]  # , 3, 6, 9, 1, 2, 7, 8]
-        for fold in folds:
-            pred_folder = train_dataset.config.pred_folder.format(fold)
-            # Initialize loss functions
-            dice_loss = DiceLoss().cuda()
-            focal_loss = FocalLoss2d().cuda()
-            # Create training data loader
-            train_dataset.load_other_folds(fold)
-            train_data_loader = train_dataset.dataloader()
-            # Create validation data loader
-            val_dataset.load_fold(fold)
-            val_data_loader = val_dataset.dataloader()
-            print(f"Fold {fold}")
-            print(f"Len train set: {len(train_dataset)}")
-            print(f"Len val set: {len(val_dataset)}")
-            # Initialize optimizer and lr scheduler
-            optimizer = self.load_optimizer()
-            scheduler = self.load_lr_scheduler()
-            self.model.cuda()
-            queue = Queue()
-            best_f1_score = -1
-            # Kick off training
-            for epoch in range(epochs):
-                iterator = tqdm(train_data_loader)
-                self.model.train()
-                # torch.cuda.empty_cache()
-                # For each batch (i.e. sample)
-                for sample in iterator:
-                    images = sample["image"].cuda(non_blocking=True)
-                    strip = sample["strip"].cuda(non_blocking=True)
-                    direction = sample["direction"].cuda(non_blocking=True)
-                    coord = sample["coordinate"].cuda(non_blocking=True)
-                    target = sample["mask"].cuda(non_blocking=True)
-                    building_count = sample["b_count"].cuda(non_blocking=True) / 8
-                    building_weight = building_count * 0.5 + 0.5
-                    weights = torch.ones(size=target.shape).cuda()
-                    weights[target > 0.0] *= 0.5
-                    for i in range(weights.shape[0]):
-                        weights[i] = weights[i] * building_weight[i]
-                    output = self.forward(images, strip, direction, coord)
-                    if isinstance(output, tuple):
-                        output = output[0]
-                    l0 = focal_loss(output[:, 0], target[:, 0], weights[:, 0]) + dice_loss(output[:, 0], target[:, 0])
-                    l1 = edge_weight * (focal_loss(output[:, 1], target[:, 1], weights[:, 1]) + dice_loss(output[:, 1],
-                                                                                                          target[:, 1]))
-                    l2 = contact_weight * (
-                                focal_loss(output[:, 2], target[:, 2], weights[:, 2]) + dice_loss(output[:, 2],
-                                                                                                  target[:, 2]))
-                    loss = l0 + l1 + l2
-                    optimizer.zero_grad()
-                    loss.backward()
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.2)
-                    optimizer.step()
-                    iterator.set_description(
-                        "epoch: {}; lr {:.5f}; loss {:.4f}".format(epoch, scheduler.get_lr()[-1], loss))
-                scheduler.step()
-                torch.save({"epoch": epoch,
-                            "state_dict": self.model.state_dict()},
-                           os.path.join(model_directory, "last_model"))
-                # torch.cuda.empty_cache()
-                if epoch >= val_dataset.config.start_val_epoch:  # or self.config.test
-                    print("Validation starts")
-                    shutil.rmtree(pred_folder, ignore_errors=True)
-                    os.makedirs(pred_folder, exist_ok=True)
-                    self.model.eval()
-                    torch.cuda.empty_cache()
-                    with torch.no_grad():
-                        for sample in tqdm(val_data_loader):
-                            images = sample["image"].cuda(non_blocking=True)
-                            ymin, xmin = sample["ymin"].item(), sample["xmin"].item()
-                            strip = sample["strip"].cuda(non_blocking=True)
-                            direction = sample["direction"].cuda(non_blocking=True)
-                            coord = sample["coordinate"].cuda(non_blocking=True)
-                            _, _, h, w = images.shape
-                            scales = [0.8, 1.0, 1.5]
-                            flips = [lambda x: x, lambda x: torch.flip(x, (3,))]
-                            rots = [(lambda x: torch.rot90(x, i, (2, 3))) for i in range(0, 1)]
-                            rots2 = [(lambda x: torch.rot90(x, 4 - i, (2, 3))) for i in range(0, 1)]
-                            oos = torch.zeros((images.shape[0], 6, images.shape[2], images.shape[3])).cuda()
-                            for sc in scales:
-                                im = F.interpolate(images, size=(ceil(h * sc / 32) * 32, ceil(w * sc / 32) * 32),
-                                                   mode="bilinear", align_corners=True)
-                                for fl in flips:
-                                    for i, rot in enumerate(rots):
-                                        o = self.forward(rot(fl(im)), strip, direction, coord)
-                                        if isinstance(o, tuple):
-                                            o = o[0]
-                                        oos += F.interpolate(fl(rots2[i](o)), size=(h, w), mode="bilinear",
-                                                             align_corners=True)
-                            o = oos / (len(scales) * len(flips) * len(rots))
-                            o = np.moveaxis(o.cpu().data.numpy(), 1, 3)
-                            for i in range(len(o)):
-                                img = o[i][:, :, :3]
-                                if direction[i].item():
-                                    img = np.fliplr(np.flipud(img))
-                                img = cv2.copyMakeBorder(img, ymin, 900 - h - ymin, xmin, 900 - w - xmin,
-                                                         cv2.BORDER_CONSTANT, 0.0)
-                                io.imsave(
-                                    os.path.join(pred_folder, os.path.split(sample["image_path"][i])[1]),
-                                    img)
-                    # torch.cuda.empty_cache()
-                    # if epoch >= self.config.start_val_epoch:
-                    to_save = {k: copy.deepcopy(v.cpu()) for k, v in self.model.state_dict().items()}
-                    pred_csv = val_dataset.config.pred_csv.format(fold)
-                    gt_csv = val_dataset.config.gt_csv.format(fold)
-                    post_process(pred_folder, pred_csv)
-                    val_f1 = evaluation(pred_csv, gt_csv)
-                    print("Val. loss at epoch {}: {:.5f}, best {:.5f}\n".format(epoch, val_f1,
-                                                                                max(val_f1, best_f1_score)))
-                    if best_f1_score < val_f1:
-                        torch.save({"epoch": epoch,
-                                    "state_dict": to_save,
-                                    "best_score": val_f1},
-                                   os.path.join(model_directory, "best_model"))
-                    queue.put(val_f1)
-                    best_f1_score = max(best_f1_score, queue.get())
+        fold = 0
+        pred_folder = train_dataset.config.pred_folder.format(fold)
+        # Initialize loss functions
+        dice_loss = DiceLoss().to(self.device)
+        focal_loss = FocalLoss2d().to(self.device)
+        # Load training data set
+        train_dataset.load_other_folds(fold)
+        train_data_loader = train_dataset.dataloader()
+        # Load validation data set
+        val_dataset.load_fold(fold)
+        val_data_loader = val_dataset.dataloader()
+        # Initialize optimizer and lr scheduler
+        optimizer = self.load_optimizer()
+        scheduler = self.load_lr_scheduler()
+        best_f1_score = -1
+        # Kick off training
+        for epoch in range(epochs):
+            iterator = tqdm(train_data_loader)
+            self.model.train()
+            # For each batch (i.e. sample)
+            for sample in iterator:
+                images = sample["image"].to(self.device)
+                strip = sample["strip"].to(self.device)
+                direction = sample["direction"].to(self.device)
+                coord = sample["coordinate"].to(self.device)
+                target = sample["mask"].to(self.device)
+                building_count = sample["b_count"].to(self.device) / 8
+                building_weight = building_count * 0.5 + 0.5
+                weights = torch.ones(size=target.shape).to(self.device)
+                weights[target > 0.0] *= 0.5
+                for i in range(weights.shape[0]):
+                    weights[i] = weights[i] * building_weight[i]
+                output = self.forward(images, strip, direction, coord)
+                if isinstance(output, tuple):
+                    output = output[0]
+                l0 = focal_loss(output[:, 0], target[:, 0], weights[:, 0]) + dice_loss(output[:, 0], target[:, 0])
+                l1 = edge_weight * (focal_loss(output[:, 1], target[:, 1], weights[:, 1]) + dice_loss(output[:, 1],
+                                                                                                      target[:, 1]))
+                l2 = contact_weight * (focal_loss(output[:, 2], target[:, 2], weights[:, 2]) + dice_loss(output[:, 2],
+                                                                                                         target[:, 2]))
+                loss = l0 + l1 + l2
+                optimizer.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.2)
+                optimizer.step()
+                iterator.set_description(
+                    "epoch: {}; lr {:.5f}; loss {:.4f}".format(epoch, scheduler.get_lr()[-1], loss))
+            scheduler.step()
+            torch.save({"epoch": epoch,
+                        "state_dict": self.model.state_dict()},
+                       os.path.join(model_directory, "last_model"))
+            if epoch >= val_dataset.config.start_val_epoch:
+                shutil.rmtree(pred_folder, ignore_errors=True)
+                os.makedirs(pred_folder, exist_ok=True)
+                self.model.eval()
+                with torch.no_grad():
+                    for sample in tqdm(val_data_loader):
+                        images = sample["image"].to(self.device)
+                        ymin, xmin = sample["ymin"].item(), sample["xmin"].item()
+                        strip = sample["strip"].to(self.device)
+                        direction = sample["direction"].to(self.device)
+                        coord = sample["coordinate"].to(self.device)
+                        _, _, h, w = images.shape
+                        scales = [0.8, 1.0, 1.5]
+                        flips = [lambda x: x, lambda x: torch.flip(x, (3,))]
+                        rots = [(lambda x: torch.rot90(x, i, (2, 3))) for i in range(0, 1)]
+                        rots2 = [(lambda x: torch.rot90(x, 4 - i, (2, 3))) for i in range(0, 1)]
+                        oos = torch.zeros((images.shape[0], 6, images.shape[2], images.shape[3])).to(self.device)
+                        for sc in scales:
+                            im = F.interpolate(images, size=(ceil(h * sc / 32) * 32, ceil(w * sc / 32) * 32),
+                                               mode="bilinear", align_corners=True)
+                            for fl in flips:
+                                for i, rot in enumerate(rots):
+                                    o = self.forward(rot(fl(im)), strip, direction, coord)
+                                    if isinstance(o, tuple):
+                                        o = o[0]
+                                    oos += F.interpolate(fl(rots2[i](o)), size=(h, w), mode="bilinear",
+                                                         align_corners=True)
+                        o = oos / (len(scales) * len(flips) * len(rots))
+                        o = np.moveaxis(o.cpu().data.numpy(), 1, 3)
+                        for i in range(len(o)):
+                            img = o[i][:, :, :3]
+                            if direction[i].item():
+                                img = np.fliplr(np.flipud(img))
+                            img = cv2.copyMakeBorder(img, ymin, 900 - h - ymin, xmin, 900 - w - xmin,
+                                                     cv2.BORDER_CONSTANT, 0.0)
+                            io.imsave(os.path.join(pred_folder, os.path.split(sample["image_path"][i])[1]), img)
+                to_save = {k: copy.deepcopy(v.cpu()) for k, v in self.model.state_dict().items()}
+                pred_csv = val_dataset.config.pred_csv.format(fold)
+                gt_csv = val_dataset.config.gt_csv.format(fold)
+                post_process(pred_folder, pred_csv)
+                val_f1 = evaluation(pred_csv, gt_csv)
+                if best_f1_score < val_f1:
+                    torch.save({"epoch": epoch,
+                                "state_dict": to_save,
+                                "best_score": val_f1},
+                               os.path.join(model_directory, "best_model"))
+                best_f1_score = max(best_f1_score, val_f1)
 
-    def evaluate(
-            self, dataset: SpaceNet6Dataset = None, model_path: str = None,
-    ):
-        # load the model
+    def evaluate(self, dataset: SpaceNet6Dataset = None, model_path: str = None):
+        # Load the model
         self.load_model(model_path)
         # evaluate model on data
-        folds = [0]  # , 3, 6, 9, 1, 2, 7, 8]
-        for fold in folds:
-            # load data into the data set
-            dataset.load_fold(fold)
-            # get test data loader
-            data_loader = dataset.dataloader()
-            pred_folder = dataset.config.pred_folder.format(fold)
-            # Enforce a clean do-over everytime by re-creating the destination prediction directory
-            shutil.rmtree(pred_folder, ignore_errors=True)
-            os.makedirs(pred_folder, exist_ok=True)
-            # Set model to eval mode and clean cuda cache
-            self.model.eval()
-            self.model.cuda()
-            torch.cuda.empty_cache()
-            with torch.no_grad():
-                for sample in tqdm(data_loader):
-                    images = sample["image"].cuda(non_blocking=True)
-                    ymin, xmin = sample["ymin"].item(), sample["xmin"].item()
-                    strip = sample["strip"].cuda(non_blocking=True)
-                    direction = sample["direction"].cuda(non_blocking=True)
-                    coord = sample["coordinate"].cuda(non_blocking=True)
-                    _, _, h, w = images.shape
-                    scales = [0.8, 1.0, 1.5]
-                    flips = [lambda x: x, lambda x: torch.flip(x, (3,))]
-                    rots = [(lambda x: torch.rot90(x, i, (2, 3))) for i in range(0, 1)]
-                    rots2 = [(lambda x: torch.rot90(x, 4 - i, (2, 3))) for i in range(0, 1)]
-                    oos = torch.zeros((images.shape[0], 6, images.shape[2], images.shape[3])).cuda()
-                    for sc in scales:
-                        im = F.interpolate(images, size=(ceil(h * sc / 32) * 32, ceil(w * sc / 32) * 32),
-                                           mode="bilinear",
-                                           align_corners=True)
-                        for fl in flips:
-                            for i, rot in enumerate(rots):
-                                o = self.forward(rot(fl(im)), strip, direction, coord)
-                                if isinstance(o, tuple):
-                                    o = o[0]
-                                oos += F.interpolate(fl(rots2[i](o)), size=(h, w), mode="bilinear", align_corners=True)
-                    o = oos / (len(scales) * len(flips) * len(rots))
-                    o = np.moveaxis(o.cpu().data.numpy(), 1, 3)
-                    for i in range(len(o)):
-                        img = o[i][:, :, :3]
-                        if direction[i].item():
-                            img = np.fliplr(np.flipud(img))
-                        img = cv2.copyMakeBorder(img, ymin, 900 - h - ymin, xmin, 900 - w - xmin, cv2.BORDER_CONSTANT,
-                                                 0.0)
-                        io.imsave(os.path.join(pred_folder, os.path.split(sample["image_path"][i])[1]), img)
-            torch.cuda.empty_cache()
+        fold = 3  # [0, 6, 9, 1, 2, 7, 8]
+        # load data into the data set
+        dataset.load_fold(fold)
+        # get test data loader
+        data_loader = dataset.dataloader()
+        pred_folder = dataset.config.pred_folder.format(fold)
+        # Enforce a clean do-over everytime by re-creating the destination prediction directory
+        shutil.rmtree(pred_folder, ignore_errors=True)
+        os.makedirs(pred_folder, exist_ok=True)
+        # Set model to eval mode
+        self.model.eval()
+        with torch.no_grad():
+            for sample in tqdm(data_loader):
+                images = sample["image"].to(self.device)
+                ymin, xmin = sample["ymin"].item(), sample["xmin"].item()
+                strip = sample["strip"].to(self.device)
+                direction = sample["direction"].to(self.device)
+                coord = sample["coordinate"].to(self.device)
+                _, _, h, w = images.shape
+                scales = [0.8, 1.0, 1.5]
+                flips = [lambda x: x, lambda x: torch.flip(x, (3,))]
+                rots = [(lambda x: torch.rot90(x, i, (2, 3))) for i in range(0, 1)]
+                rots2 = [(lambda x: torch.rot90(x, 4 - i, (2, 3))) for i in range(0, 1)]
+                oos = torch.zeros((images.shape[0], 6, images.shape[2], images.shape[3])).to(self.device)
+                for sc in scales:
+                    im = F.interpolate(images, size=(ceil(h * sc / 32) * 32, ceil(w * sc / 32) * 32),
+                                       mode="bilinear",
+                                       align_corners=True)
+                    for fl in flips:
+                        for i, rot in enumerate(rots):
+                            o = self.forward(rot(fl(im)), strip, direction, coord)
+                            if isinstance(o, tuple):
+                                o = o[0]
+                            oos += F.interpolate(fl(rots2[i](o)), size=(h, w), mode="bilinear", align_corners=True)
+                o = oos / (len(scales) * len(flips) * len(rots))
+                o = np.moveaxis(o.cpu().data.numpy(), 1, 3)
+                for i in range(len(o)):
+                    img = o[i][:, :, :3]
+                    if direction[i].item():
+                        img = np.fliplr(np.flipud(img))
+                    img = cv2.copyMakeBorder(img, ymin, 900 - h - ymin, xmin, 900 - w - xmin, cv2.BORDER_CONSTANT, 0.0)
+                    io.imsave(os.path.join(pred_folder, os.path.split(sample["image_path"][i])[1]), img)
         ################################################################################################
-        # Merge everything
-        shutil.rmtree(dataset.config.merged_pred_dir, ignore_errors=True)
-        os.makedirs(dataset.config.merged_pred_dir, exist_ok=True)
-        merge_folds = [0, 1, 2, 3, 6, 7, 8, 9]
-        predictions_folders = [dataset.config.pred_folder.format(i) for i in merge_folds]
-        for filename in tqdm(os.listdir(predictions_folders[0])):
-            used_masks = list()
-            for ff in predictions_folders:
-                if os.path.exists(os.path.join(ff, filename)):
-                    used_masks.append(io.imread(os.path.join(ff, filename)))
-            mask = np.zeros_like(used_masks[0], dtype="float")
-            for used_mask in used_masks:
-                mask += used_mask.astype("float") / len(used_masks)
-            io.imsave(os.path.join(dataset.config.merged_pred_dir, filename), mask)
-        post_process(dataset.config.merged_pred_dir, dataset.config.solution_file)
+        # # Merge everything
+        # shutil.rmtree(dataset.config.merged_pred_dir, ignore_errors=True)
+        # os.makedirs(dataset.config.merged_pred_dir, exist_ok=True)
+        # merge_folds = [0, 1, 2, 3, 6, 7, 8, 9]
+        # predictions_folders = [dataset.config.pred_folder.format(i) for i in merge_folds]
+        # for filename in tqdm(os.listdir(predictions_folders[0])):
+        #     used_masks = list()
+        #     for ff in predictions_folders:
+        #         if os.path.exists(os.path.join(ff, filename)):
+        #             used_masks.append(io.imread(os.path.join(ff, filename)))
+        #     mask = np.zeros_like(used_masks[0], dtype="float")
+        #     for used_mask in used_masks:
+        #         mask += used_mask.astype("float") / len(used_masks)
+        #     io.imsave(os.path.join(dataset.config.merged_pred_dir, filename), mask)
+        # post_process(dataset.config.merged_pred_dir, dataset.config.solution_file)
 
     def load_model(self, file_path, optimizer=None):
         loaded = torch.load(file_path)

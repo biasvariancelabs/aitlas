@@ -16,11 +16,11 @@ import gdal
 import numpy as np
 import pandas as pd
 import torch
-from tqdm import tqdm
 from shapely.wkt import loads
 from skimage import io, measure
 from skimage.morphology import square, erosion, dilation
 from skimage.segmentation import watershed
+from tqdm import tqdm
 
 from aitlas.base import BaseDataset
 from aitlas.datasets.schemas import SpaceNet6DatasetSchema
@@ -219,6 +219,16 @@ class SpaceNet6Dataset(BaseDataset):
         pass
 
     def prepare(self):
+        """
+        Prepares the SpaceNet6 data set for model training and validation by:
+
+        1. Creating training segmentation masks from the geojson files
+
+        2. Splitting the data set by location, which was shown to be very important for model learning, see:
+        https://github.com/SpaceNetChallenge/SpaceNet_SAR_Buildings_Solutions/blob/master/1-zbigniewwojna/README.md
+        Creates 10 splits of the data set. Each split consists of 10 folds (i.e. further splits) of which 9 are used for
+        training and one for validation/testing (in essence, a cross validation procedure).
+        """
         # Create destination directories if they don't exist
         os.makedirs(self.config.segmentation_directory, exist_ok=True)
         os.makedirs(self.config.folds_dir, exist_ok=True)
@@ -229,7 +239,6 @@ class SpaceNet6Dataset(BaseDataset):
         gt_buildings = pd.read_csv(gt_buildings_csv_filepath)
         # Walk the raw data directory with the SAR images and save the filenames in it
         sar_image_paths = glob.glob(os.path.join(self.config.root_directory, "SAR-Intensity", "*.tif"))
-        print("Creating segmentation masks")
         # Process each SAR image
         with Pool(self.config.num_threads) as pool:
             for _ in tqdm(pool.imap_unordered(
@@ -240,7 +249,6 @@ class SpaceNet6Dataset(BaseDataset):
                             gt_buildings_csv=gt_buildings_csv_filepath),
                     sar_image_paths)):
                 pass
-        print("Created segmentation masks")
         orientations = pd.read_csv(filepath_or_buffer=self.config.orients, sep=' ', index_col=0,
                                    names=["strip", "direction"], header=None)
         df_fold = pd.DataFrame(columns=["ImageId", "sar", "segm", "rotation", "x", "y", "fold"])
@@ -248,7 +256,6 @@ class SpaceNet6Dataset(BaseDataset):
         r_edge = 596160
         orientations["sum_y"] = 0.0
         orientations["ctr_y"] = 0.0
-        print("Assigning folds")
         for sar_path in tqdm(sar_image_paths):
             image_id = "_".join(os.path.splitext(os.path.basename(sar_path))[0].split("_")[-4:])
             strip_name = "_".join(image_id.split("_")[-4:-2])
@@ -276,4 +283,3 @@ class SpaceNet6Dataset(BaseDataset):
         orientations["mean_y"] = orientations["sum_y"] / orientations["ctr_y"]
         orientations["coord_y"] = (((orientations["mean_y"] - 5746153.106161971) / 11000) + 0.2)
         orientations.to_csv(self.config.orients_output, index=True)
-        print("Done.")

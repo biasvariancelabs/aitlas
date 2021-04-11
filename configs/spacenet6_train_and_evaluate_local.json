@@ -3,7 +3,8 @@
         "classname": "aitlas.models.UNetEfficientNet",
         "config": {
             "net": "b5",
-            "stride": 32
+            "stride": 32,
+            "use_cuda": true
         }
     },
     "task": {
@@ -22,11 +23,11 @@
                     "transforms": [
                         "aitlas.transforms.SpaceNet6Transforms"
                     ],
-                    "orients": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv",
-                    "pred_folder": "/home/dkocev/stefanp/spaceNetChallenge6/results/pred{}",
-                    "folds_path": "/home/dkocev/stefanp/spaceNetChallenge6/results/folds/folds.csv",
-                    "root_directory": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam",
-                    "segmentation_directory": "/home/dkocev/stefanp/spaceNetChallenge6/results/segmentation_masks",
+                    "orients": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv",
+                    "pred_folder": "/home/stefan/Downloads/Spacenet6Data/results/pred{}",
+                    "folds_path": "/home/stefan/Downloads/Spacenet6Data/results/folds/folds.csv",
+                    "root_directory": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam",
+                    "segmentation_directory": "/home/stefan/Downloads/Spacenet6Data/results/segmentation_masks",
                     "edge_weight": 0.25,
                     "contact_weight": 0.1
                 }
@@ -37,12 +38,12 @@
                     "batch_size": 1,
                     "shuffle": false,
                     "num_workers": 1,
-                    "orients": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv",
-                    "folds_path": "/home/dkocev/stefanp/spaceNetChallenge6/results/folds/folds.csv",
-                    "root_directory": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam",
+                    "orients": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv",
+                    "folds_path": "/home/stefan/Downloads/Spacenet6Data/results/folds/folds.csv",
+                    "root_directory": "/home/stefan/Downloads/Spacenet6Data/train/AOI_11_Rotterdam",
                     "start_val_epoch": 10,
-                    "pred_csv": "/home/dkocev/stefanp/spaceNetChallenge6/results/folds/pred_csv{}.csv",
-                    "gt_csv": "/home/dkocev/stefanp/spaceNetChallenge6/results/folds/gt_fold{}.csv"
+                    "pred_csv": "/home/stefan/Downloads/Spacenet6Data/results/folds/pred_csv{}.csv",
+                    "gt_csv": "/home/stefan/Downloads/Spacenet6Data/results/folds/gt_fold{}.csv"
                 }
             }
         }
