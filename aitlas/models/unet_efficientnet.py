@@ -332,6 +332,7 @@ class UNetEfficientNet(BaseSegmentationClassifier):
         scheduler = self.load_lr_scheduler()
         best_f1_score = -1
         # Kick off training
+        self.model.to(self.device)
         for epoch in range(epochs):
             iterator = tqdm(train_data_loader)
             self.model.train()
