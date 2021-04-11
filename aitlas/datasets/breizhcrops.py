@@ -87,12 +87,6 @@ SELECTED_BANDS = {
 					'CLD', 'EDG', 'SAT',]
 }
 
-"""
-
-TO DO ELENA: move the following to transforms
-
-"""
-
 
 class BreizhCropsDataset(BaseDataset):
     """BreizhCrops - a crop type classification dataset"""
@@ -132,32 +126,26 @@ class BreizhCropsDataset(BaseDataset):
         
         """
 
-        assert self.config.region in ["frh01", "frh02", "frh03", "frh04", "belle-ile"]
-
         self.region = self.config.region.lower()
         self.bands = BANDS[self.config.level]
 
-        self.verbose = self.config['verbose']
-        self.year = self.config.year
-        self.level = self.config.level
-
         if self.config.verbose:
-            print(f"Initializing BreizhCrops region {self.config.region}, year {self.config.year}, level {self.config.level}")
+            print(f"Initializing BreizhCrops region {self.region}, year {self.config.year}, level {self.config.level}")
 
         self.root = self.config.root
         self.h5path, self.indexfile, self.codesfile, self.shapefile, self.classmapping, self.csvfolder = \
-            self.build_folder_structure(self.root, self.year, self.level, self.region)
+            self.build_folder_structure(self.root, self.config.year, self.config.level, self.region)
 
         self.load_classmapping(self.classmapping)
         #self.classes_to_idx = self.get_classes_to_ind(self.classmapping)
         print("Path "+self.h5path)
         if os.path.exists(self.h5path):
-            h5_database_ok = os.path.getsize(self.h5path) == FILESIZES[self.year][self.level][self.region]
+            h5_database_ok = os.path.getsize(self.h5path) == FILESIZES[self.config.year][self.config.level][self.region]
         else:
             h5_database_ok = False
 
         if not os.path.exists(self.indexfile):
-            download_file(INDEX_FILE_URLs[self.year][self.level][self.region], self.indexfile)
+            download_file(INDEX_FILE_URLs[self.config.year][self.config.level][self.region], self.indexfile)
 
         if not h5_database_ok and self.config.recompile_h5_from_csv and self.config.load_timeseries:
             self.download_csv_files()
@@ -217,8 +205,10 @@ class BreizhCropsDataset(BaseDataset):
         row = self.index.iloc[index]
 
         if self.X_list is None:
+            # Looks like this is what I need (load directly from file)
             with h5py.File(self.h5path, "r") as dataset:
                 X = np.array(dataset[(row.path)])
+                #print(row.path)
         else:
             X = self.X_list[index]
 
@@ -240,8 +230,8 @@ class BreizhCropsDataset(BaseDataset):
     """
 
     def download_csv_files(self):
-        zipped_file = os.path.join(self.root, str(self.year), self.level, f"{self.region}.zip")
-        download_file(RAW_CSV_URL[self.year][self.level][self.region], zipped_file)
+        zipped_file = os.path.join(self.root, str(self.config.year), self.config.level, f"{self.region}.zip")
+        download_file(RAW_CSV_URL[self.config.year][self.config.level][self.region], zipped_file)
         unzip(zipped_file, self.csvfolder)
         os.remove(zipped_file)
 
@@ -281,13 +271,13 @@ class BreizhCropsDataset(BaseDataset):
 
     def download_h5_database(self):
         print(f"downloading {self.h5path}.tar.gz")
-        download_file(H5_URLs[self.year][self.level][self.region], self.h5path + ".tar.gz", overwrite=True)
+        download_file(H5_URLs[self.config.year][self.config.level][self.region], self.h5path + ".tar.gz", overwrite=True)
         print(f"extracting {self.h5path}.tar.gz to {self.h5path}")
         untar(self.h5path + ".tar.gz")
         print(f"removing {self.h5path}.tar.gz")
         os.remove(self.h5path + ".tar.gz")
         print(f"checking integrity by file size...")
-        assert os.path.getsize(self.h5path) == FILESIZES[self.year][self.level][self.region]
+        assert os.path.getsize(self.h5path) == FILESIZES[self.config.year][self.config.level][self.region]
         print("ok!")
 
     def write_h5_database_from_csv(self, index):
@@ -301,11 +291,11 @@ class BreizhCropsDataset(BaseDataset):
 
     def load_classmapping(self, classmapping):
         if not os.path.exists(classmapping):
-            if self.verbose:
+            if self.config.verbose:
                 print(f"no classmapping found at {classmapping}, downloading from {CLASSMAPPINGURL}")
             download_file(CLASSMAPPINGURL, classmapping)
         else:
-            if self.verbose:
+            if self.config.verbose:
                 print(f"found classmapping at {classmapping}")
 
         self.mapping = pd.read_csv(classmapping, index_col=0).sort_values(by="id")
@@ -314,16 +304,17 @@ class BreizhCropsDataset(BaseDataset):
         self.classname = self.mapping.groupby("id").first().classname.values
         self.klassenname = self.classname
         self.nclasses = len(self.classes)
-        if self.verbose:
+        if self.config.verbose:
             print(f"read {self.nclasses} classes from {classmapping}")
 
     def get_classes_to_ind(self, classmapping):
+        ''' keep for now, could be needed to make it compatible with GenericMulticlass '''
         if not os.path.exists(classmapping):
-            if self.verbose:
+            if self.config.verbose:
                 print(f"no classmapping found at {classmapping}, downloading from {CLASSMAPPINGURL}")
             download_file(CLASSMAPPINGURL, classmapping)
         else:
-            if self.verbose:
+            if self.config.verbose:
                 print(f"found classmapping at {classmapping}")
 
         mapping = pd.read_csv(classmapping, index_col=0).sort_values(by="id")
@@ -345,7 +336,7 @@ class BreizhCropsDataset(BaseDataset):
     def load(self, csv_file):
         sample = self.load_raw(csv_file)
         
-        selected_bands = SELECTED_BANDS[self.level]
+        selected_bands = SELECTED_BANDS[self.config.level]
         X = np.array(sample[selected_bands].values)	
         if np.isnan(X).any():
             t_without_nans = np.isnan(X).sum(1) > 0
@@ -357,7 +348,7 @@ class BreizhCropsDataset(BaseDataset):
         sample = self.load_raw(csv_file)
         X = np.array(sample.values)
 	
-        if self.level=="L1C":
+        if self.config.level=="L1C":
             cc_index = self.bands.index("label")
         else:
             cc_index = self.bands.index("code_cultu")
@@ -377,9 +368,9 @@ class BreizhCropsDataset(BaseDataset):
         i = 1
 
         for csv_file in tqdm(csv_files):
-            if self.level == "L1C":
+            if self.config.level == "L1C":
                 cld_index = SELECTED_BANDS["L1C"].index("QA60")
-            elif self.level == "L2A":
+            elif self.config.level == "L2A":
                 cld_index = SELECTED_BANDS["L2A"].index("CLD")
 
             X = self.load(os.path.join(self.csvfolder, csv_file))

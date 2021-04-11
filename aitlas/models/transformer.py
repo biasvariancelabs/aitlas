@@ -34,7 +34,7 @@ class TransformerModel(BaseMulticlassClassifier):
         encoder_layer = TransformerEncoderLayer(self.config.d_model, self.config.n_head, self.config.d_inner, self.config.dropout, self.config.activation)
         encoder_norm = LayerNorm(self.config.d_model)
 
-        self.model.inlinear = Linear(self.config.dropout, self.config.d_model)
+        self.model.inlinear = Linear(self.config.input_dim, self.config.d_model)
         self.model.relu = ReLU()
         self.model.transformerencoder = TransformerEncoder(encoder_layer, self.config.n_layers, encoder_norm)
         self.model.flatten = Flatten()
