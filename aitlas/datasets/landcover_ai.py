@@ -39,7 +39,7 @@ class LandCoverAiDataset(BaseDataset):
         if self.transform:
             image = self.transform(image)
         if self.target_transform:
-            mask = self.transform(mask)
+            mask = self.target_transform(mask)
         return image, mask
 
     def __len__(self):
