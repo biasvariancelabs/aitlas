@@ -47,25 +47,25 @@ class RunningScore(object):
             2
             * precision["Precision Micro"]
             * recall["Recall Micro"]
-            / (precision["Precision Micro"] * recall["Recall Micro"] + 1e-15)
+            / (precision["Precision Micro"] + recall["Recall Micro"] + 1e-15)
         )
         macro = (
             2
             * precision["Precision Macro"]
             * recall["Recall Macro"]
-            / (precision["Precision Macro"] * recall["Recall Macro"] + 1e-15)
+            / (precision["Precision Macro"] + recall["Recall Macro"] + 1e-15)
         )
         weighted = (
             2
             * precision["Precision Weighted"]
             * recall["Recall Weighted"]
-            / (precision["Precision Weighted"] * recall["Recall Weighted"] + 1e-15)
+            / (precision["Precision Weighted"] + recall["Recall Weighted"] + 1e-15)
         )
         per_class = (
             2
             * precision["Precision per Class"]
             * recall["Recall per Class"]
-            / (precision["Precision per Class"] * recall["Recall per Class"] + 1e-15)
+            / (precision["Precision per Class"] + recall["Recall per Class"] + 1e-15)
         )
 
         return {

@@ -56,9 +56,9 @@ class BaseClassifierSchema(BaseModelSchema):
 class BaseSegmentationClassifierSchema(BaseClassifierSchema):
     metrics = fields.List(
         fields.String,
-        missing=[],
+        missing=["iou"],
         description="Classes of metrics you want to calculate",
-        example=["aitlas.metrics.F1ScoreSample", "aitlas.metrics.Accuracy"],
+        example=["accuracy", "precision", "recall", "f1_score", "iou"],
     )
 
 
