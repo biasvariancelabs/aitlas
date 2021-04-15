@@ -224,9 +224,9 @@ class MultiLabelRunningScore(RunningScore):
         iou = tp_total / (tp_total + fp_total + fn_total)
 
         return {
-            "IOU": iou,
-            "IOU mean": iou_per_class.mean(),
-            "IOU pre Class": iou_per_class,
+            "IOU": float(iou),
+            "IOU mean": float(iou_per_class.mean()),
+            "IOU pre Class": iou_per_class.tolist(),
         }
 
     #

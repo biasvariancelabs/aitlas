@@ -104,9 +104,6 @@ class BaseModel(nn.Module, Configurable):
                 criterion=self.criterion,
                 description="testing on train set",
             )
-            print(f"f1 {self.running_metrics.f1_score()}")
-            print(f"p {self.running_metrics.precision()}")
-            print(f"r {self.running_metrics.recall()}")
             self.log_metrics(
                 self.running_metrics.get_scores(self.metrics),
                 dataset.get_labels(),
