@@ -218,9 +218,9 @@ class BaseModel(nn.Module, Configurable):
     def evaluate_model(
         self, dataloader, criterion=None, description="testing on validation set",
     ):
-        labels_total = []
-        predicted_total = []
-        iou_labels_total = torch.zeros([1, self.num_classes], dtype=torch.float64)
+        #labels_total = []
+        #predicted_total = []
+        #iou_labels_total = torch.zeros([1, self.num_classes], dtype=torch.float64)
 
         """
         Evaluates the current model against the specified dataloader for the specified metrics
@@ -244,8 +244,8 @@ class BaseModel(nn.Module, Configurable):
 
             predicted_probs, predicted = self.get_predicted(outputs)
 
-            labels_total += list(labels.cpu().detach().numpy())
-            predicted_total += list(predicted.cpu().detach().numpy())
+            #labels_total += list(labels.cpu().detach().numpy())
+            #predicted_total += list(predicted.cpu().detach().numpy())
 
             #print(labels, predicted)
 
@@ -265,19 +265,19 @@ class BaseModel(nn.Module, Configurable):
                 #print('Labels: ', labels.type(torch.uint8), 'Predicted: ', predicted.type(torch.uint8))
 
             self.running_metrics.update(
-                labels.type(torch.uint8), predicted.type(torch.uint8)
+                labels.type(torch.int64), predicted.type(torch.int64)
             )
 
         if criterion:
             total_loss = total_loss / len(dataloader.dataset)
 
-        predicted_total = [int(i) for i in predicted_total]
+        #predicted_total = [int(i) for i in predicted_total]
 
         #print(labels_total, predicted_total)
 
-        print('Metrika macro: ', f1_score(labels_total, predicted_total, average='macro'))
-        print('Metrika micro: ', f1_score(labels_total, predicted_total, average='micro'))
-        print('Metrika weighted: ', f1_score(labels_total, predicted_total, average='weighted'))
+        #print('Metrika macro: ', f1_score(labels_total, predicted_total, average='macro'))
+        #print('Metrika micro: ', f1_score(labels_total, predicted_total, average='micro'))
+        #print('Metrika weighted: ', f1_score(labels_total, predicted_total, average='weighted'))
 
 
         #print(self.running_metrics.get_f1score())

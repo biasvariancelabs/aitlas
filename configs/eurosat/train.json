@@ -1,6 +1,6 @@
 {
     "model": {
-        "classname": "aitlas.models.ShallowCNNNet",
+        "classname": "aitlas.models.ResNet50",
         "config": {
             "num_classes": 10,
             "learning_rate": 0.001,
@@ -10,7 +10,7 @@
     "task": {
         "classname": "aitlas.tasks.TrainTask",
         "config": {
-            "epochs": 50,
+            "epochs": 10,
             "model_directory": "./examples/experiment/eurosat",
             "save_epochs": 5,
             "id": "eurosat",
@@ -21,7 +21,8 @@
                     "shuffle": true,
                     "num_workers": 4,
                     "download": false,
-                    "csv_file_path": "./data/Eurosat/2750/train.csv"
+                    "csv_file_path": "/media/hdd/EuroSAT/train.csv",
+                    "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             }
         }

@@ -24,14 +24,14 @@ class RunningScore(object):
         """Updates stats on each batch"""
         self.confusion_matrix.update((y_pred, y_true))
 
-        print(y_pred.shape[0])
+        #print(y_pred.shape[0])
 
         # target is (batch_size, ...)
-        y_pred = torch.argmax(y_pred, dim=1).flatten()
-        print(y_pred)
-        y_true = y_true.flatten()
-        print(y_true)
-        print('Broj na klasi: ', self.num_classes)
+        #y_pred = torch.argmax(y_pred, dim=1).flatten()
+        #print(y_pred)
+        #y_true = y_true.flatten()
+        #print(y_true)
+        #print('Broj na klasi: ', self.num_classes)
 
     def reset(self):
         """Reset the confusion matrix"""
@@ -106,6 +106,7 @@ class MultiClassRunningScore(RunningScore):
 
     def recall(self):
         cm = self.get_computed()
+        #print(cm)
         micro = cm.diag().sum() / (cm.sum() + 1e-15)  # same as accuracy for multiclass
         macro = (cm.diag() / (cm.sum(dim=1) + 1e-15)).mean()
         weighted = (

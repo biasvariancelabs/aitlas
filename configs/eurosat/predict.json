@@ -3,7 +3,8 @@
         "classname": "aitlas.models.ResNet50",
         "config": {
             "num_classes": 10,
-            "learning_rate": 0.001
+            "learning_rate": 0.001,
+            "threshold": 0.5
         }
     },
     "task": {
@@ -13,18 +14,9 @@
             "dir": "./data/test/",
             "output_path": "./examples/",
             "output_format": "plot",
-            "labels": {
-                "AnnualCrop": 0,
-                "Forest": 1,
-                "HerbaceousVegetation": 2,
-                "Highway": 3,
-                "Industrial": 4,
-                "Pasture": 5,
-                "PermanentCrop": 6,
-                "Residential": 7,
-                "River": 8,
-                "SeaLake": 9
-            }
+            "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"],
+            "labels": ["AnnualCrop", "Forest", "HerbaceousVegetation", "Highway", "Industrial", "Pasture",
+                        "PermanentCrop", "Residential", "River", "SeaLake"]
         }
     }
 }

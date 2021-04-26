@@ -1,5 +1,9 @@
 import csv
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
+from itertools import compress
 from ..base import BaseDataset
 from ..utils import image_loader
 from .schemas import MultiClassClassificationDatasetSchema
@@ -45,6 +49,32 @@ class MultiClassClassificationDataset(BaseDataset):
 
     def get_labels(self):
         return self.labels
+
+    def data_distribution_table(self):
+        df = pd.read_csv(self.config.csv_file_path, sep=",")
+        label_count = pd.DataFrame(df.sum(axis=0)).reset_index()
+        label_count.columns = ["Label", "Count"]
+        label_count.drop(label_count.index[0], inplace=True)
+        return label_count
+
+    def data_distribution_barchart(self):
+        label_count = self.data_distribution_table()
+        fig, ax = plt.subplots(figsize=(12, 10))
+        sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
+        return fig
+
+    def show_samples(self):
+        df = pd.read_csv(self.config.csv_file_path, sep=",")
+        return df.head(20)
+
+    def show_image(self, index):
+        labels_list = list(compress(self.labels, self[index][1]))
+        fig = plt.figure(figsize=(8, 6))
+        plt.title(f"Image with index {index} from the dataset {self.get_name()}, with labels:\n {labels_list}\n",
+                  fontsize=14)
+        plt.axis('off')
+        plt.imshow(self[index][0])
+        return fig
 
     def load_dataset(self, file_path):
         if not self.labels:

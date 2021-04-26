@@ -30,17 +30,18 @@ class BaseMulticlassClassifier(BaseModel):
         predicted_probs, predicted = probs.topk(1, dim=1)
         return probs, predicted
 
-    #def report(self, labels, **kwargs):
-    #    """Report for multiclass classification"""
-        #run_id = kwargs.get("id", "experiment")
-        #from ..visualizations import confusion_matrix, precision_recall_curve
+    def report(self, labels, running_metrics, **kwargs):
+        """Report for multiclass classification"""
+        run_id = kwargs.get("id", "experiment")
+        from ..visualizations import plot_multiclass_confusion_matrix
 
-        #logging.info(stringify(self.running_metrics.get_accuracy()))
+        if running_metrics.confusion_matrix:
+            cm = running_metrics.get_computed()
 
         # plot confusion matrix for model evaluation
-        #confusion_matrix(
-        #    self.running_metrics.confusion_matrix, labels, f"{run_id}_cm.png"
-        #)
+        plot_multiclass_confusion_matrix(
+            np.array(cm), labels, f"{run_id}_cm.png"
+        )
 
     def load_optimizer(self):
         """Load the optimizer"""
