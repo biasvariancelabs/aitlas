@@ -244,25 +244,14 @@ class BaseModel(nn.Module, Configurable):
 
             predicted_probs, predicted = self.get_predicted(outputs)
 
-            #labels_total += list(labels.cpu().detach().numpy())
-            #predicted_total += list(predicted.cpu().detach().numpy())
-
-            #print(labels, predicted)
-
-            # if segmentation reshape the predictions and labels
-            #if len(predicted.shape) > 2:
-            #    iou_labels_total += iou_pytorch(predicted.type(torch.int), labels.type(torch.int))
-
             if (
                 len(labels.shape) == 1
             ):  # if it is multiclass, then we need one hot encoding for the predictions
-                #print(labels.size(0), self.num_classes)
                 one_hot = torch.zeros(labels.size(0), self.num_classes)
                 predicted = predicted.reshape(predicted.size(0))
                 one_hot[torch.arange(labels.size(0)), predicted.type(torch.long)] = 1
                 predicted = one_hot
                 predicted = predicted.to(self.device)
-                #print('Labels: ', labels.type(torch.uint8), 'Predicted: ', predicted.type(torch.uint8))
 
             self.running_metrics.update(
                 labels.type(torch.int64), predicted.type(torch.int64)
@@ -270,18 +259,6 @@ class BaseModel(nn.Module, Configurable):
 
         if criterion:
             total_loss = total_loss / len(dataloader.dataset)
-
-        #predicted_total = [int(i) for i in predicted_total]
-
-        #print(labels_total, predicted_total)
-
-        #print('Metrika macro: ', f1_score(labels_total, predicted_total, average='macro'))
-        #print('Metrika micro: ', f1_score(labels_total, predicted_total, average='micro'))
-        #print('Metrika weighted: ', f1_score(labels_total, predicted_total, average='weighted'))
-
-
-        #print(self.running_metrics.get_f1score())
-        #print('Rezultat: ', iou_labels_total / len(dataloader.dataset))
 
         return total_loss
 
