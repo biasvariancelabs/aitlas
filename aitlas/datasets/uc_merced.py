@@ -9,6 +9,7 @@ LABELS = ["agricultural", "airplane", "baseballdiamond", "beach", "buildings", "
 class UcMercedDataset(MultiClassClassificationDataset):
 
     labels = LABELS
+    name = "UC Merced"
 
     def __init__(self, config):
         # now call the constructor to validate the schema and load the data

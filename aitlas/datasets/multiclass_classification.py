@@ -51,10 +51,9 @@ class MultiClassClassificationDataset(BaseDataset):
         return self.labels
 
     def data_distribution_table(self):
-        df = pd.read_csv(self.config.csv_file_path, sep=",")
-        label_count = pd.DataFrame(df.sum(axis=0)).reset_index()
-        label_count.columns = ["Label", "Count"]
-        label_count.drop(label_count.index[0], inplace=True)
+        df = pd.read_csv(self.config.csv_file_path, sep=",", names=["Image path", "Label"])
+        label_count = df.groupby("Label").count().reset_index()
+        label_count.columns = ['Label', 'Count']
         return label_count
 
     def data_distribution_barchart(self):
@@ -64,13 +63,13 @@ class MultiClassClassificationDataset(BaseDataset):
         return fig
 
     def show_samples(self):
-        df = pd.read_csv(self.config.csv_file_path, sep=",")
+        df = pd.read_csv(self.config.csv_file_path, sep=",", names=["Image path", "Label"])
         return df.head(20)
 
     def show_image(self, index):
-        labels_list = list(compress(self.labels, self[index][1]))
+        label = self.labels[self[index][1]]
         fig = plt.figure(figsize=(8, 6))
-        plt.title(f"Image with index {index} from the dataset {self.get_name()}, with labels:\n {labels_list}\n",
+        plt.title(f"Image with index {index} from the dataset {self.get_name()}, with label {label}\n",
                   fontsize=14)
         plt.axis('off')
         plt.imshow(self[index][0])
