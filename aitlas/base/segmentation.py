@@ -16,6 +16,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class BaseSegmentationClassifier(BaseModel):
+
     schema = BaseSegmentationClassifierSchema
 
     def __init__(self, config):
@@ -41,15 +42,3 @@ class BaseSegmentationClassifier(BaseModel):
     def load_lr_scheduler(self):
         return None
 
-    def report(self, labels, **kwargs):
-        """Report for multiclass classification"""
-        run_id = kwargs.get("id", "experiment")
-        from ..visualizations import confusion_matrix, precision_recall_curve
-
-        logging.info(stringify(self.running_metrics.get_accuracy()))
-        logging.info(stringify(self.running_metrics.get_iu()))
-
-        # plot confusion matrix for model evaluation
-        confusion_matrix(
-            self.running_metrics.confusion_matrix, labels, f"{run_id}_cm.png"
-        )
