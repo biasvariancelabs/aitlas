@@ -1,0 +1,22 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.SplitTask",
+        "config": {
+            "split": {
+                "train": {
+                    "ratio": 80,
+                    "file": "/media/hdd/RESISC45/train.csv"
+                },
+                "val": {
+                    "ratio": 20,
+                    "file": "/media/hdd/RESISC45/val.csv"
+                },
+                "test": {
+                    "ratio": 0,
+                    "file": "/media/hdd/RESISC45/test.csv"
+                }
+            },
+            "root": "/media/hdd/RESISC45"
+        }
+    }
+}
