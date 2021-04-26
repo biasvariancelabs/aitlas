@@ -9,6 +9,7 @@ import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
 from tqdm import tqdm
+from sklearn.metrics import f1_score
 
 from ..utils import current_ts, get_class, image_loader, stringify
 from .config import Configurable
@@ -217,6 +218,10 @@ class BaseModel(nn.Module, Configurable):
     def evaluate_model(
         self, dataloader, criterion=None, description="testing on validation set",
     ):
+        labels_total = []
+        predicted_total = []
+        iou_labels_total = torch.zeros([1, self.num_classes], dtype=torch.float64)
+
         """
         Evaluates the current model against the specified dataloader for the specified metrics
         :param dataloader:
@@ -238,23 +243,26 @@ class BaseModel(nn.Module, Configurable):
                 total_loss += batch_loss.item() * inputs.size(0)
 
             predicted_probs, predicted = self.get_predicted(outputs)
+
+            labels_total += list(labels.cpu().detach().numpy())
+            predicted_total += list(predicted.cpu().detach().numpy())
+
+            #print(labels, predicted)
+
             # if segmentation reshape the predictions and labels
-            if len(predicted.shape) > 2:
-                predicted = predicted.T.reshape(
-                    predicted.shape[0] * predicted.shape[2] * predicted.shape[3],
-                    predicted.shape[1],
-                )
-                labels = labels.T.reshape(
-                    labels.shape[0] * labels.shape[2] * labels.shape[3], labels.shape[1]
-                )
+            #if len(predicted.shape) > 2:
+            #    iou_labels_total += iou_pytorch(predicted.type(torch.int), labels.type(torch.int))
 
             if (
                 len(labels.shape) == 1
             ):  # if it is multiclass, then we need one hot encoding for the predictions
+                #print(labels.size(0), self.num_classes)
                 one_hot = torch.zeros(labels.size(0), self.num_classes)
+                predicted = predicted.reshape(predicted.size(0))
                 one_hot[torch.arange(labels.size(0)), predicted.type(torch.long)] = 1
                 predicted = one_hot
                 predicted = predicted.to(self.device)
+                #print('Labels: ', labels.type(torch.uint8), 'Predicted: ', predicted.type(torch.uint8))
 
             self.running_metrics.update(
                 labels.type(torch.uint8), predicted.type(torch.uint8)
@@ -262,6 +270,18 @@ class BaseModel(nn.Module, Configurable):
 
         if criterion:
             total_loss = total_loss / len(dataloader.dataset)
+
+        predicted_total = [int(i) for i in predicted_total]
+
+        #print(labels_total, predicted_total)
+
+        print('Metrika macro: ', f1_score(labels_total, predicted_total, average='macro'))
+        print('Metrika micro: ', f1_score(labels_total, predicted_total, average='micro'))
+        print('Metrika weighted: ', f1_score(labels_total, predicted_total, average='weighted'))
+
+
+        #print(self.running_metrics.get_f1score())
+        #print('Rezultat: ', iou_labels_total / len(dataloader.dataset))
 
         return total_loss
 
@@ -367,7 +387,7 @@ class BaseModel(nn.Module, Configurable):
             for cm in calculated_metrics:
                 for key in cm:
                     metric = cm[key]
-                    if isinstance(metric, list):
+                    if isinstance(metric, list) or isinstance(metric, np.ndarray):
                         for i, sub in enumerate(metric):
                             writer.add_scalar(f"{key}/{labels[i]}/{tag}", sub, epoch)
                     else:

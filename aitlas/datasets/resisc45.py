@@ -12,3 +12,7 @@ LABELS = ["airplane", "airport", "baseball_diamond", "basketball_court", "beach"
 class Resisc45Dataset(MultiClassClassificationDataset):
 
     labels = LABELS
+
+    def __init__(self, config):
+        # now call the constructor to validate the schema and load the data
+        MultiClassClassificationDataset.__init__(self, config)

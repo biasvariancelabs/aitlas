@@ -143,8 +143,8 @@ class PredictTaskSchema(BaseTaskShema):
         nested=ObjectConfig,
         description="Dataset type and configuration.",
     )
-    labels = fields.Dict(
-        missing=None, description="Labels needed to tag the predictions.",
+    labels = fields.List(
+        fields.String, missing=None, description="Labels needed to tag the predictions.",
     )
     transforms = fields.List(
         fields.String,

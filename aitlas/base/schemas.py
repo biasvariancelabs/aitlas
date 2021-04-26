@@ -28,7 +28,7 @@ class BaseModelSchema(Schema):
         fields.String,
         missing=["f1_score"],
         description="Metrics you want to calculate",
-        example=["accuracy", "precision", "iou",],
+        example=["accuracy", "precision", "iou"],
         validate=validate.ContainsOnly(
             ["accuracy", "precision", "recall", "f1_score", "iou"]
         ),

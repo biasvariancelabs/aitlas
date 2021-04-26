@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
 import torch.optim as optim
+import numpy as np
 
 from ..utils import stringify
 from .metrics import MultiClassRunningScore, MultiLabelRunningScore
@@ -29,17 +30,17 @@ class BaseMulticlassClassifier(BaseModel):
         predicted_probs, predicted = probs.topk(1, dim=1)
         return probs, predicted
 
-    def report(self, labels, **kwargs):
-        """Report for multiclass classification"""
-        run_id = kwargs.get("id", "experiment")
-        from ..visualizations import confusion_matrix, precision_recall_curve
+    #def report(self, labels, **kwargs):
+    #    """Report for multiclass classification"""
+        #run_id = kwargs.get("id", "experiment")
+        #from ..visualizations import confusion_matrix, precision_recall_curve
 
-        logging.info(stringify(self.running_metrics.get_accuracy()))
+        #logging.info(stringify(self.running_metrics.get_accuracy()))
 
         # plot confusion matrix for model evaluation
-        confusion_matrix(
-            self.running_metrics.confusion_matrix, labels, f"{run_id}_cm.png"
-        )
+        #confusion_matrix(
+        #    self.running_metrics.confusion_matrix, labels, f"{run_id}_cm.png"
+        #)
 
     def load_optimizer(self):
         """Load the optimizer"""
@@ -84,3 +85,22 @@ class BaseMultilabelClassifier(BaseModel):
             predicted_probs.dtype
         )
         return predicted_probs, predicted
+
+    def report(self, labels, running_metrics, **kwargs):
+        """Report for multilabel classification"""
+        run_id = kwargs.get("id", "experiment")
+        cm_array = []
+        if running_metrics.confusion_matrix:
+            cm = running_metrics.get_computed()
+            for i, label in enumerate(labels):
+                tp = cm[i, 1, 1]
+                tn = cm[i, 0, 0]
+                fp = cm[i, 0, 1]
+                fn = cm[i, 1, 0]
+                cm_array.append([[int(tn), int(fp)], [int(fn), int(tp)]])
+
+        from ..visualizations import plot_multilabel_confusion_matrix
+        # plot confusion matrix for model evaluation
+        plot_multilabel_confusion_matrix(
+            np.array(cm_array), labels, f"{run_id}_cm.png"
+        )

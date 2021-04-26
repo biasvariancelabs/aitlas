@@ -2,9 +2,33 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import sklearn.metrics as skmetrics
+import math
 
 from ..base import BaseDetailedVisualization, BaseVisualization
 from ..utils import pil_loader
+
+
+def plot_confusion_matrix(confusion_matrix, axes, class_label, class_names, fontsize=14):
+    df_cm = pd.DataFrame(
+        confusion_matrix, index=class_names, columns=class_names,
+    )
+    try:
+        heatmap = sns.heatmap(df_cm, annot=True, fmt="d", cbar=False, ax=axes)
+    except ValueError:
+        raise ValueError("Confusion matrix values must be integers.")
+    heatmap.yaxis.set_ticklabels(heatmap.yaxis.get_ticklabels(), rotation=0, ha='right', fontsize=fontsize)
+    heatmap.xaxis.set_ticklabels(heatmap.xaxis.get_ticklabels(), rotation=45, ha='right', fontsize=fontsize)
+    axes.set_ylabel('True label')
+    axes.set_xlabel('Predicted label')
+    axes.set_title("CM - " + class_label)
+
+
+def plot_multilabel_confusion_matrix(cm_array, labels, output_file):
+    figure, ax = plt.subplots(4, math.ceil(len(labels)/4), figsize=(12, 7))
+    for axes, cfs_matrix, label in zip(ax.flatten(), cm_array, labels):
+        plot_confusion_matrix(cfs_matrix, axes, label, ["N", "P"])
+    figure.tight_layout()
+    figure.savefig(output_file, format="png")
 
 
 class ConfusionMatrix(BaseVisualization):

@@ -8,11 +8,11 @@
                     "file": "/media/hdd/EuroSAT/train.csv"
                 },
                 "val": {
-                    "ratio": 10,
+                    "ratio": 20,
                     "file": "/media/hdd/EuroSAT/val.csv"
                 },
                 "test": {
-                    "ratio": 10,
+                    "ratio": 0,
                     "file": "/media/hdd/EuroSAT/test.csv"
                 }
             },

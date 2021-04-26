@@ -24,6 +24,15 @@ class RunningScore(object):
         """Updates stats on each batch"""
         self.confusion_matrix.update((y_pred, y_true))
 
+        print(y_pred.shape[0])
+
+        # target is (batch_size, ...)
+        y_pred = torch.argmax(y_pred, dim=1).flatten()
+        print(y_pred)
+        y_true = y_true.flatten()
+        print(y_true)
+        print('Broj na klasi: ', self.num_classes)
+
     def reset(self):
         """Reset the confusion matrix"""
         self.confusion_matrix.reset()
@@ -37,6 +46,9 @@ class RunningScore(object):
     def accuracy(self):
         raise NotImplementedError
 
+    def weights(self):
+        raise NotImplementedError
+
     def recall(self):
         raise NotImplementedError
 
@@ -47,31 +59,19 @@ class RunningScore(object):
             2
             * precision["Precision Micro"]
             * recall["Recall Micro"]
-            / (precision["Precision Micro"] + recall["Recall Micro"] + 1e-15)
-        )
-        macro = (
-            2
-            * precision["Precision Macro"]
-            * recall["Recall Macro"]
-            / (precision["Precision Macro"] + recall["Recall Macro"] + 1e-15)
-        )
-        weighted = (
-            2
-            * precision["Precision Weighted"]
-            * recall["Recall Weighted"]
-            / (precision["Precision Weighted"] + recall["Recall Weighted"] + 1e-15)
+            / (precision["Precision Micro"] + recall["Recall Micro"])
         )
         per_class = (
             2
             * precision["Precision per Class"]
             * recall["Recall per Class"]
-            / (precision["Precision per Class"] + recall["Recall per Class"] + 1e-15)
+            / (precision["Precision per Class"] + recall["Recall per Class"])
         )
 
         return {
             "F1_score Micro": float(micro),
-            "F1_score Macro": float(macro),
-            "F1_score Weighted": float(weighted),
+            "F1_score Macro": np.mean(per_class),
+            "F1_score Weighted": np.sum(self.weights() * per_class),
             "F1_score per Class": per_class.tolist(),
         }
 
@@ -100,6 +100,10 @@ class MultiClassRunningScore(RunningScore):
         accuracy = cm.diag().sum() / (cm.sum() + 1e-15)
         return {"Accuracy": accuracy}
 
+    def weights(self):
+        cm = self.get_computed()
+        return (cm.sum(dim=1) / cm.sum()).numpy()
+
     def recall(self):
         cm = self.get_computed()
         micro = cm.diag().sum() / (cm.sum() + 1e-15)  # same as accuracy for multiclass
@@ -114,7 +118,7 @@ class MultiClassRunningScore(RunningScore):
             "Recall Micro": micro,
             "Recall Macro": macro,
             "Recall Weighted": weighted,
-            "Recall per Class": per_class,
+            "Recall per Class": per_class.numpy(),
         }
 
     def precision(self):
@@ -131,7 +135,7 @@ class MultiClassRunningScore(RunningScore):
             "Precision Micro": micro,
             "Precision Macro": macro,
             "Precision Weighted": weighted,
-            "Precision per Class": per_class,
+            "Precision per Class": per_class.numpy(),
         }
 
     def iou(self):
@@ -147,7 +151,7 @@ class MultiLabelRunningScore(RunningScore):
     def __init__(self, num_classes, device):
         super().__init__(num_classes, device)
         self.confusion_matrix = MultiLabelConfusionMatrix(
-            num_classes=self.num_classes, device=self.device
+            num_classes=self.num_classes, device=self.device,
         )
 
     def accuracy(self):
@@ -162,30 +166,31 @@ class MultiLabelRunningScore(RunningScore):
     def precision(self):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
-
         micro = tp_total / (tp_total + fp_total)
         per_class = tp / (tp + fp)
-        macro = per_class.mean()
-        weighted = (per_class * (tp + fn) / self.count()).sum()
-
+        macro = np.mean(per_class)
+        weighted = np.sum(per_class * self.weights())
         return {
-            "Precision Micro": micro,
+            "Precision Micro": float(micro),
             "Precision Macro": macro,
             "Precision Weighted": weighted,
             "Precision per Class": per_class,
         }
 
+    def weights(self):
+        tp, tn, fp, fn = self.get_outcomes()
+        weights = (tp + fn) / self.get_samples()
+        return weights
+
     def recall(self):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
-
         micro = tp_total / (tp_total + fn_total)
         per_class = tp / (tp + fn)
-        macro = per_class.mean()
-        weighted = (per_class * (tp + fn) / self.count()).sum()
-
+        macro = np.mean(per_class)
+        weighted = np.sum(per_class * self.weights())
         return {
-            "Recall Micro": micro,
+            "Recall Micro": float(micro),
             "Recall Macro": macro,
             "Recall Weighted": weighted,
             "Recall per Class": per_class,
@@ -197,7 +202,6 @@ class MultiLabelRunningScore(RunningScore):
         :param total: do we need to return per class or total
         """
         cm = self.get_computed()
-
         tp = cm[:, 1, 1]
         tn = cm[:, 0, 0]
         fp = cm[:, 0, 1]
@@ -206,7 +210,7 @@ class MultiLabelRunningScore(RunningScore):
         if total:  # sum it all if we need to calculate to totals
             tp, tn, fp, fn = tp.sum(), tn.sum(), fp.sum(), fn.sum()
 
-        return tp, tn, fp, fn
+        return tp.numpy(), tn.numpy(), fp.numpy(), fn.numpy()
 
     def count(self):
         tp, tn, fp, fn = self.get_outcomes(True)
@@ -214,7 +218,7 @@ class MultiLabelRunningScore(RunningScore):
 
     def get_samples(self):
         cm = self.confusion_matrix.compute().cpu().detach().numpy()
-        return np.sum(cm[:, 0, 1]) + np.sum(cm[:, 1, 1])
+        return np.sum(cm[:, 1, 0]) + np.sum(cm[:, 1, 1])
 
     def iou(self):
         tp, tn, fp, fn = self.get_outcomes()
@@ -225,51 +229,43 @@ class MultiLabelRunningScore(RunningScore):
 
         return {
             "IOU": float(iou),
-            "IOU mean": float(iou_per_class.mean()),
+            "IOU mean": np.mean(iou_per_class),
             "IOU pre Class": iou_per_class.tolist(),
         }
 
-    #
-    # tp_overall, tn_overall, fp_overall, fn_overall = self.get_outcomes()
-    # print(f"{tp_overall.shape}, {tn_overall.shape}, {fp_overall.shape}, {fn_overall.shape}")
-    # precision_overall = tp_overall / (tp_overall + fp_overall)
-    # recall_overall = tp_overall / (tp_overall + fn_overall)
-    # micro_f1score = (2 * precision_overall * recall_overall) / (precision_overall + recall_overall)
-    #
-    # macro_f1score = []
-    # weights = []
-    # f1score_per_class = []
-    # for i in range(self.num_classes):
-    #     tp, tf, fp, fn = self.get_outcomes(i)
-    #     precision = tp / (tp + fp)
-    #     recall = tp / (tp + fn)
-    #     weights.append((tp + fp) / self.get_samples())
-    #     macro_f1score.append((2 * precision * recall) / (precision + recall))
-    #     f1score_per_class.append((2 * precision * recall) / (precision + recall))
-    # macro_f1score = np.array(macro_f1score)
-    # macro_f1score[np.isnan(macro_f1score)] = 0
-    # # calculate weighted F1 score
-    # weighted_f1score = macro_f1score * weights
-    #
-    # f1score_per_class = np.array(f1score_per_class)
-    # f1score_per_class[np.isnan(f1score_per_class)] = 0
-    #
-    # return {"Micro F1-score": micro_f1score,
-    #         "Macro F1-score": np.mean(macro_f1score),
-    #         "Weighted F1-score": np.sum(weighted_f1score),
-    #         "F1-score per class": np.array(f1score_per_class)}
 
-    # def iu(self):
-    #     hist = self.confusion_matrix
-    #     intersection_over_union = np.diag(hist) / (
-    #         hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist)
-    #     )
-    #     mean_intersection_over_union = np.nanmean(intersection_over_union)
-    #     intersection_over_union_per_class = dict(
-    #         zip(range(self.num_classes), intersection_over_union)
-    #     )
-    #
-    #     return {
-    #         "intersection_over_union": intersection_over_union,
-    #         "intersection_over_union_per_class": intersection_over_union_per_class,
-    #     }
+class SegmentationRunningScore(RunningScore):
+    """Calculates a metrics for semantic segmentation"""
+
+    def __init__(self, num_classes, device):
+        super().__init__(num_classes, device)
+        self.iou_per_class = torch.zeros(num_classes, dtype=torch.float64).to(self.device)
+        self.f1_score_per_class = torch.zeros(num_classes, dtype=torch.float64).to(self.device)
+        self.pixel_accuracy_per_class = torch.zeros(num_classes, dtype=torch.float64).to(self.device)
+        self.samples = 0
+
+    def update(self, y_true, y_pred):
+        """Updates metrics on each batch"""
+        num_batches, num_labels, h, w = y_true.shape
+        self.samples += num_batches
+        for i in range(num_batches):
+            for j in range(num_labels):
+                intersection = (y_pred[i, j, :, :].unsqueeze(0) & y_true[i, j, :, :].unsqueeze(0)).float().sum(
+                    (1, 2))
+                union = (y_pred[i, j, :, :].unsqueeze(0) | y_true[i, j, :, :].unsqueeze(0)).float().sum(
+                    (1, 2))
+                self.iou_per_class[j] += ((intersection + 1e-15) / (union + 1e-15))[0]
+
+    def reset(self):
+        """Reset the metrics"""
+        self.iou_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(self.device)
+        self.f1_score_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(self.device)
+        self.pixel_accuracy_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(self.device)
+        self.samples = 0
+
+    def iou(self):
+        self.iou_per_class = self.iou_per_class / self.samples
+        return {
+            "IOU mean": float(self.iou_per_class.mean()),
+            "IOU pre Class": self.iou_per_class.tolist(),
+        }

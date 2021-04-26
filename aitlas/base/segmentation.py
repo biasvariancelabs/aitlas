@@ -10,7 +10,7 @@ from ..metrics import F1ScoreSample
 from ..utils import stringify
 from .models import BaseModel
 from .schemas import BaseSegmentationClassifierSchema
-from .metrics import MultiLabelRunningScore
+from .metrics import SegmentationRunningScore
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -21,7 +21,7 @@ class BaseSegmentationClassifier(BaseModel):
     def __init__(self, config):
         super().__init__(config)
 
-        self.running_metrics = MultiLabelRunningScore(self.num_classes, self.device)
+        self.running_metrics = SegmentationRunningScore(self.num_classes, self.device)
 
     def get_predicted(self, outputs, threshold=None):
         predicted_probs = torch.tanh(outputs)

@@ -1,0 +1,39 @@
+{
+    "model": {
+        "classname": "aitlas.models.VGG16MultiLabel",
+        "config": {
+            "num_classes": 8,
+            "learning_rate": 0.0001,
+            "pretrained": true,
+            "threshold": 0.5
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+        "config": {
+            "epochs": 100,
+            "model_directory": "./examples/experiment",
+            "save_epochs": 10,
+            "train_dataset_config": {
+                "classname": "aitlas.datasets.DFC15MultiLabelDataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "root": "/media/hdd/DFC15_multilabel/train",
+					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
+                }
+            },
+			"val_dataset_config": {
+                "classname": "aitlas.datasets.DFC15MultiLabelDataset",
+                "config": {
+                    "batch_size": 1,
+                    "shuffle": false,
+                    "num_workers": 4,
+                    "root": "/media/hdd/DFC15_multilabel/test",
+                    "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
+                }
+            }
+        }
+    }
+}

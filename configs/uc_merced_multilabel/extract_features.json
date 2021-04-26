@@ -1,9 +1,9 @@
 {
     "model": {
-        "classname": "aitlas.models.VGG16MultiLabel",
+        "classname": "aitlas.models.ResNet50MultiLabel",
         "config": {
             "pretrained": true,
-            "extract_feature_only": true
+            "learning_rate": 0.0001
         }
     },
     "task": {
@@ -11,7 +11,7 @@
         "config": {
             "dir": "/media/hdd/UCMerced_multilabels/test/images",
             "output_dir": "/media/hdd/UCMerced_multilabels/test/desc",
-            "model_path": "/media/hdd/aitlas/examples/experiment/checkpoint.pth.tar",
+            "model_path": "/media/ssd/uc_merced_multilabel/experiments/checkpoint.pth.tar",
             "transforms": ["torchvision.transforms.ToPILImage",
                 "torchvision.transforms.Resize",
                 "torchvision.transforms.CenterCrop",
