@@ -17,6 +17,7 @@ import numpy as np
 import torch
 import pandas as pd
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 import h5py
 
@@ -120,51 +121,66 @@ class BreizhCropsDataset(BaseDataset):
         # :param bool recompile_h5_from_csv: downloads raw csv files and recompiles the h5 databases. Only required when dealing with new datasets
         # :param bool preload_ram: loads all time series data in RAM at initialization. Can speed up training if data is stored on HDD.
 
-        """
-        
-        TO DO ELENA: figure out how to do splits of the dataset (for now load only one region)
-        
-        """
-
-        self.region = self.config.region.lower()
+        self.regions = [region.lower() for region in self.config.regions]
         self.bands = BANDS[self.config.level]
 
-        if self.config.verbose:
-            print(f"Initializing BreizhCrops region {self.region}, year {self.config.year}, level {self.config.level}")
-
         self.root = self.config.root
-        self.h5path, self.indexfile, self.codesfile, self.shapefile, self.classmapping, self.csvfolder = \
-            self.build_folder_structure(self.root, self.config.year, self.config.level, self.region)
 
-        self.load_classmapping(self.classmapping)
-        #self.classes_to_idx = self.get_classes_to_ind(self.classmapping)
-        print("Path "+self.h5path)
-        if os.path.exists(self.h5path):
-            h5_database_ok = os.path.getsize(self.h5path) == FILESIZES[self.config.year][self.config.level][self.region]
-        else:
-            h5_database_ok = False
+        self.h5path={}
+        self.indexfile={}
+        self.shapefile={}
+        self.csvfolder={}
 
-        if not os.path.exists(self.indexfile):
-            download_file(INDEX_FILE_URLs[self.config.year][self.config.level][self.region], self.indexfile)
+        self.index = pd.DataFrame()
 
-        if not h5_database_ok and self.config.recompile_h5_from_csv and self.config.load_timeseries:
-            self.download_csv_files()
-            self.write_index()
-            self.write_h5_database_from_csv(self.index)
-        if not h5_database_ok and not self.config.recompile_h5_from_csv and self.config.load_timeseries:
-            self.download_h5_database()
+        for region in self.regions:
+            if self.config.verbose:
+                print(f"Initializing BreizhCrops region {region}, year {self.config.year}, level {self.config.level}")
 
-        self.index = pd.read_csv(self.indexfile, index_col=None)
-        self.index = self.index.loc[self.index["CODE_CULTU"].isin(self.mapping.index)]
+            self.h5path[region], self.indexfile[region], self.codesfile, self.shapefile[region], self.classmapping, self.csvfolder[region] = \
+                self.build_folder_structure(self.root, self.config.year, self.config.level, region)
+
+            self.load_classmapping(self.classmapping)
+            #self.classes_to_idx = self.get_classes_to_ind(self.classmapping)
+            print("Path "+self.h5path[region])
+            if os.path.exists(self.h5path[region]):
+                h5_database_ok = os.path.getsize(self.h5path[region]) == FILESIZES[self.config.year][self.config.level][region]
+            else:
+                h5_database_ok = False
+
+            if not os.path.exists(self.indexfile[region]):
+                download_file(INDEX_FILE_URLs[self.config.year][self.config.level][region], self.indexfile[region])
+
+            if not h5_database_ok and self.config.recompile_h5_from_csv and self.config.load_timeseries:
+                self.download_csv_files(region)
+                self.write_index(region)
+                self.write_h5_database_from_csv(self.index, region)
+            if not h5_database_ok and not self.config.recompile_h5_from_csv and self.config.load_timeseries:
+                self.download_h5_database(region)
+
+            index_region = pd.read_csv(self.indexfile[region], index_col=None)
+            index_region = index_region.loc[index_region["CODE_CULTU"].isin(self.mapping.index)]
+            index_region = index_region.iloc[:500] # for testing, to speed up training
+
+            if "classid" not in index_region.columns or "classname" not in index_region.columns or "region" not in index_region.columns:
+                # drop fields that are not in the class mapping
+                index_region = index_region.loc[index_region["CODE_CULTU"].isin(self.mapping.index)]
+                index_region[["classid", "classname"]] = index_region["CODE_CULTU"].apply(lambda code: self.mapping.loc[code])
+                index_region["region"] = region
+                index_region.to_csv(self.indexfile[region])
         
-        self.index = self.index.iloc[:1000] # for testing, to speed up training
-        
+            if len(self.index.columns) == 0:
+                self.index = pd.DataFrame(columns = index_region.columns)
+            self.index = pd.concat([self.index, index_region], axis=0, ignore_index=True)
+        print(self.index)
+
+
         if self.config.verbose:
             print(f"kept {len(self.index)} time series references from applying class mapping")
 
         # filter zero-length time series
         if self.index.index.name != "idx":
-            self.index = self.index.loc[self.index.sequencelength > self.config.filter_length].set_index("idx")
+            self.index = self.index.loc[self.index.sequencelength > self.config.filter_length] # set_index('idx')
 
         self.maxseqlength = int(self.index["sequencelength"].max())
 
@@ -172,24 +188,52 @@ class BreizhCropsDataset(BaseDataset):
             download_file(CODESURL, self.codesfile)
         self.codes = pd.read_csv(self.codesfile, delimiter=";", index_col=0)
 
-        if self.config.preload_ram:
-            self.X_list = list()
-            with h5py.File(self.h5path, "r") as dataset:
-                for idx, row in tqdm(self.index.iterrows(), desc="loading data into RAM", total=len(self.index)):
-                    self.X_list.append(np.array(dataset[(row.path)]))
-        else:
-            self.X_list = None
+        # if self.config.preload_ram:
+        #     self.X_list = list()
+        #     with h5py.File(self.h5path, "r") as dataset:
+        #         for idx, row in tqdm(self.index.iterrows(), desc="loading data into RAM", total=len(self.index)):
+        #             self.X_list.append(np.array(dataset[(row.path)]))
+        # else:
+        
+        # for now    
+        self.X_list = None
 
         self.index.rename(columns={"meanQA60": "meanCLD"}, inplace=True)
         
-        if "classid" not in self.index.columns or "classname" not in self.index.columns or "region" not in self.index.columns:
-            # drop fields that are not in the class mapping
-            self.index = self.index.loc[self.index["CODE_CULTU"].isin(self.mapping.index)]
-            self.index[["classid", "classname"]] = self.index["CODE_CULTU"].apply(lambda code: self.mapping.loc[code])
-            self.index["region"] = self.region
-            self.index.to_csv(self.indexfile)
-        
         self.get_codes()
+
+        plt.plot(self.__getitem__(0)[0])
+        plt.show()
+
+        '''
+        frh01 = breizhcrops.BreizhCrops(region="frh01", root=datapath,
+                                        preload_ram=preload_ram, level=level)
+        frh02 = breizhcrops.BreizhCrops(region="frh02", root=datapath,
+                                        preload_ram=preload_ram, level=level)
+        frh03 = breizhcrops.BreizhCrops(region="frh03", root=datapath,
+                                        preload_ram=preload_ram, level=level)
+        if "evaluation" in mode:
+                frh04 = breizhcrops.BreizhCrops(region="frh04", root=datapath,
+                                                preload_ram=preload_ram, level=level)
+
+        if mode == "evaluation" or mode == "evaluation1":
+            traindatasets = torch.utils.data.ConcatDataset([frh01, frh02, frh03])
+            testdataset = frh04
+        elif mode == "evaluation2":
+            traindatasets = torch.utils.data.ConcatDataset([frh01, frh02, frh04])
+            testdataset = frh03
+        elif mode == "evaluation3":
+            traindatasets = torch.utils.data.ConcatDataset([frh01, frh03, frh04])
+            testdataset = frh02
+        elif mode == "evaluation4":
+            traindatasets = torch.utils.data.ConcatDataset([frh02, frh03, frh04])
+            testdataset = frh01
+        elif mode == "validation":
+            traindatasets = torch.utils.data.ConcatDataset([frh01, frh02])
+            testdataset = frh03
+        else:
+            raise ValueError("only --mode 'validation' or 'evaluation' allowed")
+        '''    
 
     def __len__(self):
         return len(self.index)
@@ -203,10 +247,13 @@ class BreizhCropsDataset(BaseDataset):
             tuple: (image, target) where target is index of the target class.
         """
         row = self.index.iloc[index]
+        print(row)
+
+        h5path = self.h5path[row.region]
 
         if self.X_list is None:
             # Looks like this is what I need (load directly from file)
-            with h5py.File(self.h5path, "r") as dataset:
+            with h5py.File(h5path, "r") as dataset:
                 X = np.array(dataset[(row.path)])
                 #print(row.path)
         else:
@@ -229,10 +276,10 @@ class BreizhCropsDataset(BaseDataset):
 
     """
 
-    def download_csv_files(self):
-        zipped_file = os.path.join(self.root, str(self.config.year), self.config.level, f"{self.region}.zip")
-        download_file(RAW_CSV_URL[self.config.year][self.config.level][self.region], zipped_file)
-        unzip(zipped_file, self.csvfolder)
+    def download_csv_files(self, region):
+        zipped_file = os.path.join(self.root, str(self.config.year), self.config.level, f"{region}.zip")
+        download_file(RAW_CSV_URL[self.config.year][self.config.level][region], zipped_file)
+        unzip(zipped_file, self.csvfolder[region])
         os.remove(zipped_file)
 
     def build_folder_structure(self, root, year, level, region):
@@ -269,20 +316,20 @@ class BreizhCropsDataset(BaseDataset):
     def get_fid(self, idx):
         return self.index[self.index["idx"] == idx].index[0]
 
-    def download_h5_database(self):
-        print(f"downloading {self.h5path}.tar.gz")
-        download_file(H5_URLs[self.config.year][self.config.level][self.region], self.h5path + ".tar.gz", overwrite=True)
-        print(f"extracting {self.h5path}.tar.gz to {self.h5path}")
-        untar(self.h5path + ".tar.gz")
-        print(f"removing {self.h5path}.tar.gz")
-        os.remove(self.h5path + ".tar.gz")
+    def download_h5_database(self, region):
+        print(f"downloading {self.h5path[region]}.tar.gz")
+        download_file(H5_URLs[self.config.year][self.config.level][region], self.h5path[region] + ".tar.gz", overwrite=True)
+        print(f"extracting {self.h5path[region]}.tar.gz to {self.h5path}")
+        untar(self.h5path[region] + ".tar.gz")
+        print(f"removing {self.h5path[region]}.tar.gz")
+        os.remove(self.h5path[region] + ".tar.gz")
         print(f"checking integrity by file size...")
-        assert os.path.getsize(self.h5path) == FILESIZES[self.config.year][self.config.level][self.region]
+        assert os.path.getsize(self.h5path[region]) == FILESIZES[self.config.year][self.config.level][region]
         print("ok!")
 
-    def write_h5_database_from_csv(self, index):
-        with h5py.File(self.h5path, "w") as dataset:
-            for idx, row in tqdm(index.iterrows(), total=len(index), desc=f"writing {self.h5path}"):                             
+    def write_h5_database_from_csv(self, index, region):
+        with h5py.File(self.h5path[region], "w") as dataset:
+            for idx, row in tqdm(index.iterrows(), total=len(index), desc=f"writing {self.h5path[region]}"):                             
                 X = self.load(os.path.join(self.root, row.path))
                 dataset.create_dataset(row.path, data=X)
 
@@ -362,8 +409,8 @@ class BreizhCropsDataset(BaseDataset):
         else:
             return None, None
 
-    def write_index(self):
-        csv_files = os.listdir(self.csvfolder)
+    def write_index(self, region):
+        csv_files = os.listdir(self.csvfolder[region])
         listcsv_statistics = list()
         i = 1
 
@@ -384,7 +431,7 @@ class BreizhCropsDataset(BaseDataset):
                     meanQA60=np.mean(X[:, cld_index]),
                     id=id,
                     CODE_CULTU=culturecode,
-                    path=os.path.join(self.csvfolder, f"{id}" + ".csv"),
+                    path=os.path.join(self.csvfolder[region], f"{id}" + ".csv"),
                     idx=i,
                     sequencelength=len(X)
                 )

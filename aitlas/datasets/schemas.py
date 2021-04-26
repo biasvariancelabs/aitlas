@@ -61,10 +61,10 @@ class BigEarthNetSchema(BaseDatasetSchema):
 
 
 class BreizhCropsSchema(BaseDatasetSchema):
-    region = fields.String(
-        required=True, description="Brittany region (frh01..frh04)", example="frh01",
-        validate=validate.OneOf(["frh01", "frh02", "frh03", "frh04", "belle-ile"])
-    )
+    regions = fields.List(
+        fields.String,
+        required=True, description="Brittany region (frh01..frh04)", example="['frh01','frh01']")
+        
     root = fields.String(
         required=True, description="Dataset path on disk", example="./breizhcrops_dataset"
     )
