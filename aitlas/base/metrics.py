@@ -221,7 +221,7 @@ class MultiLabelRunningScore(RunningScore):
         return {
             "IOU": float(iou),
             "IOU mean": np.mean(iou_per_class),
-            "IOU pre Class": iou_per_class.tolist(),
+            "IOU per Class": iou_per_class.tolist(),
         }
 
 
@@ -258,5 +258,5 @@ class SegmentationRunningScore(RunningScore):
         self.iou_per_class = self.iou_per_class / self.samples
         return {
             "IOU mean": float(self.iou_per_class.mean()),
-            "IOU pre Class": self.iou_per_class.tolist(),
+            "IOU per Class": self.iou_per_class.tolist(),
         }
