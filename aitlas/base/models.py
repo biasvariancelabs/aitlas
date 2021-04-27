@@ -218,10 +218,6 @@ class BaseModel(nn.Module, Configurable):
     def evaluate_model(
         self, dataloader, criterion=None, description="testing on validation set",
     ):
-        #labels_total = []
-        #predicted_total = []
-        #iou_labels_total = torch.zeros([1, self.num_classes], dtype=torch.float64)
-
         """
         Evaluates the current model against the specified dataloader for the specified metrics
         :param dataloader:
