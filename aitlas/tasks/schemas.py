@@ -156,13 +156,10 @@ class PredictTaskSchema(BaseTaskShema):
         ],
         description="Classes to run transformations.",
     )
-
-
-class PredictLabelsTask(PredictTaskSchema):
     output_format = fields.String(
         missing="plot",
         description="Whether to output the predictions to csv or plots",
-        validate=validate.OneOf(["plot", "csv"]),
+        validate=validate.OneOf(["plot", "csv", "image"]),
     )
 
 

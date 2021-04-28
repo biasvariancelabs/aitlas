@@ -4,8 +4,8 @@ import os
 
 from ..base import BaseDataset, BaseModel, BaseTask, Configurable
 from ..utils import get_class, image_loader, stringify
-from ..visualizations import display_image_labels, display_image_segmentation
-from .schemas import PredictLabelsTask, PredictTaskSchema
+from ..visualizations import display_image_labels, display_image_segmentation, save_predicted_masks
+from .schemas import PredictTaskSchema
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -41,7 +41,7 @@ class ImageFolderDataset(BaseDataset):
 
 
 class PredictTask(BaseTask):
-    schema = PredictLabelsTask
+    schema = PredictTaskSchema
 
     def __init__(self, model: BaseModel, config):
         super().__init__(model, config)
@@ -107,6 +107,11 @@ class PredictTask(BaseTask):
 class PredictSegmentationTask(BaseTask):
     schema = PredictTaskSchema
 
+    def __init__(self, model: BaseModel, config):
+        super().__init__(model, config)
+
+        self.output_format = self.config.output_format
+
     def run(self):
         """Do something awesome here"""
 
@@ -129,16 +134,28 @@ class PredictSegmentationTask(BaseTask):
             dataset=test_dataset,
         )
 
-        # plot predictions
-        for i, image_path in enumerate(test_dataset.data):
-            plot_path = os.path.join(
-                self.config.output_path, f"{test_dataset.fnames[i]}_plot.png"
-            )
-            display_image_segmentation(
-                image_path,
-                y_true[i],
-                y_pred[i],
-                y_prob[i],
-                test_dataset.labels,
-                plot_path,
-            )
+        if self.output_format == "plot":
+            # plot predictions
+            for i, image_path in enumerate(test_dataset.data):
+                plot_path = os.path.join(
+                    self.config.output_path, f"{test_dataset.fnames[i]}_plot.png"
+                )
+                display_image_segmentation(
+                    image_path,
+                    y_true[i],
+                    y_pred[i],
+                    y_prob[i],
+                    test_dataset.labels,
+                    plot_path,
+                )
+        else:
+            # save raw masks
+            for i, image_path in enumerate(test_dataset.data):
+                base_filepath_name = os.path.join(
+                    self.config.output_path, os.path.splitext(test_dataset.fnames[i])[0]
+                )
+                save_predicted_masks(
+                    y_pred[i],
+                    test_dataset.labels,
+                    base_filepath_name,
+                )
