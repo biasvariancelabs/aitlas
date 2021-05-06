@@ -18,3 +18,5 @@ from .aid_multilabel import AIDMultiLabelDataset
 from .dfc15_multilabel import DFC15MultiLabelDataset
 from .aid import AIDDataset
 from .rsscn7 import RSSCN7Dataset
+from .rsi_cb256 import RSICB256Dataset
+from. siri_whu import SiriWhuDataset
