@@ -1,0 +1,42 @@
+{
+    "model": {
+        "classname": "aitlas.models.ResNet50",
+        "config": {
+            "num_classes": 30,
+            "learning_rate": 0.001,
+            "pretrained": true,
+            "metrics": ["f1_score"]
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+        "config": {
+            "epochs": 50,
+            "model_directory": "examples/experiments/rsscn7",
+            "save_epochs": 5,
+            "id": "rsscn7",
+            "train_dataset_config":{
+                "classname": "aitlas.datasets.RSSCN7Dataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "download": false,
+                    "csv_file_path": "/media/hdd/RSSCN7/train.csv",
+                    "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
+                }
+            },
+            "val_dataset_config":{
+                  "classname": "aitlas.datasets.RSSCN7Dataset",
+                  "config": {
+                      "batch_size": 16,
+                      "shuffle": false,
+                      "num_workers": 4,
+                      "download": false,
+                      "csv_file_path": "/media/hdd/RSSCN7/val.csv",
+                      "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
+                  }
+              }
+        }
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.SplitTask",
+        "config": {
+            "split": {
+                "train": {
+                    "ratio": 80,
+                    "file": "/media/hdd/RSSCN7/train.csv"
+                },
+                "val": {
+                    "ratio": 20,
+                    "file": "/media/hdd/RSSCN7/val.csv"
+                },
+                "test": {
+                    "ratio": 0,
+                    "file": "/media/hdd/RSSCN7/test.csv"
+                }
+            },
+            "root": "/media/hdd/RSSCN7"
+        }
+    }
+}
