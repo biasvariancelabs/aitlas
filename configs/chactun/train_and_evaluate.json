@@ -1,0 +1,41 @@
+{
+    "model": {
+        "classname": "aitlas.models.DeepLabV3",
+        "config": {
+            "num_classes": 3,
+            "learning_rate": 0.0001,
+            "pretrained": true
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+          "config": {
+              "epochs": 50,
+              "model_directory": "examples/experiments/",
+              "save_epochs": 10,
+              "id": "chactun",
+              "train_dataset_config":{
+                  "classname": "aitlas.datasets.ChactunDataset",
+                  "config": {
+                      "batch_size": 4,
+                      "shuffle": true,
+                      "num_workers": 4,
+                      "root": "/media/ssd/chactun_new/train",
+                      "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
+                      "target_transforms": ["aitlas.transforms.MinMaxNorm"]
+                  }
+              },
+              "val_dataset_config":{
+                    "classname": "aitlas.datasets.ChactunDataset",
+                    "config": {
+                        "batch_size": 1,
+                        "shuffle": false,
+                        "num_workers": 1,
+                        "root": "/media/ssd/chactun_new/test",
+                        "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
+                        "target_transforms": ["aitlas.transforms.MinMaxNorm"]
+                    }
+              }
+        }
+    }
+}

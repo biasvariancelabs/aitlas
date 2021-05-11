@@ -1,0 +1,22 @@
+{
+    "model": {
+        "classname": "aitlas.models.ResNet50",
+        "config": {
+            "num_classes": 10,
+            "learning_rate": 0.001,
+            "threshold": 0.5
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.PredictTask",
+        "config": {
+            "model_path": "./experiment/eurosat/checkpoint.pth.tar",
+            "dir": "./data/test/",
+            "output_path": "./examples/",
+            "output_format": "plot",
+            "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"],
+            "labels": ["AnnualCrop", "Forest", "HerbaceousVegetation", "Highway", "Industrial", "Pasture",
+                        "PermanentCrop", "Residential", "River", "SeaLake"]
+        }
+    }
+}

@@ -1,20 +1,9 @@
-from .generic_multilabel import GenericMultiLabelsDataset
+from .multilabel_classification import MultiLabelClassificationDataset
+
+LABELS = ["impervious", "water", "clutter", "vegetation", "building", "tree", "boat", "car"]
 
 
-CLASSES_TO_IDX = {
-    "impervious": 0,
-    "water": 1,
-    "clutter": 2,
-    "vegetation": 3,
-    "building": 4,
-    "tree": 5,
-    "boat": 6,
-    "car": 7
-
-}
-
-
-class DFC15MultiLabelDataset(GenericMultiLabelsDataset):
+class DFC15MultiLabelDataset(MultiLabelClassificationDataset):
     url = "https://github.com/Hua-YS/DFC15-Multilabel-Dataset"
 
-    classes_to_idx = CLASSES_TO_IDX
+    labels = LABELS

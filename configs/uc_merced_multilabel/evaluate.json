@@ -1,0 +1,27 @@
+{
+    "model": {
+        "classname": "aitlas.models.ResNet50MultiLabel",
+        "config": {
+            "num_classes": 17,
+            "learning_rate": 0.0001,
+			"threshold": 0.5,
+			"metrics":["f1_score"]
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.EvaluateTask",
+        "config": {
+            "model_path": "/media/hdd/aitlas/examples/experiment/checkpoint.pth.tar",
+            "dataset_config":{
+                "classname": "aitlas.datasets.UcMercedMultiLabelDataset",
+                "config": {
+                    "batch_size": 1,
+                    "shuffle": false,
+                    "num_workers": 4,
+                    "root": "/media/hdd/UCMerced_multilabels/test",
+					"transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
+                }
+            }
+        }
+    }
+}

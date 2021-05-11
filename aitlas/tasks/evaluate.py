@@ -23,7 +23,7 @@ class EvaluateTask(BaseTask):
         loss = self.model.evaluate(dataset=dataset, model_path=self.config.model_path)
 
         # log the metrics
-        logging.info(stringify(self.model.running_metrics.get_scores()))
+        logging.info(stringify(self.model.running_metrics.get_scores(self.model.metrics)))
 
         # generate a report
-        self.model.report(dataset.labels(), id=self.id)
+        self.model.report(dataset.get_labels(), self.model.running_metrics, id=self.id)

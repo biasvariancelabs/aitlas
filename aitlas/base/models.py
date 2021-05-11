@@ -3,21 +3,28 @@ import logging
 import os
 from shutil import copyfile
 
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
+from torchvision import transforms
 from tqdm import tqdm
+from sklearn.metrics import f1_score
 
-from ..utils import current_ts, get_class, stringify
+from ..utils import current_ts, get_class, image_loader, stringify
 from .config import Configurable
 from .datasets import BaseDataset
 from .metrics import RunningScore
+from .schemas import BaseModelSchema
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 class BaseModel(nn.Module, Configurable):
+
+    schema = BaseModelSchema
+
     def __init__(self, config=None):
         Configurable.__init__(self, config)
         super(BaseModel, self).__init__()
@@ -30,10 +37,9 @@ class BaseModel(nn.Module, Configurable):
 
         self.device = torch.device(device_name)
 
-        self.metrics = [get_class(m) for m in self.config.metrics]
-        self.running_metrics = RunningScore(
-            self.metrics, self.config.num_classes, self.device
-        )
+        self.metrics = self.config.metrics
+        self.num_classes = self.config.num_classes
+        self.running_metrics = RunningScore(self.num_classes, self.device)
         self.weights = self.config.weights
 
     def prepare(self):
@@ -100,7 +106,11 @@ class BaseModel(nn.Module, Configurable):
                 description="testing on train set",
             )
             self.log_metrics(
-                self.running_metrics.get_scores(), "train", self.writer, epoch + 1
+                self.running_metrics.get_scores(self.metrics),
+                dataset.get_labels(),
+                "train",
+                self.writer,
+                epoch + 1,
             )
             self.running_metrics.reset()
 
@@ -112,9 +122,14 @@ class BaseModel(nn.Module, Configurable):
                     description="testing on validation set",
                 )
                 self.log_metrics(
-                    self.running_metrics.get_scores(), "val", self.writer, epoch + 1
+                    self.running_metrics.get_scores(self.metrics),
+                    dataset.get_labels(),
+                    "val",
+                    self.writer,
+                    epoch + 1,
                 )
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
+                self.running_metrics.reset()
 
         self.writer.close()
 
@@ -136,7 +151,11 @@ class BaseModel(nn.Module, Configurable):
             labels = labels.to(self.device)
 
             # zero the parameter gradients
-            optimizer.zero_grad()
+            if isinstance(optimizer, tuple):
+                for opt in optimizer:
+                    opt.zero_grad()
+            else:
+                optimizer.zero_grad()
 
             # forward + backward + optimize
             outputs = self(inputs)
@@ -145,9 +164,17 @@ class BaseModel(nn.Module, Configurable):
             if isinstance(outputs, collections.Mapping):
                 outputs = outputs["out"]
 
-            loss = criterion(outputs, labels)
+            loss = criterion(
+                outputs, labels if len(labels.shape) == 1 else labels.type(torch.float)
+            )  # TODO: Check this converion OUT!!!
             loss.backward()
-            optimizer.step()
+
+            # perform a single optimization step
+            if isinstance(optimizer, tuple):
+                for opt in optimizer:
+                    opt.step()
+            else:
+                optimizer.step()
 
             # log statistics
             running_loss += loss.item() * inputs.size(0)
@@ -170,6 +197,13 @@ class BaseModel(nn.Module, Configurable):
     def evaluate(
         self, dataset: BaseDataset = None, model_path: str = None,
     ):
+        """
+        Evaluate a model stored in a specified path against a given dataset
+
+        :param dataset: the dataset to evaluate against
+        :param model_path: the path to the model on disk
+        :return:
+        """
         # load the model
         self.load_model(model_path)
 
@@ -205,9 +239,19 @@ class BaseModel(nn.Module, Configurable):
                 total_loss += batch_loss.item() * inputs.size(0)
 
             predicted_probs, predicted = self.get_predicted(outputs)
-            y_pred = list(predicted.cpu().detach().numpy())
-            y_true = list(labels.cpu().detach().numpy())
-            self.running_metrics.update(y_true, y_pred)
+
+            if (
+                len(labels.shape) == 1
+            ):  # if it is multiclass, then we need one hot encoding for the predictions
+                one_hot = torch.zeros(labels.size(0), self.num_classes)
+                predicted = predicted.reshape(predicted.size(0))
+                one_hot[torch.arange(labels.size(0)), predicted.type(torch.long)] = 1
+                predicted = one_hot
+                predicted = predicted.to(self.device)
+
+            self.running_metrics.update(
+                labels.type(torch.int64), predicted.type(torch.int64)
+            )
 
         if criterion:
             total_loss = total_loss / len(dataloader.dataset)
@@ -215,19 +259,13 @@ class BaseModel(nn.Module, Configurable):
         return total_loss
 
     def predict(
-        self,
-        dataset: BaseDataset = None,
-        model_path: str = None,
-        description="running prediction",
+        self, dataset: BaseDataset = None, description="running prediction",
     ):
         """
         Predicts using a model against for a specified dataset
 
         :return: tuple of (y_true, y_pred, y_pred_probs)
         """
-        # load the model
-        self.load_model(model_path)
-
         # initialize counters
         y_true = []
         y_pred = []
@@ -241,6 +279,38 @@ class BaseModel(nn.Module, Configurable):
             y_pred_probs += list(predicted_probs.cpu().detach().numpy())
             y_pred += list(predicted.cpu().detach().numpy())
             y_true += list(labels.cpu().detach().numpy())
+
+        return y_true, y_pred, y_pred_probs
+
+    def predict_image(
+        self,
+        image=None,
+        data_transforms=None,
+        description="running prediction for single image",
+    ):
+        """
+        Predicts using a model against for a specified image
+
+        :return: tuple of (y_true, y_pred, y_pred_probs)
+        """
+        # load the image and apply transformations, if transforms in None convert only to Tensor
+        self.model.eval()
+        if data_transforms:
+            image = data_transforms(image)
+        else:
+            data_transforms = transforms.Compose([transforms.ToTensor(),])
+            image = data_transforms(image)
+        # convert to batch of size 1
+        inputs = image.unsqueeze(0).to(self.device)
+        outputs = self(inputs)
+        # check if outputs is OrderedDict for segmentation
+        if isinstance(outputs, collections.Mapping):
+            outputs = outputs["out"]
+
+        predicted_probs, predicted = self.get_predicted(outputs)
+        y_pred_probs = list(predicted_probs.cpu().detach().numpy())
+        y_pred = list(predicted.cpu().detach().numpy())
+        y_true = None
 
         return y_true, y_pred, y_pred_probs
 
@@ -282,20 +352,19 @@ class BaseModel(nn.Module, Configurable):
         """The report we want to generate for the model"""
         return ()
 
-    def log_metrics(self, output, tag="train", writer=None, epoch=0):
+    def log_metrics(self, output, labels, tag="train", writer=None, epoch=0):
         """Log the calculated metrics"""
         calculated_metrics = output
         logging.info(stringify(calculated_metrics))
         if writer:
-            for metric_name in calculated_metrics:
-                metric = calculated_metrics[metric_name]
-                if isinstance(metric, dict):
-                    for sub in metric:
-                        writer.add_scalar(
-                            f"{metric_name}/{sub}/{tag}", metric[sub], epoch
-                        )
-                else:
-                    writer.add_scalar(f"{metric_name}/{tag}", metric, epoch)
+            for cm in calculated_metrics:
+                for key in cm:
+                    metric = cm[key]
+                    if isinstance(metric, list) or isinstance(metric, np.ndarray):
+                        for i, sub in enumerate(metric):
+                            writer.add_scalar(f"{key}/{labels[i]}/{tag}", sub, epoch)
+                    else:
+                        writer.add_scalar(f"{key}/{tag}", metric, epoch)
 
     def allocate_device(self, opts=None):
         """
@@ -367,7 +436,7 @@ class BaseModel(nn.Module, Configurable):
                 start_epoch = 1
                 loss = 0
                 start = 0
-                run_id = ''
+                run_id = ""
 
             if optimizer:
                 optimizer.load_state_dict(checkpoint["optimizer"])

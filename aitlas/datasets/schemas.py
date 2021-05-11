@@ -3,19 +3,16 @@ from marshmallow import fields, validate
 from ..base.schemas import BaseDatasetSchema
 
 
-class GenericMulticlassDatasetSchema(BaseDatasetSchema):
+class MultiClassClassificationDatasetSchema(BaseDatasetSchema):
     download = fields.Bool(
         missing=False, description="Whether to download the dataset", example=True
     )
     csv_file_path = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv",
     )
-    labels = fields.Dict(
-        missing=None, description="Labels needed to tag the predictions.",
-    )
 
 
-class GenericMultiLabelsDatasetSchema(BaseDatasetSchema):
+class MultiLabelClassificationDatasetSchema(BaseDatasetSchema):
     root = fields.String(
         missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
     )
@@ -27,11 +24,6 @@ class SegmentationDatasetSchema(BaseDatasetSchema):
     )
     csv_file_path = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv",
-    )
-    transforms = fields.List(
-        fields.String,
-        missing=["aitlas.transforms.BaseSegmentation"],
-        description="Classes to run transformations.",
     )
 
 

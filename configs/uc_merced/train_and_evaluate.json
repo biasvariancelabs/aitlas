@@ -1,0 +1,42 @@
+{
+    "model": {
+        "classname": "aitlas.models.ResNet50",
+        "config": {
+            "num_classes": 21,
+            "learning_rate": 0.001,
+            "pretrained": true,
+            "metrics": ["f1_score", "accuracy", "iou"]
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+        "config": {
+            "epochs": 50,
+            "model_directory": "examples/experiments/uc_merced",
+            "save_epochs": 5,
+            "id": "uc_merced",
+            "train_dataset_config":{
+                "classname": "aitlas.datasets.UcMercedDataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "download": false,
+                    "csv_file_path": "/media/hdd/UCMerced/train.csv",
+                    "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
+                }
+            },
+            "val_dataset_config":{
+                  "classname": "aitlas.datasets.UcMercedDataset",
+                  "config": {
+                      "batch_size": 16,
+                      "shuffle": false,
+                      "num_workers": 4,
+                      "download": false,
+                      "csv_file_path": "/media/hdd/UCMerced/val.csv",
+                      "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
+                  }
+              }
+        }
+    }
+}

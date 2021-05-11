@@ -18,4 +18,4 @@ class DeepLabV3(BaseSegmentationClassifier):
         self.model.classifier[4] = nn.Conv2d(256, self.config.num_classes, 1)
 
     def forward(self, x):
-        return self.model.forward(x)
+        return self.model(x)

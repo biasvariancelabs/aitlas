@@ -21,7 +21,7 @@ class ResNet50(BaseMulticlassClassifier):
             )
 
     def forward(self, x):
-        return self.model.forward(x)
+        return self.model(x)
 
 
 class ResNet50MultiLabel(BaseMultilabelClassifier):
@@ -38,7 +38,7 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
             )
 
     def forward(self, x):
-        return self.model.forward(x)
+        return self.model(x)
 
     def load_criterion(self):
         """Load the loss function"""
@@ -54,3 +54,12 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
         predicted_probs = torch.sigmoid(outputs)
         predicted = predicted_probs >= self.config.threshold
         return predicted_probs, predicted
+
+    def extract_features(self):
+        """ Remove final layers if we only need to extract features """
+        self.model.fc = nn.Identity()
+
+        return self.model
+
+
+

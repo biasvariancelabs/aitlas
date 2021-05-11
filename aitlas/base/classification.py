@@ -4,8 +4,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
 import torch.optim as optim
+import numpy as np
 
 from ..utils import stringify
+from .metrics import MultiClassRunningScore, MultiLabelRunningScore
 from .models import BaseModel
 from .schemas import BaseClassifierSchema
 
@@ -21,21 +23,24 @@ class BaseMulticlassClassifier(BaseModel):
     def __init__(self, config):
         super().__init__(config)
 
+        self.running_metrics = MultiClassRunningScore(self.num_classes, self.device)
+
     def get_predicted(self, outputs, threshold=None):
         probs = nnf.softmax(outputs.data, dim=1)
         predicted_probs, predicted = probs.topk(1, dim=1)
         return probs, predicted
 
-    def report(self, labels, **kwargs):
+    def report(self, labels, running_metrics, **kwargs):
         """Report for multiclass classification"""
         run_id = kwargs.get("id", "experiment")
-        from ..visualizations import confusion_matrix, precision_recall_curve
+        from ..visualizations import plot_multiclass_confusion_matrix
 
-        logging.info(stringify(self.running_metrics.get_accuracy()))
+        if running_metrics.confusion_matrix:
+            cm = running_metrics.get_computed()
 
         # plot confusion matrix for model evaluation
-        confusion_matrix(
-            self.running_metrics.confusion_matrix, labels, f"{run_id}_cm.png"
+        plot_multiclass_confusion_matrix(
+            np.array(cm), labels, f"{run_id}_cm.png"
         )
 
     def load_optimizer(self):
@@ -57,6 +62,11 @@ class BaseMultilabelClassifier(BaseModel):
 
     schema = BaseClassifierSchema
 
+    def __init__(self, config):
+        super().__init__(config)
+
+        self.running_metrics = MultiLabelRunningScore(self.num_classes, self.device)
+
     def load_optimizer(self):
         """Load the optimizer"""
         return optim.SGD(
@@ -65,7 +75,7 @@ class BaseMultilabelClassifier(BaseModel):
 
     def load_criterion(self):
         """Load the loss function"""
-        return nn.CrossEntropyLoss()
+        return nn.MSELoss(reduction="mean")
 
     def load_lr_scheduler(self):
         return None
@@ -76,3 +86,22 @@ class BaseMultilabelClassifier(BaseModel):
             predicted_probs.dtype
         )
         return predicted_probs, predicted
+
+    def report(self, labels, running_metrics, **kwargs):
+        """Report for multilabel classification"""
+        run_id = kwargs.get("id", "experiment")
+        cm_array = []
+        if running_metrics.confusion_matrix:
+            cm = running_metrics.get_computed()
+            for i, label in enumerate(labels):
+                tp = cm[i, 1, 1]
+                tn = cm[i, 0, 0]
+                fp = cm[i, 0, 1]
+                fn = cm[i, 1, 0]
+                cm_array.append([[int(tn), int(fp)], [int(fn), int(tp)]])
+
+        from ..visualizations import plot_multilabel_confusion_matrix
+        # plot confusion matrix for model evaluation
+        plot_multilabel_confusion_matrix(
+            np.array(cm_array), labels, f"{run_id}_cm.png"
+        )

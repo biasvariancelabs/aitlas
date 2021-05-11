@@ -1,0 +1,26 @@
+{
+    "model": {
+        "classname": "aitlas.models.ResNet50",
+        "config": {
+            "num_classes": 10,
+            "learning_rate": 0.001,
+            "metrics": ["f1_score"]
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.EvaluateTask",
+        "config": {
+            "model_path": "/media/hdd/aitlas/examples/experiment/eurosat/checkpoint.pth.tar",
+            "dataset_config":{
+                "classname": "aitlas.datasets.EurosatDataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": false,
+                    "num_workers": 4,
+                    "csv_file_path": "/media/hdd/EuroSAT/val.csv",
+					"transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
+                }
+            }
+        }
+    }
+}
