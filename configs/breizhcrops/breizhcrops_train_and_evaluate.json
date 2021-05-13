@@ -18,7 +18,7 @@
               "train_dataset_config":{
                   "classname": "aitlas.datasets.BreizhCropsDataset",
                   "config": {
-                    "region":"frh01",
+                    "regions":["frh01","frh04"],
                     "root":"./data/breizhcrops_dataset",
                     "year":2017,
                     "level":"L1C",
@@ -31,7 +31,7 @@
               "val_dataset_config":{
                     "classname": "aitlas.datasets.BreizhCropsDataset",
                     "config": {
-                        "region":"frh02",
+                        "regions":["frh04"],
                         "root":"./data/breizhcrops_dataset",
                         "year":2017,
                         "level":"L1C",

@@ -1,31 +1,27 @@
 {
     "model": {
-        "classname": "aitlas.models.OmniScaleCNN",
+        "classname": "aitlas.models.TransformerModel",
         "config": {
+            "input_dim":13,
             "num_classes": 9,
-            "learning_rate": 0.001,
-            "input_dim" : 13
+            "pretrained":false,
+            "learning_rate": 0.001
         }
     },
     "task": {
         "classname": "aitlas.tasks.TrainTask",
         "config": {
-            "epochs": 5,
+            "epochs": 10,
             "model_directory": "./examples/experiment",
             "save_epochs": 5,
             "id": "breizhcrops",
             "dataset_config":{
                 "classname": "aitlas.datasets.BreizhCropsDataset",
                 "config": {
-                    "region":"frh01",
+                    "regions":["frh01"],
                     "root":"./data/breizhcrops_dataset",
                     "year":2017,
                     "level":"L1C",
-                    "filter_length":0,
-                    "verbose":false,
-                    "load_timeseries":true,
-                    "recompile_h5_from_csv":false,
-                    "preload_ram":false,
                     "batch_size": 16,
                     "shuffle": true,
                     "num_workers": 4,
