@@ -174,7 +174,7 @@ class BreizhCropsDataset(BaseDataset):
             if len(self.index.columns) == 0:
                 self.index = pd.DataFrame(columns = index_region.columns)
             self.index = pd.concat([self.index, index_region], axis=0, ignore_index=True)
-        print(self.index)
+        #print(self.index)
 
 
         if self.config.verbose:
@@ -204,9 +204,15 @@ class BreizhCropsDataset(BaseDataset):
         
         self.get_codes()
 
+        
+        # Run visualization functions
+
         print(self.parcel_distribution_table())
+        
         fig = self.data_distribution_barchart()
-        plt.show()
+        self.show_timeseries(10)
+        print(self.show_samples())
+        #plt.show()
 
     def __len__(self):
         return len(self.index)
@@ -245,13 +251,12 @@ class BreizhCropsDataset(BaseDataset):
 
     def data_distribution_table(self):
         label_count = self.index[["id","region","classname"]].groupby(["classname", "region"]).count().reset_index()
-        print(label_count)
         label_count.columns = ['Label', 'Region','Number of parcels']
         return label_count
 
     def parcel_distribution_table(self):
+        # Figure 2 a) in the paper
         parcel_count = self.index[["id","region"]].groupby("region").count().reset_index()
-        print(parcel_count)
         parcel_count.columns = ['Region NUTS-3','# '+self.config.level]
         total_row = parcel_count.sum(axis=0)
         total_row["Region NUTS-3"] = "Total"
@@ -260,21 +265,30 @@ class BreizhCropsDataset(BaseDataset):
         return parcel_count
 
     def data_distribution_barchart(self):
+        # Figure 2 b) in the paper
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
-        sns.barplot(x="Label", y="Number of parcels",hue="Region", data=label_count, ax=ax)
+        g = sns.barplot(x="Label", y="Number of parcels",hue="Region", data=label_count, ax=ax)
+        g.set_xticklabels(g.get_xticklabels(),rotation=30)
+        g.set_yscale("log")
         return fig
 
     def show_samples(self):
-        df = pd.read_csv(self.config.csv_file_path, sep=",", names=["Image path", "Label"])
-        return df.head(20)
+        return self.index.head(20)
 
     def show_timeseries(self, index):
+        # Figure 3 in the paper
         X, _ = self.__getitem__(index)
         label = row = self.index.iloc[index].loc["classname"]
         fig, ax = plt.subplots(figsize=(8, 6))
-        ax.set_title(f"Timeseries with index {index} from the dataset {self.get_name()}, with label {label}\n",fontsize=14)
+        ax.set_title(f"Timeseries with index {index} from the region {self.index.iloc[index].loc['region']}, with label {label}\n",fontsize=14)
         ax.plot(X)
+        ax.legend(BANDS[self.config.level][:X.shape[1]])
+        ax.set_ylabel('ρ ') # x ${10^4}$
+
+        # for months
+        #plt.locator_params(axis='x', nbins=17)
+        #ax.set_xticklabels(["x","j","f","m","a","m","j","j","a","s","o","n","d"])
         return fig
 
     """
