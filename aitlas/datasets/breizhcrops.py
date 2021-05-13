@@ -248,6 +248,10 @@ class BreizhCropsDataset(BaseDataset):
 
         return X, y #, row.id
 
+    def get_labels(self):
+        return self.index.classid
+
+    # visualization functions
 
     def data_distribution_table(self):
         label_count = self.index[["id","region","classname"]].groupby(["classname", "region"]).count().reset_index()
