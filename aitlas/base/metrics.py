@@ -98,7 +98,7 @@ class MultiClassRunningScore(RunningScore):
     def recall(self):
         cm = self.get_computed()
         micro = cm.diag().sum() / (cm.sum() + 1e-15)  # same as accuracy for multiclass
-        macro = (cm.diag() / (cm.sum(dim=1) + 1e-15)).mean()
+        macro = (cm.diag() / (cm.sum(dim=1) + 1e-15)).mean() # same as average accuracy in breizhcrops
         weighted = (
             (cm.diag() / (cm.sum(dim=1) + 1e-15))
             * ((cm.sum(dim=1)) / (cm.sum() + 1e-15))
@@ -135,6 +135,33 @@ class MultiClassRunningScore(RunningScore):
 
         return {"IOU": iou.tolist(), "mIOU": float(iou.mean())}
 
+    def kappa(self):
+        cm = self.get_computed()
+        N = cm.shape[0]
+        w = np.zeros((N,N))
+        
+        act_hist = cm.sum(dim=1)
+        
+        pred_hist = cm.sum(dim=0)
+                            
+        E = np.outer(act_hist, pred_hist)
+        E = E/E.sum()
+        cm = cm/cm.sum()
+        
+        num = 0
+        den = 0
+        for i in range(len(w)):
+            for j in range(len(w)):
+                if i == j:
+                    weight = 1
+                else:
+                    weight = 0
+                num += weight*cm[i][j]
+                den += weight*E[i][j]
+        kappa =  (1 - (num/den))
+        return {
+            "Kappa metric": kappa
+        }
 
 class MultiLabelRunningScore(RunningScore):
     """Calculates a confusion matrix for multi-labelled, multi-class data in addition to the """
