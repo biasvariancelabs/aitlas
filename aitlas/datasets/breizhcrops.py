@@ -19,6 +19,8 @@ import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
+import seaborn as sns
+
 import h5py
 
 from ..base import BaseDataset
@@ -160,7 +162,7 @@ class BreizhCropsDataset(BaseDataset):
 
             index_region = pd.read_csv(self.indexfile[region], index_col=None)
             index_region = index_region.loc[index_region["CODE_CULTU"].isin(self.mapping.index)]
-            index_region = index_region.iloc[:500] # for testing, to speed up training
+            #index_region = index_region.iloc[:500] # for testing, to speed up training
 
             if "classid" not in index_region.columns or "classname" not in index_region.columns or "region" not in index_region.columns:
                 # drop fields that are not in the class mapping
@@ -202,38 +204,9 @@ class BreizhCropsDataset(BaseDataset):
         
         self.get_codes()
 
-        plt.plot(self.__getitem__(0)[0])
+        print(self.parcel_distribution_table())
+        fig = self.data_distribution_barchart()
         plt.show()
-
-        '''
-        frh01 = breizhcrops.BreizhCrops(region="frh01", root=datapath,
-                                        preload_ram=preload_ram, level=level)
-        frh02 = breizhcrops.BreizhCrops(region="frh02", root=datapath,
-                                        preload_ram=preload_ram, level=level)
-        frh03 = breizhcrops.BreizhCrops(region="frh03", root=datapath,
-                                        preload_ram=preload_ram, level=level)
-        if "evaluation" in mode:
-                frh04 = breizhcrops.BreizhCrops(region="frh04", root=datapath,
-                                                preload_ram=preload_ram, level=level)
-
-        if mode == "evaluation" or mode == "evaluation1":
-            traindatasets = torch.utils.data.ConcatDataset([frh01, frh02, frh03])
-            testdataset = frh04
-        elif mode == "evaluation2":
-            traindatasets = torch.utils.data.ConcatDataset([frh01, frh02, frh04])
-            testdataset = frh03
-        elif mode == "evaluation3":
-            traindatasets = torch.utils.data.ConcatDataset([frh01, frh03, frh04])
-            testdataset = frh02
-        elif mode == "evaluation4":
-            traindatasets = torch.utils.data.ConcatDataset([frh02, frh03, frh04])
-            testdataset = frh01
-        elif mode == "validation":
-            traindatasets = torch.utils.data.ConcatDataset([frh01, frh02])
-            testdataset = frh03
-        else:
-            raise ValueError("only --mode 'validation' or 'evaluation' allowed")
-        '''    
 
     def __len__(self):
         return len(self.index)
@@ -247,7 +220,6 @@ class BreizhCropsDataset(BaseDataset):
             tuple: (image, target) where target is index of the target class.
         """
         row = self.index.iloc[index]
-        print(row)
 
         h5path = self.h5path[row.region]
 
@@ -269,6 +241,41 @@ class BreizhCropsDataset(BaseDataset):
             X,y = self.transform((X,y))
 
         return X, y #, row.id
+
+
+    def data_distribution_table(self):
+        label_count = self.index[["id","region","classname"]].groupby(["classname", "region"]).count().reset_index()
+        print(label_count)
+        label_count.columns = ['Label', 'Region','Number of parcels']
+        return label_count
+
+    def parcel_distribution_table(self):
+        parcel_count = self.index[["id","region"]].groupby("region").count().reset_index()
+        print(parcel_count)
+        parcel_count.columns = ['Region NUTS-3','# '+self.config.level]
+        total_row = parcel_count.sum(axis=0)
+        total_row["Region NUTS-3"] = "Total"
+        
+        parcel_count = parcel_count.append(total_row, ignore_index=True)
+        return parcel_count
+
+    def data_distribution_barchart(self):
+        label_count = self.data_distribution_table()
+        fig, ax = plt.subplots(figsize=(12, 10))
+        sns.barplot(x="Label", y="Number of parcels",hue="Region", data=label_count, ax=ax)
+        return fig
+
+    def show_samples(self):
+        df = pd.read_csv(self.config.csv_file_path, sep=",", names=["Image path", "Label"])
+        return df.head(20)
+
+    def show_timeseries(self, index):
+        X, _ = self.__getitem__(index)
+        label = row = self.index.iloc[index].loc["classname"]
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.set_title(f"Timeseries with index {index} from the dataset {self.get_name()}, with label {label}\n",fontsize=14)
+        ax.plot(X)
+        return fig
 
     """
 
