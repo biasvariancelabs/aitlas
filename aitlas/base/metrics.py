@@ -138,27 +138,17 @@ class MultiClassRunningScore(RunningScore):
     def kappa(self):
         cm = self.get_computed()
         N = cm.shape[0]
-        w = np.zeros((N,N))
         
-        act_hist = cm.sum(dim=1)
+        act_hist = cm.sum(axis=1)
         
-        pred_hist = cm.sum(dim=0)
-                            
-        E = np.outer(act_hist, pred_hist)
-        E = E/E.sum()
-        cm = cm/cm.sum()
+        pred_hist = cm.sum(axis=0)
+
+        num_samples = cm.sum()
         
-        num = 0
-        den = 0
-        for i in range(len(w)):
-            for j in range(len(w)):
-                if i == j:
-                    weight = 1
-                else:
-                    weight = 0
-                num += weight*cm[i][j]
-                den += weight*E[i][j]
-        kappa =  (1 - (num/den))
+        total_agreements = cm.diag().sum()
+        agreements_chance = (act_hist * pred_hist) / num_samples
+        agreements_chance = agreements_chance.sum()
+        kappa =  (total_agreements - agreements_chance) / (num_samples - agreements_chance)
         return {
             "Kappa metric": kappa
         }
