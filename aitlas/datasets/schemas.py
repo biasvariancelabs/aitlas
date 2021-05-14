@@ -1,6 +1,17 @@
 from marshmallow import fields, validate
-
 from ..base.schemas import BaseDatasetSchema
+
+
+class MatDatasetSchema(BaseDatasetSchema):
+    mat_file_path = fields.String(
+        missing=None, description="mat file on disk", example="./data/dataset.mat",
+    )
+    mode = fields.String(
+        missing='train', description="Which split to use, train or test.", example="train",
+    )
+    download = fields.Bool(
+        missing=False, description="Whether to download the dataset", example=True
+    )
 
 
 class MultiClassClassificationDatasetSchema(BaseDatasetSchema):

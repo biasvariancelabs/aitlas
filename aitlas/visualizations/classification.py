@@ -23,8 +23,9 @@ def plot_confusion_matrix(confusion_matrix, axes, class_label, class_names, font
     axes.set_title("CM - " + class_label)
 
 
-def plot_multilabel_confusion_matrix(cm_array, labels, output_file):
+def plot_multilabel_confusion_matrix(cm_array, labels, dataset_name, output_file):
     figure, ax = plt.subplots(4, math.ceil(len(labels)/4), figsize=(12, 7))
+    figure.suptitle("Confusion matrix of predictions for {}".format(dataset_name), fontsize=20)
     for axes, cfs_matrix, label in zip(ax.flatten(), cm_array, labels):
         plot_confusion_matrix(cfs_matrix, axes, label, ["N", "P"])
     figure.tight_layout()
@@ -33,14 +34,14 @@ def plot_multilabel_confusion_matrix(cm_array, labels, output_file):
     return figure
 
 
-def plot_multiclass_confusion_matrix(cm_array, labels, output_file):
+def plot_multiclass_confusion_matrix(cm_array, labels, dataset_name, output_file):
     # get the confusion matrix
     df_cm = pd.DataFrame(cm_array, index=labels, columns=labels)
 
     # plot confusion matrix
     figure = plt.figure(figsize=(10, 7))
     ax = plt.axes()
-    ax.set_title("Confusion matrix of predictions")
+    ax.set_title("Confusion matrix of predictions for {}".format(dataset_name))
     sns.set(font_scale=1)
     sns.heatmap(df_cm, cmap="YlGnBu", ax=ax, annot=True, fmt='g')
     plt.yticks(rotation=0)

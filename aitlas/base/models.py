@@ -348,7 +348,7 @@ class BaseModel(nn.Module, Configurable):
         """
         raise NotImplementedError("Please implement `get_predicted` for your model. ")
 
-    def report(self, labels, **kwargs):
+    def report(self, labels, dataset_name, running_metrics, **kwargs):
         """The report we want to generate for the model"""
         return ()
 

@@ -67,7 +67,7 @@ class BaseDataset(Dataset, Configurable):
             "Please implement the `labels` method for your dataset"
         )
 
-    def show_batch(self):
+    def show_batch(self, size):
         """Implement this if you want to return the complete set of labels of the dataset"""
         raise NotImplementedError(
             "Please implement the `show_batch` method for your dataset"

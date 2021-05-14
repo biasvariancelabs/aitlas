@@ -1,5 +1,5 @@
 import os
-
+import random
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -62,6 +62,7 @@ class MultiLabelClassificationDataset(BaseDataset):
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
+        ax.set_title("Image distribution for {}".format(self.get_name()), fontsize=18)
         return fig
 
     def show_samples(self):
@@ -71,11 +72,36 @@ class MultiLabelClassificationDataset(BaseDataset):
     def show_image(self, index):
         labels_list = list(compress(self.labels, self[index][1]))
         fig = plt.figure(figsize=(8, 6))
-        plt.title(f"Image with index {index} from the dataset {self.get_name()}, with labels:\n {labels_list}\n",
-                  fontsize=14)
+        plt.title(f"Image with index {index} from the dataset {self.get_name()}, with labels:\n "
+                  f"{str(labels_list).strip('[]')}\n", fontsize=14)
         plt.axis('off')
         plt.imshow(self[index][0])
         return fig
+
+    def show_batch(self, size):
+        if size % 3:
+            raise ValueError(
+                "The provided size should be divided by 4!"
+            )
+        image_indices = random.sample(range(0, len(self.data)), size)
+        figure_height = int(size/3) * 4
+        figure, ax = plt.subplots(int(size/3), 3, figsize=(20, figure_height))
+        figure.suptitle("Example images with labels from {}".format(self.get_name()), fontsize=32)
+        for axes, image_index in zip(ax.flatten(), image_indices):
+            axes.imshow(self[image_index][0])
+            labels_list = list(compress(self.labels, self[image_index][1]))
+            str_label_list = ""
+            if len(labels_list) > 4:
+                str_label_list = f"{str(labels_list[0:4]).strip('[]')}\n"
+                str_label_list += f"{str(labels_list[4:]).strip('[]')}\n"
+            else:
+                str_label_list = f"{str(labels_list).strip('[]')}\n"
+            axes.set_title(str_label_list, fontsize=18)
+            axes.set_xticks([])
+            axes.set_yticks([])
+        figure.tight_layout()
+        #figure.subplots_adjust(top=0.88)
+        return figure
 
     def load_dataset(self, dir_path):
         # read labels

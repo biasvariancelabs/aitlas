@@ -17,6 +17,7 @@
             "dataset_config":{
                 "classname": "aitlas.datasets.UcMercedMultiLabelDataset",
                 "config": {
+                  "batch_size": 1,
                   "root": "/media/hdd/UCMerced_multilabels/train",
 				  "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
                 }

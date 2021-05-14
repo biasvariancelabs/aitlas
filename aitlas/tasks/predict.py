@@ -12,13 +12,14 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class ImageFolderDataset(BaseDataset):
-    def __init__(self, root, labels, transforms):
+    def __init__(self, root, labels, transforms, batch_size):
         BaseDataset.__init__(self, {})
 
         self.root = root
         self.labels = labels
         self.transform = self.load_transforms(transforms)
         self.shuffle = False
+        self.batch_size = batch_size
 
         self.data = []
         self.fnames = []
@@ -58,11 +59,13 @@ class PredictTask(BaseTask):
             dataset = self.create_dataset(self.config.dataset_config)
             labels = dataset.get_labels()
             transforms = dataset.config.transforms
+            batch_size = dataset.config.batch_size
         else:
             labels = self.config.labels
             transforms = self.config.transforms
+            batch_size = self.config.batch_size
 
-        test_dataset = ImageFolderDataset(self.dir, labels, transforms,)
+        test_dataset = ImageFolderDataset(self.dir, labels, transforms, batch_size,)
 
         # load the model
         self.model.load_model(self.config.model_path)
@@ -120,11 +123,13 @@ class PredictSegmentationTask(BaseTask):
             dataset = self.create_dataset(self.config.dataset_config)
             labels = dataset.get_labels()
             transforms = dataset.config.transforms
+            batch_size = dataset.config.batch_size
         else:
             labels = self.config.labels
             transforms = self.config.transforms
+            batch_size = self.config.batch_size
 
-        test_dataset = ImageFolderDataset(self.config.dir, labels, transforms,)
+        test_dataset = ImageFolderDataset(self.config.dir, labels, transforms, batch_size,)
 
         # load the model
         self.model.load_model(self.config.model_path)

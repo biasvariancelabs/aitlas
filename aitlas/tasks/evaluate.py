@@ -26,4 +26,4 @@ class EvaluateTask(BaseTask):
         logging.info(stringify(self.model.running_metrics.get_scores(self.model.metrics)))
 
         # generate a report
-        self.model.report(dataset.get_labels(), self.model.running_metrics, id=self.id)
+        self.model.report(dataset.get_labels(), dataset.get_name(), self.model.running_metrics, id=self.id)
