@@ -1,0 +1,51 @@
+{
+    "model": {
+        "classname": "aitlas.models.TempCNN",
+        "config": {
+            "input_dim":13,
+            "num_classes": 9,
+            "pretrained":false,
+            "learning_rate": 0.000238,
+            "weight_decay" : 0.0000518,
+            "kernel_size" : 7,
+            "hidden_dims" : 128,
+            "dropout" : 0.18,
+            "metrics":["accuracy","f1_score", "kappa"]
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+          "config": {
+              "epochs": 11,
+              "model_directory": "examples/experiment",
+              "save_epochs": 2,
+              "id": "breizhcrops",
+              "train_dataset_config":{
+                  "classname": "aitlas.datasets.BreizhCropsDataset",
+                  "config": {
+                    "regions":["frh01","frh02","frh03"],
+                    "root":"./data/breizhcrops_dataset",
+                    "year":2017,
+                    "level":"L1C",
+                    "batch_size": 1024,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "transforms": ["aitlas.transforms.SelectBands"]
+                  }
+              },
+              "val_dataset_config":{
+                    "classname": "aitlas.datasets.BreizhCropsDataset",
+                    "config": {
+                        "regions":["frh04"],
+                        "root":"./data/breizhcrops_dataset",
+                        "year":2017,
+                        "level":"L1C",
+                        "batch_size": 1024,
+                        "shuffle": false,
+                        "num_workers": 4,
+                        "transforms": ["aitlas.transforms.SelectBands"]
+                    }
+              }
+        }
+    }
+}
