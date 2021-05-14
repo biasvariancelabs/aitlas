@@ -51,6 +51,11 @@ class TempCNN(BaseMulticlassClassifier):
         x = self.model.dense(x)
         return self.model.logsoftmax(x)
 
+    def load_optimizer(self):
+        """Load the optimizer"""
+        return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)        
+
+
 class Conv1D_BatchNorm_Relu_Dropout(torch.nn.Module):
     def __init__(self, input_dim, hidden_dims, kernel_size=5, drop_probability=0.5):
         super(Conv1D_BatchNorm_Relu_Dropout, self).__init__()

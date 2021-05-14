@@ -104,6 +104,10 @@ class OmniScaleCNN(BaseMulticlassClassifier):
             X = self.model.hidden(X)
         return X
 
+    def load_optimizer(self):
+        """Load the optimizer"""
+        return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)        
+
 def get_Prime_number_in_a_range(start, end):
     Prime_list = []
     for val in range(start, end + 1):

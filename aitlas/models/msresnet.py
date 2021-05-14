@@ -272,6 +272,10 @@ class MSResNet(BaseMulticlassClassifier):
 
         return logprobabilities
 
+    def load_optimizer(self):
+        """Load the optimizer"""
+        return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)        
+
     def save(self, path="model.pth", **kwargs):
         print("\nsaving model to " + path)
         model_state = self.state_dict()

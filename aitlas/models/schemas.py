@@ -27,6 +27,9 @@ class TransformerModelSchema(BaseClassifierSchema):
 
     activation = fields.String(required=False, missing="relu",
                         description="Which activation function to use")
+    
+    weight_decay = fields.Float(required=False, missing=0.0000000552,
+                        description="Weight decay for Adam optimizer")
 
 
 class InceptionTimeSchema(BaseClassifierSchema):
@@ -35,14 +38,18 @@ class InceptionTimeSchema(BaseClassifierSchema):
                         description="Number of bands (13 for L1C, 10 for L2A)",
                         validate=validate.OneOf([13, 10]))
 
-    num_layers = fields.Int(required=False, missing = 4,
+    num_layers = fields.Int(required=False, missing = 3,
                         description="None")
 
-    hidden_dims = fields.Int(required=False, missing = 64,
+    hidden_dims = fields.Int(required=False, missing = 128,
                         description="None")
 
     use_bias = fields.Bool(required=False, missing = False,
                         description="None")
+
+    weight_decay = fields.Float(required=False, missing=0.0000000552,
+                        description="Weight decay for Adam optimizer")
+
 
 
 class LSTMSchema(BaseClassifierSchema):
@@ -66,6 +73,9 @@ class LSTMSchema(BaseClassifierSchema):
     dropout = fields.Float(required=False, missing = 0.5713020228087161,
                         description="None")
 
+    weight_decay = fields.Float(required=False, missing=0.0000000552,
+                        description="Weight decay for Adam optimizer")
+
 class MSResNetSchema(BaseClassifierSchema):
 
     input_dim = fields.Int(required=True,
@@ -77,6 +87,10 @@ class MSResNetSchema(BaseClassifierSchema):
 
     hidden_dims = fields.Int(required=False, missing = 32,
                         description="None")
+
+    weight_decay = fields.Float(required=False, missing=0.0000000552,
+                        description="Weight decay for Adam optimizer")
+
 
 class TempCNNSchema(BaseClassifierSchema):
 
@@ -95,6 +109,9 @@ class TempCNNSchema(BaseClassifierSchema):
 
     dropout = fields.Float(required=False, missing = 0.18203942949809093,
                         description="None")
+
+    weight_decay = fields.Float(required=False, missing=0.0000000552,
+                        description="Weight decay for Adam optimizer")
 
 class StarRNNSchema(BaseClassifierSchema):
 
@@ -120,6 +137,10 @@ class StarRNNSchema(BaseClassifierSchema):
     dropout = fields.Float(required=False, missing = 0.5,
                         description="None")
 
+    weight_decay = fields.Float(required=False, missing=0.0000000552,
+                        description="Weight decay for Adam optimizer")
+
+
 class OmniScaleCNNSchema(BaseClassifierSchema):
 
     input_dim = fields.Int(required=True,
@@ -143,6 +164,10 @@ class OmniScaleCNNSchema(BaseClassifierSchema):
 
     dropout = fields.Float(required=False, missing = 0.18203942949809093,
                         description="None")
+
+    weight_decay = fields.Float(required=False, missing=0.0000000552,
+                        description="Weight decay for Adam optimizer")
+
 
 class UnsupervisedDeepMulticlassClassifierSchema(BaseModelSchema):
     learning_rate = fields.Float(

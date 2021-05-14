@@ -61,6 +61,10 @@ class InceptionTime(BaseMulticlassClassifier):
         logprobabilities = F.log_softmax(x, dim=-1)
         return logprobabilities
 
+    def load_optimizer(self):
+        """Load the optimizer"""
+        return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)        
+
 class InceptionModule(nn.Module):
     def __init__(self, kernel_size=32, num_filters=128, residual=True, use_bias=False, device=torch.device("cpu")):
         super(InceptionModule, self).__init__()
