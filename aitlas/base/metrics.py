@@ -56,7 +56,7 @@ class RunningScore(object):
             2
             * precision["Precision per Class"]
             * recall["Recall per Class"]
-            / (precision["Precision per Class"] + recall["Recall per Class"])
+            / (precision["Precision per Class"] + recall["Recall per Class"] + 1e-15)
         )
 
         return {
