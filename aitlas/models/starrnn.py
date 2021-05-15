@@ -21,6 +21,8 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn.init as init
 import math
+import torch.optim as optim
+
 
 from ..base import BaseMulticlassClassifier
 from .schemas import StarRNNSchema

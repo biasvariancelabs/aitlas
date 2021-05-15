@@ -14,6 +14,8 @@ import os
 import torch
 import torch.nn as nn
 import torch.utils.data
+import torch.optim as optim
+
 
 from ..base import BaseMulticlassClassifier
 from .schemas import TempCNNSchema

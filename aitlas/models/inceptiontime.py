@@ -12,6 +12,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data
 import torch
+import torch.optim as optim
+
 
 from ..base import BaseMulticlassClassifier
 from .schemas import InceptionTimeSchema

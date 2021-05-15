@@ -13,7 +13,9 @@ import os
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as Functional
+import torch.nn.functional as 
+
+import torch.optim as optim
 
 from ..base import BaseMulticlassClassifier
 from .schemas import MSResNetSchema
