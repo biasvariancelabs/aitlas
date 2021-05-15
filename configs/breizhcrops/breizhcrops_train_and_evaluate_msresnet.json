@@ -17,7 +17,7 @@
               "epochs": 23,
               "model_directory": "examples/experiment",
               "save_epochs": 2,
-              "id": "breizhcrops",
+              "id": "breizhcrops/msresnet",
               "train_dataset_config":{
                   "classname": "aitlas.datasets.BreizhCropsDataset",
                   "config": {
