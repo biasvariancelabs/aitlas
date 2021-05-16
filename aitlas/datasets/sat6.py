@@ -4,6 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import scipy.io
 import numpy as np
+import random
 
 from ..base import BaseDataset
 from ..utils import image_loader
@@ -61,12 +62,10 @@ class SAT6(BaseDataset):
 
     def data_distribution_table(self):
         mat_data = scipy.io.loadmat(self.config.mat_file_path)
-        images = mat_data[f'{self.mode}_x'].transpose(3, 0, 1, 2)
         img_labels = mat_data[f'{self.mode}_y'].transpose()
-        data = list(zip(images[:, :, :, 0:3], np.where(img_labels == 1)[1]))
-        df = pd.DataFrame(data, columns=['Image path', 'Label'])
-
-        df = pd.read_csv(self.config.csv_file_path, sep=",", names=["Image path", "Label"])
+        data = list(np.where(img_labels == 1)[1])
+        res_list = [[i, self.labels[index]] for i, index in enumerate(data)]
+        df = pd.DataFrame(res_list, columns=['id', 'Label'])
         label_count = df.groupby("Label").count().reset_index()
         label_count.columns = ['Label', 'Count']
         return label_count
@@ -77,10 +76,6 @@ class SAT6(BaseDataset):
         sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
         return fig
 
-    def show_samples(self):
-        df = pd.read_csv(self.config.csv_file_path, sep=",", names=["Image path", "Label"])
-        return df.head(20)
-
     def show_image(self, index):
         label = self.labels[self[index][1]]
         fig = plt.figure(figsize=(8, 6))
@@ -89,6 +84,24 @@ class SAT6(BaseDataset):
         plt.axis('off')
         plt.imshow(self[index][0])
         return fig
+
+    def show_batch(self, size):
+        if size % 3:
+            raise ValueError(
+                "The provided size should be divided by 4!"
+            )
+        image_indices = random.sample(range(0, len(self.data)), size)
+        figure_height = int(size / 3) * 4
+        figure, ax = plt.subplots(int(size / 3), 3, figsize=(20, figure_height))
+        figure.suptitle("Example images with labels from {}".format(self.get_name()), fontsize=32)
+        for axes, image_index in zip(ax.flatten(), image_indices):
+            axes.imshow(self[image_index][0])
+            axes.set_title(self.labels[self[image_index][1]], fontsize=18)
+            axes.set_xticks([])
+            axes.set_yticks([])
+        figure.tight_layout()
+        # figure.subplots_adjust(top=1.0)
+        return figure
 
     def load_dataset(self, file_path):
         if not self.labels:
