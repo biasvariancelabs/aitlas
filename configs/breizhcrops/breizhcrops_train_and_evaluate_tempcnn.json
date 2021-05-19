@@ -4,6 +4,7 @@
         "config": {
             "input_dim":13,
             "num_classes": 9,
+            "sequence_length":45,
             "pretrained":false,
             "learning_rate": 0.000238,
             "weight_decay" : 0.0000518,

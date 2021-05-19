@@ -40,7 +40,7 @@ class TempCNN(BaseMulticlassClassifier):
         self.model.conv_bn_relu3 = Conv1D_BatchNorm_Relu_Dropout(self.config.input_dim, self.config.input_dim, kernel_size=self.config.kernel_size,
                                                            drop_probability=self.config.dropout)
         self.model.flatten = Flatten()
-        self.model.dense = FC_BatchNorm_Relu_Dropout(self.config.input_dim * self.config.sequencelength, 4 * self.config.input_dim, drop_probability=self.config.dropout)
+        self.model.dense = FC_BatchNorm_Relu_Dropout(self.config.input_dim * self.config.sequence_length, 4 * self.config.input_dim, drop_probability=self.config.dropout)
         self.model.logsoftmax = nn.Sequential(nn.Linear(4 * self.config.input_dim, self.config.num_classes), nn.LogSoftmax(dim=-1))
 
     def forward(self, x):
