@@ -27,12 +27,12 @@ class ExtractFeaturesTask(BaseTask):
         """Do something awesome here"""
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+        # set the model to extract feature only
+        self.model.extract_features()
+
         # load the model from disk if specified
         if self.config.model_path:
             self.model.load_model(self.config.model_path)
-
-        # set the model to extract feature only
-        self.model.extract_features()
 
         # allocate device
         self.model.allocate_device()
@@ -57,7 +57,7 @@ class ExtractFeaturesTask(BaseTask):
                         feats = feats.cpu()
 
                     np.savetxt(
-                        os.path.join(self.output_dir, f"{fname}.feat"), feats.numpy(),
+                        os.path.join(self.output_dir, f"{fname}.feat"), feats.numpy().flatten(),
                     )
 
         logging.info(f"And that's it! The features are in {self.output_dir}")

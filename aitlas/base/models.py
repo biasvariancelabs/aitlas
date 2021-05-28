@@ -422,7 +422,7 @@ class BaseModel(nn.Module, Configurable):
             checkpoint = torch.load(file_path)
 
             if "state_dict" in checkpoint:
-                self.model.load_state_dict(checkpoint["state_dict"])
+                self.model.load_state_dict(checkpoint["state_dict"], strict=False)
                 self.allocate_device()
 
                 start_epoch = checkpoint["epoch"]

@@ -7,7 +7,6 @@ import numpy as np
 import random
 
 from ..base import BaseDataset
-from ..utils import image_loader
 from .schemas import MatDatasetSchema
 
 """

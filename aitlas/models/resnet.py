@@ -57,8 +57,7 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
 
     def extract_features(self):
         """ Remove final layers if we only need to extract features """
-        self.model.fc = nn.Identity()
-
+        self.model = nn.Sequential(*list(self.model.children())[:-1])
         return self.model
 
 
