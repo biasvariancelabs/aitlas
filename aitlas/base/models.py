@@ -342,7 +342,7 @@ class BaseModel(nn.Module, Configurable):
         """
         raise NotImplementedError
 
-    def get_predicted(self, outputs):
+    def get_predicted(self, outputs, threshold=None):
         """Gets the output from the model and return the predictions
         :return: tuple in the format (probabilities, predicted classes/labels)
         """

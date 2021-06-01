@@ -69,22 +69,20 @@ class BaseMultilabelClassifier(BaseModel):
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.SGD(
-            self.model.parameters(), lr=self.config.learning_rate, momentum=0.9
+        return optim.Adam(
+            self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4
         )
 
     def load_criterion(self):
         """Load the loss function"""
-        return nn.MSELoss(reduction="mean")
+        return nn.BCEWithLogitsLoss(weight=self.weights)
 
     def load_lr_scheduler(self):
         return None
 
     def get_predicted(self, outputs, threshold=None):
         predicted_probs = torch.sigmoid(outputs)
-        predicted = (predicted_probs >= self.config.threshold).type(
-            predicted_probs.dtype
-        )
+        predicted = predicted_probs >= (threshold if threshold else self.config.threshold)
         return predicted_probs, predicted
 
     def report(self, labels, dataset_name, running_metrics, **kwargs):

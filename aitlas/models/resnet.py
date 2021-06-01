@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -23,6 +22,33 @@ class ResNet50(BaseMulticlassClassifier):
     def forward(self, x):
         return self.model(x)
 
+    def extract_features(self):
+        """ Remove final layers if we only need to extract features """
+        self.model = nn.Sequential(*list(self.model.children())[:-1])
+
+        return self.model
+
+class ResNet152(BaseMulticlassClassifier):
+    def __init__(self, config):
+        BaseMulticlassClassifier.__init__(self, config)
+
+        if self.config.pretrained:
+            self.model = models.resnet152(self.config.pretrained, False)
+            num_ftrs = self.model.fc.in_features
+            self.model.fc = nn.Linear(num_ftrs, self.config.num_classes)
+        else:
+            self.model = models.resnet152(
+                self.config.pretrained, False, num_classes=self.config.num_classes
+            )
+
+    def forward(self, x):
+        return self.model(x)
+
+    def extract_features(self):
+        """ Remove final layers if we only need to extract features """
+        self.model = nn.Sequential(*list(self.model.children())[:-1])
+
+        return self.model
 
 class ResNet50MultiLabel(BaseMultilabelClassifier):
     def __init__(self, config):
@@ -40,24 +66,32 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
     def forward(self, x):
         return self.model(x)
 
-    def load_criterion(self):
-        """Load the loss function"""
-        return nn.BCEWithLogitsLoss(weight=self.weights)
+    def extract_features(self):
+        """ Remove final layers if we only need to extract features """
+        self.model = nn.Sequential(*list(self.model.children())[:-1])
 
-    def load_optimizer(self):
-        """Load the optimizer"""
-        return optim.Adam(
-            self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4
-        )
+        return self.model
 
-    def get_predicted(self, outputs):
-        predicted_probs = torch.sigmoid(outputs)
-        predicted = predicted_probs >= self.config.threshold
-        return predicted_probs, predicted
+class ResNet152MultiLabel(BaseMultilabelClassifier):
+    def __init__(self, config):
+        BaseMultilabelClassifier.__init__(self, config)
+
+        if self.config.pretrained:
+            self.model = models.resnet152(self.config.pretrained, False)
+            num_ftrs = self.model.fc.in_features
+            self.model.fc = nn.Linear(num_ftrs, self.config.num_classes)
+        else:
+            self.model = models.resnet152(
+                self.config.pretrained, False, num_classes=self.config.num_classes
+            )
+
+    def forward(self, x):
+        return self.model(x)
 
     def extract_features(self):
         """ Remove final layers if we only need to extract features """
         self.model = nn.Sequential(*list(self.model.children())[:-1])
+
         return self.model
 
 

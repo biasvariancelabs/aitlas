@@ -1,13 +1,8 @@
 import logging
-import os
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from ..metrics import F1ScoreSample
-from ..utils import stringify
 from .models import BaseModel
 from .schemas import BaseSegmentationClassifierSchema
 from .metrics import SegmentationRunningScore
