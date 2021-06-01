@@ -1,0 +1,36 @@
+{
+    "model": {
+        "classname": "aitlas.models.CNNRNN",
+        "config": {
+            "num_classes": 17
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+        "config": {
+            "epochs": 10,
+            "model_directory": "./examples/experiment",
+            "save_epochs": 10,
+            "train_dataset_config": {
+                "classname": "aitlas.datasets.UcMercedMultiLabelDataset",
+                "config": {
+                    "batch_size": 12,
+                    "shuffle": true,
+                    "num_workers": 1,
+                    "root": "/home/stefan/Downloads/UCMerced_LandUse_Train/",
+					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
+                }
+            },
+            "val_dataset_config": {
+                "classname": "aitlas.datasets.UcMercedMultiLabelDataset",
+                "config": {
+                    "batch_size": 12,
+                    "shuffle": true,
+                    "num_workers": 1,
+                    "root": "/home/stefan/Downloads/UCMerced_LandUse_Train/",
+					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
+                }
+            }
+        }
+    }
+}
