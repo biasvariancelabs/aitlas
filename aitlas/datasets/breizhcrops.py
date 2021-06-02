@@ -204,15 +204,6 @@ class BreizhCropsDataset(BaseDataset):
         
         self.get_codes()
 
-        
-        # Run visualization functions
-
-        print(self.parcel_distribution_table())
-        
-        fig = self.data_distribution_barchart()
-        self.show_timeseries(10)
-        print(self.show_samples())
-        #plt.show()
 
     def __len__(self):
         return len(self.index)
