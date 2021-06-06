@@ -2,7 +2,8 @@
     "model": {
         "classname": "aitlas.models.CNNRNN",
         "config": {
-            "num_classes": 17
+            "num_classes": 17,
+            "metrics": ["f1_score"]
         }
     },
     "task": {
@@ -14,20 +15,20 @@
             "train_dataset_config": {
                 "classname": "aitlas.datasets.UcMercedMultiLabelDataset",
                 "config": {
-                    "batch_size": 12,
+                    "batch_size": 16,
                     "shuffle": true,
-                    "num_workers": 1,
-                    "root": "/home/stefan/Downloads/UCMerced_LandUse_Train/",
+                    "num_workers": 4,
+                    "root": "/Users/spopov/Downloads/UC_merced_multilabel/train/",
 					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             },
             "val_dataset_config": {
                 "classname": "aitlas.datasets.UcMercedMultiLabelDataset",
                 "config": {
-                    "batch_size": 12,
+                    "batch_size": 16,
                     "shuffle": true,
-                    "num_workers": 1,
-                    "root": "/home/stefan/Downloads/UCMerced_LandUse_Train/",
+                    "num_workers": 4,
+                    "root": "/Users/spopov/Downloads/UC_merced_multilabel/test",
 					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             }
