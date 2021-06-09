@@ -8,7 +8,6 @@ from aitlas.models.schemas import CNNRNNModelSchema
 
 class EncoderCNN(nn.Module):
     def __init__(self, embed_size):
-        """Load the pretrained Resnet-152 neural network and replace the top fc layer"""
         super(EncoderCNN, self).__init__()
         resnet = resnet152(pretrained=True)
         modules = list(resnet.children())[:-1]  # ignore the last fc layer
@@ -17,7 +16,6 @@ class EncoderCNN(nn.Module):
         self.bn = nn.BatchNorm1d(embed_size, momentum=0.01)
 
     def forward(self, images):
-        """Extract feature vectors from input images"""
         with torch.no_grad():
             features = self.resnet(images)
         features = features.reshape(features.size(0), -1)
@@ -26,7 +24,6 @@ class EncoderCNN(nn.Module):
 
 class DecoderRNN(nn.Module):
     def __init__(self, embed_size, hidden_size, num_classes, num_layers):
-        """Set the hyperparameters and build the layers"""
         super(DecoderRNN, self).__init__()
         self.lstm = nn.LSTM(embed_size, hidden_size, num_layers, batch_first=True)
         self.linear = nn.Linear(hidden_size, num_classes)
