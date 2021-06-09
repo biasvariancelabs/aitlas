@@ -29,7 +29,6 @@ class DecoderRNN(nn.Module):
         self.linear = nn.Linear(hidden_size, num_classes)
 
     def forward(self, features):
-        """Decode image feature vectors and generate captions"""
         features = features.unsqueeze(1)
         hiddens, _ = self.lstm(features, None)
         return self.linear(hiddens.squeeze(1))
