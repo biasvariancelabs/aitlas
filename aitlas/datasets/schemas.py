@@ -83,3 +83,95 @@ class SpaceNet5DatasetSchema(BaseDatasetSchema):
         missing="",
         description="File path to the root directory with the output multi-channel masks by the PrepareSpeedMasksTask",
     )
+
+
+class SpaceNet6DatasetSchema(BaseDatasetSchema):
+    orients = fields.String(
+        required=False,
+        example="path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.csv",
+        description="Absolute path pointing to the SAR orientations text file "
+        "(output of the pre-processing task",
+    )
+    root_directory = fields.String(
+        required=False,
+        example="path/to/data/train/AOI_11_Rotterdam/",
+        description="Root directory for the raw SpaceNet6 data set",
+    )
+    start_val_epoch = fields.Int(
+        required=False,
+        description="From which epoch should the validation period start",
+    )
+    # Train & val
+    folds_path = fields.String(
+        required=False,
+        example="path/to/results/folds",
+        description="Path to the fold csv files",
+    )
+    segmentation_directory = fields.String(
+        required=False,
+        example="path/to/results/segmentation",
+        description="Source directory with the target segmentation masks",
+    )
+    gt_csv = fields.String(
+        required=False,
+        description="Source file containing the ground truth segmentation data on the buildings",
+    )
+    pred_csv = fields.String(
+        required=False,
+        description="Destination file for saving the predictions from the current fold",
+    )
+    pred_folder = fields.String(
+        required=False,
+        description="Destination directory for saving the predictions from all folds",
+    )
+    edge_weight = fields.Int(
+        required=False, description="Weight for the building edges pixels"
+    )
+    contact_weight = fields.Int(
+        required=False, description="Weight for the building contact pixels"
+    )
+    # Test
+    test_directory = fields.String(
+        required=False,
+        example="path/to/data/train/AOI_11_Rotterdam/",
+        description="Root directory for the raw SpaceNet6 data set",
+    )
+    merged_pred_dir = fields.String(
+        required=False,
+        example="path/to/data/train/AOI_11_Rotterdam/",
+        description="Destination directory for merging the predictions from all folds",
+    )
+    solution_file = fields.String(
+        required=False,
+        example="path/to/data/results/solution.csv",
+        description="SpaceNet6-compliant csv destination file used for grading the challenge",
+    )
+    # Prepare
+    num_folds = fields.Int(
+        required=False, missing=10, description="Number of fold splits for the data set"
+    )
+    orients_output = fields.String(
+        required=False,
+        example="path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.txt",
+        description="Absolute path pointing to the output SAR orientations csv file",
+    )
+    num_threads = fields.Int(
+        required=False,
+        missing=1,
+        description="Number of threads for parallel execution",
+    )
+    edge_width = fields.Int(
+        required=False,
+        default=3,
+        description="Width of the edge of buildings (in pixels)",
+    )
+    contact_width = fields.Int(
+        required=False,
+        default=9,
+        description="Width of the contact between (in pixels)",
+    )
+    folds_dir = fields.String(
+        required=False,
+        example="path/to/results/folds",
+        description="Source directory with the fold csv files",
+    )
