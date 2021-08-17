@@ -1,0 +1,16 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.SpaceNet5InferSpeedTask",
+        "config": {
+            "path_results_root": "/home/stefan/Downloads/Spacenet5Data/results_root",
+            "test_results_dir": "test_results_dir",
+            "test_data_refined_dir": "/home/stefan/Downloads/Spacenet5Data/test_prepare_imagery",
+            "graph_dir": "graph_dir",
+            "num_channels": 3,
+            "speed_conversion_file": "/home/stefan/Downloads/Spacenet5Data/SN5_roads_train_speed_conversion_multi_channel.csv",
+            "masks_dir": "/home/stefan/Downloads/Spacenet5Data/results_root/predicts",
+            "skeleton_band": 7,
+            "num_classes": 8
+        }
+    }
+}

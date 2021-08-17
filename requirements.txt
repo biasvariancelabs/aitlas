@@ -22,3 +22,17 @@ scikit-image<0.17.3
 jupyter<1.0.1
 pytorch-ignite<0.5
 faiss-cpu<1.7.9
+eo-learn-core<0.8.1
+
+networkx~=2.5
+numba~=0.52.0
+scipy~=1.6.0
+osmnx~=1.0.1
+Shapely~=1.7.1
+statsmodels~=0.12.1
+Fiona~=1.8.18
+utm~=0.7.0
+osgeo~=0.0.0
+geopandas~=0.8.1
+Pillow~=8.1.0
+setuptools~=49.2.1

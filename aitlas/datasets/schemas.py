@@ -1,4 +1,5 @@
 from marshmallow import fields, validate
+
 from ..base.schemas import BaseDatasetSchema
 
 
@@ -7,7 +8,9 @@ class MatDatasetSchema(BaseDatasetSchema):
         missing=None, description="mat file on disk", example="./data/dataset.mat",
     )
     mode = fields.String(
-        missing='train', description="Which split to use, train or test.", example="train",
+        missing="train",
+        description="Which split to use, train or test.",
+        example="train",
     )
     download = fields.Bool(
         missing=False, description="Whether to download the dataset", example=True
@@ -60,4 +63,23 @@ class BigEarthNetSchema(BaseDatasetSchema):
         missing=[572.41639287, 582.87945694, 675.88746967],
         required=False,
         description="List of std values for the 3 channels",
+    )
+
+
+class SpaceNet5DatasetSchema(BaseDatasetSchema):
+    filenames = fields.String(
+        missing="",
+        description="File path to the {train, test, val}.csv output file by the SpaceNet5SplitTask",
+    )
+    image_root = fields.String(
+        missing="",
+        description="File path to the root directory with the output images by the PrepareImageryTask",
+    )
+    cont_mask_root = fields.String(
+        missing="",
+        description="File path to the root directory with the output continuous masks by the PrepareSpeedMasksTask",
+    )
+    mc_mask_root = fields.String(
+        missing="",
+        description="File path to the root directory with the output multi-channel masks by the PrepareSpeedMasksTask",
     )

@@ -1,0 +1,16 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.SpaceNet5WktToGraphTask",
+        "config": {
+            "min_spur_length_m": 10,
+            "min_subgraph_length_pix": 20,
+            "path_results_root": "/home/stefan/Downloads/Spacenet5Data/results_root",
+            "test_results_dir": "test_results_dir",
+            "test_data_refined_dir": "/home/stefan/Downloads/Spacenet5Data/test_prepare_imagery",
+            "graph_dir": "graph_dir",
+            "num_channels": 3,
+            "rdp_epsilon": 1,
+            "wkt_submission": "wkt_submission_nospeed.csv"
+        }
+    }
+}

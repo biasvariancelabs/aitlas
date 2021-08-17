@@ -1,0 +1,33 @@
+{
+    "model": {
+        "classname": "aitlas.models.UNetResnet34",
+        "config": {
+            "num_classes": 8,
+            "pretrained": true
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainTask",
+        "config": {
+            "epochs": 30,
+            "model_directory": "examples/experiments/",
+            "save_epochs": 3,
+            "id": "spacenet5_baseline",
+            "dataset_config": {
+                "classname": "aitlas.datasets.SpaceNet5Dataset",
+                "config": {
+                    "batch_size": 4,
+                    "shuffle": true,
+                    "num_workers": 1,
+                    "filenames": "/home/dkocev/sp/SpaceNetChallenge5/results/train/split/train.csv",
+                    "image_root": "/home/dkocev/sp/SpaceNetChallenge5/results/train/prepare_imagery",
+                    "cont_mask_root": "/home/dkocev/sp/SpaceNetChallenge5/results/train/output_mask_contin_dir",
+                    "mc_mask_root": "/home/dkocev/sp/SpaceNetChallenge5/results/train/output_mask_multidim_dir",
+                    "transforms": [
+                        "aitlas.transforms.SpaceNet5Transforms"
+                    ]
+                }
+            }
+        }
+    }
+}
