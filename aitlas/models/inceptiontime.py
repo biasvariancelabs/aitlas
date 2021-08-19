@@ -14,18 +14,15 @@ import torch.utils.data
 import torch
 import torch.optim as optim
 
-
 from ..base import BaseMulticlassClassifier
 from .schemas import InceptionTimeSchema
 
-#__all__ = ['InceptionTime']
 
 class InceptionTime(BaseMulticlassClassifier):
 
     schema = InceptionTimeSchema
 
     def __init__(self, config):
-        
         BaseMulticlassClassifier.__init__(self, config)
 
         #self.modelname = f"InceptionTime_input-dim={input_dim}_num-classes={num_classes}_" \
@@ -34,7 +31,8 @@ class InceptionTime(BaseMulticlassClassifier):
         self.model.inlinear = nn.Linear(self.config.input_dim, self.config.hidden_dims*4)
 
         self.model.inception_modules_list = [InceptionModule(kernel_size=32, num_filters=self.config.hidden_dims*4,
-                                                       use_bias=self.config.use_bias, device=self.device) for _ in range(self.config.num_layers)]
+                                                             use_bias=self.config.use_bias,
+                                                             device=self.device) for _ in range(self.config.num_layers)]
         
         # ? I don't see it used anywhere
         self.inception_modules = nn.Sequential(
@@ -44,11 +42,9 @@ class InceptionTime(BaseMulticlassClassifier):
         self.model.avgpool = nn.AdaptiveAvgPool1d(1)
         self.model.outlinear = nn.Linear(self.config.hidden_dims*4,self.config.num_classes)
 
-        #self.to(self.device)
-
-    def forward(self,x):
+    def forward(self, x):
         # N x T x D -> N x D x T
-        x = x.transpose(1,2)
+        x = x.transpose(1, 2)
 
         # expand dimensions
         x = self.model.inlinear(x.transpose(1, 2)).transpose(1, 2)
@@ -66,6 +62,7 @@ class InceptionTime(BaseMulticlassClassifier):
     def load_optimizer(self):
         """Load the optimizer"""
         return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)        
+
 
 class InceptionModule(nn.Module):
     def __init__(self, kernel_size=32, num_filters=128, residual=True, use_bias=False, device=torch.device("cpu")):
@@ -93,7 +90,6 @@ class InceptionModule(nn.Module):
 
         # Maybe keep self.to here (it doesn't inherit from base)
         self.to(device)
-
 
     def forward(self, input_tensor):
         # collapse feature dimension

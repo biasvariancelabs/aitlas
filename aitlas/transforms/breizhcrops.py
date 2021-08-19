@@ -3,7 +3,6 @@ import numpy as np
 
 from ..base import BaseTransforms
 
-
 BANDS = {
     "L1C": ['B1', 'B10', 'B11', 'B12', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8',
             'B8A', 'B9', 'QA10', 'QA20', 'QA60', 'doa', 'label', 'id'],
@@ -12,14 +11,14 @@ BANDS = {
 }
 
 SELECTED_BANDS = {
-			"L1C": ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B10', 'B11', 'B12', 
-						'QA10', 'QA20', 'QA60', 'doa'],
-			"L2A": ['doa','B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11', 'B12', 
-					'CLD', 'EDG', 'SAT',]
+    "L1C": ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B10', 'B11', 'B12',
+            'QA10', 'QA20', 'QA60', 'doa'],
+    "L2A": ['doa', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11', 'B12',
+            'CLD', 'EDG', 'SAT', ]
 }
 
-class SelectBands(BaseTransforms):
 
+class SelectBands(BaseTransforms):
     configurables = ["level"]
 
     def __init__(self, *args, **kwargs):
@@ -27,7 +26,7 @@ class SelectBands(BaseTransforms):
 
         self.level = kwargs["level"]
 
-        #padded_value = PADDING_VALUE
+        # padded_value = PADDING_VALUE
         self.sequencelength = 45
 
         bands = BANDS[self.level]
@@ -38,9 +37,8 @@ class SelectBands(BaseTransforms):
 
         self.selected_band_idxs = np.array([bands.index(b) for b in selected_bands])
 
-
     def __call__(self, input, target=None):
-        #x = x[x[:, 0] != padded_value, :]  # remove padded values
+        # x = x[x[:, 0] != padded_value, :]  # remove padded values
 
         # choose selected bands
         x, y = input

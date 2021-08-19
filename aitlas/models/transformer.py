@@ -19,7 +19,6 @@ import torch.optim as optim
 from ..base import BaseMulticlassClassifier
 from .schemas import TransformerModelSchema
 
-#__all__ = ['TransformerModel']
 
 class TransformerModel(BaseMulticlassClassifier):
     """Transformer Model for Multi-Class Classification"""
@@ -28,10 +27,6 @@ class TransformerModel(BaseMulticlassClassifier):
 
     def __init__(self, config):
         BaseMulticlassClassifier.__init__(self, config)
-
-        #self.modelname = f"TransformerEncoder_input-dim={input_dim}_num-classes={num_classes}_" \
-        #                 f"d-model={d_model}_d-inner={d_inner}_n-layers={n_layers}_n-head={n_head}_" \
-        #                 f"dropout={dropout}"
 
         encoder_layer = TransformerEncoderLayer(self.config.d_model, self.config.n_head, self.config.d_inner, self.config.dropout, self.config.activation)
         encoder_norm = LayerNorm(self.config.d_model)
@@ -42,7 +37,7 @@ class TransformerModel(BaseMulticlassClassifier):
         self.model.flatten = Flatten()
         self.model.outlinear = Linear(self.config.d_model, self.config.num_classes)
 
-    def forward(self,x):
+    def forward(self, x):
         x = self.model.inlinear(x)
         x = self.model.relu(x)
         x = x.transpose(0, 1) # N x T x D -> T x N x D
@@ -58,6 +53,7 @@ class TransformerModel(BaseMulticlassClassifier):
     def load_optimizer(self):
         """Load the optimizer"""
         return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)        
+
 
 class Flatten(nn.Module):
     """Flatten module"""

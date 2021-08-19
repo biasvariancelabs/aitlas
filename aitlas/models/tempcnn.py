@@ -8,44 +8,39 @@
         https://github.com/charlotte-pel/temporalCNN
 
 """
-
-import os
-
-import torch
 import torch.nn as nn
 import torch.utils.data
 import torch.optim as optim
 
-
 from ..base import BaseMulticlassClassifier
 from .schemas import TempCNNSchema
 
-#__all__ = ['TempCNN']
 
 class TempCNN(BaseMulticlassClassifier):
 
     schema = TempCNNSchema
 
     def __init__(self, config):
-
         BaseMulticlassClassifier.__init__(self, config)
 
-        #self.modelname = f"TempCNN_input-dim={input_dim}_num-classes={num_classes}_sequencelenght={sequencelength}_" \
-        #                 f"kernelsize={kernel_size}_hidden-dims={hidden_dims}_dropout={dropout}"
-
-        self.model.conv_bn_relu1 = Conv1D_BatchNorm_Relu_Dropout(self.config.input_dim, self.config.input_dim, kernel_size=self.config.kernel_size,
-                                                           drop_probability=self.config.dropout)
-        self.model.conv_bn_relu2 = Conv1D_BatchNorm_Relu_Dropout(self.config.input_dim, self.config.input_dim, kernel_size=self.config.kernel_size,
-                                                           drop_probability=self.config.dropout)
-        self.model.conv_bn_relu3 = Conv1D_BatchNorm_Relu_Dropout(self.config.input_dim, self.config.input_dim, kernel_size=self.config.kernel_size,
-                                                           drop_probability=self.config.dropout)
+        self.model.conv_bn_relu1 = Conv1D_BatchNorm_Relu_Dropout(self.config.input_dim, self.config.input_dim,
+                                                                 kernel_size=self.config.kernel_size,
+                                                                 drop_probability=self.config.dropout)
+        self.model.conv_bn_relu2 = Conv1D_BatchNorm_Relu_Dropout(self.config.input_dim, self.config.input_dim,
+                                                                 kernel_size=self.config.kernel_size,
+                                                                 drop_probability=self.config.dropout)
+        self.model.conv_bn_relu3 = Conv1D_BatchNorm_Relu_Dropout(self.config.input_dim, self.config.input_dim,
+                                                                 kernel_size=self.config.kernel_size,
+                                                                 drop_probability=self.config.dropout)
         self.model.flatten = Flatten()
-        self.model.dense = FC_BatchNorm_Relu_Dropout(self.config.input_dim * self.config.sequence_length, 4 * self.config.input_dim, drop_probability=self.config.dropout)
-        self.model.logsoftmax = nn.Sequential(nn.Linear(4 * self.config.input_dim, self.config.num_classes), nn.LogSoftmax(dim=-1))
+        self.model.dense = FC_BatchNorm_Relu_Dropout(self.config.input_dim * self.config.sequence_length,
+                                                     4 * self.config.input_dim, drop_probability=self.config.dropout)
+        self.model.logsoftmax = nn.Sequential(nn.Linear(4 * self.config.input_dim, self.config.num_classes),
+                                              nn.LogSoftmax(dim=-1))
 
     def forward(self, x):
         # require NxTxD
-        x = x.transpose(1,2)
+        x = x.transpose(1, 2)
         x = self.model.conv_bn_relu1(x)
         x = self.model.conv_bn_relu2(x)
         x = self.model.conv_bn_relu3(x)

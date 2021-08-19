@@ -13,13 +13,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data
 import torch.optim as optim
-
 import os
 
 from ..base import BaseMulticlassClassifier
 from .schemas import LSTMSchema
 
-#__all__ = ['LSTM']
 
 class LSTM(BaseMulticlassClassifier):
     """LSTM Model for Multi-Class Classification"""
@@ -27,7 +25,6 @@ class LSTM(BaseMulticlassClassifier):
     schema = LSTMSchema
 
     def __init__(self, config):
-
         BaseMulticlassClassifier.__init__(self, config)
 
         """
@@ -42,10 +39,12 @@ class LSTM(BaseMulticlassClassifier):
 
         if self.config.use_layernorm:
             self.model.inlayernorm = nn.LayerNorm(self.config.input_dim)
-            self.model.clayernorm = nn.LayerNorm((self.config.hidden_dims + self.config.hidden_dims * self.config.bidirectional) * self.config.num_layers)
+            self.model.clayernorm = nn.LayerNorm((self.config.hidden_dims + self.config.hidden_dims *
+                                                  self.config.bidirectional) * self.config.num_layers)
 
-        self.model.lstm = nn.LSTM(input_size=self.config.input_dim, hidden_size=self.config.hidden_dims, num_layers=self.config.num_layers,
-                            bias=False, batch_first=True, dropout=self.config.dropout, bidirectional=self.config.bidirectional)
+        self.model.lstm = nn.LSTM(input_size=self.config.input_dim, hidden_size=self.config.hidden_dims,
+                                  num_layers=self.config.num_layers, bias=False, batch_first=True,
+                                  dropout=self.config.dropout, bidirectional=self.config.bidirectional)
 
         if self.config.bidirectional:
             hidden_dims = self.config.hidden_dims * 2
@@ -54,9 +53,7 @@ class LSTM(BaseMulticlassClassifier):
 
         self.model.linear_class = nn.Linear(hidden_dims * self.config.num_layers, self.config.num_classes, bias=True)
 
-
     def logits(self, x):
-
         if self.config.use_layernorm:
             x = self.model.inlayernorm(x)
 
@@ -78,15 +75,3 @@ class LSTM(BaseMulticlassClassifier):
         """Load the optimizer"""
         return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)        
 
-    def save(self, path="model.pth", **kwargs):
-        print("\nsaving model to " + path)
-        model_state = self.state_dict()
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        torch.save(dict(model_state=model_state, **kwargs), path)
-
-    def load(self, path):
-        print("loading model from " + path)
-        snapshot = torch.load(path, map_location="cpu")
-        model_state = snapshot.pop('model_state', snapshot)
-        self.load_state_dict(model_state)
-        return snapshot

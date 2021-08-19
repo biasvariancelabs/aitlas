@@ -14,7 +14,6 @@ import tarfile
 import urllib
 
 import numpy as np
-import torch
 import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -26,21 +25,15 @@ import h5py
 from ..base import BaseDataset
 from .schemas import BreizhCropsSchema
 
-
-## from ..utils import download_file, unzip, untar
 from .urls import CODESURL, CLASSMAPPINGURL, INDEX_FILE_URLs, FILESIZES, SHP_URLs, H5_URLs, RAW_CSV_URL
 
-"""
-
-TO DO ELENA: move the following to utils
-
-"""
 
 class DownloadProgressBar(tqdm):
     def update_to(self, b=1, bsize=1, tsize=None):
         if tsize is not None:
             self.total = tsize
         self.update(b * bsize - self.n)
+
 
 def download_file(url, output_path, overwrite=False):
     if url is None:
@@ -53,6 +46,7 @@ def download_file(url, output_path, overwrite=False):
     else:
         print(f"file exists in {output_path}. specify overwrite=True if intended")
 
+
 def unzip(zipfile_path, target_dir):
     with zipfile.ZipFile(zipfile_path) as zip:
         for zip_info in zip.infolist():
@@ -61,20 +55,18 @@ def unzip(zipfile_path, target_dir):
             zip_info.filename = os.path.basename(zip_info.filename)
             zip.extract(zip_info, target_dir)
 
+
 def untar(filepath):
     dirname = os.path.dirname(filepath)
     with tarfile.open(filepath, 'r:gz') as tar:
-        #tar.extractall(path=dirname)
-	#tar = tarfile.open(tar_file)
         for member in tar.getmembers():
             if member.isreg():  # skip if the TarInfo is not files
-                member.name = os.path.basename(member.name) # remove the path by reset it
-                tar.extract(member,dirname) # extract 
-
-
+                member.name = os.path.basename(member.name)  # remove the path by reset it
+                tar.extract(member, dirname)  # extract
 
 
 PADDING_VALUE = -1
+
 
 BANDS = {
     "L1C": ['B1', 'B10', 'B11', 'B12', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8',
@@ -84,10 +76,10 @@ BANDS = {
 }
 
 SELECTED_BANDS = {
-			"L1C": ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B10', 'B11', 'B12', 
-						'QA10', 'QA20', 'QA60', 'doa'],
-			"L2A": ['doa','B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11', 'B12', 
-					'CLD', 'EDG', 'SAT',]
+    "L1C": ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B10', 'B11', 'B12',
+            'QA10', 'QA20', 'QA60', 'doa'],
+    "L2A": ['doa', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B11', 'B12',
+            'CLD', 'EDG', 'SAT', ]
 }
 
 
@@ -128,10 +120,10 @@ class BreizhCropsDataset(BaseDataset):
 
         self.root = self.config.root
 
-        self.h5path={}
-        self.indexfile={}
-        self.shapefile={}
-        self.csvfolder={}
+        self.h5path = {}
+        self.indexfile = {}
+        self.shapefile = {}
+        self.csvfolder = {}
 
         self.index = pd.DataFrame()
 
@@ -139,14 +131,15 @@ class BreizhCropsDataset(BaseDataset):
             if self.config.verbose:
                 print(f"Initializing BreizhCrops region {region}, year {self.config.year}, level {self.config.level}")
 
-            self.h5path[region], self.indexfile[region], self.codesfile, self.shapefile[region], self.classmapping, self.csvfolder[region] = \
-                self.build_folder_structure(self.root, self.config.year, self.config.level, region)
+            self.h5path[region], self.indexfile[region], self.codesfile, self.shapefile[region], self.classmapping, \
+            self.csvfolder[region] = self.build_folder_structure(self.root, self.config.year, self.config.level, region)
 
             self.load_classmapping(self.classmapping)
-            #self.classes_to_idx = self.get_classes_to_ind(self.classmapping)
-            print("Path "+self.h5path[region])
+            # self.classes_to_idx = self.get_classes_to_ind(self.classmapping)
+            print("Path " + self.h5path[region])
             if os.path.exists(self.h5path[region]):
-                h5_database_ok = os.path.getsize(self.h5path[region]) == FILESIZES[self.config.year][self.config.level][region]
+                h5_database_ok = os.path.getsize(self.h5path[region]) == FILESIZES[self.config.year][self.config.level][
+                    region]
             else:
                 h5_database_ok = False
 
@@ -162,27 +155,26 @@ class BreizhCropsDataset(BaseDataset):
 
             index_region = pd.read_csv(self.indexfile[region], index_col=None)
             index_region = index_region.loc[index_region["CODE_CULTU"].isin(self.mapping.index)]
-            #index_region = index_region.iloc[:500] # for testing, to speed up training
+            # index_region = index_region.iloc[:500] # for testing, to speed up training
 
             if "classid" not in index_region.columns or "classname" not in index_region.columns or "region" not in index_region.columns:
                 # drop fields that are not in the class mapping
                 index_region = index_region.loc[index_region["CODE_CULTU"].isin(self.mapping.index)]
-                index_region[["classid", "classname"]] = index_region["CODE_CULTU"].apply(lambda code: self.mapping.loc[code])
+                index_region[["classid", "classname"]] = index_region["CODE_CULTU"].apply(
+                    lambda code: self.mapping.loc[code])
                 index_region["region"] = region
                 index_region.to_csv(self.indexfile[region])
-        
-            if len(self.index.columns) == 0:
-                self.index = pd.DataFrame(columns = index_region.columns)
-            self.index = pd.concat([self.index, index_region], axis=0, ignore_index=True)
-        #print(self.index)
 
+            if len(self.index.columns) == 0:
+                self.index = pd.DataFrame(columns=index_region.columns)
+            self.index = pd.concat([self.index, index_region], axis=0, ignore_index=True)
 
         if self.config.verbose:
             print(f"kept {len(self.index)} time series references from applying class mapping")
 
         # filter zero-length time series
         if self.index.index.name != "idx":
-            self.index = self.index.loc[self.index.sequencelength > self.config.filter_length] # set_index('idx')
+            self.index = self.index.loc[self.index.sequencelength > self.config.filter_length]  # set_index('idx')
 
         self.maxseqlength = int(self.index["sequencelength"].max())
 
@@ -196,14 +188,13 @@ class BreizhCropsDataset(BaseDataset):
         #         for idx, row in tqdm(self.index.iterrows(), desc="loading data into RAM", total=len(self.index)):
         #             self.X_list.append(np.array(dataset[(row.path)]))
         # else:
-        
+
         # for now    
         self.X_list = None
 
         self.index.rename(columns={"meanQA60": "meanCLD"}, inplace=True)
-        
-        self.get_codes()
 
+        self.get_codes()
 
     def __len__(self):
         return len(self.index)
@@ -224,20 +215,20 @@ class BreizhCropsDataset(BaseDataset):
             # Looks like this is what I need (load directly from file)
             with h5py.File(h5path, "r") as dataset:
                 X = np.array(dataset[(row.path)])
-                #print(row.path)
+                # print(row.path)
         else:
             X = self.X_list[index]
 
         # translate CODE_CULTU to class id
         y = self.mapping.loc[row["CODE_CULTU"]].id
 
-        #npad = self.maxseqlength - X.shape[0]
-        #X = np.pad(X, [(0, npad), (0, 0)], 'constant', constant_values=PADDING_VALUE)
+        # npad = self.maxseqlength - X.shape[0]
+        # X = np.pad(X, [(0, npad), (0, 0)], 'constant', constant_values=PADDING_VALUE)
 
         if self.transform:
-            X,y = self.transform((X,y))
+            X, y = self.transform((X, y))
 
-        return X, y #, row.id
+        return X, y  # , row.id
 
     def get_labels(self):
         return self.index.classid
@@ -245,17 +236,17 @@ class BreizhCropsDataset(BaseDataset):
     # visualization functions
 
     def data_distribution_table(self):
-        label_count = self.index[["id","region","classname"]].groupby(["classname", "region"]).count().reset_index()
-        label_count.columns = ['Label', 'Region','Number of parcels']
+        label_count = self.index[["id", "region", "classname"]].groupby(["classname", "region"]).count().reset_index()
+        label_count.columns = ['Label', 'Region', 'Number of parcels']
         return label_count
 
     def parcel_distribution_table(self):
         # Figure 2 a) in the paper
-        parcel_count = self.index[["id","region"]].groupby("region").count().reset_index()
-        parcel_count.columns = ['Region NUTS-3','# '+self.config.level]
+        parcel_count = self.index[["id", "region"]].groupby("region").count().reset_index()
+        parcel_count.columns = ['Region NUTS-3', '# ' + self.config.level]
         total_row = parcel_count.sum(axis=0)
         total_row["Region NUTS-3"] = "Total"
-        
+
         parcel_count = parcel_count.append(total_row, ignore_index=True)
         return parcel_count
 
@@ -263,8 +254,8 @@ class BreizhCropsDataset(BaseDataset):
         # Figure 2 b) in the paper
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
-        g = sns.barplot(x="Label", y="Number of parcels",hue="Region", data=label_count, ax=ax)
-        g.set_xticklabels(g.get_xticklabels(),rotation=30)
+        g = sns.barplot(x="Label", y="Number of parcels", hue="Region", data=label_count, ax=ax)
+        g.set_xticklabels(g.get_xticklabels(), rotation=30)
         g.set_yscale("log")
         return fig
 
@@ -276,14 +267,16 @@ class BreizhCropsDataset(BaseDataset):
         X, _ = self.__getitem__(index)
         label = row = self.index.iloc[index].loc["classname"]
         fig, ax = plt.subplots(figsize=(8, 6))
-        ax.set_title(f"Timeseries with index {index} from the region {self.index.iloc[index].loc['region']}, with label {label}\n",fontsize=14)
+        ax.set_title(
+            f"Timeseries with index {index} from the region {self.index.iloc[index].loc['region']}, with label {label}\n",
+            fontsize=14)
         ax.plot(X)
         ax.legend(BANDS[self.config.level][:X.shape[1]])
-        ax.set_ylabel('ρ ') # x ${10^4}$
+        ax.set_ylabel('ρ ')  # x ${10^4}$
 
         # for months
-        #plt.locator_params(axis='x', nbins=17)
-        #ax.set_xticklabels(["x","j","f","m","a","m","j","j","a","s","o","n","d"])
+        # plt.locator_params(axis='x', nbins=17)
+        # ax.set_xticklabels(["x","j","f","m","a","m","j","j","a","s","o","n","d"])
         return fig
 
     """
@@ -334,7 +327,8 @@ class BreizhCropsDataset(BaseDataset):
 
     def download_h5_database(self, region):
         print(f"downloading {self.h5path[region]}.tar.gz")
-        download_file(H5_URLs[self.config.year][self.config.level][region], self.h5path[region] + ".tar.gz", overwrite=True)
+        download_file(H5_URLs[self.config.year][self.config.level][region], self.h5path[region] + ".tar.gz",
+                      overwrite=True)
         print(f"extracting {self.h5path[region]}.tar.gz to {self.h5path}")
         untar(self.h5path[region] + ".tar.gz")
         print(f"removing {self.h5path[region]}.tar.gz")
@@ -345,7 +339,7 @@ class BreizhCropsDataset(BaseDataset):
 
     def write_h5_database_from_csv(self, index, region):
         with h5py.File(self.h5path[region], "w") as dataset:
-            for idx, row in tqdm(index.iterrows(), total=len(index), desc=f"writing {self.h5path[region]}"):                             
+            for idx, row in tqdm(index.iterrows(), total=len(index), desc=f"writing {self.h5path[region]}"):
                 X = self.load(os.path.join(self.root, row.path))
                 dataset.create_dataset(row.path, data=X)
 
@@ -381,7 +375,7 @@ class BreizhCropsDataset(BaseDataset):
                 print(f"found classmapping at {classmapping}")
 
         mapping = pd.read_csv(classmapping, index_col=0).sort_values(by="id")
-        mapping = mapping[['id','classname']].groupby("id").first()
+        mapping = mapping[['id', 'classname']].groupby("id").first()
         mapping = mapping.set_index("classnamedf.to_dict('index')")
         return mapping.T.to_dict('records')[0]
 
@@ -398,9 +392,9 @@ class BreizhCropsDataset(BaseDataset):
 
     def load(self, csv_file):
         sample = self.load_raw(csv_file)
-        
+
         selected_bands = SELECTED_BANDS[self.config.level]
-        X = np.array(sample[selected_bands].values)	
+        X = np.array(sample[selected_bands].values)
         if np.isnan(X).any():
             t_without_nans = np.isnan(X).sum(1) > 0
             X = X[~t_without_nans]
@@ -410,8 +404,8 @@ class BreizhCropsDataset(BaseDataset):
     def load_culturecode_and_id(self, csv_file):
         sample = self.load_raw(csv_file)
         X = np.array(sample.values)
-	
-        if self.config.level=="L1C":
+
+        if self.config.level == "L1C":
             cc_index = self.bands.index("label")
         else:
             cc_index = self.bands.index("code_cultu")
@@ -456,4 +450,3 @@ class BreizhCropsDataset(BaseDataset):
 
         self.index = pd.DataFrame(listcsv_statistics)
         self.index.to_csv(self.indexfile)
-

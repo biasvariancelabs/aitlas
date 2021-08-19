@@ -12,9 +12,7 @@
 __author__ = Türkoglu Mehmet Özgür <ozgur.turkoglu@geod.baug.ethz.ch>
 """
 
-import torch.nn as nn
 import torch.utils.data
-import os
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -23,34 +21,29 @@ import torch.nn.init as init
 import math
 import torch.optim as optim
 
-
 from ..base import BaseMulticlassClassifier
 from .schemas import StarRNNSchema
 
-#__all__ = ['StarRNN']
 
 class StarRNN(BaseMulticlassClassifier):
 
     schema = StarRNNSchema
 
     def __init__(self, config):
-
         BaseMulticlassClassifier.__init__(self, config)
-        
-        device=torch.device("cpu") # how to handle this?
-
-        #self.modelname = f"StarRNN_input-dim={input_dim}_num-classes={num_classes}_" \
-        #                 f"hidden-dims={hidden_dims}_num-layers={num_layers}_dropout={dropout}"
 
         self.d_model = self.config.num_layers*self.config.hidden_dims
         
         if self.config.use_layernorm:
             self.model.inlayernorm = nn.LayerNorm(self.config.input_dim)
-            self.model.clayernorm = nn.LayerNorm((self.config.hidden_dims + self.config.hidden_dims * self.config.bidirectional) )
+            self.model.clayernorm = nn.LayerNorm((self.config.hidden_dims + self.config.hidden_dims *
+                                                  self.config.bidirectional))
 
         self.model.block = torch.nn.Sequential(
-            StarLayer(input_dim=self.config.input_dim, hidden_dim=self.config.hidden_dims, droput_factor=self.config.dropout, device=device),
-            *[StarLayer(input_dim=self.config.hidden_dims, hidden_dim=self.config.hidden_dims, droput_factor=self.config.dropout, device=device)] * (self.config.num_layers-1)
+            StarLayer(input_dim=self.config.input_dim, hidden_dim=self.config.hidden_dims,
+                      droput_factor=self.config.dropout, device=self.device),
+            *[StarLayer(input_dim=self.config.hidden_dims, hidden_dim=self.config.hidden_dims,
+                        droput_factor=self.config.dropout, device=self.device)] * (self.config.num_layers-1)
         )
 
         if self.config.bidirectional:
@@ -66,23 +59,19 @@ class StarRNN(BaseMulticlassClassifier):
             else:
                 self.model.bn = nn.BatchNorm1d(hidden_dims)
 
-        #self.to(device)
-
     def _logits(self, x):
-        #x = x.transpose(1,2)
-
         if self.config.use_layernorm:
             x = self.model.inlayernorm(x)
 
         outputs = self.model.block(x)
         
         if self.config.use_batchnorm:
-            outputs = outputs[:,-1:,:]
-            b,t,d = outputs.shape
-            o_ = outputs.view(b, -1, d).permute(0,2,1)
-            outputs = self.model.bn(o_).permute(0, 2, 1).view(b,t,d)
+            outputs = outputs[:, -1:, :]
+            b, t, d = outputs.shape
+            o_ = outputs.view(b, -1, d).permute(0, 2, 1)
+            outputs = self.model.bn(o_).permute(0, 2, 1).view(b, t, d)
 
-        h=outputs[:,-1,:] 
+        h = outputs[:, -1, :]
         
         if self.config.use_layernorm:
             h = self.model.clayernorm(h)
@@ -102,19 +91,6 @@ class StarRNN(BaseMulticlassClassifier):
         """Load the optimizer"""
         return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)        
 
-    '''def save(self, path="model.pth", **kwargs):
-        print("\nsaving model to "+path)
-        model_state = self.state_dict()
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        torch.save(dict(model_state=model_state,**kwargs),path)
-
-    def load(self, path):
-        print("loading model from "+path)
-        snapshot = torch.load(path, map_location="cpu")
-        model_state = snapshot.pop('model_state', snapshot)
-        self.load_state_dict(model_state)
-        return snapshot'''
-
 
 class StarCell(nn.Module):
 
@@ -132,10 +108,6 @@ class StarCell(nn.Module):
         init.orthogonal_(self.x_K.weight)
         init.orthogonal_(self.x_z.weight)
         init.orthogonal_(self.h_K.weight)
-
-        #        bias_f= np.log(np.random.uniform(1,45,hidden_size))
-        #        bias_f = torch.Tensor(bias_f)
-        #        self.bias_K = Variable(bias_f.cuda(), requires_grad=True)
 
         self.x_K.bias.data.fill_(1.)
         self.x_z.bias.data.fill_(0)
@@ -168,7 +140,8 @@ class StarCell(nn.Module):
 
 
 class StarLayer(nn.Module):
-    def __init__(self, input_dim, hidden_dim, bias=True, droput_factor=0.2, batch_norm=True, layer_norm=False, device=torch.device("cpu")):
+    def __init__(self, input_dim, hidden_dim, bias=True, droput_factor=0.2, batch_norm=True, layer_norm=False,
+                 device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")):
         super(StarLayer, self).__init__()
         # Hidden dimensions
         self.device = device
@@ -182,31 +155,24 @@ class StarLayer(nn.Module):
             self.naive_dropout = nn.Dropout(p=droput_factor)
 
         if batch_norm:
-            # print('batch norm')
             self.bn_layer = nn.BatchNorm1d(hidden_dim)
         if layer_norm:
             self.layer_norm_layer = nn.LayerNorm(hidden_dim)
 
     def forward(self, x):
-
         # Initialize hidden state with zeros
         h0 = Variable(torch.zeros(x.size(0), self.hidden_dim)).to(self.device)
         outs = Variable(torch.zeros(x.size(0), x.shape[1], self.hidden_dim)).to(self.device)
-
         hn = h0
-
         for seq in range(x.size(1)):
             hn = self.cell(x[:, seq], hn)
-
             if self.droput_factor != 0:
                 outs[:, seq, :] = self.naive_dropout(hn)
             else:
                 outs[:, seq, :] = hn
-
         # batch normalization:
         if self.batch_norm:
             outs = self.bn_layer(outs.permute(0, 2, 1)).permute(0, 2, 1)
-
             # layer normalization:
         if self.layer_norm:
             outs = self.layer_norm_layer(outs)

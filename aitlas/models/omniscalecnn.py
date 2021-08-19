@@ -67,16 +67,11 @@ class OmniScaleCNN(BaseMulticlassClassifier):
 
     schema = OmniScaleCNNSchema
 
-    def __init__(self,config):
+    def __init__(self, config):
         BaseMulticlassClassifier.__init__(self, config)
-        
-        #self.modelname = "OmniScaleCNN"
-
         receptive_field_shape = self.config.sequence_length//4
-
         layer_parameter_list = generate_layer_parameter_list(1,receptive_field_shape,
                                                              self.config.parameter_number_of_layer_list, in_channel=self.config.input_dim)
-
         self.layer_parameter_list = layer_parameter_list
         self.layer_list = []
 
@@ -95,12 +90,9 @@ class OmniScaleCNN(BaseMulticlassClassifier):
         self.model.hidden = nn.Linear(out_put_channel_numebr, self.config.num_classes)
 
     def forward(self, X):
-
         X = self.model.net(X.transpose(1,2))
-
         X = self.model.averagepool(X)
         X = X.squeeze_(-1)
-
         if not self.config.few_shot:
             X = self.model.hidden(X)
         return X

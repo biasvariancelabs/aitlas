@@ -20,7 +20,6 @@ import torch.optim as optim
 from ..base import BaseMulticlassClassifier
 from .schemas import MSResNetSchema
 
-#__all__ = ['MSResNet']
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
@@ -141,10 +140,9 @@ class BasicBlock7x7(nn.Module):
 class MSResNet(BaseMulticlassClassifier):
 
     schema = MSResNetSchema
+
     def __init__(self, config):
         BaseMulticlassClassifier.__init__(self, config)
-
-        #self.modelname = f"MSResNet_input-dim={input_dim}_num-classes={num_classes}_hidden-dims={hidden_dims}"
 
         #self.d_model = self.config.hidden_dims
         self.inplanes3 = self.config.hidden_dims
@@ -276,17 +274,5 @@ class MSResNet(BaseMulticlassClassifier):
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)        
+        return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)
 
-    def save(self, path="model.pth", **kwargs):
-        print("\nsaving model to " + path)
-        model_state = self.state_dict()
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        torch.save(dict(model_state=model_state, **kwargs), path)
-
-    def load(self, path):
-        print("loading model from " + path)
-        snapshot = torch.load(path, map_location="cpu")
-        model_state = snapshot.pop('model_state', snapshot)
-        self.load_state_dict(model_state)
-        return snapshot
