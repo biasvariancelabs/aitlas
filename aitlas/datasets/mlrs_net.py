@@ -17,6 +17,7 @@ class MLRSNet(MultiLabelClassificationDataset):
     labels = LABELS
     name = "MLRSNet dataset"
 
+    # Function to convert the dataset in PASCAL VOC data format
     def prepare(self):
         all_csv_filenames = [i for i in glob.glob('/{}*.{}'.format(self.config.root, "csv"))]
         combined_csv = pd.concat([pd.read_csv(f) for f in all_csv_filenames])

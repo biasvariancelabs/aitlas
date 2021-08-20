@@ -6,7 +6,10 @@ LABELS = ["AnnualCrop", "Forest", "HerbaceousVegetation", "Highway", "Industrial
 
 class EurosatDataset(MultiClassClassificationDataset):
 
+    url = "https://github.com/phelber/EuroSAT"
+
     labels = LABELS
+    name = "EuroSAT dataset"
 
     def __init__(self, config):
         # now call the constructor to validate the schema and load the data

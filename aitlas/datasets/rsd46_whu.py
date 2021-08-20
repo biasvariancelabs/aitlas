@@ -16,6 +16,7 @@ class RSD46WHUDataset(MultiClassClassificationDataset):
 
     url = "https://github.com/RSIA-LIESMARS-WHU/RSD46-WHU"
     labels = LABELS
+
     name = "RSD46-WHU dataset"
 
     def __init__(self, config):

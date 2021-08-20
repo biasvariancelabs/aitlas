@@ -8,3 +8,4 @@ class AIDMultiLabelDataset(MultiLabelClassificationDataset):
     url = "https://github.com/Hua-YS/AID-Multilabel-Dataset"
 
     labels = LABELS
+    name = "AID multilabel dataset"

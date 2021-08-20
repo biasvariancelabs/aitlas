@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, validate
 
 from ..base import BaseModelSchema
 from ..base.schemas import BaseSegmentationClassifierSchema

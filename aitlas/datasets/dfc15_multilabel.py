@@ -7,3 +7,4 @@ class DFC15MultiLabelDataset(MultiLabelClassificationDataset):
     url = "https://github.com/Hua-YS/DFC15-Multilabel-Dataset"
 
     labels = LABELS
+    name = "DFC15 dataset"

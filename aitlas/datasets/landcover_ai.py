@@ -10,8 +10,9 @@ from .schemas import SegmentationDatasetSchema
 #"Buildings": 1
 #"Woodlands": 2
 #"Water": 3
+#"Road": 4
 
-LABELS = ["Buildings"]
+LABELS = ["Background", "Buildings", "Woodlands", "Water", "Road"]
 
 """
 For the LandCover Ai dataset the mask is in one file, each label is color coded.
