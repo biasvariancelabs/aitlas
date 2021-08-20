@@ -1,10 +1,11 @@
 import logging
 
 import torch
-from aitlas.base import BaseTask
-from aitlas.tasks.schemas import EvaluateTaskSchema
-from aitlas.utils import get_class, stringify
 from tqdm import tqdm
+
+from ...base import BaseTask
+from ...utils import get_class, stringify
+from ..schemas import EvaluateTaskSchema
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

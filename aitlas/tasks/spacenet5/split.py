@@ -1,9 +1,10 @@
 import os
 
 import torch
-from aitlas.base import BaseTask
-from aitlas.tasks.schemas import SplitTaskSchema
 from torch.utils.data import random_split
+
+from ...base import BaseTask
+from ..schemas import SplitTaskSchema
 
 
 class SpaceNet5SplitTask(BaseTask):

@@ -17,10 +17,11 @@ import pandas as pd
 import shapely.ops
 import shapely.wkt
 import utm
-from aitlas.base import BaseTask
-from aitlas.tasks.schemas import SpaceNet5WktToGraphTaskSchema
 from osgeo import gdal, ogr, osr
 from shapely.geometry import LineString, Point
+
+from ...base import BaseTask
+from ..schemas import SpaceNet5WktToGraphTaskSchema
 
 
 # Create or get the logger

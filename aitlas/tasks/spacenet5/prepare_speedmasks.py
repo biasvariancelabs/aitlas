@@ -15,9 +15,10 @@ import numpy as np
 import osmnx as osmnx_funcs
 import pandas as pd
 import skimage.io
-from aitlas.base import BaseTask
-from aitlas.tasks.schemas import SpaceNet5PrepareSpeedMasksTaskSchema
 from osgeo import gdal, ogr, osr
+
+from ...base import BaseTask
+from ..schemas import SpaceNet5PrepareSpeedMasksTaskSchema
 
 
 def create_multi_band_geo_tiff(out_path, array):

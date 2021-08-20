@@ -18,12 +18,13 @@ import osmnx.settings as ox_settings
 
 # cv2 can't load large files, so need to import skimage too
 import skimage.io
-from aitlas.base import BaseTask
-from aitlas.tasks.schemas import SpaceNet5PlotGraphOverImageTaskSchema
 from matplotlib.collections import LineCollection
 from osmnx.utils import log
 from shapely import wkt
 from shapely.geometry import LineString, Point
+
+from ...base import BaseTask
+from ..schemas import SpaceNet5PlotGraphOverImageTaskSchema
 
 
 # Create or get the logger

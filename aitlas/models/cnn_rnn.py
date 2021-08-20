@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from torchvision.models import resnet152
 
-from aitlas.base import BaseMultilabelClassifier
-from aitlas.models.schemas import CNNRNNModelSchema
+from ..base import BaseMultilabelClassifier
+from .schemas import CNNRNNModelSchema
 
 
 class EncoderCNN(nn.Module):
@@ -36,15 +36,20 @@ class DecoderRNN(nn.Module):
 
 class CNNRNN(BaseMultilabelClassifier):
     """Inspired by https://github.com/Lin-Zhipeng/CNN-RNN-A-Unified-Framework-for-Multi-label-Image-Classification"""
+
     schema = CNNRNNModelSchema
 
     def __init__(self, config):
         super(CNNRNN, self).__init__(config)
-        self.model.encoder = EncoderCNN(embed_size=self.config["embed_size"]).to(self.device)
-        self.model.decoder = DecoderRNN(embed_size=self.config["embed_size"],
-                                        hidden_size=self.config["hidden_size"],
-                                        num_classes=self.config["num_classes"],
-                                        num_layers=self.config["num_layers"]).to(self.device)
+        self.model.encoder = EncoderCNN(embed_size=self.config["embed_size"]).to(
+            self.device
+        )
+        self.model.decoder = DecoderRNN(
+            embed_size=self.config["embed_size"],
+            hidden_size=self.config["hidden_size"],
+            num_classes=self.config["num_classes"],
+            num_layers=self.config["num_layers"],
+        ).to(self.device)
 
     def forward(self, inputs):
         return self.model.decoder(self.model.encoder(inputs))

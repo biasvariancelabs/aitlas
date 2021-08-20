@@ -18,12 +18,13 @@ import pandas as pd
 import skimage
 import skimage.draw
 import skimage.io
-from aitlas.base import BaseTask, Config
-from aitlas.tasks.schemas import SpaceNet5SkeletonizeTaskSchema
 from matplotlib.pylab import plt
 from numba import jit
 from scipy.spatial.distance import pdist, squareform
 from skimage.morphology import remove_small_holes, remove_small_objects, skeletonize
+
+from ...base import BaseTask, Config
+from ..schemas import SpaceNet5SkeletonizeTaskSchema
 
 
 # Create or get the logger

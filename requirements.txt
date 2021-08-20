@@ -42,5 +42,4 @@ imgaug~=0.2.6
 setuptools~=52.0.0
 apex~=0.9.10.dev0
 rasterio~=1.2.0
-# aitlas~=0.0.1
 solaris~=0.4.0

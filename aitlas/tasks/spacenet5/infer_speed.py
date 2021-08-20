@@ -17,11 +17,12 @@ import pandas as pd
 import scipy.spatial
 import shapely
 import skimage.io
-from aitlas.base import BaseTask
 from aitlas.tasks.schemas import SpaceNet5InferSpeedTaskSchema
 from matplotlib import collections as mpl_collections
 from matplotlib import pyplot as plt
 from statsmodels.stats.weightstats import DescrStatsW
+
+from ...base import BaseTask
 
 
 # Create or get the logger

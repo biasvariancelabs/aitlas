@@ -10,9 +10,10 @@ import os
 from multiprocessing.pool import Pool
 
 import numpy as np
-from aitlas.base import BaseTask
-from aitlas.tasks.schemas import SpaceNet5PrepareImageryTaskSchema
 from osgeo import gdal
+
+from ...base import BaseTask
+from ..schemas import SpaceNet5PrepareImageryTaskSchema
 
 
 rescale = {
