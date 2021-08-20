@@ -8,3 +8,7 @@ class DFC15MultiLabelDataset(MultiLabelClassificationDataset):
 
     labels = LABELS
     name = "DFC15 dataset"
+
+    def __init__(self, config):
+        # now call the constructor to validate the schema and load the data
+        MultiLabelClassificationDataset.__init__(self, config)

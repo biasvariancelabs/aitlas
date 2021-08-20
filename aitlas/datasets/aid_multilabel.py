@@ -9,3 +9,7 @@ class AIDMultiLabelDataset(MultiLabelClassificationDataset):
 
     labels = LABELS
     name = "AID multilabel dataset"
+
+    def __init__(self, config):
+        # now call the constructor to validate the schema and load the data
+        MultiLabelClassificationDataset.__init__(self, config)

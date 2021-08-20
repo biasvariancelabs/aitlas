@@ -10,3 +10,7 @@ class UcMercedMultiLabelDataset(MultiLabelClassificationDataset):
     labels = LABELS
     name = "UC Merced multilabel dataset"
 
+    def __init__(self, config):
+        # now call the constructor to validate the schema and load the data
+        MultiLabelClassificationDataset.__init__(self, config)
+
