@@ -4,9 +4,10 @@ import random
 
 import numpy as np
 import torch
-from aitlas.base import BaseTask
-from aitlas.tasks.schemas import PredictTaskSchema
 from skimage import io
+
+from ...base import BaseTask
+from ..schemas import PredictTaskSchema
 
 
 logger = logging.getLogger(__name__)

@@ -1,10 +1,11 @@
 import os
 from csv import reader
 
-from aitlas.base import BaseDataset
-from aitlas.datasets.schemas import SpaceNet5DatasetSchema
-from ..utils import image_loader
 from skimage import io
+
+from ..base import BaseDataset
+from ..datasets.schemas import SpaceNet5DatasetSchema
+from ..utils import image_loader
 
 
 class SpaceNet5Dataset(BaseDataset):
@@ -25,7 +26,8 @@ class SpaceNet5Dataset(BaseDataset):
         filenames : list
             Contains the .tif filenames specified in the csv output file of the split task
     """
-    schema = SpaceNet5DatasetSchema # set up the dataset schema
+
+    schema = SpaceNet5DatasetSchema  # set up the dataset schema
 
     def __init__(self, config):
         """
@@ -83,10 +85,9 @@ class SpaceNet5Dataset(BaseDataset):
         """
         img_path = os.path.join(self.config.image_root, self.filenames[index])
         image = image_loader(img_path)
-        image, _ = self.transform({
-            "image": image,
-            "mask": image  # workaround to avoid the usage of masks
-        })
+        image, _ = self.transform(
+            {"image": image, "mask": image}  # workaround to avoid the usage of masks
+        )
         return image
 
     def __len__(self):
@@ -122,7 +123,7 @@ class SpaceNet5Dataset(BaseDataset):
             "31-40mph": 3,
             "41-50mph": 4,
             "51-60mph": 5,
-            "61-65mph": 6
+            "61-65mph": 6,
         }
 
     def __load_filenames(self, csv_path):

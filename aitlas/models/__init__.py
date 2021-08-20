@@ -1,4 +1,5 @@
 from .alexnet import AlexNet, AlexNetMultiLabel
+from .cnn_rnn import CNNRNN
 from .deeplabv3 import DeepLabV3
 from .densenet import DenseNet201, DenseNet201MultiLabel
 from .fastrcnn import FastRCNN
