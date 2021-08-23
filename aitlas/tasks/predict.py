@@ -33,7 +33,7 @@ class ImageFolderDataset(BaseDataset):
     def __getitem__(self, index):
         img = self.data[index]
         return (
-            self.transform(image_loader(img)),
+            self.transform(image_loader(img))[:3],
             0,
         )  # returning `0` because we have no target
 

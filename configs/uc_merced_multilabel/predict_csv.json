@@ -14,13 +14,11 @@
             "dir": "/media/ssd/uc_merced_multilabel/predict/",
             "output_path": "/media/ssd/uc_merced_multilabel/experiments/results.csv",
             "output_format": "csv",
-            "dataset_config":{
-                "classname": "aitlas.datasets.UcMercedMultiLabelDataset",
-                "config": {
-                  "root": "/media/hdd/UCMerced_multilabels/train",
-				  "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
-                }
-            }
+            "batch_size": 1,
+            "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"],
+            "labels": ["airplane", "bare-soil", "buildings", "cars", "chaparral", "court", "dock", "field", "grass",
+                "mobile-home", "pavement", "sand", "sea", "ship", "tanks", "trees", "water"]
         }
     }
 }
+

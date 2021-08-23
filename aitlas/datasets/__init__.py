@@ -27,3 +27,5 @@ from .spacenet6 import SpaceNet6Dataset
 from .uc_merced import UcMercedDataset
 from .uc_merced_multilabel import UcMercedMultiLabelDataset
 from .whu_rs19 import WHURS19Dataset
+from .planet_uas import PlanetUASMultiLabelDataset
+

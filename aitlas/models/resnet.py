@@ -16,7 +16,6 @@ class ResNet50(BaseMulticlassClassifier):
             self.model = models.resnet50(
                 self.config.pretrained, False, num_classes=self.config.num_classes
             )
-        self.freeze()
 
     def forward(self, x):
         return self.model(x)
