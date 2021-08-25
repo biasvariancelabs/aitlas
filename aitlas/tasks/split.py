@@ -2,12 +2,17 @@ import logging
 import os
 
 import numpy as np
+from sklearn.model_selection import train_test_split
 from skmultilearn.model_selection import iterative_train_test_split
 from torch.utils.data import random_split
 
 from ..base import BaseModel, BaseTask
-from ..utils import load_voc_format_dataset
-from .schemas import RandomSplitTaskSchema, SplitTaskSchema
+from ..utils import (
+    load_aitlas_format_dataset,
+    load_folder_per_class_dataset,
+    load_voc_format_dataset,
+)
+from .schemas import SplitTaskSchema
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -16,11 +21,25 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 class BaseSplitTask(BaseTask):
     """Base task meant to split dataset"""
 
+    schema = SplitTaskSchema
+
+    extensions = [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".ppm",
+        ".bmp",
+        ".pgm",
+        ".tif",
+        ".tiff",
+        "webp",
+    ]
+
     def __init__(self, model: BaseModel, config):
         super().__init__(model, config)
 
     def run(self):
-        self.images = self.load_images(self.config.root)
+        self.images = self.load_images(self.config.path)
         self.split()
         logging.info("And that's it!")
 
@@ -53,29 +72,30 @@ class BaseSplitTask(BaseTask):
                 f.write(self.get_image_row(d))
             f.close()
 
-    def make_splits(self):
-        raise NotImplementedError
+    def load_images(self, path, extensions=None):
+        """Attempts to read in VOC format, then in internal format, then in folder per class format"""
+        images = []
+        try:
+            images = load_voc_format_dataset(path)
+        except FileNotFoundError:  # it's not in VOC format, then let's try aitlas internal one
+            if not os.path.isdir(path):
+                images = load_aitlas_format_dataset(path)
+            else:
+                if not extensions:
+                    extensions = self.extensions
+                images = load_folder_per_class_dataset(path, extensions)
 
-    def load_images(self, dir, extensions=None):
+        if not images:
+            raise ValueError("Nos images were found!")
+
+        return images
+
+    def make_splits(self):
         raise NotImplementedError
 
 
 class RandomSplitTask(BaseSplitTask):
     """Randomly split a folder containing images"""
-
-    schema = RandomSplitTaskSchema
-
-    extensions = [
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".ppm",
-        ".bmp",
-        ".pgm",
-        ".tif",
-        ".tiff",
-        "webp",
-    ]
 
     def make_splits(self):
         size = len(self.images)
@@ -106,68 +126,40 @@ class RandomSplitTask(BaseSplitTask):
         if self.has_val():
             self.save_split(result[2], self.config.split.val.file)
 
-    def has_file_allowed_extension(self, filename, extensions):
-        """Checks if a file is an allowed extension.
-        Args:
-            filename (string): path to a file
-            extensions (iterable of strings): extensions to consider (lowercase)
-        Returns:
-            bool: True if the filename ends with one of given extensions
-        """
-        filename_lower = filename.lower()
-        return any(filename_lower.endswith(ext) for ext in extensions)
-
-    def load_images(self, dir, extensions=None):
-        if not extensions:
-            extensions = self.extensions
-
-        images = []
-        dir = os.path.expanduser(dir)
-        classes = [
-            item for item in os.listdir(dir) if os.path.isdir(os.path.join(dir, item))
-        ]
-
-        for target in classes:
-            d = os.path.join(dir, target)
-            if not os.path.isdir(d):
-                continue
-
-            for root, _, fnames in sorted(os.walk(d)):
-                for fname in sorted(fnames):
-                    if self.has_file_allowed_extension(fname, extensions):
-                        path = os.path.join(root, fname)
-                        item = (path, target)
-                        images.append(item)
-
-        return images
-
 
 class StratifiedSplitTask(BaseSplitTask):
     """Meant for multilabel stratified slit"""
 
-    schema = RandomSplitTaskSchema
-
-    def load_images(self, dir, extensions=None):
-        """ this fill transform images in the format ["path",[labels]]"""
-        return load_voc_format_dataset(dir)
+    # def load_images(self, dir, extensions=None):
+    #     """ this fill transform images in the format ["path",[labels]]"""
+    #     return load_voc_format_dataset(dir)
 
     def get_image_row_string(self, image):
         return "{}\n".format(image)
 
     def get_image_row(self, x):
-        return self.get_image_row_string(x[0])
+        return self.get_image_row_string(x[0] if isinstance(x, np.ndarray) else x)
 
     def make_splits(self):
+        # load paths and labels
         X = np.array([x[0] for x in self.images])
         y = np.array([x[1] for x in self.images])
 
-        X = X.reshape(X.shape[0], 1)  # it needs this reshape for the split to work
+        is_multilabel = len(y.shape) > 1
 
         test_size = float(self.config.split.test.ratio / 100)
 
-        X_train, y_train, X_test, y_test = iterative_train_test_split(
-            X, y, test_size=test_size
-        )
+        # check if multilabel or multiclass dataset
+        if is_multilabel:
+            X = X.reshape(X.shape[0], 1)  # it needs this reshape for the split to work
+
+            X_train, y_train, X_test, y_test = iterative_train_test_split(
+                X, y, test_size=test_size
+            )
+        else:
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=test_size, stratify=y
+            )
 
         # save the splits
         self.save_split(X_train, self.config.split.train.file)
@@ -178,9 +170,14 @@ class StratifiedSplitTask(BaseSplitTask):
                 self.config.split.val.ratio
                 / (self.config.split.val.ratio + self.config.split.train.ratio)
             )
-            X_train, y_train, X_val, y_val = iterative_train_test_split(
-                X_train, y_train, test_size=val_size
-            )
+            if is_multilabel:
+                X_train, y_train, X_val, y_val = iterative_train_test_split(
+                    X_train, y_train, test_size=val_size
+                )
+            else:
+                X_train, X_val, y_train, y_val = train_test_split(
+                    X_train, y_train, test_size=val_size, stratify=y_train
+                )
 
             # save split
             self.save_split(X_val, self.config.split.val.file)

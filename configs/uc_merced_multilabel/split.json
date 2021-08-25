@@ -16,7 +16,7 @@
                     "file": "./data/UCMerced_multilabels/test.csv"
                 }
             },
-            "root": "./data/UCMerced_multilabels/"
+            "path": "./data/UCMerced_multilabels/"
         }
     }
 }

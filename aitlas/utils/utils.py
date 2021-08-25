@@ -1,3 +1,4 @@
+import csv
 import importlib
 import os
 from time import time
@@ -76,12 +77,12 @@ def parse_img_id(file_path, orients):
     return direction, strip, coord
 
 
-def load_voc_format_dataset(dir_path):
+def load_voc_format_dataset(dir):
     """Loads a dataset in the Pascal VOC format. It expects a `multilabels.txt` file and `images` in the root folder"""
 
     # read labels
     multi_hot_labels = {}
-    with open(dir_path + "/multilabels.txt", "rb") as f:
+    with open(dir + "/multilabels.txt", "rb") as f:
         lines = f.readlines()
         for line in lines[1:]:
             line = line.decode("utf-8")
@@ -91,9 +92,9 @@ def load_voc_format_dataset(dir_path):
             )
 
     images = []
-    dir = os.path.expanduser(dir_path + "/images")
+    images_folder = os.path.expanduser(dir + "/images")
     # this ensures the image always have the same index numbers
-    for root, _, fnames in sorted(os.walk(dir)):
+    for root, _, fnames in sorted(os.walk(images_folder)):
         for fname in sorted(fnames):
             path = os.path.join(root, fname)
             multi_hot_label = multi_hot_labels[fname[: fname.find(".")]]
@@ -101,3 +102,54 @@ def load_voc_format_dataset(dir_path):
             images.append(item)
 
     return images
+
+
+def has_file_allowed_extension(file_path, extensions):
+    """Checks if a file is an allowed extension.
+    Args:
+        file_path (string): path to a file
+        extensions (iterable of strings): extensions to consider (lowercase)
+    Returns:
+        bool: True if the filename ends with one of given extensions
+    """
+    filename_lower = file_path.lower()
+    return any(filename_lower.endswith(ext) for ext in extensions)
+
+
+def load_folder_per_class_dataset(dir, extensions=None):
+    if not extensions:
+        raise ValueError("Please provide accepted extensions for image scanning.")
+
+    images = []
+    dir = os.path.expanduser(dir)
+    classes = [
+        item for item in os.listdir(dir) if os.path.isdir(os.path.join(dir, item))
+    ]
+
+    for target in classes:
+        d = os.path.join(dir, target)
+        if not os.path.isdir(d):
+            continue
+
+        for root, _, fnames in sorted(os.walk(d)):
+            for fname in sorted(fnames):
+                if has_file_allowed_extension(fname, extensions):
+                    path = os.path.join(root, fname)
+                    item = (path, target)
+                    images.append(item)
+
+    return images
+
+
+def load_aitlas_format_dataset(file_path):
+    """Reads the images from a CSV. Format: (image_path, class_name)"""
+    data = []
+
+    with open(file_path, "r") as f:
+        csv_reader = csv.reader(f)
+        for index, row in enumerate(csv_reader):
+            path = row[0]
+            item = (path, row[1])
+            data.append(item)
+
+        return data
