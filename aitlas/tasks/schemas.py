@@ -30,6 +30,9 @@ class SplitTaskSchema(BaseTaskShema):
     root = fields.String(
         required=True, description="Dataset path on disk", example="./data/tmp/",
     )
+
+
+class RandomSplitTaskSchema(SplitTaskSchema):
     split = fields.Nested(
         SplitObjectSchema,
         description="Configuration on how to split the dataset.",

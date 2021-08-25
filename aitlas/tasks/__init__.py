@@ -11,5 +11,5 @@ from .spacenet5.prepare_speedmasks import SpaceNet5PrepareSpeedMasksTask
 from .spacenet5.skeletonize import SpaceNet5SkeletonizeTask
 from .spacenet5.split import SpaceNet5SplitTask
 from .spacenet5.wkt_to_graph import SpaceNet5WktToGraphTask
-from .split import SplitTask
+from .split import RandomSplitTask, StratifiedSplitTask
 from .train import TrainAndEvaluateTask, TrainTask
