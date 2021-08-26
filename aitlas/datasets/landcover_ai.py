@@ -24,9 +24,11 @@ For the LandCover Ai dataset the mask is in one file, each label is color coded.
 
 
 class LandCoverAiDataset(BaseDataset):
+    url = "https://landcover.ai/"
 
     schema = SegmentationDatasetSchema
     labels = LABELS
+    name = "Landcover AI dataset"
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
