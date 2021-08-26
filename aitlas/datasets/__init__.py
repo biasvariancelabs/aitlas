@@ -22,7 +22,6 @@ from .rsi_cb256 import RSICB256Dataset
 from .rsscn7 import RSSCN7Dataset
 from .sat6 import SAT6
 from .siri_whu import SiriWhuDataset
-from .spacenet5 import SpaceNet5Dataset
 from .spacenet6 import SpaceNet6Dataset
 from .uc_merced import UcMercedDataset
 from .uc_merced_multilabel import UcMercedMultiLabelDataset

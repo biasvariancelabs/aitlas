@@ -6,5 +6,4 @@ from .fastrcnn import FastRCNN
 from .resnet import ResNet50, ResNet50MultiLabel, ResNet152, ResNet152MultiLabel
 from .shallow import ShallowCNNNet, ShallowCNNNetMultilabel
 from .unet_efficientnet import UNetEfficientNet
-from .unetresnet34 import UNetResnet34
 from .vgg import VGG16, VGG19, VGG16MultiLabel, VGG19MultiLabel
