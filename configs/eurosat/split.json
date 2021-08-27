@@ -1,6 +1,6 @@
 {
     "task": {
-        "classname": "aitlas.tasks.StratifiedSplitTask",
+        "classname": "aitlas.tasks.RandomSplitTask",
         "config": {
             "split": {
                 "train": {

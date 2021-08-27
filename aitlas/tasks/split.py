@@ -23,6 +23,8 @@ class BaseSplitTask(BaseTask):
 
     schema = SplitTaskSchema
 
+    is_multilabel = False  # specify it's a multilabel dataset or not
+
     extensions = [
         ".jpg",
         ".jpeg",
@@ -39,7 +41,15 @@ class BaseSplitTask(BaseTask):
         super().__init__(model, config)
 
     def run(self):
+        logging.info("Loading data...")
         self.images = self.load_images(self.config.path)
+
+        logging.info("Making splits...")
+
+        # load the images and labels
+        self.X = np.array([x[0] for x in self.images])
+        self.y = np.array([y[1] for y in self.images])
+
         self.split()
         logging.info("And that's it!")
 
@@ -60,16 +70,21 @@ class BaseSplitTask(BaseTask):
         # split the dataset
         self.make_splits()
 
-    def get_image_row_string(self, image):
-        return "{},{}\n".format(image[0], image[1])
-
-    def get_image_row(self, x):
-        return self.get_image_row_string(self.images[x])
-
-    def save_split(self, data, file):
+    def save_split(self, X, y, file):
         with open(file, "w") as f:
-            for d in data:
-                f.write(self.get_image_row(d))
+            if self.is_multilabel:
+                row = "\t".join(self.header)
+                f.write(f"{row}\n")
+
+            for xx, yy in zip(X, y):
+                if self.is_multilabel:
+                    # save in VOC format again
+                    img = xx[0] if isinstance(xx, np.ndarray) else xx
+                    img = img[img.rfind("images") + 7 : img.rfind(".")]
+                    row = "\t".join([str(i) for i in yy])
+                    f.write(f"{img}\t{row}\n")
+                else:
+                    f.write(f"{xx},{yy}\n")
             f.close()
 
     def load_images(self, path, extensions=None):
@@ -77,7 +92,15 @@ class BaseSplitTask(BaseTask):
         images = []
         try:
             images = load_voc_format_dataset(path)
-        except FileNotFoundError:  # it's not in VOC format, then let's try aitlas internal one
+
+            # if this format is load, it's a multilabel dataset
+            self.is_multilabel = True
+
+            # read the header again. TODO: Maybe this can be a bit better implemented.
+            with open(path + "/multilabels.txt", "rb") as f:
+                self.header = f.readline().decode("utf-8").strip().split("\t")
+
+        except FileNotFoundError:  # it's not in VOC format, then let's try aitlas (CSV) internal one
             if not os.path.isdir(path):
                 images = load_aitlas_format_dataset(path)
             else:
@@ -86,71 +109,72 @@ class BaseSplitTask(BaseTask):
                 images = load_folder_per_class_dataset(path, extensions)
 
         if not images:
-            raise ValueError("Nos images were found!")
+            raise ValueError("No images were found!")
 
         return images
 
     def make_splits(self):
+        # load paths and labels
+        test_size = float(self.config.split.test.ratio / 100)
+
+        X_train, y_train, X_test, y_test = self.perform_split(self.X, self.y, test_size)
+
+        # if there is a validation split, perform that as well
+        if self.has_val():
+            val_size = float(
+                self.config.split.val.ratio
+                / (self.config.split.val.ratio + self.config.split.train.ratio)
+            )
+
+            X_train, y_train, X_val, y_val = self.perform_split(
+                X_train, y_train, val_size
+            )
+
+            # save split
+            self.save_split(X_val, y_val, self.config.split.val.file)
+
+        # save the other splits
+        self.save_split(X_train, y_train, self.config.split.train.file)
+        self.save_split(X_test, y_test, self.config.split.test.file)
+
+    def perform_split(self, X, y, test_size):
         raise NotImplementedError
 
 
 class RandomSplitTask(BaseSplitTask):
     """Randomly split a folder containing images"""
 
-    def make_splits(self):
-        size = len(self.images)
-        train_num = int(size * self.config.split.train.ratio / 100)
-        test_num = int(size * self.config.split.test.ratio / 100)
+    def perform_split(self, X, y, test_size):
+        """Peform actual split using pytorch random split"""
+        size = len(X)
+        train_num = int(size * (1 - test_size))
+        test_num = int(size * test_size)
 
         arr_num = [train_num, test_num]
 
-        if self.has_val():
-            val_num = int(size * self.config.split.val.ratio / 100)
-            arr_num.append(val_num)
+        train_split, test_split = random_split(range(size), arr_num)
 
-        # fix roundup cases
-        arr_num[0] += size - sum(arr_num)
+        X_train, y_train, X_test, y_test = [], [], [], []
 
-        result = random_split(range(size), arr_num)
+        for i in train_split:
+            X_train.append(X[i])
+            y_train.append(y[i])
 
-        self.train_indices = result[0]
-        self.test_indices = result[1]
+        for i in test_split:
+            X_test.append(X[i])
+            y_test.append(y[i])
 
-        if self.has_val():
-            self.val_indices = result[2]
-
-        # save the splits
-        self.save_split(result[0], self.config.split.train.file)
-        self.save_split(result[1], self.config.split.test.file)
-
-        if self.has_val():
-            self.save_split(result[2], self.config.split.val.file)
+        return X_train, y_train, X_test, y_test
 
 
 class StratifiedSplitTask(BaseSplitTask):
     """Meant for multilabel stratified slit"""
 
-    # def load_images(self, dir, extensions=None):
-    #     """ this fill transform images in the format ["path",[labels]]"""
-    #     return load_voc_format_dataset(dir)
-
-    def get_image_row_string(self, image):
-        return "{}\n".format(image)
-
-    def get_image_row(self, x):
-        return self.get_image_row_string(x[0] if isinstance(x, np.ndarray) else x)
-
-    def make_splits(self):
-        # load paths and labels
-        X = np.array([x[0] for x in self.images])
-        y = np.array([x[1] for x in self.images])
-
-        is_multilabel = len(y.shape) > 1
-
-        test_size = float(self.config.split.test.ratio / 100)
+    def perform_split(self, X, y, test_size):
+        """Perform the actual split using sklearn or skmultilearn"""
 
         # check if multilabel or multiclass dataset
-        if is_multilabel:
+        if self.is_multilabel:
             X = X.reshape(X.shape[0], 1)  # it needs this reshape for the split to work
 
             X_train, y_train, X_test, y_test = iterative_train_test_split(
@@ -161,23 +185,4 @@ class StratifiedSplitTask(BaseSplitTask):
                 X, y, test_size=test_size, stratify=y
             )
 
-        # save the splits
-        self.save_split(X_train, self.config.split.train.file)
-        self.save_split(X_test, self.config.split.test.file)
-
-        if self.has_val():
-            val_size = float(
-                self.config.split.val.ratio
-                / (self.config.split.val.ratio + self.config.split.train.ratio)
-            )
-            if is_multilabel:
-                X_train, y_train, X_val, y_val = iterative_train_test_split(
-                    X_train, y_train, test_size=val_size
-                )
-            else:
-                X_train, X_val, y_train, y_val = train_test_split(
-                    X_train, y_train, test_size=val_size, stratify=y_train
-                )
-
-            # save split
-            self.save_split(X_val, self.config.split.val.file)
+        return X_train, y_train, X_test, y_test
