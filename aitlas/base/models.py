@@ -9,12 +9,10 @@ import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
 from tqdm import tqdm
-from sklearn.metrics import f1_score
 
 from ..utils import current_ts, get_class, image_loader, stringify
 from .config import Configurable
 from .datasets import BaseDataset
-from .metrics import RunningScore
 from .schemas import BaseModelSchema
 
 
@@ -33,13 +31,12 @@ class BaseModel(nn.Module, Configurable):
 
         device_name = "cpu"
         if self.config.use_cuda and torch.cuda.is_available():
-            device_name = "cuda"
+            device_name = f"cuda:{self.config.rank}"
 
         self.device = torch.device(device_name)
 
         self.metrics = self.config.metrics
         self.num_classes = self.config.num_classes
-        self.running_metrics = RunningScore(self.num_classes, self.device)
         self.weights = self.config.weights
 
     def prepare(self):
@@ -371,9 +368,11 @@ class BaseModel(nn.Module, Configurable):
         Put the model on CPU or GPU
         :return:
         """
-        if torch.cuda.device_count() > 1:
-            self.model = nn.DataParallel(self.model)
         self.model = self.model.to(self.device)
+        if torch.cuda.device_count() > 1:
+            self.model = nn.parallel.DistributedDataParallel(
+                self.model, device_ids=[self.device]
+            )
         return self.model
 
     def save_model(self, model_directory, epoch, optimizer, loss, start, run_id):

@@ -1,3 +1,4 @@
+import dill
 import numpy as np
 import torch
 from ignite.metrics import confusion_matrix
@@ -19,6 +20,16 @@ class RunningScore(object):
         self.num_classes = num_classes
         self.device = device
         self.confusion_matrix = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["confusion_matrix"] = dill.dumps(state["confusion_matrix"])
+        return state
+
+    def __setstate__(self, state):
+        new_state = state
+        new_state["confusion_matrix"] = dill.loads(state["confusion_matrix"])
+        self.__dict__.update(new_state)
 
     def update(self, y_true, y_pred):
         """Updates stats on each batch"""
@@ -230,9 +241,15 @@ class SegmentationRunningScore(RunningScore):
 
     def __init__(self, num_classes, device):
         super().__init__(num_classes, device)
-        self.iou_per_class = torch.zeros(num_classes, dtype=torch.float64).to(self.device)
-        self.f1_score_per_class = torch.zeros(num_classes, dtype=torch.float64).to(self.device)
-        self.pixel_accuracy_per_class = torch.zeros(num_classes, dtype=torch.float64).to(self.device)
+        self.iou_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
+            self.device
+        )
+        self.f1_score_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
+            self.device
+        )
+        self.pixel_accuracy_per_class = torch.zeros(
+            num_classes, dtype=torch.float64
+        ).to(self.device)
         self.samples = 0
 
     def update(self, y_true, y_pred):
@@ -241,17 +258,29 @@ class SegmentationRunningScore(RunningScore):
         self.samples += num_batches
         for i in range(num_batches):
             for j in range(num_labels):
-                intersection = (y_pred[i, j, :, :].unsqueeze(0) & y_true[i, j, :, :].unsqueeze(0)).float().sum(
-                    (1, 2))
-                union = (y_pred[i, j, :, :].unsqueeze(0) | y_true[i, j, :, :].unsqueeze(0)).float().sum(
-                    (1, 2))
+                intersection = (
+                    (y_pred[i, j, :, :].unsqueeze(0) & y_true[i, j, :, :].unsqueeze(0))
+                    .float()
+                    .sum((1, 2))
+                )
+                union = (
+                    (y_pred[i, j, :, :].unsqueeze(0) | y_true[i, j, :, :].unsqueeze(0))
+                    .float()
+                    .sum((1, 2))
+                )
                 self.iou_per_class[j] += ((intersection + 1e-15) / (union + 1e-15))[0]
 
     def reset(self):
         """Reset the metrics"""
-        self.iou_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(self.device)
-        self.f1_score_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(self.device)
-        self.pixel_accuracy_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(self.device)
+        self.iou_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(
+            self.device
+        )
+        self.f1_score_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(
+            self.device
+        )
+        self.pixel_accuracy_per_class = torch.zeros(
+            self.num_classes, dtype=torch.float64
+        ).to(self.device)
         self.samples = 0
 
     def iou(self):

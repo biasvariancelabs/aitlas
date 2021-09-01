@@ -39,6 +39,7 @@ class BaseModelSchema(Schema):
         description="Classes weights you want to apply for the loss",
         example=[1.0, 2.3, 1.0],
     )
+    rank = fields.Integer(required=False, missing=0)
 
 
 class BaseClassifierSchema(BaseModelSchema):
