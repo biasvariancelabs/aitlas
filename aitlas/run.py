@@ -16,7 +16,7 @@ from .utils import get_class
 def setup(rank, world_size):
     os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = "12345"
-    os.environ["LOCAL_RANK"] = rank
+    os.environ["LOCAL_RANK"] = f"{rank}"
 
     # initialize the process group
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
@@ -30,11 +30,11 @@ def signal_handler(signal, frame):
     cleanup()
 
 
-# def run(rank, world_size, config):
-def run(rank, config):
+def run(rank, world_size, config):
+    # def run(rank, config):
     # signal.signal(signal.SIGINT, signal_handler)
-    # setup(rank, world_size)
-    # print(f"Running basic DDP example on rank {rank}.")
+    setup(rank, world_size)
+    print(f"Running basic DDP example on rank {rank}.")
 
     # load model, if specified
     model = None
@@ -49,7 +49,7 @@ def run(rank, config):
     task = task_cls(model, config.task.config)
     task.run()
 
-    # cleanup()
+    cleanup()
 
 
 def main(config_file):
@@ -66,9 +66,10 @@ def main(config_file):
 
     # run task
     if world_size > 1:
-        # mp.spawn(run, args=(world_size, config,), nprocs=world_size, join=True)
-        with idist.Parallel(backend="nccl", nproc_per_node=world_size) as parallel:
-            parallel.run(run, config)
+        mp.spawn(run, args=(world_size, config,), nprocs=world_size, join=True)
+        # idist.spawn("nccl", run, args=(config,), nproc_per_node=world_size)
+        # with idist.Parallel(backend="nccl", nproc_per_node=world_size) as parallel:
+        #     parallel.run(run, config)
     else:
         run(0, config)
 
