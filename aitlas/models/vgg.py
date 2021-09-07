@@ -18,7 +18,7 @@ def fc_init_weights(m):
 
 class VGG16(BaseMulticlassClassifier):
     def __init__(self, config):
-        BaseMultilabelClassifier.__init__(self, config)
+        super().__init__(config)
 
         if self.config.pretrained:
             self.model = models.vgg16(self.config.pretrained, False)
@@ -44,7 +44,7 @@ class VGG16(BaseMulticlassClassifier):
 
 class VGG19(BaseMulticlassClassifier):
     def __init__(self, config):
-        BaseMultilabelClassifier.__init__(self, config)
+        super().__init__(config)
 
         if self.config.pretrained:
             self.model = models.vgg19(self.config.pretrained, False)
@@ -70,7 +70,7 @@ class VGG19(BaseMulticlassClassifier):
 
 class VGG16MultiLabel(BaseMultilabelClassifier):
     def __init__(self, config):
-        BaseMultilabelClassifier.__init__(self, config)
+        super().__init__(config)
 
         if self.config.pretrained:
             self.model = models.vgg16(self.config.pretrained, False)
@@ -96,7 +96,7 @@ class VGG16MultiLabel(BaseMultilabelClassifier):
 
 class VGG19MultiLabel(BaseMultilabelClassifier):
     def __init__(self, config):
-        BaseMultilabelClassifier.__init__(self, config)
+        super().__init__(config)
 
         if self.config.pretrained:
             self.model = models.vgg19(self.config.pretrained, False)
@@ -118,4 +118,3 @@ class VGG19MultiLabel(BaseMultilabelClassifier):
         self.model.classifier = self.model.classifier[:-3]
 
         return self.model
-
