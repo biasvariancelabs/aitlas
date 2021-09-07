@@ -1,13 +1,16 @@
 import os
 import random
+from itertools import compress
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
-from itertools import compress
+
 from ..base import BaseDataset
-from ..utils import image_loader
+from ..utils import image_loader, load_voc_format_dataset
 from .schemas import MultiLabelClassificationDatasetSchema
+
 
 """
 The MultiLabelClassificationdataset is using the Pascal VOC data format
@@ -72,21 +75,24 @@ class MultiLabelClassificationDataset(BaseDataset):
     def show_image(self, index):
         labels_list = list(compress(self.labels, self[index][1]))
         fig = plt.figure(figsize=(8, 6))
-        plt.title(f"Image with index {index} from the dataset {self.get_name()}, with labels:\n "
-                  f"{str(labels_list).strip('[]')}\n", fontsize=14)
-        plt.axis('off')
+        plt.title(
+            f"Image with index {index} from the dataset {self.get_name()}, with labels:\n "
+            f"{str(labels_list).strip('[]')}\n",
+            fontsize=14,
+        )
+        plt.axis("off")
         plt.imshow(self[index][0])
         return fig
 
     def show_batch(self, size):
         if size % 3:
-            raise ValueError(
-                "The provided size should be divided by 4!"
-            )
+            raise ValueError("The provided size should be divided by 4!")
         image_indices = random.sample(range(0, len(self.data)), size)
-        figure_height = int(size/3) * 4
-        figure, ax = plt.subplots(int(size/3), 3, figsize=(20, figure_height))
-        figure.suptitle("Example images with labels from {}".format(self.get_name()), fontsize=32)
+        figure_height = int(size / 3) * 4
+        figure, ax = plt.subplots(int(size / 3), 3, figsize=(20, figure_height))
+        figure.suptitle(
+            "Example images with labels from {}".format(self.get_name()), fontsize=32
+        )
         for axes, image_index in zip(ax.flatten(), image_indices):
             axes.imshow(self[image_index][0])
             labels_list = list(compress(self.labels, self[image_index][1]))
@@ -100,29 +106,8 @@ class MultiLabelClassificationDataset(BaseDataset):
             axes.set_xticks([])
             axes.set_yticks([])
         figure.tight_layout()
-        #figure.subplots_adjust(top=0.88)
+        # figure.subplots_adjust(top=0.88)
         return figure
 
     def load_dataset(self, dir_path):
-        # read labels
-        multi_hot_labels = {}
-        with open(dir_path + "/multilabels.txt", "rb") as f:
-            lines = f.readlines()
-            for line in lines[1:]:
-                line = line.decode("utf-8")
-                labels_list = line[line.find("\t") + 1:].split("\t")
-                multi_hot_labels[line[: line.find("\t")]] = np.asarray(
-                    list((map(float, labels_list)))
-                )
-
-        images = []
-        dir = os.path.expanduser(dir_path + "/images")
-        # this ensures the image always have the same index numbers
-        for root, _, fnames in sorted(os.walk(dir)):
-            for fname in sorted(fnames):
-                path = os.path.join(root, fname)
-                multi_hot_label = multi_hot_labels[fname[: fname.find(".")]]
-                item = (path, multi_hot_label)
-                images.append(item)
-
-        return images
+        return load_voc_format_dataset(dir_path)
