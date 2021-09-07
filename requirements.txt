@@ -46,3 +46,6 @@ solaris~=0.4.0
 
 scikit-multilearn~=0.2.0
 arff~=0.9
+
+
+timm~=0.4.12
