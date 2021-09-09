@@ -7,4 +7,5 @@ from .utils import (
     pil_loader,
     stringify,
     tiff_loader,
+    split_images,
 )

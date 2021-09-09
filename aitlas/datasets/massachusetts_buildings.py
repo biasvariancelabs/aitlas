@@ -1,6 +1,8 @@
 import csv
+import cv2
 import os
 import numpy as np
+import glob
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
@@ -16,17 +18,18 @@ LABELS = ["Background", "Buildings"]
 COLOR_MAPPING = [[0, 0, 0], [255, 255, 255]]
 
 """
-For the Inria Aerial Image Labeling dataset the mask is in one file, each label is color coded.
+This dataset contains 1171 aerial images, along with their respective maps. 
+They are 1500 x 1500 in dimension and are in .tiff format
 """
 
 
-class InriaDataset(BaseDataset):
-    url = "https://project.inria.fr/aerialimagelabeling/"
+class MassachusettsBuildingsDataset(BaseDataset):
+    url = "https://www.cs.toronto.edu/~vmnih/data/"
 
     schema = SegmentationDatasetSchema
     labels = LABELS
     color_mapping = COLOR_MAPPING
-    name = "Inria dataset"
+    name = "Massachusetts Buildings dataset"
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data

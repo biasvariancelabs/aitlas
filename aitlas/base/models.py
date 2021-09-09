@@ -293,15 +293,15 @@ class BaseModel(nn.Module, Configurable):
 
         :return: tuple of (y_true, y_pred, y_pred_probs)
         """
-        # load the image and apply transformations, if transforms in None convert only to Tensor
+        # load the image and apply transformations
         self.model.eval()
         if data_transforms:
             image = data_transforms(image)
+        # check if tensor and convert to batch of size 1, otherwise convert to tensor and then to batch of size 1
+        if torch.is_tensor(image):
+            inputs = image.unsqueeze(0).to(self.device)
         else:
-            data_transforms = transforms.Compose([transforms.ToTensor(),])
-            image = data_transforms(image)
-        # convert to batch of size 1
-        inputs = image.unsqueeze(0).to(self.device)
+            inputs = torch.from_numpy(image).unsqueeze(0).to(self.device)
         outputs = self(inputs)
         # check if outputs is OrderedDict for segmentation
         if isinstance(outputs, collections.Mapping):
@@ -312,7 +312,7 @@ class BaseModel(nn.Module, Configurable):
         y_pred = list(predicted.cpu().detach().numpy())
         y_true = None
 
-        return y_true, y_pred, y_pred_probs
+        return y_true, y_pred[0], y_pred_probs[0]
 
     def predict_output_per_batch(self, dataloader, description):
         """Run predictions on a dataloader and return inputs, outputs, labels per batch"""
@@ -371,8 +371,8 @@ class BaseModel(nn.Module, Configurable):
         Put the model on CPU or GPU
         :return:
         """
-        if torch.cuda.device_count() > 1:
-            self.model = nn.DataParallel(self.model)
+        #if torch.cuda.device_count() > 1:
+        #    self.model = nn.DataParallel(self.model)
         self.model = self.model.to(self.device)
         return self.model
 

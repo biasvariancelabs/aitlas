@@ -1,43 +1,44 @@
-import csv
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
 
 from ..base import BaseDataset
 from ..utils import image_loader
 from .schemas import SegmentationDatasetSchema
+from matplotlib.patches import Patch
 
 #"Background": 0
 #"Buildings": 1
 
-LABELS = ["Background", "Buildings"]
+LABELS = ["Background", "Forest"]
 # Color mapping for the labels
 COLOR_MAPPING = [[0, 0, 0], [255, 255, 255]]
 
 """
-For the Inria Aerial Image Labeling dataset the mask is in one file, each label is color coded.
+The Amazon Rainforest dataset for semantic segmentation 
+contains GeoTIFF images with 512x512 pixels and associated PNG masks 
+(forest indicated in white and non-forest in black color)
 """
 
 
-class InriaDataset(BaseDataset):
-    url = "https://project.inria.fr/aerialimagelabeling/"
+class AmazonRainforestDataset(BaseDataset):
+    url = "https://zenodo.org/record/3233081#.YTYm_44zaUk"
 
     schema = SegmentationDatasetSchema
     labels = LABELS
     color_mapping = COLOR_MAPPING
-    name = "Inria dataset"
+    name = "Amazon Rainforest dataset"
 
     def __init__(self, config):
-        # now call the constructor to validate the schema and split the data
+        # now call the constructor to validate the schema
         BaseDataset.__init__(self, config)
         self.images = []
         self.masks = []
-        self.load_dataset(self.config.root, self.config.csv_file_path)
+        self.load_dataset(self.config.root)
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
-        mask = image_loader(self.masks[index], True) / 255
+        mask = image_loader(self.masks[index], False)
         masks = [(mask == v) for v, label in enumerate(self.labels)]
         mask = np.stack(masks, axis=-1).astype('float32')
         if self.transform:
@@ -49,16 +50,15 @@ class InriaDataset(BaseDataset):
     def __len__(self):
         return len(self.images)
 
-    def load_dataset(self, root_dir, file_path):
+    def load_dataset(self, root_dir):
         if not self.labels:
             raise ValueError(
                 "You need to provide the list of labels for the dataset"
             )
-        with open(file_path, "r") as f:
-            csv_reader = csv.reader(f)
-            for index, row in enumerate(csv_reader):
-                self.images.append(os.path.join(root_dir, row[0] + '.jpg'))
-                self.masks.append(os.path.join(root_dir, row[0] + '_m.png'))
+
+        ids = os.listdir(os.path.join(root_dir, 'images'))
+        self.images = [os.path.join(root_dir, 'images', image_id) for image_id in ids]
+        self.masks = [os.path.join(root_dir, 'masks', image_id) for image_id in ids]
 
     def get_labels(self):
         return self.labels
@@ -84,3 +84,4 @@ class InriaDataset(BaseDataset):
         plt.axis('off')
         plt.show()
         return fig
+
