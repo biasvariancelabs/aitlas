@@ -6,10 +6,10 @@ from shutil import copyfile
 import numpy as np
 import torch
 import torch.nn as nn
+from sklearn.metrics import f1_score
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
 from tqdm import tqdm
-from sklearn.metrics import f1_score
 
 from ..utils import current_ts, get_class, image_loader, stringify
 from .config import Configurable
@@ -100,6 +100,7 @@ class BaseModel(nn.Module, Configurable):
                 self.lr_scheduler.step()
 
             # evaluate against the train set
+            self.running_metrics.reset()
             train_loss = self.evaluate_model(
                 train_loader,
                 criterion=self.criterion,
@@ -112,10 +113,10 @@ class BaseModel(nn.Module, Configurable):
                 self.writer,
                 epoch + 1,
             )
-            self.running_metrics.reset()
 
             # evaluate against a validation set if there is one
             if val_loader:
+                self.running_metrics.reset()
                 val_loss = self.evaluate_model(
                     val_loader,
                     criterion=self.criterion,
@@ -129,7 +130,6 @@ class BaseModel(nn.Module, Configurable):
                     epoch + 1,
                 )
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
-                self.running_metrics.reset()
 
         self.writer.close()
 
