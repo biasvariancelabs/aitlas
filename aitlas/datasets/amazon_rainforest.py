@@ -38,7 +38,7 @@ class AmazonRainforestDataset(BaseDataset):
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
-        mask = image_loader(self.masks[index], False)
+        mask = image_loader(self.masks[index], True) / 255
         masks = [(mask == v) for v, label in enumerate(self.labels)]
         mask = np.stack(masks, axis=-1).astype('float32')
         if self.transform:
@@ -58,7 +58,8 @@ class AmazonRainforestDataset(BaseDataset):
 
         ids = os.listdir(os.path.join(root_dir, 'images'))
         self.images = [os.path.join(root_dir, 'images', image_id) for image_id in ids]
-        self.masks = [os.path.join(root_dir, 'masks', image_id) for image_id in ids]
+        self.masks = [os.path.join(root_dir, 'masks', image_id[:image_id.rfind(".")] + '.png') for image_id in ids]
+        print(self.masks)
 
     def get_labels(self):
         return self.labels

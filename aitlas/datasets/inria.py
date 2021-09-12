@@ -16,7 +16,11 @@ LABELS = ["Background", "Buildings"]
 COLOR_MAPPING = [[0, 0, 0], [255, 255, 255]]
 
 """
-For the Inria Aerial Image Labeling dataset the mask is in one file, each label is color coded.
+The training set contains 180 color image tiles of size 5000×5000, covering a surface of 1500 m × 1500 m each 
+(at a 30 cm resolution). The format is GeoTIFF (TIFF with georeferencing, but the images can be used as any other TIFF). 
+The reference data is in a different folder and the file names correspond exactly to those of the color images. 
+In the case of the reference data, the tiles are single-channel images 
+with values 255 for the building class and 0 for the not building class.
 """
 
 

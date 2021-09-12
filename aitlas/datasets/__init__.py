@@ -28,4 +28,8 @@ from .uc_merced_multilabel import UcMercedMultiLabelDataset
 from .whu_rs19 import WHURS19Dataset
 from .planet_uas import PlanetUASMultiLabelDataset
 from .inria import InriaDataset
+from .amazon_rainforest import AmazonRainforestDataset
+from .massachusetts_buildings import MassachusettsBuildingsDataset
+from .massachusetts_roads import MassachusettsRoadsDataset
+
 

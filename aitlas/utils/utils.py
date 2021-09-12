@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import tifffile
 import torch
+import subprocess
 
 from PIL import Image, ImageOps
 
@@ -196,4 +197,20 @@ def load_aitlas_format_dataset(file_path):
             data.append(item)
 
         return data
+
+
+# Run this function to submit the masks to inria contest for semantic segmentation
+# https://project.inria.fr/aerialimagelabeling/
+def submit_inria_results(input_dir, output_dir):
+    for file in os.listdir(input_dir):
+        if file.endswith("_Buildings.png"):
+            input_file = os.path.join(input_dir, file)
+            output_file = os.path.join(input_dir, file).replace("_Buildings.png", ".tif")
+            command = "gdal_translate -of GTiff " + input_file + " " + output_file
+            subprocess.call(command, shell=True)
+            input_file = os.path.join(input_dir, file).replace("_Buildings.png", ".tif")
+            output_file = os.path.join(output_dir, file).replace("_Buildings.png", ".tif")
+            command = "gdal_translate --config GDAL_PAM_ENABLED NO -co COMPRESS=CCITTFAX4 -co NBITS=1 " \
+                      + input_file + " " + output_file
+            subprocess.call(command, shell=True)
 

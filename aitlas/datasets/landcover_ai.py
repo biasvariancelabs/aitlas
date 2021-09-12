@@ -19,7 +19,9 @@ LABELS = ["Background", "Buildings", "Woodlands", "Water", "Road"]
 COLOR_MAPPING = [[255, 255, 0], [0, 0, 0], [0, 255, 0], [0, 0, 255], [200, 200, 200]]
 
 """
-For the LandCover Ai dataset the mask is in one file, each label is color coded.
+41 orthophoto tiles from different counties located in all regions. Every tile has about 5 km2. 
+There are 33 images with resolution 25cm (ca. 9000 × 9500 px) and 8 images with resolution 50cm (ca. 4200 × 4700 px)
+Tne masks are codded with building (1), woodland (2), water (3), and road (4)
 """
 
 
