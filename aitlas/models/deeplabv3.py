@@ -8,7 +8,7 @@ from ..base import BaseSegmentationClassifier
 
 class DeepLabV3(BaseSegmentationClassifier):
     def __init__(self, config):
-        BaseSegmentationClassifier.__init__(self, config)
+        super().__init__(config)
 
         self.model = models.segmentation.deeplabv3_resnet101(
             pretrained=self.config.pretrained, progress=True

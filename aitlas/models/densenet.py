@@ -6,7 +6,7 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 class DenseNet201(BaseMulticlassClassifier):
     def __init__(self, config):
-        BaseMulticlassClassifier.__init__(self, config)
+        super().__init__(config)
 
         if self.config.pretrained:
             self.model = models.densenet201(self.config.pretrained, False)
@@ -29,7 +29,7 @@ class DenseNet201(BaseMulticlassClassifier):
 
 class DenseNet201MultiLabel(BaseMultilabelClassifier):
     def __init__(self, config):
-        BaseMultilabelClassifier.__init__(self, config)
+        super().__init__(config)
 
         if self.config.pretrained:
             self.model = models.densenet201(self.config.pretrained, False)
@@ -48,6 +48,3 @@ class DenseNet201MultiLabel(BaseMultilabelClassifier):
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model
-
-
-
