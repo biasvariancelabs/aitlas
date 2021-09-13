@@ -369,7 +369,7 @@ class BaseModel(nn.Module, Configurable):
         :return:
         """
         self.model = self.model.to(self.device)
-        if torch.cuda.device_count() > 1:
+        if self.config.use_ddp and torch.cuda.device_count() > 1:
             self.model = nn.parallel.DistributedDataParallel(
                 self.model, device_ids=[self.device]
             )

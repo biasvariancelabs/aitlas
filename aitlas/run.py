@@ -8,11 +8,15 @@ from .base import Config, RunConfig
 from .utils import get_class
 
 
-def run(rank, world_size, config):
+def run(rank, config):
     # load model, if specified
     model = None
     if config.model:
+        # pass additional parameters to the model
         config.model.config.rank = rank
+        config.model.config.use_ddp = config.use_ddp
+
+        # initialize model
         model_cls = get_class(config.model.classname)
         model = model_cls(config.model.config)
         model.prepare()
@@ -36,8 +40,8 @@ def main(config_file):
     world_size = torch.cuda.device_count()
 
     # run task
-    if world_size > 1:
-        with idist.Parallel(backend="nccl", nproc_per_node=world_size) as parallel:
+    if config.use_ddp and world_size > 1:
+        with idist.Parallel(backend="gloo", nproc_per_node=world_size) as parallel:
             parallel.run(run, config)
     else:
         run(0, config)
