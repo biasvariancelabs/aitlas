@@ -11,16 +11,16 @@
         "classname": "aitlas.tasks.TrainAndEvaluateTask",
           "config": {
               "epochs": 50,
-              "model_directory": "examples/experiments/",
+              "model_directory": ".experiments/",
               "save_epochs": 10,
               "id": "camvid",
               "train_dataset_config":{
                   "classname": "aitlas.datasets.CamVidDataset",
                   "config": {
-                      "batch_size": 4,
+                      "batch_size": 2,
                       "shuffle": true,
                       "num_workers": 1,
-                      "root": "/media/hdd/CamVid/train",
+                      "root": "./data/CamVid/train",
                       "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
                       "target_transforms": ["aitlas.transforms.Transponse"]
                   }
@@ -31,7 +31,7 @@
                         "batch_size": 1,
                         "shuffle": false,
                         "num_workers": 1,
-                        "root": "/media/hdd/CamVid/test",
+                        "root": "./data/CamVid/test",
                         "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
                         "target_transforms": ["aitlas.transforms.Transponse"]
                     }
