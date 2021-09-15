@@ -1,22 +1,19 @@
 import logging
 import os
 import sys
-import collections
 
 from tqdm import tqdm
 
 import math
 
-import numpy as np
 import torch
-import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 
 from aitlas.base.datasets import BaseDataset
 from aitlas.base.models import BaseModel
 from .schemas import BaseDetectionClassifierSchema
-from aitlas.utils import current_ts, get_class, stringify
+from aitlas.utils import current_ts
 
 from .metrics import DetectionRunningScore
 
