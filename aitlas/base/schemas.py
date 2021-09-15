@@ -39,6 +39,10 @@ class BaseModelSchema(Schema):
         description="Classes weights you want to apply for the loss",
         example=[1.0, 2.3, 1.0],
     )
+    rank = fields.Integer(required=False, missing=0)
+    use_ddp = fields.Boolean(
+        required=False, missing=False, description="Turn on distributed data processing"
+    )
 
 
 class BaseClassifierSchema(BaseModelSchema):

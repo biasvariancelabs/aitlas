@@ -1,10 +1,30 @@
 import argparse
 import json
 
-import torch.nn as nn
+import ignite.distributed as idist
+import torch
 
 from .base import Config, RunConfig
 from .utils import get_class
+
+
+def run(rank, config):
+    # load model, if specified
+    model = None
+    if config.model:
+        # pass additional parameters to the model
+        config.model.config.rank = rank
+        config.model.config.use_ddp = config.use_ddp
+
+        # initialize model
+        model_cls = get_class(config.model.classname)
+        model = model_cls(config.model.config)
+        model.prepare()
+
+    # load task
+    task_cls = get_class(config.task.classname)
+    task = task_cls(model, config.task.config)
+    task.run()
 
 
 def main(config_file):
@@ -16,19 +36,15 @@ def main(config_file):
     # load configuration
     config = Config(RunConfig().load(config))
 
-    # load model, if specified
-    model = None
-    if config.model:
-        model_cls = get_class(config.model.classname)
-        model = model_cls(config.model.config)
-        model.prepare()
-
-    # load task
-    task_cls = get_class(config.task.classname)
-    task = task_cls(model, config.task.config)
+    # check if there are multiple GPUs
+    world_size = torch.cuda.device_count()
 
     # run task
-    task.run()
+    if config.use_ddp and world_size > 1:
+        with idist.Parallel(backend="gloo", nproc_per_node=world_size) as parallel:
+            parallel.run(run, config)
+    else:
+        run(0, config)
 
 
 if __name__ == "__main__":
@@ -40,4 +56,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    print("Do")
     main(config_file=args.config)
+    print("Done")

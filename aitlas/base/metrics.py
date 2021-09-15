@@ -1,3 +1,4 @@
+import dill
 import numpy as np
 import torch
 from ignite.metrics import confusion_matrix
@@ -19,6 +20,16 @@ class RunningScore(object):
         self.num_classes = num_classes
         self.device = device
         self.confusion_matrix = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["confusion_matrix"] = dill.dumps(state["confusion_matrix"])
+        return state
+
+    def __setstate__(self, state):
+        new_state = state
+        new_state["confusion_matrix"] = dill.loads(state["confusion_matrix"])
+        self.__dict__.update(new_state)
 
     def update(self, y_true, y_pred):
         """Updates stats on each batch"""
