@@ -4,8 +4,12 @@ import torch
 from collections import Counter
 from aitlas.base import BaseMetric
 
+'''These classes had to be overwritten for an Object Detection scenario since the update (DetectionRunningScore) and calculate (mAP) methods
+   get parameters in a specific format, bounding boxes.'''
+
+
 class DetectionRunningScore(object):
-    """Generic metric container class. This class contains metrics that are averaged over batches. """
+    """Generic metric container class. This class contains metrics that are averaged over batches."""
 
     def __init__(self, metrics, num_classes, device):
         self.calculated_metrics = {}
@@ -37,12 +41,8 @@ class DetectionRunningScore(object):
             else:
                 self.calculated_metrics[metric.name].append(calculated)
 
-        # # update confusion matrix
-        # for lt, lp in zip(y_true, y_pred):
-        #     self.confusion_matrix += self._fast_hist(
-        #         lt.flatten(), lp.flatten(), self.num_classes
-        #     )
-
+    # THE METHODS WHICH FOLLOW HAVE NOT BEEN CHECKED FOR COMPATIBILITY WITHIN A DETECTION SCENARIO
+    #################################################################################################
     def _fast_hist(self, label_true, label_pred, n_class):
         mask = (label_true >= 0) & (label_true < n_class)
         hist = np.bincount(
@@ -95,51 +95,7 @@ class DetectionRunningScore(object):
             "intersection_over_union": intersection_over_union,
             "intersection_over_union_per_class": intersection_over_union_per_class,
         }
-
-class IoU(BaseMetric):
-    name = "IoU"
-    key = "iou"
-
-    def __init__(self, **kwargs):
-        BaseMetric.__init__(self, **kwargs)
-        self.method = None
-
-    def calculate(self, y_true, y_pred, eps=1e-7):
-        total_score = 0.0
-        for i, item in enumerate(y_true):
-            predictions = torch.from_numpy(np.array(y_pred[i]))
-            labels = torch.from_numpy(np.array(y_true[i]))
-
-            predictions = predictions.to(self.device)
-            labels = labels.to(self.device)
-
-            intersection = torch.sum(labels * predictions)
-            union = torch.sum(labels) + torch.sum(predictions) - intersection + eps
-            total_score += (intersection + eps) / union
-
-        return float(total_score / len(y_true))
-
-class Accuracy(BaseMetric):
-    name = "Accuracy"
-    key = "accuracy"
-
-    def __init__(self, **kwargs):
-        BaseMetric.__init__(self, **kwargs)
-        self.method = None
-
-    def calculate(self, y_true, y_pred):
-        total_score = 0.0
-        for i, item in enumerate(y_true):
-            predictions = torch.from_numpy(np.array(y_pred[i]))
-            labels = torch.from_numpy(np.array(y_true[i]))
-
-            predictions = predictions.to(self.device)
-            labels = labels.to(self.device)
-
-            tp = torch.sum(labels == predictions, dtype=predictions.dtype)
-            total_score += tp / labels.view(-1).shape[0]
-
-        return float(total_score / len(y_true))
+    #################################################################################################
 
 class mAP (BaseMetric):
     name = "Mean Average Precision"
@@ -192,6 +148,8 @@ class mAP (BaseMetric):
         return intersection / (box1_area + box2_area - intersection + 1e-6)
 
     def calculate(self, pred_boxes, true_boxes, iou_threshold=0.5, box_format="corners", num_classes = 3):
+        '''This should be re-written because it is quite slow'''
+        
         # pred_boxes (list): [[train_idx, class_pred, prob_score, x1, y1, x2, y2]]
         # list storing all AP for respective classes
         average_precisions = []
@@ -206,6 +164,7 @@ class mAP (BaseMetric):
             # Go through all predictions and targets,
             # and only add the ones that belong to the
             # current class c
+
             for detection in pred_boxes:
                 if detection[1] == c:
                     detections.append(detection)
