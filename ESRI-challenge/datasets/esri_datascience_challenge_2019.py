@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import random
 from PIL import Image
 
 import torch
@@ -15,6 +16,11 @@ class ToTensor(object):
 
 def collate_fn(batch):
     return tuple(zip(*batch))
+
+category_mapping = {
+    "car":1,
+    "pool":2
+}
 
 class ESRI_challenge_2019 (torch.utils.data.Dataset):
     def __init__(self, root, subset, subsample_percentage, batch_size = 4, shuffle = True, num_workers=4):
@@ -37,9 +43,8 @@ class ESRI_challenge_2019 (torch.utils.data.Dataset):
 
         # select a subset of these images for training and testing
         # the reason for this subsampling is computational complexity only
-        
         num_subsampled_imgs = int (subsample_percentage * len(self.imgs))
-        selected = np.random.randint (0, high = len(self.imgs), size = num_subsampled_imgs, dtype=int)
+        selected = random.sample(range(0, len(self.imgs)), num_subsampled_imgs)
 
         self.imgs = [self.imgs[idx] for idx in range(len(self.imgs)) if idx in selected]
         self.labels = [self.labels[idx] for idx in range(len(self.labels)) if idx in selected]
@@ -53,7 +58,6 @@ class ESRI_challenge_2019 (torch.utils.data.Dataset):
         
         img = Image.open(img_path).convert("RGB")
         
-        
         '''
         should end up with a dictionary like this:
         
@@ -64,7 +68,6 @@ class ESRI_challenge_2019 (torch.utils.data.Dataset):
         target["image_id"] = image_id
         target["area"] = area
         target["iscrowd"] = iscrowd
-
         '''
         label_xml = ET.parse(label_path)
         root = label_xml.getroot()
@@ -108,4 +111,7 @@ class ESRI_challenge_2019 (torch.utils.data.Dataset):
         return len(self.imgs)
 
     def dataloader(self):
-        return torch.utils.data.DataLoader(self, batch_size=self.batch_size, shuffle=self.shuffle, num_workers=self.num_workers, collate_fn=collate_fn)
+        return torch.utils.data.DataLoader(self, batch_size=self.batch_size, 
+                                           shuffle=self.shuffle,
+                                           num_workers=self.num_workers, 
+                                           collate_fn=collate_fn)
