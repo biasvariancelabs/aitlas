@@ -1,3 +1,4 @@
+from .segmentation_losses import *
 from .utils import (
     current_ts,
     get_class,
@@ -8,7 +9,7 @@ from .utils import (
     load_voc_format_dataset,
     parse_img_id,
     pil_loader,
+    split_images,
     stringify,
     tiff_loader,
-    split_images,
 )
