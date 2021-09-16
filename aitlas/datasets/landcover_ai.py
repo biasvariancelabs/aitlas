@@ -22,6 +22,7 @@ COLOR_MAPPING = [[255, 255, 0], [0, 0, 0], [0, 255, 0], [0, 0, 255], [200, 200, 
 41 orthophoto tiles from different counties located in all regions. Every tile has about 5 km2. 
 There are 33 images with resolution 25cm (ca. 9000 × 9500 px) and 8 images with resolution 50cm (ca. 4200 × 4700 px)
 Tne masks are codded with building (1), woodland (2), water (3), and road (4)
+Use function split_images from utils to split the images and the masks in smaller patches
 """
 
 
@@ -31,7 +32,7 @@ class LandCoverAiDataset(BaseDataset):
     schema = SegmentationDatasetSchema
     labels = LABELS
     color_mapping = COLOR_MAPPING
-    name = "Landcover AI dataset"
+    name = "Landcover AI"
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data

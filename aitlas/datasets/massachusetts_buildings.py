@@ -15,7 +15,7 @@ from .schemas import SegmentationDatasetSchema
 
 LABELS = ["Background", "Buildings"]
 # Color mapping for the labels
-COLOR_MAPPING = [[0, 0, 0], [255, 255, 255]]
+COLOR_MAPPING = [[0, 0, 0], [255, 0, 0]]
 
 """
 This dataset contains 1171 aerial images, along with their respective maps. 
@@ -40,7 +40,7 @@ class MassachusettsBuildingsDataset(BaseDataset):
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
-        mask = image_loader(self.masks[index], True) / 255
+        mask = image_loader(self.masks[index], True) / 76
         masks = [(mask == v) for v, label in enumerate(self.labels)]
         mask = np.stack(masks, axis=-1).astype('float32')
         if self.transform:

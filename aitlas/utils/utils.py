@@ -81,10 +81,10 @@ def parse_img_id(file_path, orients):
 
 
 # Run this Function to split images into XxX pieces, and file out.txt containing the lists of patches
-# Example call: split_images("./inria/images", "./inria/masks", "./inria/output", 500)
-def split_images(images_dir, masks_dir, output_dir, target_size):
-    img_paths = glob.glob(os.path.join(images_dir, "*.tif"))
-    mask_paths = glob.glob(os.path.join(masks_dir, "*.tif"))
+# Example call: split_images("./inria/images", "*.tiff", "./inria/masks", "*.tif", "./inria/output", 500)
+def split_images(images_dir, ext_images, masks_dir, ext_masks, output_dir, target_size):
+    img_paths = glob.glob(os.path.join(images_dir, ext_images))
+    mask_paths = glob.glob(os.path.join(masks_dir, ext_masks))
     file = open("list_patches.txt", "w")
 
     img_paths.sort()
@@ -96,7 +96,6 @@ def split_images(images_dir, masks_dir, output_dir, target_size):
         mask_filename = os.path.splitext(os.path.basename(mask_path))[0]
         img = cv2.imread(img_path)
         mask = cv2.imread(mask_path)
-        print(img_path, mask_path)
 
         assert img_filename == mask_filename and img.shape[:2] == mask.shape[:2]
 
@@ -113,12 +112,12 @@ def split_images(images_dir, masks_dir, output_dir, target_size):
                     out_mask_path = os.path.join(output_dir, "{}_{}_m.png".format(mask_filename, k))
                     cv2.imwrite(out_mask_path, mask_tile)
 
-                    file.write(img_filename + "\n")
+                    file.write("{}_{}".format(img_filename, k) + "\n")
 
                 k += 1
 
         print("Processed {} {}/{}".format(img_filename, i + 1, len(img_paths)))
-        file.close()
+    file.close()
 
 
 def load_voc_format_dataset(dir):

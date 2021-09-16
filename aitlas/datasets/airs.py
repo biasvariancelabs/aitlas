@@ -1,6 +1,8 @@
 import csv
+import cv2
 import os
 import numpy as np
+import glob
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
@@ -9,29 +11,25 @@ from ..utils import image_loader
 from .schemas import SegmentationDatasetSchema
 
 #"Background": 0
-#"Buildings": 1
+#"Roof": 1
 
-LABELS = ["Background", "Buildings"]
+LABELS = ["Background", "Roof "]
 # Color mapping for the labels
 COLOR_MAPPING = [[0, 0, 0], [255, 255, 255]]
 
 """
-The training set contains 180 color image tiles of size 5000×5000, covering a surface of 1500 m × 1500 m each 
-(at a 30 cm resolution). The format is GeoTIFF (TIFF with georeferencing, but the images can be used as any other TIFF). 
-The reference data is in a different folder and the file names correspond exactly to those of the color images. 
-In the case of the reference data, the tiles are single-channel images 
-with values 255 for the building class and 0 for the not building class.
-Use function split_images from utils to split the images and the masks in smaller patches
+This dataset contains 1171 aerial images, along with their respective maps. 
+They are 1500 x 1500 in dimension and are in .tiff format
 """
 
 
-class InriaDataset(BaseDataset):
-    url = "https://project.inria.fr/aerialimagelabeling/"
+class AIRSDataset(BaseDataset):
+    url = "https://www.airs-dataset.com/"
 
     schema = SegmentationDatasetSchema
     labels = LABELS
     color_mapping = COLOR_MAPPING
-    name = "Inria"
+    name = "AIRS"
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
@@ -42,11 +40,9 @@ class InriaDataset(BaseDataset):
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
-        mask = image_loader(self.masks[index], True) / 255
+        mask = image_loader(self.masks[index], True)
         masks = [(mask == v) for v, label in enumerate(self.labels)]
         mask = np.stack(masks, axis=-1).astype('float32')
-        if self.joint_transform:
-            image, mask = self.joint_transform(image, mask)
         if self.transform:
             image = self.transform(image)
         if self.target_transform:

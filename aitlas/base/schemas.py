@@ -16,6 +16,9 @@ class BaseDatasetSchema(Schema):
     target_transforms = fields.List(
         fields.String, missing=None, description="Classes to run transformations.",
     )
+    joint_transforms = fields.List(
+        fields.String, missing=None, description="Classes to run transformations.",
+    )
     labels = fields.List(
         fields.String, missing=None, description="Labels for the dataset",
     )

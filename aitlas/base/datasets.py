@@ -29,6 +29,7 @@ class BaseDataset(Dataset, Configurable):
         # get the transformations to be applied for the image and for the target
         self.transform = self.load_transforms(self.config.transforms)
         self.target_transform = self.load_transforms(self.config.target_transforms)
+        self.joint_transform = self.load_transforms(self.config.joint_transforms)
 
     def __getitem__(self, index):
         """ Implement here what you want to return"""

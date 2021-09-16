@@ -10,19 +10,20 @@
     "task": {
         "classname": "aitlas.tasks.TrainTask",
           "config": {
-              "epochs": 10,
+              "epochs": 100,
               "model_directory": "examples/experiments/",
-              "save_epochs": 5,
+              "save_epochs": 10,
               "id": "inria",
               "dataset_config":{
                   "classname": "aitlas.datasets.InriaDataset",
                   "config": {
-                      "batch_size": 4,
+                      "batch_size": 8,
                       "shuffle": true,
                       "num_workers": 1,
-                      "csv_file_path": "/media/ssd/AerialImageDataset/train/train.txt",
-                      "root": "/media/ssd/AerialImageDataset/train/output",
-                      "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
+                      "csv_file_path": "/home/dkocev/data/inria/train.txt",
+                      "root": "/home/dkocev/data/inria/output",
+                      "joint_transforms": ["aitlas.transforms.FlipHVRandomRotate"],
+                      "transforms": ["aitlas.transforms.ColorTransformations", "aitlas.transforms.MinMaxNormTransponse"],
                       "target_transforms": ["aitlas.transforms.Transponse"]
                   }
               }
