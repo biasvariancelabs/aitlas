@@ -1,6 +1,6 @@
 {
     "model": {
-        "classname": "aitlas.models.DeepLabV3",
+        "classname": "aitlas.models.HRNet",
         "config": {
             "num_classes": 12,
             "learning_rate": 0.0001,
@@ -21,8 +21,8 @@
                       "shuffle": true,
                       "num_workers": 1,
                       "root": "./data/CamVid/train",
-                      "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
-                      "target_transforms": ["aitlas.transforms.Transponse"]
+                      "transforms": ["aitlas.transforms.ResizeToTensor"],
+                      "target_transforms": ["aitlas.transforms.Transponse", "aitlas.transforms.ResizePerChannelToTensor"]
                   }
               },
               "val_dataset_config":{
@@ -32,8 +32,8 @@
                         "shuffle": false,
                         "num_workers": 1,
                         "root": "./data/CamVid/test",
-                        "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
-                        "target_transforms": ["aitlas.transforms.Transponse"]
+                      "transforms": ["aitlas.transforms.ResizeToTensor"],
+                      "target_transforms": ["aitlas.transforms.Transponse", "aitlas.transforms.ResizePerChannelToTensor"]
                     }
               }
         }
