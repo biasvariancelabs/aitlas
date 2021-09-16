@@ -6,7 +6,7 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 class AlexNet(BaseMulticlassClassifier):
     def __init__(self, config):
-        BaseMulticlassClassifier.__init__(self, config)
+        super().__init__(config)
 
         if self.config.pretrained:
             self.model = models.alexnet(self.config.pretrained, False)
@@ -32,7 +32,7 @@ class AlexNet(BaseMulticlassClassifier):
 
 class AlexNetMultiLabel(BaseMultilabelClassifier):
     def __init__(self, config):
-        BaseMultilabelClassifier.__init__(self, config)
+        super().__init__(config)
 
         if self.config.pretrained:
             self.model = models.alexnet(self.config.pretrained, False)

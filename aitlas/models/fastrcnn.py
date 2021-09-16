@@ -7,9 +7,8 @@ from ..base import BaseSegmentationClassifier
 
 
 class FastRCNN(BaseSegmentationClassifier):
-
     def __init__(self, config):
-        BaseSegmentationClassifier.__init__(self, config)
+        super().__init__(config)
 
         # load an instance segmentation model pre-trained pre-trained on COCO
         self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(

@@ -4,22 +4,25 @@
 #
 """
 import random
+
 import numpy as np
-from skimage.filters import gaussian
-from skimage.restoration import denoise_bilateral
 import torch
-from PIL import Image, ImageEnhance
 import torchvision.transforms as torch_tr
 from config import cfg
+from PIL import Image, ImageEnhance
 from scipy.ndimage.interpolation import shift
+from skimage.filters import gaussian
+from skimage.restoration import denoise_bilateral
 from skimage.segmentation import find_boundaries
+from torchvision import transforms as torch_tr
+
+from ..base import BaseTransforms
+
 
 try:
     import accimage
 except ImportError:
     accimage = None
-
-from ..base import BaseTransforms
 
 
 class MinMaxNormTransponse(BaseTransforms):
@@ -89,9 +92,9 @@ class RelaxedBoundaryLossToTensor(object):
         one_hot = 0
 
         border = cfg.BORDER_WINDOW
-        if (cfg.REDUCE_BORDER_EPOCH != -1 and cfg.EPOCH > cfg.REDUCE_BORDER_EPOCH):
+        if cfg.REDUCE_BORDER_EPOCH != -1 and cfg.EPOCH > cfg.REDUCE_BORDER_EPOCH:
             border = border // 2
-            border_prediction = find_boundaries(img_arr, mode='thick').astype(np.uint8)
+            border_prediction = find_boundaries(img_arr, mode="thick").astype(np.uint8)
 
         for i in range(-border, border + 1):
             for j in range(-border, border + 1):
@@ -105,7 +108,7 @@ class RelaxedBoundaryLossToTensor(object):
 
         one_hot = np.moveaxis(one_hot, -1, 0)
 
-        if (cfg.REDUCE_BORDER_EPOCH != -1 and cfg.EPOCH > cfg.REDUCE_BORDER_EPOCH):
+        if cfg.REDUCE_BORDER_EPOCH != -1 and cfg.EPOCH > cfg.REDUCE_BORDER_EPOCH:
             one_hot = np.where(border_prediction, 2 * one_hot, 1 * one_hot)
             # print(one_hot.shape)
         return torch.from_numpy(one_hot).byte()
@@ -168,7 +171,9 @@ class RandomBilateralBlur(object):
 
     def __call__(self, img):
         sigma = random.uniform(0.05, 0.75)
-        blurred_img = denoise_bilateral(np.array(img), sigma_spatial=sigma, multichannel=True)
+        blurred_img = denoise_bilateral(
+            np.array(img), sigma_spatial=sigma, multichannel=True
+        )
         blurred_img *= 255
         return Image.fromarray(blurred_img.astype(np.uint8))
 
@@ -191,7 +196,7 @@ def adjust_brightness(img, brightness_factor):
         PIL Image: Brightness adjusted image.
     """
     if not _is_pil_image(img):
-        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+        raise TypeError("img should be PIL Image. Got {}".format(type(img)))
 
     enhancer = ImageEnhance.Brightness(img)
     img = enhancer.enhance(brightness_factor)
@@ -209,7 +214,7 @@ def adjust_contrast(img, contrast_factor):
         PIL Image: Contrast adjusted image.
     """
     if not _is_pil_image(img):
-        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+        raise TypeError("img should be PIL Image. Got {}".format(type(img)))
 
     enhancer = ImageEnhance.Contrast(img)
     img = enhancer.enhance(contrast_factor)
@@ -227,7 +232,7 @@ def adjust_saturation(img, saturation_factor):
         PIL Image: Saturation adjusted image.
     """
     if not _is_pil_image(img):
-        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+        raise TypeError("img should be PIL Image. Got {}".format(type(img)))
 
     enhancer = ImageEnhance.Color(img)
     img = enhancer.enhance(saturation_factor)
@@ -253,24 +258,24 @@ def adjust_hue(img, hue_factor):
         PIL Image: Hue adjusted image.
     """
     if not (-0.5 <= hue_factor <= 0.5):
-        raise ValueError('hue_factor is not in [-0.5, 0.5].'.format(hue_factor))
+        raise ValueError("hue_factor is not in [-0.5, 0.5].".format(hue_factor))
 
     if not _is_pil_image(img):
-        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+        raise TypeError("img should be PIL Image. Got {}".format(type(img)))
 
     input_mode = img.mode
-    if input_mode in {'L', '1', 'I', 'F'}:
+    if input_mode in {"L", "1", "I", "F"}:
         return img
 
-    h, s, v = img.convert('HSV').split()
+    h, s, v = img.convert("HSV").split()
 
     np_h = np.array(h, dtype=np.uint8)
     # uint8 addition take cares of rotation across boundaries
-    with np.errstate(over='ignore'):
+    with np.errstate(over="ignore"):
         np_h += np.uint8(hue_factor * 255)
-    h = Image.fromarray(np_h, 'L')
+    h = Image.fromarray(np_h, "L")
 
-    img = Image.merge('HSV', (h, s, v)).convert(input_mode)
+    img = Image.merge("HSV", (h, s, v)).convert(input_mode)
     return img
 
 
@@ -303,24 +308,30 @@ class ColorJitter(object):
         """
         transforms = []
         if brightness > 0:
-            brightness_factor = np.random.uniform(max(0, 1 - brightness), 1 + brightness)
+            brightness_factor = np.random.uniform(
+                max(0, 1 - brightness), 1 + brightness
+            )
             transforms.append(
-                torch_tr.Lambda(lambda img: adjust_brightness(img, brightness_factor)))
+                torch_tr.Lambda(lambda img: adjust_brightness(img, brightness_factor))
+            )
 
         if contrast > 0:
             contrast_factor = np.random.uniform(max(0, 1 - contrast), 1 + contrast)
             transforms.append(
-                torch_tr.Lambda(lambda img: adjust_contrast(img, contrast_factor)))
+                torch_tr.Lambda(lambda img: adjust_contrast(img, contrast_factor))
+            )
 
         if saturation > 0:
-            saturation_factor = np.random.uniform(max(0, 1 - saturation), 1 + saturation)
+            saturation_factor = np.random.uniform(
+                max(0, 1 - saturation), 1 + saturation
+            )
             transforms.append(
-                torch_tr.Lambda(lambda img: adjust_saturation(img, saturation_factor)))
+                torch_tr.Lambda(lambda img: adjust_saturation(img, saturation_factor))
+            )
 
         if hue > 0:
             hue_factor = np.random.uniform(-hue, hue)
-            transforms.append(
-                torch_tr.Lambda(lambda img: adjust_hue(img, hue_factor)))
+            transforms.append(torch_tr.Lambda(lambda img: adjust_hue(img, hue_factor)))
 
         np.random.shuffle(transforms)
         transform = torch_tr.Compose(transforms)
@@ -334,6 +345,41 @@ class ColorJitter(object):
         Returns:
             PIL Image: Color jittered image.
         """
-        transform = self.get_params(self.brightness, self.contrast,
-                                    self.saturation, self.hue)
+        transform = self.get_params(
+            self.brightness, self.contrast, self.saturation, self.hue
+        )
         return transform(img)
+
+
+class ResizeToTensor(BaseTransforms):
+    def __call__(self, sample):
+        data_transforms = transforms.Compose(
+            [
+                transforms.ToPILImage(),
+                transforms.Resize((256, 256)),
+                transforms.ToTensor(),
+            ]
+        )
+
+        return data_transforms(sample)
+
+
+class ResizePerChannelToTensor(BaseTransforms):
+    def __call__(self, sample):
+        """Applies transformations per channel. Assumes this format: (channel, h, w)"""
+
+        data_transforms = transforms.Compose(
+            [
+                transforms.ToPILImage(),
+                transforms.Resize((256, 256)),
+                transforms.ToTensor(),
+            ]
+        )
+
+        x = []
+        # apply transformations to each channel
+        for ch in sample:
+            x.append(data_transforms(ch))
+
+        # this is the multichannel transformed image (a torch tensor)
+        return torch.cat(x)
