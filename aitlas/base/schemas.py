@@ -56,7 +56,7 @@ class BaseClassifierSchema(BaseModelSchema):
 class BaseSegmentationClassifierSchema(BaseClassifierSchema):
     metrics = fields.List(
         fields.String,
-        missing=["iou"],
+        missing=["iou", "f1_score", "accuracy"],
         description="Classes of metrics you want to calculate",
         example=["accuracy", "precision", "recall", "f1_score", "iou"],
     )

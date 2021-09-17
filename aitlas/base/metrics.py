@@ -236,6 +236,12 @@ class SegmentationRunningScore(RunningScore):
         self.f1_score_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
             self.device
         )
+        self.intersection_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
+            self.device
+        )
+        self.total_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
+            self.device
+        )
         self.pixel_accuracy_per_class = torch.zeros(
             num_classes, dtype=torch.float64
         ).to(self.device)
@@ -243,21 +249,24 @@ class SegmentationRunningScore(RunningScore):
 
     def update(self, y_true, y_pred):
         """Updates metrics on each batch"""
-        num_batches, num_labels, h, w = y_true.shape
-        self.samples += num_batches
-        for i in range(num_batches):
+        num_images, num_labels, h, w = y_true.shape
+        self.samples += num_images
+        for i in range(num_images):
             for j in range(num_labels):
-                intersection = (
-                    (y_pred[i, j, :, :].unsqueeze(0) & y_true[i, j, :, :].unsqueeze(0))
-                    .float()
-                    .sum((1, 2))
+                y_pred_local = y_pred[i, j, :, :].unsqueeze(0)
+                y_true_local = y_true[i, j, :, :].unsqueeze(0)
+                intersection = (y_pred_local & y_true_local).float().sum()
+                union = (y_pred_local | y_true_local).float().sum()
+                correct = (y_pred_local == y_true_local).int().sum()
+
+                total = y_true_local.numel()
+                trues = y_pred_local.float().sum() + y_true_local.float().sum()
+
+                self.iou_per_class[j] += 1 if union == 0 else (intersection / union)
+                self.f1_score_per_class[j] += (
+                    1 if trues == 0 else (2 * intersection / trues)
                 )
-                union = (
-                    (y_pred[i, j, :, :].unsqueeze(0) | y_true[i, j, :, :].unsqueeze(0))
-                    .float()
-                    .sum((1, 2))
-                )
-                self.iou_per_class[j] += ((intersection + 1e-15) / (union + 1e-15))[0]
+                self.pixel_accuracy_per_class[j] += correct / total
 
     def reset(self):
         """Reset the metrics"""
@@ -267,10 +276,30 @@ class SegmentationRunningScore(RunningScore):
         self.f1_score_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(
             self.device
         )
+        self.intersection_per_class = torch.zeros(
+            self.num_classes, dtype=torch.float64
+        ).to(self.device)
+        self.total_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(
+            self.device
+        )
         self.pixel_accuracy_per_class = torch.zeros(
             self.num_classes, dtype=torch.float64
         ).to(self.device)
         self.samples = 0
+
+    def accuracy(self):
+        self.pixel_accuracy_per_class = self.pixel_accuracy_per_class / self.samples
+        return {
+            "Accuracy mean": float(self.pixel_accuracy_per_class.mean()),
+            "Accuracy per Class": self.pixel_accuracy_per_class.tolist(),
+        }
+
+    def f1_score(self):
+        self.f1_score_per_class = self.f1_score_per_class / self.samples
+        return {
+            "F1 mean": float(self.f1_score_per_class.mean()),
+            "F1 per Class": self.f1_score_per_class.tolist(),
+        }
 
     def iou(self):
         self.iou_per_class = self.iou_per_class / self.samples
