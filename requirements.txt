@@ -50,3 +50,5 @@ dill<0.3.5
 
 timm~=0.4.12
 segmentation-models-pytorch~=0.2.0
+
+albumentations~=1.0.3
