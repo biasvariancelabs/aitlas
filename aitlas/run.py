@@ -56,6 +56,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print("Do")
     main(config_file=args.config)
-    print("Done")
