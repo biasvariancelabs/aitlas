@@ -36,11 +36,12 @@ def main(config_file):
     # load configuration
     config = Config(RunConfig().load(config))
 
-    # check if there are multiple GPUs
-    world_size = torch.cuda.device_count()
-
     # run task
-    if config.use_ddp and world_size > 1:
+    if config.use_ddp:
+        # check if there are multiple GPUs
+        world_size = torch.cuda.device_count()
+
+        # spawn processes
         with idist.Parallel(backend="gloo", nproc_per_node=world_size) as parallel:
             parallel.run(run, config)
     else:
@@ -56,6 +57,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print("Do")
     main(config_file=args.config)
-    print("Done")

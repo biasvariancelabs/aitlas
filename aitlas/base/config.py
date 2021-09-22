@@ -36,7 +36,7 @@ class RunConfig(Schema):
     model = fields.Nested(ObjectConfig, missing=None, description="Model configuration")
     task = fields.Nested(ObjectConfig, required=True, description="Task configuration")
     use_ddp = fields.Boolean(
-        required=False, missing=True, description="Turn on distributed data processing"
+        required=False, missing=False, description="Turn on distributed data processing"
     )
 
 
