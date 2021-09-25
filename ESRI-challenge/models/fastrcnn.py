@@ -15,12 +15,14 @@ class FastRCNN(BaseDetectionClassifier):
         # replace the pre-trained head with a new one
         self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, self.config.num_classes)
 
+        ##### TRGNI ######## VO BASE CLASSIFIER ####
         # select either GPU or CPU as the active device
         # GPU is always preferred
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
         # move model to the right devicee
         self.model.to(device)
+        ############################################
 
     def forward_train(self, x, y):
         return self.model.forward(x, targets = y)
