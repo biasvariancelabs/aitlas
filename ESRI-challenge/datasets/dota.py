@@ -5,6 +5,7 @@ import os
 
 import random
 from PIL import Image
+import numpy as np
 
 import torch
 
@@ -13,9 +14,12 @@ class DotaDataset(BaseDataset):
     schema = DotaDatasetSchema
 
     def __init__ (self, config):
-        self.root = config.root
-        self.subset = config.subset
-        self.filter_null = config.filter_null
+        # now call the constructor to validate the schema and split the data
+        BaseDataset.__init__(self, config)
+
+        self.root = self.config.root
+        self.subset = self.config.subset
+        self.filter_null = self.config.filter_null
 
         self.mappings = {
             "plane": 1, 
@@ -35,7 +39,7 @@ class DotaDataset(BaseDataset):
             "swimming-pool": 15
         }
 
-        self.subsample_percentage = config.subsample_percentage
+        self.subsample_percentage = self.config.subsample_percentage
 
         self.load_dataset()
 
@@ -161,8 +165,8 @@ class DotaDataset(BaseDataset):
         target["area"] = area
         target["iscrowd"] = iscrowd
 
-        if self.transforms:
-            img = self.transforms(img)
+        if self.transform:
+            img = self.transform(img)
 
         return img, target
         
