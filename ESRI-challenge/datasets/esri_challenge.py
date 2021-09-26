@@ -96,8 +96,8 @@ class EsriChallengeDataset (BaseDataset):
         target["area"] = area
         target["iscrowd"] = iscrowd
 
-        if self.transforms is not None:
-            img, target = self.transforms(img, target)
+        if self.transform is not None:
+            img = self.transform(img)
 
         return img, target
         
