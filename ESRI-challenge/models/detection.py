@@ -207,7 +207,7 @@ class BaseDetectionClassifier(BaseModel):
                 
                 image_count += 1
 
-        self.running_metrics.update(pred_boxes, true_boxes, iou_threshold = 0.5, box_format = 'corners', num_classes = 3)
+        self.running_metrics.update(pred_boxes, true_boxes, iou_threshold = 0.5, box_format = 'corners', num_classes = self.config.num_classes)
 
     def predict_output_per_batch(self, dataloader, description):
         """Run predictions on a dataloader and return inputs, outputs, labels per batch"""
@@ -222,16 +222,3 @@ class BaseDetectionClassifier(BaseModel):
                 outputs= self.forward_eval(images)
 
                 yield images, outputs, targets
-
-    # def report(self, labels, **kwargs):
-    #     """Report for multiclass classification"""
-    #     run_id = kwargs.get("id", "experiment")
-    #     from ..visualizations import confusion_matrix, precision_recall_curve
-
-    #     logging.info(stringify(self.running_metrics.get_accuracy()))
-    #     logging.info(stringify(self.running_metrics.get_iu()))
-
-    #     # plot confusion matrix for model evaluation
-    #     confusion_matrix(
-    #         self.running_metrics.confusion_matrix, labels, f"{run_id}_cm.png"
-    #     )
