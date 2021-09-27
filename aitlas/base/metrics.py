@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class BaseMetric:
     """Base class for implementing metrics """
 
@@ -99,3 +98,36 @@ class RunningScore(object):
             "intersection_over_union": intersection_over_union,
             "intersection_over_union_per_class": intersection_over_union_per_class,
         }
+
+class DetectionRunningScore(object):
+    """Generic metric container class. This class contains metrics that are averaged over batches."""
+
+    def __init__(self, metrics, num_classes, device):
+        self.calculated_metrics = {}
+        self.metrics = metrics
+        self.device = device
+        self.num_classes = num_classes
+        self.confusion_matrix = np.zeros((num_classes, num_classes))
+        for metric_cls in self.metrics:
+            metric = metric_cls(device=self.device)
+            self.calculated_metrics[metric.name] = []
+
+    def update(self, pred_boxes, true_boxes, iou_threshold, box_format, num_classes):
+        """Updates stats on each batch"""
+
+        # update metrics
+        for metric_cls in self.metrics:
+            metric = metric_cls(device=self.device)
+            calculated = metric.calculate(pred_boxes=pred_boxes, true_boxes=true_boxes, 
+                                            iou_threshold = iou_threshold, 
+                                            box_format = box_format,
+                                            num_classes = num_classes)
+            if isinstance(calculated, dict):
+                if isinstance(self.calculated_metrics[metric.name], list):
+                    self.calculated_metrics[metric.name] = {}
+                for k, v in calculated.items():
+                    if not k in self.calculated_metrics[metric.name]:
+                        self.calculated_metrics[metric.name][k] = []
+                    self.calculated_metrics[metric.name][k].append(v)
+            else:
+                self.calculated_metrics[metric.name].append(calculated)

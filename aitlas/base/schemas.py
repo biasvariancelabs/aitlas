@@ -66,3 +66,11 @@ class BaseSegmentationClassifierSchema(BaseClassifierSchema):
 
 class BaseTransformsSchema(Schema):
     pass
+
+class BaseDetectionClassifierSchema(BaseClassifierSchema):
+    metrics = fields.List(
+        fields.String,
+        missing=["aitlas.metrics.detection.mAP"],
+        description="Classes of metrics you want to calculate",
+        example=["aitlas.metrics.mAP"],
+    )
