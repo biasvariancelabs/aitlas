@@ -9,6 +9,9 @@ import numpy as np
 
 import torch
 
+def collate_fn(batch):
+    return tuple(zip(*batch))
+
 class DotaDataset(BaseDataset):
 
     schema = DotaDatasetSchema
@@ -172,3 +175,9 @@ class DotaDataset(BaseDataset):
         
     def __len__(self):
         return len(self.imgs)
+
+    def dataloader(self):
+        return torch.utils.data.DataLoader(self, batch_size=self.batch_size, 
+                                           shuffle=self.shuffle,
+                                           num_workers=self.num_workers, 
+                                           collate_fn=collate_fn)
