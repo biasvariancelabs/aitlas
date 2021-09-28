@@ -158,9 +158,6 @@ class DotaDataset(BaseDataset):
         # set the image index as the image identifier
         image_id = torch.tensor([idx])
 
-        # print (boxes)
-        # print (labels)
-
         target = {}
         target["boxes"] = boxes
         target["labels"] = labels
