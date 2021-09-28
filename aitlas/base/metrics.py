@@ -23,13 +23,19 @@ class RunningScore(object):
             metric = metric_cls(device=self.device)
             self.calculated_metrics[metric.name] = []
 
-    def update(self, y_true, y_pred):
+    def update(self, y_true, y_pred, **kwargs):
         """Updates stats on each batch"""
 
         # update metrics
         for metric_cls in self.metrics:
             metric = metric_cls(device=self.device)
-            calculated = metric.calculate(y_true, y_pred)
+            if not kwargs.get('detection_clf', False):
+                calculated = metric.calculate(y_true, y_pred)
+            else:
+                calculated = metric.calculate(pred_boxes=y_pred, true_boxes=y_true, 
+                                              iou_threshold = kwargs.get('iou_threshold'), 
+                                              box_format = kwargs.get('box_format'),
+                                              num_classes = kwargs.get('num_classes'))
             if isinstance(calculated, dict):
                 if isinstance(self.calculated_metrics[metric.name], list):
                     self.calculated_metrics[metric.name] = {}
@@ -40,11 +46,12 @@ class RunningScore(object):
             else:
                 self.calculated_metrics[metric.name].append(calculated)
 
-        # update confusion matrix
-        for lt, lp in zip(y_true, y_pred):
-            self.confusion_matrix += self._fast_hist(
-                lt.flatten(), lp.flatten(), self.num_classes
-            )
+        if kwargs.get('confusion_matrix', True):
+            # update confusion matrix
+            for lt, lp in zip(y_true, y_pred):
+                self.confusion_matrix += self._fast_hist(
+                    lt.flatten(), lp.flatten(), self.num_classes
+                )
 
     def _fast_hist(self, label_true, label_pred, n_class):
         mask = (label_true >= 0) & (label_true < n_class)
@@ -98,36 +105,3 @@ class RunningScore(object):
             "intersection_over_union": intersection_over_union,
             "intersection_over_union_per_class": intersection_over_union_per_class,
         }
-
-class DetectionRunningScore(object):
-    """Generic metric container class. This class contains metrics that are averaged over batches."""
-
-    def __init__(self, metrics, num_classes, device):
-        self.calculated_metrics = {}
-        self.metrics = metrics
-        self.device = device
-        self.num_classes = num_classes
-        self.confusion_matrix = np.zeros((num_classes, num_classes))
-        for metric_cls in self.metrics:
-            metric = metric_cls(device=self.device)
-            self.calculated_metrics[metric.name] = []
-
-    def update(self, pred_boxes, true_boxes, iou_threshold, box_format, num_classes):
-        """Updates stats on each batch"""
-
-        # update metrics
-        for metric_cls in self.metrics:
-            metric = metric_cls(device=self.device)
-            calculated = metric.calculate(pred_boxes=pred_boxes, true_boxes=true_boxes, 
-                                            iou_threshold = iou_threshold, 
-                                            box_format = box_format,
-                                            num_classes = num_classes)
-            if isinstance(calculated, dict):
-                if isinstance(self.calculated_metrics[metric.name], list):
-                    self.calculated_metrics[metric.name] = {}
-                for k, v in calculated.items():
-                    if not k in self.calculated_metrics[metric.name]:
-                        self.calculated_metrics[metric.name][k] = []
-                    self.calculated_metrics[metric.name][k].append(v)
-            else:
-                self.calculated_metrics[metric.name].append(calculated)

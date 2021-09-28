@@ -15,7 +15,7 @@ from aitlas.base.models import BaseModel
 from .schemas import BaseDetectionClassifierSchema
 from aitlas.utils import current_ts
 
-from .metrics import DetectionRunningScore
+from .metrics import RunningScore
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -39,7 +39,7 @@ class BaseDetectionClassifier(BaseModel):
     def __init__(self, config):
         super().__init__(config)
 
-        self.running_metrics = DetectionRunningScore(
+        self.running_metrics = RunningScore(
             self.metrics, self.config.num_classes, self.device
         )
 
@@ -207,7 +207,12 @@ class BaseDetectionClassifier(BaseModel):
                 
                 image_count += 1
 
-        self.running_metrics.update(pred_boxes, true_boxes, iou_threshold = 0.5, box_format = 'corners', num_classes = 3)
+        self.running_metrics.update(true_boxes, pred_boxes,
+                                    iou_threshold = 0.5, 
+                                    box_format = 'corners', 
+                                    num_classes = 3, 
+                                    detection_clf = True,
+                                    confusion_matrix = False)
 
     def predict_output_per_batch(self, dataloader, description):
         """Run predictions on a dataloader and return inputs, outputs, labels per batch"""
