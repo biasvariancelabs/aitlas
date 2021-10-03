@@ -1,0 +1,22 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.StratifiedSplitTask",
+        "config": {
+            "split": {
+                "train": {
+                    "ratio": 60,
+                    "file": "./data/UCMerced_multilabels/train.csv"
+                },
+                "val": {
+                    "ratio": 20,
+                    "file": "./data/UCMerced_multilabels/val.csv"
+                },
+                "test": {
+                    "ratio": 20,
+                    "file": "./data/UCMerced_multilabels/test.csv"
+                }
+            },
+            "path": "./data/UCMerced_multilabels/"
+        }
+    }
+}

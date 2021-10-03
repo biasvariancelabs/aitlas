@@ -8,7 +8,7 @@ from ..base import BaseSegmentationClassifier
 
 class DeepLabV3(BaseSegmentationClassifier):
     def __init__(self, config):
-        BaseSegmentationClassifier.__init__(self, config)
+        super().__init__(config)
 
         self.model = models.segmentation.deeplabv3_resnet101(
             pretrained=self.config.pretrained, progress=True
@@ -18,4 +18,4 @@ class DeepLabV3(BaseSegmentationClassifier):
         self.model.classifier[4] = nn.Conv2d(256, self.config.num_classes, 1)
 
     def forward(self, x):
-        return self.model.forward(x)
+        return self.model(x)

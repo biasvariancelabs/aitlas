@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, validate
 
 
 class BaseDatasetSchema(Schema):
@@ -11,14 +11,16 @@ class BaseDatasetSchema(Schema):
         missing=False, description="Whether to use page-locked memory"
     )
     transforms = fields.List(
-        fields.String,
-        missing=[
-            "torchvision.transforms.ToPILImage",
-            "torchvision.transforms.Resize",
-            "torchvision.transforms.CenterCrop",
-            "torchvision.transforms.ToTensor",
-        ],
-        description="Classes to run transformations.",
+        fields.String, missing=None, description="Classes to run transformations.",
+    )
+    target_transforms = fields.List(
+        fields.String, missing=None, description="Classes to run transformations.",
+    )
+    joint_transforms = fields.List(
+        fields.String, missing=None, description="Classes to run transformations.",
+    )
+    labels = fields.List(
+        fields.String, missing=None, description="Labels for the dataset",
     )
 
 
@@ -27,19 +29,22 @@ class BaseModelSchema(Schema):
     use_cuda = fields.Bool(missing=True, description="Whether to use CUDA if possible")
     metrics = fields.List(
         fields.String,
-        missing=["aitlas.metrics.F1Score"],
-        description="Classes of metrics you want to calculate",
-        example=[
-            "aitlas.metrics.PrecisionScore",
-            "aitlas.metrics.AccuracyScore",
-            "aitlas.metrics.F1Score",
-        ],
+        missing=["f1_score"],
+        description="Metrics you want to calculate",
+        example=["accuracy", "precision", "iou"],
+        validate=validate.ContainsOnly(
+            ["accuracy", "precision", "recall", "f1_score", "iou"]
+        ),
     )
     weights = fields.List(
         fields.Float,
         missing=None,
         description="Classes weights you want to apply for the loss",
         example=[1.0, 2.3, 1.0],
+    )
+    rank = fields.Integer(required=False, missing=0)
+    use_ddp = fields.Boolean(
+        required=False, missing=False, description="Turn on distributed data processing"
     )
 
 
@@ -58,9 +63,9 @@ class BaseClassifierSchema(BaseModelSchema):
 class BaseSegmentationClassifierSchema(BaseClassifierSchema):
     metrics = fields.List(
         fields.String,
-        missing=["aitlas.metrics.F1ScoreSample"],
+        missing=["iou", "f1_score", "accuracy"],
         description="Classes of metrics you want to calculate",
-        example=["aitlas.metrics.F1ScoreSample", "aitlas.metrics.Accuracy"],
+        example=["accuracy", "precision", "recall", "f1_score", "iou"],
     )
 
 

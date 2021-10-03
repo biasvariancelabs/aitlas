@@ -1,48 +1,20 @@
-from .generic_multiclass import GenericMulticlassDataset
+from .multiclass_classification import MultiClassClassificationDataset
+
+LABELS = ["airplane", "baseball_field", "basketball_court", "beach", "bridge", "cemetery", "chaparral",
+          "christmas_tree_farm", "closed_road", "coastal_mansion", "crosswalk", "dense_residential",
+          "ferry_terminal", "football_field", "forest", "freeway", "golf_course", "harbor", "intersection",
+          "mobile_home_park", "nursing_home", "oil_gas_field", "oil_well", "overpass", "parking_lot", "parking_space",
+          "railway", "river", "runway", "runway_marking", "shipping_yard", "solar_panel", "sparse_residential",
+          "storage_tank", "swimming_pool", "tennis_court", "transformer_station", "wastewater_treatment_plant"]
 
 
-CLASSES_TO_IDX = {
-    "airplane": 0,
-    "baseball_field": 1,
-    "basketball_court": 2,
-    "beach": 3,
-    "bridge": 4,
-    "cemetery": 5,
-    "chaparral": 6,
-    "christmas_tree_farm": 7,
-    "closed_road": 8,
-    "coastal_mansion": 9,
-    "crosswalk": 10,
-    "dense_residential": 11,
-    "ferry_terminal": 12,
-    "football_field": 13,
-    "forest": 14,
-    "freeway": 15,
-    "golf_course": 16,
-    "harbor": 17,
-    "intersection": 18,
-    "mobile_home_park": 19,
-    "nursing_home": 20,
-    "oil_gas_field": 21,
-    "oil_well": 22,
-    "overpass": 23,
-    "parking_lot": 24,
-    "parking_space": 25,
-    "railway": 26,
-    "river": 27,
-    "runway": 28,
-    "runway_marking": 29,
-    "shipping_yard": 30,
-    "solar_panel": 31,
-    "sparse_residential": 32,
-    "storage_tank": 33,
-    "swimming_pool": 34,
-    "tennis_court": 35,
-    "transformer_station": 36,
-    "wastewater_treatment_plant": 37,
-}
+class PatternNetDataset(MultiClassClassificationDataset):
 
+    url = "https://arxiv.org/abs/1706.03424"
+    labels = LABELS
 
-class PatternNetDataset(GenericMulticlassDataset):
+    name = "PatternNet dataset"
 
-    classes_to_idx = CLASSES_TO_IDX
+    def __init__(self, config):
+        # now call the constructor to validate the schema and load the data
+        MultiClassClassificationDataset.__init__(self, config)

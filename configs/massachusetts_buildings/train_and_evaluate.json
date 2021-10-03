@@ -1,0 +1,43 @@
+{
+    "model": {
+        "classname": "aitlas.models.DeepLabV3",
+        "config": {
+            "num_classes": 2,
+            "learning_rate": 0.0001,
+            "pretrained": true
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+          "config": {
+              "epochs": 100,
+              "model_directory": "examples/experiments/",
+              "save_epochs": 10,
+              "id": "massachusetts_buildings",
+              "train_dataset_config":{
+                  "classname": "aitlas.datasets.MassachusettsBuildingsDataset",
+                  "config": {
+                      "batch_size": 8,
+                      "shuffle": true,
+                      "num_workers": 1,
+                      "csv_file_path": "/home/dkocev/data/MassachusettsBuildings/train.txt",
+                      "root": "/home/dkocev/data/MassachusettsBuildings/train_splits",
+                      "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
+                      "target_transforms": ["aitlas.transforms.Transponse"]
+                  }
+              },
+              "val_dataset_config":{
+                    "classname": "aitlas.datasets.MassachusettsBuildingsDataset",
+                    "config": {
+                        "batch_size": 1,
+                        "shuffle": false,
+                        "num_workers": 1,
+                        "csv_file_path": "/home/dkocev/data/MassachusettsBuildings/val.txt",
+                        "root": "/home/dkocev/data/MassachusettsBuildings/val_splits",
+                        "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
+                        "target_transforms": ["aitlas.transforms.Transponse"]
+                    }
+              }
+        }
+    }
+}

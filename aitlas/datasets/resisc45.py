@@ -1,55 +1,22 @@
-from .generic_multiclass import GenericMulticlassDataset
+from .multiclass_classification import MultiClassClassificationDataset
 
 
-CLASSES_TO_IDX = {
-    "airplane": 0,
-    "airport": 1,
-    "baseball_diamond": 2,
-    "basketball_court": 3,
-    "beach": 4,
-    "bridge": 5,
-    "chaparral": 6,
-    "church": 7,
-    "circular_farmland": 8,
-    "cloud": 9,
-    "commercial_area": 10,
-    "dense_residential": 11,
-    "desert": 12,
-    "forest": 13,
-    "freeway": 14,
-    "golf_course": 15,
-    "ground_track_field": 16,
-    "harbor": 17,
-    "industrial_area": 18,
-    "intersection": 19,
-    "island": 20,
-    "lake": 21,
-    "meadow": 22,
-    "medium_residential": 23,
-    "mobile_home_park": 24,
-    "mountain": 25,
-    "overpass": 26,
-    "palace": 27,
-    "parking_lot": 28,
-    "railway": 29,
-    "railway_station": 30,
-    "rectangular_farmland": 31,
-    "river": 32,
-    "roundabout": 33,
-    "runway": 34,
-    "sea_ice": 35,
-    "ship": 36,
-    "snowberg": 37,
-    "sparse_residential": 38,
-    "stadium": 39,
-    "storage_tank": 40,
-    "tennis_court": 41,
-    "terrace": 42,
-    "thermal_power_station": 43,
-    "wetland": 44,
-}
+LABELS = ["airplane", "airport", "baseball_diamond", "basketball_court", "beach", "bridge", "chaparral", "church",
+          "circular_farmland", "cloud", "commercial_area", "dense_residential", "desert", "forest", "freeway",
+          "golf_course", "ground_track_field", "harbor", "industrial_area", "intersection", "island", "lake",
+          "meadow", "medium_residential", "mobile_home_park", "mountain", "overpass", "palace", "parking_lot",
+          "railway", "railway_station", "rectangular_farmland", "river", "roundabout", "runway", "sea_ice",
+          "ship", "snowberg", "sparse_residential", "stadium", "storage_tank", "tennis_court", "terrace",
+          "thermal_power_station", "wetland"]
 
 
-class Resisc45Dataset(GenericMulticlassDataset):
+class Resisc45Dataset(MultiClassClassificationDataset):
 
-    classes_to_idx = CLASSES_TO_IDX
+    url = "https://www.tensorflow.org/datasets/catalog/resisc45"
+    labels = LABELS
+
+    name = "RESISC45 dataset"
+
+    def __init__(self, config):
+        # now call the constructor to validate the schema and load the data
+        MultiClassClassificationDataset.__init__(self, config)

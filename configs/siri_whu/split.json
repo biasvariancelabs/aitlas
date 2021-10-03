@@ -1,0 +1,22 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.SplitTask",
+        "config": {
+            "split": {
+                "train": {
+                    "ratio": 80,
+                    "file": "/media/hdd/SIRI-WHU/train.csv"
+                },
+                "val": {
+                    "ratio": 20,
+                    "file": "/media/hdd/SIRI-WHU/val.csv"
+                },
+                "test": {
+                    "ratio": 0,
+                    "file": "/media/hdd/SIRI-WHU/test.csv"
+                }
+            },
+            "root": "/media/hdd/SIRI-WHU"
+        }
+    }
+}

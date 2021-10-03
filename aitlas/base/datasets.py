@@ -9,6 +9,8 @@ from .transforms import load_transforms
 class BaseDataset(Dataset, Configurable):
 
     schema = BaseDatasetSchema
+    labels = None  # need to put the labels here
+    name = None
 
     def __init__(self, config):
         Dataset.__init__(self)
@@ -20,8 +22,14 @@ class BaseDataset(Dataset, Configurable):
         self.num_workers = self.config.num_workers
         self.pin_memory = self.config.pin_memory
 
-        # get the transformations to be applied
+        # get labels if provided in config and not set in class
+        if not self.labels and self.config.labels:
+            self.labels = self.config.labels
+
+        # get the transformations to be applied for the image and for the target
         self.transform = self.load_transforms(self.config.transforms)
+        self.target_transform = self.load_transforms(self.config.target_transforms)
+        self.joint_transform = self.load_transforms(self.config.joint_transforms)
 
     def __getitem__(self, index):
         """ Implement here what you want to return"""
@@ -34,6 +42,12 @@ class BaseDataset(Dataset, Configurable):
             "Please implement the `__len__` method for your dataset"
         )
 
+    def get_name(self):
+        if self.name:
+            return self.name
+        else:
+            return ""
+
     def prepare(self):
         """Implement if something needs to happen to the dataset after object creation"""
         return True
@@ -45,12 +59,43 @@ class BaseDataset(Dataset, Configurable):
             shuffle=self.shuffle,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
+            # drop_last=True,
         )
 
-    def labels(self):
+    def get_labels(self):
         """Implement this if you want to return the complete set of labels of the dataset"""
         raise NotImplementedError(
             "Please implement the `labels` method for your dataset"
+        )
+
+    def show_batch(self, size):
+        """Implement this if you want to return the complete set of labels of the dataset"""
+        raise NotImplementedError(
+            "Please implement the `show_batch` method for your dataset"
+        )
+
+    def show_samples(self):
+        """Implement this if you want to return the complete set of labels of the dataset"""
+        raise NotImplementedError(
+            "Please implement the `show_samples` method for your dataset"
+        )
+
+    def show_image(self, index):
+        """Implement this if you want to return the complete set of labels of the dataset"""
+        raise NotImplementedError(
+            "Please implement the `show_image` method for your dataset"
+        )
+
+    def data_distribution_table(self):
+        """Implement this if you want to return the complete set of labels of the dataset"""
+        raise NotImplementedError(
+            "Please implement the `data_distribution_table` method for your dataset"
+        )
+
+    def data_distribution_barchart(self):
+        """Implement this if you want to return the complete set of labels of the dataset"""
+        raise NotImplementedError(
+            "Please implement the `data_distribution_barchart` method for your dataset"
         )
 
     def load_transforms(self, class_names):

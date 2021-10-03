@@ -1,24 +1,27 @@
-from .generic_multiclass import GenericMulticlassDataset
+from .multiclass_classification import MultiClassClassificationDataset
 
 
-CLASSES_TO_IDX = {
-    "AnnualCrop": 0,
-    "Forest": 1,
-    "HerbaceousVegetation": 2,
-    "Highway": 3,
-    "Industrial": 4,
-    "Pasture": 5,
-    "PermanentCrop": 6,
-    "Residential": 7,
-    "River": 8,
-    "SeaLake": 9,
-}
+LABELS = [
+    "AnnualCrop",
+    "Forest",
+    "HerbaceousVegetation",
+    "Highway",
+    "Industrial",
+    "Pasture",
+    "PermanentCrop",
+    "Residential",
+    "River",
+    "SeaLake",
+]
 
 
-class EurosatDataset(GenericMulticlassDataset):
+class EurosatDataset(MultiClassClassificationDataset):
 
-    classes_to_idx = CLASSES_TO_IDX
+    url = "https://github.com/phelber/EuroSAT"
+
+    labels = LABELS
+    name = "EuroSAT dataset"
 
     def __init__(self, config):
-        # now call the constuctor to validate the schema and load the data
-        GenericMulticlassDataset.__init__(self, config)
+        # now call the constructor to validate the schema and load the data
+        super().__init__(config)

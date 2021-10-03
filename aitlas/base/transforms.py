@@ -15,6 +15,9 @@ def load_transforms(class_names, config):
     """Loads transformation classes and make a composition of them"""
     lst_transforms = []
 
+    if not class_names:
+        return None
+
     # check all transformation classes
     for name in class_names:
         cls = get_class(name)  # get class

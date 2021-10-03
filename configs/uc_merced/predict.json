@@ -1,0 +1,24 @@
+{
+    "model": {
+        "classname": "aitlas.models.ResNet50",
+        "config": {
+            "num_classes": 21,
+            "learning_rate": 0.001,
+            "threshold": 0.5
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.PredictTask",
+        "config": {
+            "model_path": "/media/hdd/aitlas/examples/experiments/checkpoint.pth.tar",
+            "dir": "/media/hdd/predict/UC_merced",
+            "output_path": "/media/hdd/predict",
+            "output_format": "plot",
+            "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"],
+            "labels": ["agricultural", "airplane", "baseballdiamond", "beach", "buildings", "chaparral",
+                        "denseresidential", "forest", "freeway", "golfcourse", "harbor", "intersection",
+                        "mediumresidential", "mobilehomepark", "overpass", "parkinglot", "river", "runway",
+                        "sparseresidential", "storagetanks", "tenniscourt"]
+        }
+    }
+}

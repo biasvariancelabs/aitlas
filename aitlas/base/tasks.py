@@ -2,6 +2,7 @@ from ..utils import current_ts, get_class
 from .config import Configurable
 from .datasets import BaseDataset
 
+
 class BaseTask(Configurable):
     def __init__(self, model, config):
         super().__init__(config)

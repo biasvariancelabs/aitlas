@@ -6,46 +6,48 @@ from ..base import BaseDataset
 from ..utils import image_loader
 from .schemas import SegmentationDatasetSchema
 
-CLASSES_TO_IDX = {'sky': 0, 'road': 3, 'car': 8}
-#CLASSES_TO_IDX = {'car': 8}
+LABELS = ['sky', 'building', 'column_pole', 'road', 'sidewalk', 'tree', 'sign', 'fence',
+          'car', 'pedestrian', 'byciclist', 'void']
+
+"""
+For the CamVid dataset the mask is in one file, each label is color coded.
+"""
+
 
 class CamVidDataset(BaseDataset):
-
     schema = SegmentationDatasetSchema
+    labels = LABELS
 
     def __init__(self, config):
-        # now call the constructor to validate the schema and split the data
+        # now call the constructor to validate the schema
         BaseDataset.__init__(self, config)
         self.images = []
         self.masks = []
-        self.class_values = []
-
         self.load_dataset(self.config.root)
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
         mask = image_loader(self.masks[index], False)
-        masks = [(mask == v) for v in self.class_values]
+        masks = [(mask == v) for v, label in enumerate(self.labels)]
         mask = np.stack(masks, axis=-1).astype('float32')
-        image, mask = self.transform({"image": image, "mask": mask})
+        if self.transform:
+            image = self.transform(image)
+        if self.target_transform:
+            mask = self.target_transform(mask)
         return image, mask
 
     def __len__(self):
         return len(self.images)
 
     def load_dataset(self, root_dir):
-        self.class_values = CLASSES_TO_IDX.values()
-
-        if not self.class_values:
+        if not self.labels:
             raise ValueError(
-                "You need to implement the classes to index mapping for the dataset"
+                "You need to provide the list of labels for the dataset"
             )
 
         ids = os.listdir(os.path.join(root_dir, 'images'))
         self.images = [os.path.join(root_dir, 'images', image_id) for image_id in ids]
         self.masks = [os.path.join(root_dir, 'masks', image_id) for image_id in ids]
 
-    def labels(self):
-        return list(CLASSES_TO_IDX.keys())
-
-
+    def get_labels(self):
+        return self.labels

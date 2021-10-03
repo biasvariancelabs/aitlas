@@ -1,0 +1,22 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.RandomSplitTask",
+        "config": {
+            "split": {
+                "train": {
+                    "ratio": 60,
+                    "file": "./data/EuroSAT/train.csv"
+                },
+                "val": {
+                    "ratio": 20,
+                    "file": "./data/EuroSAT/val.csv"
+                },
+                "test": {
+                    "ratio": 20,
+                    "file": "./data/EuroSAT/test.csv"
+                }
+            },
+            "path": "./data/EuroSAT/2750/"
+        }
+    }
+}
