@@ -317,3 +317,46 @@ class SegmentationRunningScore(RunningScore):
             "IOU mean": float(self.iou_per_class.mean()),
             "IOU per Class": self.iou_per_class.tolist(),
         }
+
+class DetectionRunningScore(RunningScore):
+    '''To-do:
+        1. Calculate precision, recall and F1 @ threshold
+            - TP - a detection with an IoU >= threshold
+            - FP - a detection with an IoU < threshold
+            - FN - a groundtruth which has not been detected
+            - TN - not applicable
+            - Precision = TP / (TP + FP) = TP / num_detections
+            - Recall = TP / (TP + FN) = TP / num_truths
+            - F1-score - harmonic mean of precision and recall
+        2. Calculate mAP on each batch?
+            - you should find code for this because I don't like the one we 
+            have at the moment (it's slow).
+    '''
+
+    def __init__(self, num_classes, device):
+        super().__init__(num_classes, device)
+        
+    def update (self, y_true, y_pred):
+        '''update the internal stores...'''
+        pass
+
+    def reset (self):
+        '''reset the state of all internal variables'''
+        pass
+
+    def f1_score(self):
+        self.f1_score_per_class = self.f1_score_per_class / self.samples
+        return {
+            "F1 mean": float(self.f1_score_per_class.mean()),
+            "F1 per Class": self.f1_score_per_class.tolist(),
+        }
+
+    def precision(self):
+        pass
+    
+    def recall(self):
+        pass
+
+    def mAP(self):
+        pass
+

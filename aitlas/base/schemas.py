@@ -75,7 +75,9 @@ class BaseTransformsSchema(Schema):
 class BaseDetectionClassifierSchema(BaseClassifierSchema):
     metrics = fields.List(
         fields.String,
-        missing=["aitlas.metrics.detection.mAP"],
+        # we apparently don't use the metrics.detection classes
+        # missing=["aitlas.metrics.detection.mAP"],
+        missing = ['mAP', 'f1_score', 'precision', 'recall'],
         description="Classes of metrics you want to calculate",
-        example=["aitlas.metrics.mAP"],
+        example=['mAP', 'f1_score', 'precision', 'recall'],
     )
