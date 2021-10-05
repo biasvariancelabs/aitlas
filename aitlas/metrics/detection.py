@@ -62,7 +62,9 @@ class mAP (BaseMetric):
 
         # used for numerical stability later on
         epsilon = 1e-6
-
+        '''
+            Iterate over all the classes in the dataset
+        '''
         for c in range(num_classes):
             detections = []
             ground_truths = []
@@ -92,6 +94,10 @@ class mAP (BaseMetric):
             for key, val in amount_bboxes.items():
                 amount_bboxes[key] = torch.zeros(val)
 
+
+            '''
+                These should be maintained for each of the classes
+            '''
             # sort by box probabilities which is index 2
             detections.sort(key=lambda x: x[2], reverse=True)
             TP = torch.zeros((len(detections)))
@@ -101,7 +107,7 @@ class mAP (BaseMetric):
             # If none exists for this class then we can safely skip
             if total_true_bboxes == 0:
                 continue
-
+                    
             for detection_idx, detection in enumerate(detections):
                 # Only take out the ground_truths that have the same
                 # training idx as detection
@@ -111,6 +117,8 @@ class mAP (BaseMetric):
 
                 num_gts = len(ground_truth_img)
                 best_iou = 0
+
+                ''' Goes through all groundtruths and calculates the iou in comparison to this detection'''
 
                 for idx, gt in enumerate(ground_truth_img):
                     iou = self.intersection_over_union(torch.tensor(detection[3:]), torch.tensor(gt[3:]), box_format)
@@ -132,6 +140,9 @@ class mAP (BaseMetric):
                 else:
                     FP[detection_idx] = 1
 
+            '''
+                This is the actual calculation of AP for each class
+            '''
             TP_cumsum = torch.cumsum(TP, dim=0)
             FP_cumsum = torch.cumsum(FP, dim=0)
             recalls = TP_cumsum / (total_true_bboxes + epsilon)
