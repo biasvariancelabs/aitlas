@@ -1,6 +1,8 @@
 import dill
 import numpy as np
 import torch
+import torchvision
+
 from ignite.metrics import confusion_matrix
 from ignite.metrics.multilabel_confusion_matrix import MultiLabelConfusionMatrix
 
@@ -319,37 +321,104 @@ class SegmentationRunningScore(RunningScore):
         }
 
 class DetectionRunningScore(RunningScore):
-    '''To-do:
-        1. Calculate precision, recall and F1 @ threshold
-            - TP - a detection with an IoU >= threshold
-            - FP - a detection with an IoU < threshold
-            - FN - a groundtruth which has not been detected
-            - TN - not applicable
-            - Precision = TP / (TP + FP) = TP / num_detections
-            - Recall = TP / (TP + FN) = TP / num_truths
-            - F1-score - harmonic mean of precision and recall
-        2. Calculate mAP on each batch?
-            - you should find code for this because I don't like the one we 
-            have at the moment (it's slow).
-    '''
 
     def __init__(self, num_classes, device):
+        ''' At the moment, the IoU threshold is fixed at 0.5'''
+        self.iou_threshold = 0.5
+
         super().__init__(num_classes, device)
         
+        # to store average precisions per class
+        self.average_precisions = []
+
+        # a value for numerical stability
+        self.epsilon = 1e-6
+
+        # keep a TP and FP tensor for each class separately
+        self.TP_per_class = []
+        self.FP_per_class = []
+        # they all start with zero true boxes
+        self.total_true_boxes_per_class = torch.zeros((num_classes))
+
     def update (self, y_true, y_pred):
-        '''update the internal stores...'''
-        pass
+        '''
+            y_true = [[image_idx, class, 1.0, x1, y1, x2, y2]]
+            y_pred = [[image_idx, pred_class, score, x1, y1, x2, y2]]
+        '''
+
+        y_true = np.array(y_true)
+        y_pred = np.array(y_pred)
+
+        for c in range(self.num_classes):
+            # Go through all predictions and targets,
+            # and only add the ones that belong to the
+            # current class c
+            detections = y_pred[np.where(y_true[:, 1] == c)[0], :]
+            ground_truths = y_true[np.where(y_true[:, 1] == c)[0], :]
+
+            # find the amount of bboxes for each training example
+            image_ind, counts = np.unique(ground_truths[:, 0], return_counts = True)
+
+            # reformat these into a dictionary with the following shape
+            # amount_bboxes = {image_idx: torch.tensor(num_true_bboxes)}
+            amount_bboxes = {}
+            for image_idx, count in zip(image_ind, counts):
+                amount_bboxes[image_idx] = torch.zeros(count)
+
+            # sort the detections in descending order based on the score
+            detections = detections[np.argsort(detections[:, 2])[::-1]]
+            self.TP_per_class.append(torch.zeros((len(detections))))
+            self.FP_per_class.append(torch.zeros((len(detections))))
+            self.total_true_boxes_per_class[c] = ground_truths.shape[0]
+
+            # iterate through the images and calculate the number of TP and FP
+            for image_idx in image_ind:
+                # holds the indices of the detections in the TP_per_class array
+                image_detections_ind = np.where(detections[:, 0]==image_idx)[0]
+
+                image_detections = detections[image_detections_ind, :]
+                image_gts = ground_truths[np.where(ground_truths[:, 0]==image_idx)[0], :]
+
+                num_detections = image_detections.shape[0]
+
+                # ious have the following shape: [NxM], where N is the number of detections
+                # and M is the number of groundtruths
+                ious = tochvision.ops.box_iou(image_detections[3:], image_gts[3:]).numpy()
+                
+                detection_best_iou = np.argmax(ious, axis=1)
+                detection_potential_gt_idx = np.amax(ious, axis=1)
+
+                # if the iou is lower than the threshold than than the detection is a false positive
+                detection_potential_gt_idx[np.where(detection_best_iou<self.iou_threshold)] = -1
+
+                for gt_idx in range(image_gts.shape[0]):
+                    gt_ind = np.where(detection_potential_gt_idx == gt_idx)[0]
+                    idx = gt_ind[0]
+                    
+                    if gt_ind.shape[0]>1:
+                        rest = gt_ind[1:]
+                        self.FP_per_class[c][image_detections_ind[rest]] = 1
+                    
+                    self.TP_per_class[c][image_detections_ind[idx]] = 1
 
     def reset (self):
         '''reset the state of all internal variables'''
-        pass
+        self.iou_threshold = 0.5
+        
+        # to store average precisions per class
+        self.average_precisions = []
+
+        # a value for numerical stability
+        self.epsilon = 1e-6
+
+        # keep a TP and FP tensor for each class separately
+        self.TP_per_class = []
+        self.FP_per_class = []
+        # they all start with zero true boxes
+        self.total_true_boxes_per_class = torch.zeros((self.num_classes))
 
     def f1_score(self):
-        self.f1_score_per_class = self.f1_score_per_class / self.samples
-        return {
-            "F1 mean": float(self.f1_score_per_class.mean()),
-            "F1 per Class": self.f1_score_per_class.tolist(),
-        }
+        pass
 
     def precision(self):
         pass
@@ -358,5 +427,18 @@ class DetectionRunningScore(RunningScore):
         pass
 
     def mAP(self):
-        pass
+        for class_idx in range(self.num_classes):
+            TP = self.TP_per_class[class_idx]
+            FP = self.FP_per_class[class_idx]
+            total_true_bboxes = self.total_true_boxes_per_class[class_idx]
 
+            TP_cumsum = torch.cumsum(TP, dim=0)
+            FP_cumsum = torch.cumsum(FP, dim=0)
+            recalls = TP_cumsum / (total_true_bboxes + self.epsilon)
+            precisions = TP_cumsum / (TP_cumsum + FP_cumsum + self.epsilon)
+            precisions = torch.cat((torch.tensor([1]), precisions))
+            recalls = torch.cat((torch.tensor([0]), recalls))
+            # torch.trapz for numerical integration
+            self.average_precisions.append(torch.trapz(precisions, recalls))
+        
+        return sum(self.average_precisions) / len(self.average_precisions)
