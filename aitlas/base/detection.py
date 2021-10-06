@@ -8,14 +8,11 @@ import math
 
 import torch
 import torch.optim as optim
-from torch.utils.tensorboard import SummaryWriter
-
-from aitlas.base.datasets import BaseDataset
 from aitlas.base.models import BaseModel
 from .schemas import BaseDetectionClassifierSchema
 from aitlas.utils import current_ts
 
-from .metrics import RunningScore
+from .metrics import DetectionRunningScore
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -38,9 +35,7 @@ class BaseDetectionClassifier(BaseModel):
     def __init__(self, config):
         super().__init__(config)
 
-        self.running_metrics = RunningScore(
-            self.metrics, self.config.num_classes, self.device
-        )
+        self.running_metrics = DetectionRunningScore(self.num_classes, self.device)
 
     def load_optimizer(self):
         """Load the optimizer"""
@@ -53,8 +48,8 @@ class BaseDetectionClassifier(BaseModel):
     def load_lr_scheduler(self):
         return None
 
-    def get_predicted(self, image_count, outputs):
-        count = image_count
+    def get_predicted(self, outputs):
+        count = 0
         pred_boxes = []
         for i in range (len(outputs)):
             for bbox_idx in range (outputs[i]['boxes'].shape[0]):
@@ -130,11 +125,8 @@ class BaseDetectionClassifier(BaseModel):
         :return: tuple of (metrics, y_true, y_pred)
         """
         self.model.eval()
-        
-        pred_boxes = []
-        true_boxes = []
 
-        image_count = 0
+
         for inputs, outputs, labels in self.predict_output_per_batch(dataloader, description):
             formated_preds, count = self.get_predicted(image_count, outputs)
             pred_boxes += formated_preds
@@ -145,17 +137,12 @@ class BaseDetectionClassifier(BaseModel):
             image_count+=count
 
 
-        self.running_metrics.update(true_boxes, pred_boxes,
-                                    iou_threshold = 0.5, 
-                                    box_format = 'corners', 
-                                    num_classes = 3, 
-                                    detection_clf = True,
-                                    confusion_matrix = False)
+            self.running_metrics.update(true_boxes, pred_boxes)
 
         return 0
 
     def predict_output_per_batch(self, dataloader, description):
-        """Run predictions on a dataloader and return inputs, outputs, labels per batch"""
+        """Maybe overwrite this... I still don't know..."""
         # turn on eval mode
         self.model.eval()
 

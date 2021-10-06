@@ -341,6 +341,7 @@ class DetectionRunningScore(RunningScore):
         self.total_true_boxes_per_class = torch.zeros((num_classes))
 
     def update (self, y_true, y_pred):
+        ''' I AM MISSING SOME APPEND HERE... TP and FP should be appended'''
         '''
             y_true = [[image_idx, class, 1.0, x1, y1, x2, y2]]
             y_pred = [[image_idx, pred_class, score, x1, y1, x2, y2]]
