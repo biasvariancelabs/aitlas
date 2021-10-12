@@ -1,0 +1,34 @@
+{
+    "model": {
+        "classname": "aitlas.models.TransformerModel",
+        "config": {
+            "input_dim":13,
+            "num_classes": 9,
+            "pretrained":false,
+            "learning_rate": 0.001,
+            "metrics":["accuracy","f1_score", "kappa"]
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainTask",
+        "config": {
+            "epochs": 26,
+            "model_directory": "./examples/experiment",
+            "save_epochs": 2,
+            "id": "breizhcrops",
+            "dataset_config":{
+                "classname": "aitlas.datasets.BreizhCropsDataset",
+                "config": {
+                    "regions":["frh01"],
+                    "root":"./data/breizhcrops_dataset",
+                    "year":2017,
+                    "level":"L1C",
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "transforms": ["aitlas.transforms.SelectBands"]
+                }
+            }
+        }
+    }
+}

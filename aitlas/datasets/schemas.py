@@ -156,3 +156,34 @@ class SpaceNet6DatasetSchema(BaseDatasetSchema):
         example="path/to/results/folds",
         description="Source directory with the fold csv files",
     )
+
+
+class BreizhCropsSchema(BaseDatasetSchema):
+    regions = fields.List(
+        fields.String,
+        required=True,
+        description="Brittany region (frh01..frh04)",
+        example="['frh01','frh01']",
+    )
+
+    root = fields.String(
+        required=True,
+        description="Dataset path on disk",
+        example="./breizhcrops_dataset",
+    )
+    year = fields.Integer(
+        missing=2017, description="year", validate=validate.OneOf([2017, 2018])
+    )
+    filter_length = fields.Integer(missing=0, description="filter_length")
+    level = fields.String(
+        required=True,
+        description="L1C or L2A",
+        example="L1C",
+        validate=validate.OneOf(["L1C", "L2A"]),
+    )
+    verbose = fields.Bool(missing=False, description="verbose")  # change to true
+    load_timeseries = fields.Bool(missing=True, description="load_timeseries")
+    recompile_h5_from_csv = fields.Bool(
+        missing=False, description="recompile_h5_from_csv"
+    )
+    preload_ram = fields.Bool(missing=False, description="preload_ram")

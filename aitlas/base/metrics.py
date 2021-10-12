@@ -67,7 +67,7 @@ class RunningScore(object):
             2
             * precision["Precision per Class"]
             * recall["Recall per Class"]
-            / (precision["Precision per Class"] + recall["Recall per Class"])
+            / (precision["Precision per Class"] + recall["Recall per Class"] + 1e-15)
         )
 
         return {
@@ -109,7 +109,9 @@ class MultiClassRunningScore(RunningScore):
     def recall(self):
         cm = self.get_computed()
         micro = cm.diag().sum() / (cm.sum() + 1e-15)  # same as accuracy for multiclass
-        macro = (cm.diag() / (cm.sum(dim=1) + 1e-15)).mean()
+        macro = (
+            cm.diag() / (cm.sum(dim=1) + 1e-15)
+        ).mean()  # same as average accuracy in breizhcrops
         weighted = (
             (cm.diag() / (cm.sum(dim=1) + 1e-15))
             * ((cm.sum(dim=1)) / (cm.sum() + 1e-15))
@@ -145,6 +147,24 @@ class MultiClassRunningScore(RunningScore):
         iou = cm.diag() / (cm.sum(dim=1) + cm.sum(dim=0) - cm.diag() + 1e-15)
 
         return {"IOU": iou.tolist(), "mIOU": float(iou.mean())}
+
+    def kappa(self):
+        cm = self.get_computed()
+        N = cm.shape[0]
+
+        act_hist = cm.sum(axis=1)
+
+        pred_hist = cm.sum(axis=0)
+
+        num_samples = cm.sum()
+
+        total_agreements = cm.diag().sum()
+        agreements_chance = (act_hist * pred_hist) / num_samples
+        agreements_chance = agreements_chance.sum()
+        kappa = (total_agreements - agreements_chance) / (
+            num_samples - agreements_chance
+        )
+        return {"Kappa metric": kappa}
 
 
 class MultiLabelRunningScore(RunningScore):
