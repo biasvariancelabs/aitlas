@@ -16,7 +16,7 @@ import numpy as np
 ## ESRI challenge
 
 train_cfg = {
-    "root": "E:\\AiTLAS\\aitlas\\ESRI-challenge\\data\\ESRI",
+    "root": "/home/dkocev/data/ESRI",
     "subset": "train",
     "subsample_percentage": 0.02,
     "batch_size": 256,
@@ -27,7 +27,7 @@ train_cfg = {
 train_set = EsriChallengeDataset(train_cfg)
 
 test_cfg = {
-    "root": "E:\\AiTLAS\\aitlas\\ESRI-challenge\\data\\ESRI",
+    "root": "/home/dkocev/data/ESRI",
     "subset": "test",
     "subsample_percentage": 0.02,
     "batch_size": 256,
