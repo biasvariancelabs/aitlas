@@ -92,10 +92,10 @@ model = get_fastrcnn(num_classes = 3)
 model.train_and_evaluate_model(
     train_dataset=train_set,
     val_dataset=test_set,
-    epochs=3,
+    epochs=18,
     model_directory = "./experiment/",
     run_id = "esri-fastrcnn",
-    iterations_log = 30
+    iterations_log = 15
 )
 
 
