@@ -1,10 +1,10 @@
 # datasets
-from ..aitlas.datasets.esri_challenge import EsriChallengeDataset
-from ..aitlas.datasets.dota import DotaDataset
+from aitlas.datasets.esri_challenge import EsriChallengeDataset
+from aitlas.datasets.dota import DotaDataset
 
 # models
-from ..aitlas.models.fastrcnn_detector import FastRCNN
-from ..aitlas.models.retinanet import RetinaNet
+from aitlas.models.fastrcnn_detector import FastRCNN
+from aitlas.models.retinanet import RetinaNet
 
 # vizualization
 from matplotlib import pyplot as plt
