@@ -14,11 +14,3 @@ class FastRCNN(BaseDetectionClassifier):
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
         # replace the pre-trained head with a new one
         self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, self.config.num_classes)
-
-    def forward_train(self, x, y):
-        return self.model.forward(x, targets = y)
-
-    def forward_eval(self, x):
-        return self.model.forward(x)
-
-    
