@@ -18,8 +18,8 @@ import numpy as np
 train_cfg = {
     "root": "/home/dkocev/data/ESRI",
     "subset": "train",
-    "subsample_percentage": 0.02,
-    "batch_size": 256,
+    "subsample_percentage": 1,
+    "batch_size": 32,
     "shuffle": True,
     "num_workers": 0,
     "transforms": ["torchvision.transforms.ToTensor"]
@@ -29,8 +29,8 @@ train_set = EsriChallengeDataset(train_cfg)
 test_cfg = {
     "root": "/home/dkocev/data/ESRI",
     "subset": "test",
-    "subsample_percentage": 0.02,
-    "batch_size": 256,
+    "subsample_percentage": 1,
+    "batch_size": 32,
     "shuffle": True,
     "num_workers": 0,
     "transforms": ["torchvision.transforms.ToTensor"]
@@ -40,10 +40,10 @@ test_set = EsriChallengeDataset(test_cfg)
 ## DOTA
 '''
 train_cfg = {
-    "root": "D:\\Documents\\AiTLAS\\aitlas\\ESRI-challenge\\data\\DOTA",
+    "root": "/home/dkocev/data/DOTA",
     "subset": "validation_split",
-    "subsample_percentage": 0.01,
-    "batch_size": 2,
+    "subsample_percentage": 0.5,
+    "batch_size": 32,
     "shuffle": True,
     "num_workers": 0,
     "filter_null": True,
@@ -52,10 +52,10 @@ train_cfg = {
 train_set = DotaDataset(train_cfg)
 
 test_cfg = {
-    "root": "D:\\Documents\\AiTLAS\\aitlas\\ESRI-challenge\\data\\DOTA",
+    "root": "/home/dkocev/data/DOTA",
     "subset": "validation_split",
-    "subsample_percentage": 0.01,
-    "batch_size": 2,
+    "subsample_percentage": 0.5,
+    "batch_size": 32,
     "shuffle": True,
     "num_workers": 0,
     "filter_null": True, 
