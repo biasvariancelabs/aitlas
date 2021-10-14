@@ -18,14 +18,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 ''' 
     Notes: 
-    1. The "fit" method had to be overwritten because "evaluate_model" does not return the loss. 
-       This is because we still don't have an implementation of a loss function used by an object detection model.
-    2. "train_epoch" and "predict_output_per_batch" are also overwritten in order to handle the targets properly. 
-    3. "evaluate_model" is overwritten in order to avoid calculating loss as well as to prepare the outputs in a suitable format for the mAP metric.
-
-    We also implement the mAP (Mean Average Precison) metric. As opposed to other metrics, in order to calculate mAP we need the predicted and groundtruth 
-    boxes, as well as the iou threshold rather than the true and groundtruth labels. This means we have to change the "update" method in the RunningScore class. 
-    In order to do that, we implement a version of the RunningScore class with **kwargs, to allow for calls to update functions with different signatures.
+    1. "train_epoch" is overwritten in order to handle the targets properly. 
 '''
 
 class BaseDetectionClassifier(BaseModel):
@@ -53,24 +46,25 @@ class BaseDetectionClassifier(BaseModel):
         pred_boxes = []
         for i in range (len(outputs)):
             for bbox_idx in range (outputs[i]['boxes'].shape[0]):
-                pred_boxes.append([image_count, outputs[i]['labels'][bbox_idx], outputs[i]['scores'][bbox_idx], outputs[i]['boxes'][bbox_idx][0], 
+                pred_boxes.append([count, outputs[i]['labels'][bbox_idx], outputs[i]['scores'][bbox_idx], outputs[i]['boxes'][bbox_idx][0], 
                                                                                                                 outputs[i]['boxes'][bbox_idx][1],
                                                                                                                 outputs[i]['boxes'][bbox_idx][2],
                                                                                                                 outputs[i]['boxes'][bbox_idx][3]])
             count += 1
-        return pred_boxes, count
+        # the first return value is for compatibility with the BaseModel implementations
+        return None, pred_boxes
 
-    def get_groundtruth(self, image_count, outputs, labels):
-        count = image_count
+    def get_groundtruth(self, labels):
+        count = 0
         true_boxes = []
-        for i in range (len(outputs)):
+        for i in range (len(labels)):
             for bbox_idx in range (labels[i]['boxes'].shape[0]):
-                true_boxes.append([image_count, labels[i]['labels'][bbox_idx], 1, labels[i]['boxes'][bbox_idx][0], 
+                true_boxes.append([count, labels[i]['labels'][bbox_idx], 1, labels[i]['boxes'][bbox_idx][0], 
                                                                                   labels[i]['boxes'][bbox_idx][1],
                                                                                   labels[i]['boxes'][bbox_idx][2],
                                                                                   labels[i]['boxes'][bbox_idx][3]])
             count += 1  
-        return true_boxes, count
+        return true_boxes
 
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
         start = current_ts()
@@ -82,7 +76,7 @@ class BaseDetectionClassifier(BaseModel):
             images = list(image.to(self.device) for image in images)
             targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
 
-            loss_dict = self.forward_train(images, targets)
+            loss_dict = self.model(images, targets)
 
             combined_loss = sum(loss for loss in loss_dict.values())
 
@@ -115,42 +109,3 @@ class BaseDetectionClassifier(BaseModel):
 
         return total_loss
 
-    def evaluate_model(self, dataloader, criterion=None, description="testing on validation set"):
-        """
-        Evaluates the current model against the specified dataloader for the specified metrics
-        :param dataloader:
-        :param metrics: list of metric keys to calculate
-        :criterion: Criterion to calculate loss
-        :description: What to show in the progress bar
-        :return: tuple of (metrics, y_true, y_pred)
-        """
-        self.model.eval()
-
-
-        for inputs, outputs, labels in self.predict_output_per_batch(dataloader, description):
-            formated_preds, count = self.get_predicted(image_count, outputs)
-            pred_boxes += formated_preds
-            
-            formated_true, count = self.get_groundtruth(image_count, outputs, labels)
-            true_boxes += formated_true
-
-            image_count+=count
-
-
-            self.running_metrics.update(true_boxes, pred_boxes)
-
-        return 0
-
-    def predict_output_per_batch(self, dataloader, description):
-        """Maybe overwrite this... I still don't know..."""
-        # turn on eval mode
-        self.model.eval()
-
-        # run predictions
-        with torch.no_grad():
-            for i, (images, targets) in enumerate(tqdm(dataloader, desc = description)):
-                images = list(image.to(self.device) for image in images)
-                targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
-                outputs= self.forward_eval(images)
-
-                yield images, outputs, targets
