@@ -238,18 +238,21 @@ class BaseModel(nn.Module, Configurable):
 
             predicted_probs, predicted = self.get_predicted(outputs)
 
-            if (
-                len(labels.shape) == 1
-            ):  # if it is multiclass, then we need one hot encoding for the predictions
+            if isinstance(labels[0], list): 
+                # if this is a detection problem than the check in the elif will raise an error
+                self.running_metrics.update(labels, predicted)
+                #
+            elif (len(labels.shape) == 1):  
+                # if it is multiclass, then we need one hot encoding for the predictions
                 one_hot = torch.zeros(labels.size(0), self.num_classes)
                 predicted = predicted.reshape(predicted.size(0))
                 one_hot[torch.arange(labels.size(0)), predicted.type(torch.long)] = 1
                 predicted = one_hot
                 predicted = predicted.to(self.device)
 
-            self.running_metrics.update(
-                labels.type(torch.int64), predicted.type(torch.int64)
-            )
+                self.running_metrics.update(
+                    labels.type(torch.int64), predicted.type(torch.int64)
+                )
 
         if criterion:
             total_loss = total_loss / len(dataloader.dataset)
@@ -322,10 +325,17 @@ class BaseModel(nn.Module, Configurable):
         with torch.no_grad():
             for i, data in enumerate(tqdm(dataloader, desc=description)):
                 inputs, labels = data
-                inputs = inputs.to(self.device)
-                labels = labels.to(self.device)
 
-                outputs = self(inputs)
+                # check if the inputs are a tuple for detection
+                if isinstance(inputs, tuple):
+                    inputs = list(image.to(self.device) for image in inputs)
+                    labels = [{k: v.to(self.device) for k, v in t.items()} for t in labels]
+                    labels = self.get_groundtruth(labels)
+                else:
+                    inputs = inputs.to(self.device)
+                    labels = labels.to(self.device)
+
+                outputs = self.model(inputs)
 
                 # check if outputs is OrderedDict for segmentation
                 if isinstance(outputs, collections.Mapping):
