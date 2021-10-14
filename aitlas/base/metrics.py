@@ -350,6 +350,11 @@ class DetectionRunningScore(RunningScore):
             y_true = [[image_idx, class, 1.0, x1, y1, x2, y2]...[]]
             y_pred = [[image_idx, pred_class, score, x1, y1, x2, y2]...[]]
         '''
+
+        # make sure these tensors are in RAM first
+        y_true = [[x[0], x[1].cpu(), x[2], x[3].cpu(), x[4].cpu(), x[5].cpu(), x[6].cpu()] for x in y_true]
+        y_pred = [[x[0], x[1].cpu(), x[2].cpu(), x[3].cpu(), x[4].cpu(), x[5].cpu(), x[6].cpu()] for x in y_pred]
+
         y_true = np.array(y_true)
         y_pred = np.array(y_pred)
 
