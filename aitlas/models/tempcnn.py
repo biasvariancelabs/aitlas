@@ -9,8 +9,8 @@
 
 """
 import torch.nn as nn
-import torch.utils.data
 import torch.optim as optim
+import torch.utils.data
 
 from ..base import BaseMulticlassClassifier
 from .schemas import TempCNNSchema
@@ -21,22 +21,36 @@ class TempCNN(BaseMulticlassClassifier):
     schema = TempCNNSchema
 
     def __init__(self, config):
-        BaseMulticlassClassifier.__init__(self, config)
+        super().__init__(config)
 
-        self.model.conv_bn_relu1 = Conv1D_BatchNorm_Relu_Dropout(self.config.input_dim, self.config.input_dim,
-                                                                 kernel_size=self.config.kernel_size,
-                                                                 drop_probability=self.config.dropout)
-        self.model.conv_bn_relu2 = Conv1D_BatchNorm_Relu_Dropout(self.config.input_dim, self.config.input_dim,
-                                                                 kernel_size=self.config.kernel_size,
-                                                                 drop_probability=self.config.dropout)
-        self.model.conv_bn_relu3 = Conv1D_BatchNorm_Relu_Dropout(self.config.input_dim, self.config.input_dim,
-                                                                 kernel_size=self.config.kernel_size,
-                                                                 drop_probability=self.config.dropout)
+        self.model.conv_bn_relu1 = Conv1D_BatchNorm_Relu_Dropout(
+            self.config.input_dim,
+            self.config.input_dim,
+            kernel_size=self.config.kernel_size,
+            drop_probability=self.config.dropout,
+        )
+        self.model.conv_bn_relu2 = Conv1D_BatchNorm_Relu_Dropout(
+            self.config.input_dim,
+            self.config.input_dim,
+            kernel_size=self.config.kernel_size,
+            drop_probability=self.config.dropout,
+        )
+        self.model.conv_bn_relu3 = Conv1D_BatchNorm_Relu_Dropout(
+            self.config.input_dim,
+            self.config.input_dim,
+            kernel_size=self.config.kernel_size,
+            drop_probability=self.config.dropout,
+        )
         self.model.flatten = Flatten()
-        self.model.dense = FC_BatchNorm_Relu_Dropout(self.config.input_dim * self.config.sequence_length,
-                                                     4 * self.config.input_dim, drop_probability=self.config.dropout)
-        self.model.logsoftmax = nn.Sequential(nn.Linear(4 * self.config.input_dim, self.config.num_classes),
-                                              nn.LogSoftmax(dim=-1))
+        self.model.dense = FC_BatchNorm_Relu_Dropout(
+            self.config.input_dim * self.config.sequence_length,
+            4 * self.config.input_dim,
+            drop_probability=self.config.dropout,
+        )
+        self.model.logsoftmax = nn.Sequential(
+            nn.Linear(4 * self.config.input_dim, self.config.num_classes),
+            nn.LogSoftmax(dim=-1),
+        )
 
     def forward(self, x):
         # require NxTxD
@@ -50,7 +64,11 @@ class TempCNN(BaseMulticlassClassifier):
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)        
+        return optim.Adam(
+            self.model.parameters(),
+            lr=self.config.learning_rate,
+            weight_decay=self.config.weight_decay,
+        )
 
 
 class Conv1D_BatchNorm_Relu_Dropout(torch.nn.Module):
@@ -61,7 +79,7 @@ class Conv1D_BatchNorm_Relu_Dropout(torch.nn.Module):
             nn.Conv1d(input_dim, hidden_dims, kernel_size, padding=(kernel_size // 2)),
             nn.BatchNorm1d(hidden_dims),
             nn.ReLU(),
-            nn.Dropout(p=drop_probability)
+            nn.Dropout(p=drop_probability),
         )
 
     def forward(self, X):
@@ -76,7 +94,7 @@ class FC_BatchNorm_Relu_Dropout(torch.nn.Module):
             nn.Linear(input_dim, hidden_dims),
             nn.BatchNorm1d(hidden_dims),
             nn.ReLU(),
-            nn.Dropout(p=drop_probability)
+            nn.Dropout(p=drop_probability),
         )
 
     def forward(self, X):

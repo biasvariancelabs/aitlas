@@ -6,7 +6,7 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 class ShallowCNNNet(BaseMulticlassClassifier):
     def __init__(self, config):
-        BaseMulticlassClassifier.__init__(self, config)
+        super().__init__(config)
 
         self.model.conv1 = nn.Conv2d(3, 6, 5)
         self.model.pool = nn.MaxPool2d(2, 2)
@@ -28,7 +28,7 @@ class ShallowCNNNet(BaseMulticlassClassifier):
 
 class ShallowCNNNetMultilabel(BaseMultilabelClassifier):
     def __init__(self, config):
-        BaseMultilabelClassifier.__init__(self, config)
+        super().__init__(config)
 
         self.model.conv1 = nn.Conv2d(3, 6, 5)
         self.model.pool = nn.MaxPool2d(2, 2)

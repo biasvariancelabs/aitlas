@@ -6,7 +6,7 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 class ResNet50(BaseMulticlassClassifier):
     def __init__(self, config):
-        BaseMulticlassClassifier.__init__(self, config)
+        super().__init__(config)
 
         if self.config.pretrained:
             self.model = models.resnet50(self.config.pretrained, False)
@@ -35,7 +35,7 @@ class ResNet50(BaseMulticlassClassifier):
 
 class ResNet152(BaseMulticlassClassifier):
     def __init__(self, config):
-        BaseMulticlassClassifier.__init__(self, config)
+        super().__init__(config)
 
         if self.config.pretrained:
             self.model = models.resnet152(self.config.pretrained, False)
@@ -58,7 +58,7 @@ class ResNet152(BaseMulticlassClassifier):
 
 class ResNet50MultiLabel(BaseMultilabelClassifier):
     def __init__(self, config):
-        BaseMultilabelClassifier.__init__(self, config)
+        super().__init__(config)
 
         if self.config.pretrained:
             self.model = models.resnet50(self.config.pretrained, False)
@@ -81,7 +81,7 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
 
 class ResNet152MultiLabel(BaseMultilabelClassifier):
     def __init__(self, config):
-        BaseMultilabelClassifier.__init__(self, config)
+        super().__init__(config)
 
         if self.config.pretrained:
             self.model = models.resnet152(self.config.pretrained, False)
@@ -100,6 +100,3 @@ class ResNet152MultiLabel(BaseMultilabelClassifier):
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model
-
-
-

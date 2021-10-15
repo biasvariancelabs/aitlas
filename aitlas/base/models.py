@@ -6,12 +6,10 @@ from shutil import copyfile
 import numpy as np
 import torch
 import torch.nn as nn
-from sklearn.metrics import f1_score
 from torch.utils.tensorboard import SummaryWriter
-from torchvision import transforms
 from tqdm import tqdm
 
-from ..utils import current_ts, get_class, image_loader, stringify
+from ..utils import current_ts, stringify
 from .config import Configurable
 from .datasets import BaseDataset
 from .schemas import BaseModelSchema

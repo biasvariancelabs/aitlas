@@ -20,7 +20,6 @@ pyarrow<1.0.2
 tqdm~=4.56.0
 scikit-image~=0.18.1
 jupyter<1.0.1
-eo-learn-core<0.8.1
 h5py<3.2.1
 pytorch-ignite<0.5
 faiss-cpu<1.7.9
