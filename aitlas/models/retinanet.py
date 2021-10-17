@@ -17,11 +17,3 @@ class RetinaNet(BaseDetectionClassifier):
                                                                           self.model.anchor_generator.num_anchors_per_location()[0], 
                                                                           config['num_classes'])
         self.model.head.regression_head = RetinaNetRegressionHead(self.model.backbone.out_channels, self.model.anchor_generator.num_anchors_per_location()[0])
-
-    def forward_train(self, x, y):
-        return self.model.forward(x, targets = y)
-
-    def forward_eval(self, x):
-        return self.model.forward(x)
-
-    
