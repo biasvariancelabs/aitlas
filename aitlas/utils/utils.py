@@ -59,7 +59,7 @@ def stringify(obj):
     if isinstance(obj, list):
         response = ", ".join([stringify(o) for o in obj])
     elif isinstance(obj, dict):
-        response = ", ".join([f"{k}:{stringify(v)}" for k, v in obj.items()])
+        response = ", ".join([f"{k}:{stringify(v)}\n" for k, v in obj.items()])
     else:
         response = str(obj)
 
