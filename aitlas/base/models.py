@@ -1,6 +1,7 @@
 import collections
 import logging
 import os
+import json
 from shutil import copyfile
 
 import numpy as np
@@ -15,7 +16,6 @@ from ..utils import current_ts, get_class, image_loader, stringify
 from .config import Configurable
 from .datasets import BaseDataset
 from .schemas import BaseModelSchema
-
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -237,8 +237,8 @@ class BaseModel(nn.Module, Configurable):
                 total_loss += batch_loss.item() * inputs.size(0)
 
             predicted_probs, predicted = self.get_predicted(outputs)
-
-            if isinstance(labels[0], list): 
+            
+            if "annotations" in labels.keys():
                 # if this is a detection problem than the check in the elif will raise an error
                 self.running_metrics.update(labels, predicted)
                 #
@@ -323,6 +323,7 @@ class BaseModel(nn.Module, Configurable):
 
         # run predictions
         with torch.no_grad():
+
             for i, data in enumerate(tqdm(dataloader, desc=description)):
                 inputs, labels = data
 
@@ -330,7 +331,9 @@ class BaseModel(nn.Module, Configurable):
                 if isinstance(inputs, tuple):
                     inputs = list(image.to(self.device) for image in inputs)
                     labels = [{k: v.to(self.device) for k, v in t.items()} for t in labels]
+
                     labels = self.get_groundtruth(labels)
+
                 else:
                     inputs = inputs.to(self.device)
                     labels = labels.to(self.device)

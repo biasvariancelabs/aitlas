@@ -77,7 +77,7 @@ class BaseDetectionClassifierSchema(BaseClassifierSchema):
         fields.String,
         # we apparently don't use the metrics.detection classes
         # missing=["aitlas.metrics.detection.mAP"],
-        missing = ['mAP'],
+        missing = ['cocoAP'],
         description="Classes of metrics you want to calculate",
-        example=['mAP', 'f1_score', 'precision', 'recall'],
+        example=['cocoAP'],
     )
