@@ -7,7 +7,7 @@ ext_modules = [
     Extension(
         '_mask',
         sources=['./aitlas/utils/maskApi.c', './aitlas/utils/_mask.pyx'],
-        include_dirs = [np.get_include(), '../common'],
+        include_dirs = [np.get_include(), './aitlas/utils'],
         extra_compile_args=['-Wno-cpp', '-Wno-unused-function', '-std=c99'],
     )
 ]
