@@ -13,3 +13,6 @@ from .utils import (
     stringify,
     tiff_loader,
 )
+
+from .coco import COCO
+from .cocoeval import COCOeval
