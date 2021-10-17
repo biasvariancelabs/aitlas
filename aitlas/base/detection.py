@@ -5,6 +5,7 @@ import sys
 from tqdm import tqdm
 
 import math
+import numpy as np
 
 import torch
 import torch.optim as optim
@@ -14,7 +15,7 @@ from aitlas.utils import current_ts
 
 from .metrics import DetectionRunningScore
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s\n")
 
 ''' 
     Notes: 
@@ -42,29 +43,74 @@ class BaseDetectionClassifier(BaseModel):
         return None
 
     def get_predicted(self, outputs):
-        count = 0
-        pred_boxes = []
-        for i in range (len(outputs)):
-            for bbox_idx in range (outputs[i]['boxes'].shape[0]):
-                pred_boxes.append([count, outputs[i]['labels'][bbox_idx], outputs[i]['scores'][bbox_idx], outputs[i]['boxes'][bbox_idx][0], 
-                                                                                                                outputs[i]['boxes'][bbox_idx][1],
-                                                                                                                outputs[i]['boxes'][bbox_idx][2],
-                                                                                                                outputs[i]['boxes'][bbox_idx][3]])
-            count += 1
-        # the first return value is for compatibility with the BaseModel implementations
-        return None, pred_boxes
+        '''
+            Example output:
+
+            {'boxes': tensor([[  5.7677, 108.3321,  15.2177, 113.5312],
+                            [  6.7789, 106.9112,  16.5648, 116.3191],
+                            [ 44.8771, 205.6994,  55.6011, 215.7120]], device='cuda:0'), 
+            'labels': tensor([1, 2, 2], device='cuda:0'), 
+            'scores': tensor([0.2266, 0.0687, 0.0514], device='cuda:0')}
+        '''
+
+        coco_formated_annotations = []
+
+        for annot_idx, annot in enumerate(outputs):
+            for box_id in range(annot['boxes'].shape[0]):
+                coco_formated_annotations.append({
+                    "image_id": annot_idx,
+                    "category_id": int (annot['labels'][box_id].item()), 
+                    "bbox": [float((annot['boxes'][box_id,2] - annot['boxes'][box_id,0])//2), 
+                             float((annot['boxes'][box_id,3] - annot['boxes'][box_id,1])//2), 
+                             float((annot['boxes'][box_id,2] - annot['boxes'][box_id,0])), 
+                             float((annot['boxes'][box_id,3] - annot['boxes'][box_id,1]))],
+                    "score": float(annot['scores'][box_id].item())
+                })
+
+        return None, coco_formated_annotations
 
     def get_groundtruth(self, labels):
-        count = 0
-        true_boxes = []
-        for i in range (len(labels)):
-            for bbox_idx in range (labels[i]['boxes'].shape[0]):
-                true_boxes.append([count, labels[i]['labels'][bbox_idx], 1, labels[i]['boxes'][bbox_idx][0], 
-                                                                                  labels[i]['boxes'][bbox_idx][1],
-                                                                                  labels[i]['boxes'][bbox_idx][2],
-                                                                                  labels[i]['boxes'][bbox_idx][3]])
-            count += 1  
-        return true_boxes
+
+        '''
+            Example label:
+            
+            {'boxes': tensor([[ 79.2300,  36.1800, 123.6700,  80.6300],
+                              [157.3000,  63.9400, 201.7400, 108.3900],
+                              [ 93.1100, 112.5200, 137.5500, 156.9600]], device='cuda:0'), 
+             'labels': tensor([2, 2, 2], device='cuda:0'), 
+             'image_id': tensor([43], device='cuda:0'), 
+             'area': tensor([1975.3577, 1975.3582, 1974.9142], device='cuda:0'), 
+             'iscrowd': tensor([0, 0, 0], device='cuda:0')}
+        '''
+    
+        coco_formated_annotations = {'annotations': [], "images": []}
+
+        current_annot = 0
+        for annot_idx, annot in enumerate(labels) :
+            for box_id in range(annot['boxes'].shape[0]):
+                coco_formated_annotations['annotations'].append({
+                    "image_id": annot_idx, 
+                    "category_id": int (annot['labels'][box_id].item()), 
+                    "bbox": [float((annot['boxes'][box_id, 2] - annot['boxes'][box_id, 0])//2), 
+                             float((annot['boxes'][box_id, 3] - annot['boxes'][box_id, 1])//2), 
+                             float((annot['boxes'][box_id, 2] - annot['boxes'][box_id, 0])), 
+                             float((annot['boxes'][box_id, 3] - annot['boxes'][box_id, 1]))],
+                    "score": float(1.0), 
+                    "id": current_annot, 
+                    "iscrowd": annot['iscrowd'][box_id].item(), 
+                    "area": annot['area'][box_id].item()
+                })
+                current_annot+=1
+
+            coco_formated_annotations['images'].append(annot_idx)
+        
+        img_ids = np.unique(coco_formated_annotations['images'])
+        coco_formated_annotations['images'] = [{"id": int(img_idx)} for img_idx in img_ids]
+
+        coco_formated_annotations['categories'] = []
+
+        # return the dictionary with the groundtruths as well as the new start_img_idx and the new annotation_start_idx
+        return coco_formated_annotations
 
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
         start = current_ts()
