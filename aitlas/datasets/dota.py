@@ -179,3 +179,6 @@ class DotaDataset(BaseDataset):
                                            num_workers=self.num_workers,
                                            pin_memory = self.pin_memory,
                                            collate_fn=collate_fn)
+
+    def get_labels(self):
+        return list(self.mappings.keys())
