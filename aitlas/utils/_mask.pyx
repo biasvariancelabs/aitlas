@@ -1,5 +1,5 @@
 # distutils: language = c
-# distutils: sources = ../common/maskApi.c
+# distutils: sources = .aitlas/utils/maskApi.c
 
 #**************************************************************************
 # Microsoft COCO Toolbox.      version 2.0
