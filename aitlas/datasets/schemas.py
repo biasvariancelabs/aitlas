@@ -67,11 +67,12 @@ class CropsDatasetSchema(BaseDatasetSchema):
     level = fields.String(
         missing='L1C', description="L1C or L2A", example="L1C", validate=validate.OneOf(['L1C', 'L2A'])
     )
-
-class BreizhCropsSchema(CropsDatasetSchema):
     regions = fields.List(
         fields.String,
-        required=True, description="Brittany region (frh01..frh04)", example="['frh01','frh01']")
+        required=True, description="Brittany region (frh01..frh04) or train/val/test", example="['frh01','frh01']")
+
+class BreizhCropsSchema(CropsDatasetSchema):
+
  
     filter_length = fields.Integer(
         missing=0, description="filter_length"

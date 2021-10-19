@@ -24,7 +24,8 @@
                     "batch_size": 16,
                     "shuffle": true,
                     "csv_file_path":"index.csv",
-                    "num_workers": 4
+                    "num_workers": 4,
+                    "regions":["train"]
                 }
             }
         }
