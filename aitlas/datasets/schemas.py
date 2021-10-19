@@ -51,26 +51,30 @@ class BigEarthNetSchema(BaseDatasetSchema):
         description="List of std values for the 3 channels",
     )
 
-
-class BreizhCropsSchema(BaseDatasetSchema):
-    regions = fields.List(
-        fields.String,
-        required=True, description="Brittany region (frh01..frh04)", example="['frh01','frh01']")
-        
+class CropsDatasetSchema(BaseDatasetSchema):
+    csv_file_path = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
     root = fields.String(
-        required=True, description="Dataset path on disk", example="./breizhcrops_dataset"
+        required=True, description="Dataset path on disk", example="./slovenia-crops"
     )
     year = fields.Integer(
         missing=2017, description="year", validate=validate.OneOf([2017, 2018])
     )
-    filter_length = fields.Integer(
-        missing=0, description="filter_length"
-    )
-    level = fields.String(
-        required=True, description="L1C or L2A", example="L1C", validate=validate.OneOf(['L1C', 'L2A'])
-    )
     verbose = fields.Bool(
         missing=False, description="verbose" #change to true
+    )    
+    level = fields.String(
+        missing='L1C', description="L1C or L2A", example="L1C", validate=validate.OneOf(['L1C', 'L2A'])
+    )
+
+class BreizhCropsSchema(CropsDatasetSchema):
+    regions = fields.List(
+        fields.String,
+        required=True, description="Brittany region (frh01..frh04)", example="['frh01','frh01']")
+ 
+    filter_length = fields.Integer(
+        missing=0, description="filter_length"
     )
     load_timeseries = fields.Bool(
         missing=True, description="load_timeseries"
