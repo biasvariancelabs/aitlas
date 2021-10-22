@@ -2,8 +2,8 @@
     "model": {
         "classname": "aitlas.models.TransformerModel",
         "config": {
-            "input_dim":13,
-            "num_classes": 9,
+            "input_dim":11,
+            "num_classes": 10,
             "pretrained":false,
             "learning_rate": 0.001,
             "metrics":["accuracy","f1_score", "kappa"]
