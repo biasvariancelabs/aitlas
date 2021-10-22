@@ -51,12 +51,18 @@ class EOPatchCrops(CropsDataset):
 
     def __init__(self, config):
         CropsDataset.__init__(self, config)
-
-        self.region = 'slovenia'
+        
+        self.root = self.config.root
+        self.regions = self.config.regions #'slovenia'
         self.indexfile = self.config.root+os.sep+self.config.csv_file_path
         self.h5path = {}
-        self.h5path[self.region] = self.config.root+os.sep+'dataset.hdf5'
+
+        self.split_sets = ['train','test','val']
+
+        for region in self.split_sets:
+            self.h5path[region] = self.config.root+os.sep+region+'.hdf5'
         self.classmappingfile = self.config.root+os.sep+"classmapping.csv"  
+        
         #self.regions = ['slovenia']
 
         self.load_classmapping(self.classmappingfile)
@@ -66,7 +72,17 @@ class EOPatchCrops(CropsDataset):
             self.preprocess()
 
         self.selected_bands = BANDS
-        self.index = pd.read_csv(self.indexfile, index_col=None)
+
+        self.index= pd.read_csv(self.root+os.sep+self.regions[0]+".csv", index_col=None)
+        
+        for region in self.regions[1:]:
+            region_ind = pd.read_csv(self.root+os.sep+region+".csv", index_col=None)
+            self.index = pd.concatenate([self.index,region_ind], axis=0)
+        
+        # self.index will always be all chosen regions summarized
+        # index.csv will be the entire index for all existing regions
+
+
 
         self.X_list = None
 
@@ -88,14 +104,12 @@ class EOPatchCrops(CropsDataset):
 
     def preprocess(self):
 
-        self.root = self.config.root
         self.eopatches = [f.name for f in os.scandir(self.root+os.sep+'eopatches') if f.is_dir()]
         self.indexfile = self.root+os.sep+'index.csv'
         print(self.eopatches)
         columns = ['path','eopatch', 'polygon_id','CODE_CULTU', 'sequencelength','classid','classname','region']
         #self.index = pd.DataFrame(columns=columns)
         list_index = list()
-        f = h5py.File(self.h5path[self.region], "w")
         for patch in self.eopatches:
             eop = EOPatch.load(self.root+os.sep+'eopatches'+os.sep+patch)
             polygons = eop.vector_timeless["CROP_TYPE_GDF"]
@@ -103,6 +117,42 @@ class EOPatchCrops(CropsDataset):
                 if row.ct_eu_code not in self.mapping.index.values:
                     continue
                 poly_id = int(row.polygon_id)
+
+                classid = self.mapping.loc[row.ct_eu_code].id
+                classname = self.mapping.loc[row.ct_eu_code].classname
+
+                list_index.append(
+                    {
+                        columns[0]:patch+os.sep+str(poly_id), 
+                        columns[1]:patch,
+                        columns[2]:poly_id,
+                        columns[3]:row.ct_eu_code,
+                        columns[4]:0,#temp_X.shape[0],
+                        columns[5]:classid,
+                        columns[6]:classname,
+                        columns[7]:''#self.region                  
+                    }
+                )
+                #self.index = pd.concat([self.index, pd.DataFrame([[patch+os.sep+str(poly_id), patch, poly_id, row.ct_eu_code, temp_X.shape[0], classid, classname]], columns=self.index.columns)], axis=0, ignore_index=True)
+        self.index = pd.DataFrame(list_index)
+
+        self.split()
+
+        f = {}
+        for set in self.split_sets:
+            f[set] = h5py.File(self.h5path[set], "w")
+
+        self.index.set_index("path", drop=False, inplace=True)
+
+        for patch in self.eopatches:
+            eop = EOPatch.load(self.root+os.sep+'eopatches'+os.sep+patch)
+            polygons = eop.vector_timeless["CROP_TYPE_GDF"]
+            for row in polygons.itertuples():
+                if row.ct_eu_code not in self.mapping.index.values:
+                    continue
+                poly_id = int(row.polygon_id)
+                print(self.index)
+                index_row = self.index.loc[patch+os.sep+str(poly_id)]
 
                 polygon = polygons[polygons.polygon_id==poly_id]
                 temp = VectorToRasterTask(vector_input=polygon,
@@ -130,36 +180,29 @@ class EOPatchCrops(CropsDataset):
 
                 temp_X=np.sum(np.multiply(polygon_indicator_mask_ts, eop.data["FEATURES_S2"]), axis=(1,2))
 
-                ### figure out how to save this in breizhcrops h5
-
-                dset = f.create_dataset(patch+os.sep+str(poly_id), data=temp_X)
-                classid = self.mapping.loc[row.ct_eu_code].id
-                classname = self.mapping.loc[row.ct_eu_code].classname
-
-                list_index.append(
-                    {
-                        columns[0]:patch+os.sep+str(poly_id), 
-                        columns[1]:patch,
-                        columns[2]:poly_id,
-                        columns[3]:row.ct_eu_code,
-                        columns[4]:temp_X.shape[0],
-                        columns[5]:classid,
-                        columns[6]:classname,
-                        columns[7]:self.region                  
-                    }
-                )
-                #self.index = pd.concat([self.index, pd.DataFrame([[patch+os.sep+str(poly_id), patch, poly_id, row.ct_eu_code, temp_X.shape[0], classid, classname]], columns=self.index.columns)], axis=0, ignore_index=True)
-        self.index = pd.DataFrame(list_index)
+                dset = f[index_row.region].create_dataset(patch+os.sep+str(poly_id), data=temp_X)
+        self.index.reset_index(inplace=True, drop=True)
         self.write_index()
-        self.split()
-        
+
     def split(self):
+        print(self.index)
         X_train, X_test, y_train, y_test  = train_test_split(self.index.values, self.index.classid.values, test_size=0.15, random_state=1)
         X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.15, random_state=1) # 0.25 x 0.8 = 0.2
 
-        pd.DataFrame(X_train, columns=self.index.columns).to_csv(self.root+os.sep+'train.csv')
-        pd.DataFrame(X_test, columns=self.index.columns).to_csv(self.root+os.sep+'test.csv')
-        pd.DataFrame(X_val, columns=self.index.columns).to_csv(self.root+os.sep+'val.csv')
+        X_train = pd.DataFrame(X_train, columns=self.index.columns)
+        X_train['region'] = 'train'
+        X_train.to_csv(self.root+os.sep+'train.csv')
+        X_test = pd.DataFrame(X_test, columns=self.index.columns)
+        X_test['region'] = 'test'
+        X_test.to_csv(self.root+os.sep+'test.csv')
+        X_val = pd.DataFrame(X_val, columns=self.index.columns)
+        X_val['region'] = 'val'
+        X_val.to_csv(self.root+os.sep+'val.csv')
+
+        self.index = pd.concat([X_train, X_val, X_test], ignore_index=True)
+
+        # sort?
+        print(self.index)
 
     def write_index(self):
         self.index.to_csv(self.indexfile)
