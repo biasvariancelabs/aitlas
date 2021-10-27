@@ -187,3 +187,38 @@ class BreizhCropsSchema(BaseDatasetSchema):
         missing=False, description="recompile_h5_from_csv"
     )
     preload_ram = fields.Bool(missing=False, description="preload_ram")
+
+
+class CropsDatasetSchema(BaseDatasetSchema):
+    csv_file_path = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    root = fields.String(
+        required=True, description="Dataset path on disk", example="./slovenia-crops"
+    )
+    year = fields.Integer(
+        missing=2017, description="year", validate=validate.OneOf([2017, 2018])
+    )
+    verbose = fields.Bool(missing=False, description="verbose")  # change to true
+    level = fields.String(
+        missing="L1C",
+        description="L1C or L2A",
+        example="L1C",
+        validate=validate.OneOf(["L1C", "L2A"]),
+    )
+    regions = fields.List(
+        fields.String,
+        required=True,
+        description="Brittany region (frh01..frh04) or train/val/test",
+        example="['frh01','frh01']",
+    )
+
+
+class BreizhCropsSchema(CropsDatasetSchema):
+
+    filter_length = fields.Integer(missing=0, description="filter_length")
+    load_timeseries = fields.Bool(missing=True, description="load_timeseries")
+    recompile_h5_from_csv = fields.Bool(
+        missing=False, description="recompile_h5_from_csv"
+    )
+    preload_ram = fields.Bool(missing=False, description="preload_ram")

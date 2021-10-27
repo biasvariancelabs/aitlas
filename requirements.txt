@@ -32,3 +32,6 @@ timm~=0.4.12
 segmentation-models-pytorch~=0.2.0
 
 albumentations~=1.0.3
+
+eo-learn-geometry==0.10.0
+eo-learn-core==0.10.0

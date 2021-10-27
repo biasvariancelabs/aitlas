@@ -11,7 +11,9 @@ from .breizhcrops import BreizhCropsDataset
 from .camvid import CamVidDataset
 from .chactun import ChactunDataset
 from .clrs import CLRSDataset
+from .crops_classification import CropsDataset
 from .dfc15_multilabel import DFC15MultiLabelDataset
+from .eopatch_crops import EOPatchCrops
 from .eurosat import EurosatDataset
 from .inria import InriaDataset
 from .landcover_ai import LandCoverAiDataset

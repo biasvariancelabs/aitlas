@@ -8,8 +8,8 @@ from ..base.schemas import BaseSegmentationClassifierSchema
 class TransformerModelSchema(BaseClassifierSchema):
     input_dim = fields.Int(
         required=True,
-        description="Number of bands (13 for L1C, 10 for L2A)",
-        validate=validate.OneOf([13, 10]),
+        description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
+        validate=validate.OneOf([13, 10, 11]),
     )
 
     d_model = fields.Int(missing=64, description="None")
@@ -38,8 +38,8 @@ class TransformerModelSchema(BaseClassifierSchema):
 class InceptionTimeSchema(BaseClassifierSchema):
     input_dim = fields.Int(
         required=True,
-        description="Number of bands (13 for L1C, 10 for L2A)",
-        validate=validate.OneOf([13, 10]),
+        description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
+        validate=validate.OneOf([13, 10, 11]),
     )
 
     num_layers = fields.Int(required=False, missing=3, description="None")
@@ -58,8 +58,8 @@ class InceptionTimeSchema(BaseClassifierSchema):
 class LSTMSchema(BaseClassifierSchema):
     input_dim = fields.Int(
         required=True,
-        description="Number of bands (13 for L1C, 10 for L2A)",
-        validate=validate.OneOf([13, 10]),
+        description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
+        validate=validate.OneOf([13, 10, 11]),
     )
 
     num_layers = fields.Int(required=False, missing=4, description="None")
@@ -84,8 +84,8 @@ class LSTMSchema(BaseClassifierSchema):
 class MSResNetSchema(BaseClassifierSchema):
     input_dim = fields.Int(
         required=True,
-        description="Number of bands (13 for L1C, 10 for L2A)",
-        validate=validate.OneOf([13, 10]),
+        description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
+        validate=validate.OneOf([13, 10, 11]),
     )
 
     layers = fields.List(
@@ -104,8 +104,8 @@ class MSResNetSchema(BaseClassifierSchema):
 class TempCNNSchema(BaseClassifierSchema):
     input_dim = fields.Int(
         required=True,
-        description="Number of bands (13 for L1C, 10 for L2A)",
-        validate=validate.OneOf([13, 10]),
+        description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
+        validate=validate.OneOf([13, 10, 11]),
     )
 
     sequence_length = fields.Int(required=False, missing=45, description="None")
@@ -128,8 +128,8 @@ class TempCNNSchema(BaseClassifierSchema):
 class StarRNNSchema(BaseClassifierSchema):
     input_dim = fields.Int(
         required=True,
-        description="Number of bands (13 for L1C, 10 for L2A)",
-        validate=validate.OneOf([13, 10]),
+        description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
+        validate=validate.OneOf([13, 10, 11]),
     )
 
     num_layers = fields.Int(required=False, missing=3, description="None")
@@ -154,8 +154,8 @@ class StarRNNSchema(BaseClassifierSchema):
 class OmniScaleCNNSchema(BaseClassifierSchema):
     input_dim = fields.Int(
         required=True,
-        description="Number of bands (13 for L1C, 10 for L2A)",
-        validate=validate.OneOf([13, 10]),
+        description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
+        validate=validate.OneOf([13, 10, 11]),
     )
 
     sequence_length = fields.Int(required=False, missing=45, description="None")

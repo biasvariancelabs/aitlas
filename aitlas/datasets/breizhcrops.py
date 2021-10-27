@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from aitlas.datasets.crops_classification import CropsDataset
 from tqdm import tqdm
 
 from ..base import BaseDataset
@@ -164,13 +165,25 @@ SELECTED_BANDS = {
 }
 
 
-class BreizhCropsDataset(BaseDataset):
+class BreizhCropsDataset(CropsDataset):
     """BreizhCrops - a crop type classification dataset"""
 
     schema = BreizhCropsSchema
 
     def __init__(self, config):
         super().__init__(config)
+
+        #      (self,
+        #          region,
+        #          root="breizhcrops_dataset",
+        #          year=2017, level="L1C",
+        #          transform=None,
+        #          target_transform=None,
+        #          filter_length=0,
+        #          verbose=False,
+        #          load_timeseries=True,
+        #          recompile_h5_from_csv=False,
+        #          preload_ram=False)
 
         # :param region: dataset region. choose from "frh01", "frh02", "frh03", "frh04", "belle-ile"
         # :param root: where the data will be stored. defaults to `./breizhcrops_dataset`
@@ -186,7 +199,7 @@ class BreizhCropsDataset(BaseDataset):
 
         self.regions = [region.lower() for region in self.config.regions]
         self.bands = BANDS[self.config.level]
-
+        self.selected_bands = SELECTED_BANDS[self.config.level]
         self.root = self.config.root
 
         self.h5path = {}
@@ -196,6 +209,9 @@ class BreizhCropsDataset(BaseDataset):
 
         self.index = pd.DataFrame()
 
+        self.preprocess()
+
+    def preprocess(self):
         for region in self.regions:
             if self.config.verbose:
                 logging.info(
