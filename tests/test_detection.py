@@ -73,7 +73,7 @@ if __name__ == '__main__':
         elif args.dataset == "DOTA":
             train_cfg = {
                 "root": "/home/dkocev/data/DOTA",
-                "subset": "validation_split",
+                "subset": "train_split",
                 "subsample_percentage": 0.5,
                 "batch_size": 32,
                 "shuffle": True,
@@ -86,7 +86,7 @@ if __name__ == '__main__':
             test_cfg = {
                 "root": "/home/dkocev/data/DOTA",
                 "subset": "validation_split",
-                "subsample_percentage": 0.5,
+                "subsample_percentage": 1.0,
                 "batch_size": 32,
                 "shuffle": True,
                 "num_workers": 0,
