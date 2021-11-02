@@ -93,7 +93,7 @@ if __name__ == '__main__':
                 "filter_null": True, 
                 "transforms": ["torchvision.transforms.ToTensor"]
             }
-            test_set = DotaDataset(train_cfg)
+            test_set = DotaDataset(test_cfg)
             num_classes = 16
         else:
             print ("Invalid dataset selection")
