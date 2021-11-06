@@ -140,8 +140,13 @@ class DotaDataset(BaseDataset):
                 if xmin == xmax:
                     xmax = xmin+1
 
-                boxes.append([xmin, ymin, xmax, ymax])
-                labels.append(self.mappings[line.split(" ")[8]])
+                if ((xmax - xmin) <= 0.0 or (ymax - ymin) <= 0.0):
+                    print ("Found box with inappropriate coords:")
+                    print ([xmin, ymin, xmax, ymax])
+                    continue
+                else:
+                    boxes.append([xmin, ymin, xmax, ymax])
+                    labels.append(self.mappings[line.split(" ")[8]])
 
         # if we have chosen not to filter empty images and the current images does not contain any objects 
         # append a dummy bbox and label it as background
