@@ -68,6 +68,16 @@ class DotaDataset(BaseDataset):
 
         print ("The subsampled number of images is:", len(self.imgs))
 
+        print ("Running check for valid width and height...", flush = True)
+        for i in range(self.__len__):
+            _, target = self.__getitem__(i)
+            for box in target["boxes"]:
+                xmin, ymin, xmax, ymax = box[0], box[1], box[2], box[3]
+                if ((xmax - xmin) <= 1.0 or (ymax - ymin) <= 1.0):
+                    print ("Found box with inappropriate coords:")
+                    print ([xmin, ymin, xmax, ymax])
+
+
     def filter (self):
         filtered_imgs, filtered_labels = [],  []
 
@@ -140,14 +150,9 @@ class DotaDataset(BaseDataset):
                     ymax = ymin+1
                 if xmin == xmax:
                     xmax = xmin+1
-
-                if ((xmax - xmin) <= 1.0 or (ymax - ymin) <= 1.0):
-                    print ("Found box with inappropriate coords:")
-                    print ([xmin, ymin, xmax, ymax])
-                    continue
-                else:
-                    boxes.append([xmin, ymin, xmax, ymax])
-                    labels.append(self.mappings[line.split(" ")[8]])
+                
+                boxes.append([xmin, ymin, xmax, ymax])
+                labels.append(self.mappings[line.split(" ")[8]])
 
         # if we have chosen not to filter empty images and the current images does not contain any objects 
         # append a dummy bbox and label it as background
