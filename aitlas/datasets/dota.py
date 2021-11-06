@@ -73,7 +73,7 @@ class DotaDataset(BaseDataset):
             _, target = self.__getitem__(i)
             for box in target["boxes"]:
                 xmin, ymin, xmax, ymax = box[0], box[1], box[2], box[3]
-                if ((xmax - xmin) <= 1.0 or (ymax - ymin) <= 1.0):
+                if (((xmax - xmin) <= 1.0) or ((ymax - ymin) <= 1.0)):
                     print ("Found box with inappropriate coords:")
                     print ([xmin, ymin, xmax, ymax])
 
