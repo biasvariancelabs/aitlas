@@ -153,14 +153,7 @@ class DotaDataset(BaseDataset):
                         elif value > ymax:
                             ymax = value
 
-                if ymin == ymax:
-                    ymax = ymin+1
-                if xmin == xmax:
-                    xmax = xmin+1
-
                 if (((xmax - xmin) <= 0.0) or ((ymax - ymin) <= 0.0)):
-                    print ('Found bad box...')
-                    print ([xmin, ymin, xmax, ymax])
                     continue
                                     
                 boxes.append([xmin, ymin, xmax, ymax])
@@ -170,6 +163,10 @@ class DotaDataset(BaseDataset):
         # append a dummy bbox and label it as background
         if (not self.filter_null) and (not len(boxes)):
             boxes.append([0, 1, 2, 3])
+            labels.append(0)
+    
+        if not len(boxes):
+            boxes.apped([0, 1, 2, 3])
             labels.append(0)
         
         # convert to torch.Tensor
