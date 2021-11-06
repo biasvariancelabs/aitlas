@@ -140,7 +140,7 @@ class DotaDataset(BaseDataset):
                 if xmin == xmax:
                     xmax = xmin+1
 
-                if ((xmax - xmin) <= 0.0 or (ymax - ymin) <= 0.0):
+                if ((xmax - xmin) <= 1.0 or (ymax - ymin) <= 1.0):
                     print ("Found box with inappropriate coords:")
                     print ([xmin, ymin, xmax, ymax])
                     continue
