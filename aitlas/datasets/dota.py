@@ -69,7 +69,7 @@ class DotaDataset(BaseDataset):
         print ("The subsampled number of images is:", len(self.imgs))
 
         print ("Running check for valid width and height...", flush = True)
-        for i in range(self.__len__):
+        for i in range(self.__len__()):
             _, target = self.__getitem__(i)
             for box in target["boxes"]:
                 xmin, ymin, xmax, ymax = box[0], box[1], box[2], box[3]
