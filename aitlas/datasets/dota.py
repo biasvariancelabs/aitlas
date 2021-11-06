@@ -166,7 +166,7 @@ class DotaDataset(BaseDataset):
             labels.append(0)
     
         if not len(boxes):
-            boxes.apped([0, 1, 2, 3])
+            boxes.append([0, 1, 2, 3])
             labels.append(0)
         
         # convert to torch.Tensor
