@@ -59,11 +59,12 @@ class DotaDataset(BaseDataset):
 
         # select a subset of these images for training and testing
         # the reason for this subsampling is computational complexity only
-        num_subsampled_imgs = int(self.subsample_percentage * len(self.imgs))
-        selected = random.sample(range(0,len(self.imgs)), num_subsampled_imgs)
-
-        self.imgs = [self.imgs[idx] for idx in range(len(self.imgs)) if idx in selected]
-        self.labels = [self.labels[idx] for idx in range(len(self.labels)) if idx in selected]
+        if self.subsample_percentage != 1.0:
+            num_subsampled_imgs = int(self.subsample_percentage * len(self.imgs))
+            selected = random.sample(range(0,len(self.imgs)), num_subsampled_imgs)
+        
+            self.imgs = [self.imgs[idx] for idx in range(len(self.imgs)) if idx in selected]
+            self.labels = [self.labels[idx] for idx in range(len(self.labels)) if idx in selected]
 
         print ("The subsampled number of images is:", len(self.imgs))
 
