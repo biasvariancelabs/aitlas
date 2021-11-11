@@ -110,7 +110,8 @@ if __name__ == '__main__':
                 epochs=args.epochs,
                 model_directory = "./experiment/",
                 run_id = "{}-fastrcnn".format(args.dataset),
-                iterations_log = 20
+                iterations_log = 20,
+                evaluate_on_train=False
             )
         elif args.model == 'RetinaNet':
             # Test the performance of RetinaNet
@@ -122,7 +123,8 @@ if __name__ == '__main__':
                 epochs=args.epochs,
                 model_directory = "./experiment/",
                 run_id = "{}-retinanet".format(args.dataset),
-                iterations_log = 20
+                iterations_log = 20,
+                evaluate_on_train=False
             )
 
             img_names, predictions = model.predict_with_output(test_set, description = 'Predicting outputs on validation')

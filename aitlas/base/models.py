@@ -57,6 +57,7 @@ class BaseModel(nn.Module, Configurable):
         iterations_log: int = 100,
         resume_model: str = None,
         val_dataset: BaseDataset = None,
+        evaluate_on_train: bool = True,
         run_id: str = None,
         **kwargs,
     ):
@@ -99,18 +100,20 @@ class BaseModel(nn.Module, Configurable):
 
             # evaluate against the train set
             self.running_metrics.reset()
-            train_loss = self.evaluate_model(
-                train_loader,
-                criterion=self.criterion,
-                description="testing on train set",
-            )
-            self.log_metrics(
-                self.running_metrics.get_scores(self.metrics),
-                dataset.get_labels(),
-                "train",
-                self.writer,
-                epoch + 1,
-            )
+
+            if evaluate_on_train:
+                train_loss = self.evaluate_model(
+                    train_loader,
+                    criterion=self.criterion,
+                    description="testing on train set",
+                )
+                self.log_metrics(
+                    self.running_metrics.get_scores(self.metrics),
+                    dataset.get_labels(),
+                    "train",
+                    self.writer,
+                    epoch + 1,
+                )
 
             # evaluate against a validation set if there is one
             if val_loader:
@@ -481,6 +484,7 @@ class BaseModel(nn.Module, Configurable):
         iterations_log: int = 100,
         resume_model: str = None,
         val_dataset: BaseDataset = None,
+        evaluate_on_train: bool = True,
         run_id: str = None,
         **kwargs,
     ):
@@ -491,6 +495,7 @@ class BaseModel(nn.Module, Configurable):
             save_epochs=save_epochs,
             iterations_log=iterations_log,
             resume_model=resume_model,
+            evaluate_on_train=evaluate_on_train,
             run_id=run_id,
             **kwargs,
         )
