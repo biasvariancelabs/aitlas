@@ -74,9 +74,9 @@ if __name__ == '__main__':
             train_cfg = {
                 "root": "/home/dkocev/data/DOTA",
                 "subset": "train_split",
-                "subsample_percentage": 0.5,
+                "subsample_percentage": 0.01,
                 "batch_size": 32,
-                "shuffle": True,
+                "shuffle": False,
                 "num_workers": 0,
                 "filter_null": True,
                 "transforms": ["torchvision.transforms.ToTensor"]
@@ -86,9 +86,9 @@ if __name__ == '__main__':
             test_cfg = {
                 "root": "/home/dkocev/data/DOTA",
                 "subset": "validation_split",
-                "subsample_percentage": 1.0,
+                "subsample_percentage": 0.01,
                 "batch_size": 32,
-                "shuffle": True,
+                "shuffle": False,
                 "num_workers": 0,
                 "filter_null": True, 
                 "transforms": ["torchvision.transforms.ToTensor"]
@@ -103,7 +103,7 @@ if __name__ == '__main__':
             # Test the performance of FastRCNN
             model = get_fastrcnn(num_classes = num_classes)
 
-            model.train_and_evaluate_model(
+            model.train_model(
                 train_dataset=train_set,
                 val_dataset=test_set,
                 epochs=args.epochs,
@@ -115,7 +115,7 @@ if __name__ == '__main__':
             # Test the performance of RetinaNet
             model = get_retinanet(num_classes = num_classes)
 
-            model.train_and_evaluate_model(
+            model.train_model(
                 train_dataset=train_set,
                 val_dataset=test_set,
                 epochs=args.epochs,
