@@ -172,6 +172,6 @@ class BaseDetectionClassifier(BaseModel):
     
         # predict
         for inputs, outputs, labels in self.predict_output_per_batch(dataset.dataloader(), description):
-            predictions.append(outputs.cpu())
+            predictions.append(outputs)
         
         return img_names, predictions

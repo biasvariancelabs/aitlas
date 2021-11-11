@@ -128,7 +128,8 @@ if __name__ == '__main__':
             img_names, predictions = model.predict_with_output(test_set, description = 'Predicting outputs on validation')
 
             for img_name, pred in zip(img_names, predictions):
-                print ("{}: {}".format(img_name, type(pred)))
+                for p in pred:
+                    print ("{}: {}".format(img_name, p))
 
         else:
             print ("Invalid model selection")
