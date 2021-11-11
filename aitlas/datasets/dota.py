@@ -68,23 +68,6 @@ class DotaDataset(BaseDataset):
 
         print ("The subsampled number of images is:", len(self.imgs))
 
-        # num_good_boxes = 0
-        # num_bad_boxes = 0
-        # print ("Running check for valid width and height...", flush = True)
-        # for i in range(self.__len__()):
-        #     _, target = self.__getitem__(i)
-        #     for box in target["boxes"]:
-        #         xmin, ymin, xmax, ymax = box[0], box[1], box[2], box[3]
-        #         if (((xmax - xmin) <= 0.0) or ((ymax - ymin) <= 0.0)):
-        #             num_bad_boxes+=1
-        #         else:
-        #             num_good_boxes+=1
-        
-        # print ("The number of bad boxes is:", num_bad_boxes)
-        # print ("The total number of boxes is:", num_good_boxes + num_bad_boxes)
-
-
-
     def filter (self):
         filtered_imgs, filtered_labels = [],  []
 
@@ -111,6 +94,8 @@ class DotaDataset(BaseDataset):
         del filtered_imgs, filtered_labels
 
     def __getitem__(self, idx):
+
+        print ("THE INDEX OF THE IMAGE I AM TRYING TO GET IS:", idx, flush = True)
         # load images and masks
         img_path = os.path.join(self.root, self.subset, "images", self.imgs[idx])
         label_path = os.path.join(self.root, self.subset, "labelTxt", self.labels[idx])
