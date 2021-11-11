@@ -198,4 +198,7 @@ class DotaDataset(BaseDataset):
         for class_name, class_id in self.mappings.items():
             with open(dir_path + os.sep + 'Task2_{}.txt'.format(class_name), "w") as tf:
                 for img_name, predictions in zip(self.imgs, self.predictions):
-                    print (img_name, predictions.keys())
+                    for (box, score, label) in zip (predictions['boxes'], predictions['scores'], predictions['labels']):
+                        if label == class_id:
+                            tf.write ('{} {} {} {} {} {}\n'.format(img_name, score, box[0], box[1], box[2], box[3]))
+                tf.close()
