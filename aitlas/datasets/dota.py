@@ -95,7 +95,6 @@ class DotaDataset(BaseDataset):
 
     def __getitem__(self, idx):
 
-        print ("THE INDEX OF THE IMAGE I AM TRYING TO GET IS:", idx, flush = True)
         # load images and masks
         img_path = os.path.join(self.root, self.subset, "images", self.imgs[idx])
         label_path = os.path.join(self.root, self.subset, "labelTxt", self.labels[idx])
@@ -187,3 +186,6 @@ class DotaDataset(BaseDataset):
 
     def get_labels(self):
         return list(self.mappings.keys())
+
+    def get_img_names(self):
+        return self.imgs

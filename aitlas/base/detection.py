@@ -15,6 +15,8 @@ from aitlas.utils import current_ts
 
 from .metrics import DetectionRunningScore
 
+from .datasets import BaseDataset
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s\n")
 
 ''' 
@@ -155,3 +157,21 @@ class BaseDetectionClassifier(BaseModel):
 
         return total_loss
 
+    def predict_with_output(self, dataset: BaseDataset = None, description="running prediction"):
+        """
+        Predicts using a model against for a specified dataset
+
+        :return: 
+        """
+
+        # get the image_name order from the dataset
+        img_names = dataset.get_img_names()
+    
+        # initialize an aggregation array 
+        predictions = []
+    
+        # predict
+        for inputs, outputs, labels in self.predict_output_per_batch(dataset.dataloader(), description):
+            predictions.append(outputs.cpu())
+        
+        return img_names, predictions

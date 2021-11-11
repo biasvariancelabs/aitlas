@@ -71,6 +71,7 @@ if __name__ == '__main__':
             num_classes = 3
 
         elif args.dataset == "DOTA":
+            # leave shuffling set to False. This helps when we want to do external evaluation of the results.
             train_cfg = {
                 "root": "/home/dkocev/data/DOTA",
                 "subset": "trainsplit",
@@ -123,6 +124,12 @@ if __name__ == '__main__':
                 run_id = "{}-retinanet".format(args.dataset),
                 iterations_log = 20
             )
+
+            img_names, predictions = model.predict_with_output(test_set, description = 'Predicting outputs on validation')
+
+            for img_name, pred in zip(img_names, predictions):
+                print ("{}: {}".format(img_name, type(pred)))
+
         else:
             print ("Invalid model selection")
             exit(-1)
