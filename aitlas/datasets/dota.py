@@ -2,6 +2,7 @@ from aitlas.base import BaseDataset
 from .schemas import DotaDatasetSchema
 
 import os
+from tqdm import tqdm
 
 import random
 from PIL import Image
@@ -195,7 +196,7 @@ class DotaDataset(BaseDataset):
 
     def save_predictions (self, dir_path):
         # iterate over all classes and find all boxes with that class
-        for class_name, class_id in self.mappings.items():
+        for class_name, class_id in tqdm(self.mappings.items()):
             with open(dir_path + os.sep + 'Task2_{}.txt'.format(class_name), "w") as tf:
                 for img_name, predictions in zip(self.imgs, self.predictions):
                     for (box, score, label) in zip (predictions['boxes'], predictions['scores'], predictions['labels']):
