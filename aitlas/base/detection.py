@@ -163,15 +163,11 @@ class BaseDetectionClassifier(BaseModel):
 
         :return: 
         """
-
-        # get the image_name order from the dataset
-        img_names = dataset.get_img_names()
-    
         # initialize an aggregation array 
         predictions = []
     
         # predict
         for inputs, outputs, labels in self.predict_output_per_batch(dataset.dataloader(), description):
-            predictions.append(outputs)
-        
-        return img_names, predictions
+            predictions += outputs
+
+        return predictions

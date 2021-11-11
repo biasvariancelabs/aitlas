@@ -127,11 +127,10 @@ if __name__ == '__main__':
                 evaluate_on_train=False
             )
 
-            img_names, predictions = model.predict_with_output(test_set, description = 'Predicting outputs on validation')
+            predictions = model.predict_with_output(test_set, description = 'Predicting outputs on validation')
 
-            for img_name, pred in zip(img_names, predictions):
-                for p in pred:
-                    print ("{}: {}".format(img_name, p.keys()))
+            test_set.add_predictions(predictions)
+            test_set.save_predictions("./task2_predictions")
 
         else:
             print ("Invalid model selection")

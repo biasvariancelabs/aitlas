@@ -189,3 +189,13 @@ class DotaDataset(BaseDataset):
 
     def get_img_names(self):
         return self.imgs
+
+    def add_predictions (self, predictions):
+        self.predictions = predictions
+
+    def save_predictions (self, dir_path):
+        # iterate over all classes and find all boxes with that class
+        for class_name, class_id in self.mappings.items():
+            with open(dir_path + os.sep + 'Task2_{}.txt'.format(class_name)) as tf:
+                for img_name, predictions in zip(self.imgs, self.predictions):
+                    print (img_name, predictions.keys())
