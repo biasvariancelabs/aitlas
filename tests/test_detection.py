@@ -131,7 +131,7 @@ if __name__ == '__main__':
 
             for img_name, pred in zip(img_names, predictions):
                 for p in pred:
-                    print ("{}: {}".format(img_name, p))
+                    print ("{}: {}".format(img_name, p.keys()))
 
         else:
             print ("Invalid model selection")
