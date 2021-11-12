@@ -176,7 +176,7 @@ class DotaDataset(BaseDataset):
 
         else:
             target = None
-            
+
         if self.transform:
             img = self.transform(img)
 
@@ -203,10 +203,16 @@ class DotaDataset(BaseDataset):
 
     def save_predictions (self, dir_path):
         # iterate over all classes and find all boxes with that class
-        for class_name, class_id in tqdm(self.mappings.items()):
+        outputs = {}        
+        for class_name, class_id in self.mappings.items():
+            outputs[class_id] = ""
+            
+        for img_name, predictions in tqdm(zip(self.imgs, self.predictions)):
+            for (box, score, label) in zip (predictions['boxes'], predictions['scores'], predictions['labels']):
+                if label != 0:
+                    outputs[label] += '{} {} {} {} {} {}\n'.format(img_name, score, box[0], box[1], box[2], box[3])
+
+        for class_name, class_id in self.mappings.items():
             with open(dir_path + os.sep + 'Task2_{}.txt'.format(class_name), "w") as tf:
-                for img_name, predictions in zip(self.imgs, self.predictions):
-                    for (box, score, label) in zip (predictions['boxes'], predictions['scores'], predictions['labels']):
-                        if label == class_id:
-                            tf.write ('{} {} {} {} {} {}\n'.format(img_name, score, box[0], box[1], box[2], box[3]))
+                tf.write(outputs[class_id])
                 tf.close()
