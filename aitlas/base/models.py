@@ -333,9 +333,13 @@ class BaseModel(nn.Module, Configurable):
                 # check if the inputs are a tuple for detection
                 if isinstance(inputs, tuple):
                     inputs = list(image.to(self.device) for image in inputs)
-                    labels = [{k: v.to(self.device) for k, v in t.items()} for t in labels]
+                    # check if the subset includes labels (if the first element is None than this is a test set without labels)
+                    if labels[0] != None:
+                        labels = [{k: v.to(self.device) for k, v in t.items()} for t in labels]
 
-                    labels = self.get_groundtruth(labels)
+                        labels = self.get_groundtruth(labels)
+                    else:
+                        labels = None
 
                 else:
                     inputs = inputs.to(self.device)
