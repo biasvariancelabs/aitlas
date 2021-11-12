@@ -209,6 +209,7 @@ class DotaDataset(BaseDataset):
             
         for img_name, predictions in tqdm(zip(self.imgs, self.predictions)):
             for (box, score, label) in zip (predictions['boxes'], predictions['scores'], predictions['labels']):
+                label = label.cpu()
                 if label != 0:
                     outputs[label] += '{} {} {} {} {} {}\n'.format(img_name, score, box[0], box[1], box[2], box[3])
 
