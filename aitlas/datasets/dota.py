@@ -50,24 +50,26 @@ class DotaDataset(BaseDataset):
     def load_dataset(self):
         # read all filenames from disk
         self.imgs = list(sorted(os.listdir(os.path.join(self.root, self.subset, "images"))))
-        self.labels = list(sorted(os.listdir(os.path.join(self.root, self.subset,  "labelTxt"))))
 
-        print ("The number of images on disk is:", len(self.imgs))
+        if "test" not in self.subset:
+            self.labels = list(sorted(os.listdir(os.path.join(self.root, self.subset,  "labelTxt"))))
 
-        if self.filter_null:
-            self.filter()
-            print ("The number of images with at least one detectable object is:", len(self.imgs))
+            print ("The number of images on disk is:", len(self.imgs))
 
-        # select a subset of these images for training and testing
-        # the reason for this subsampling is computational complexity only
-        if self.subsample_percentage != 1.0:
-            num_subsampled_imgs = int(self.subsample_percentage * len(self.imgs))
-            selected = random.sample(range(0,len(self.imgs)), num_subsampled_imgs)
-        
-            self.imgs = [self.imgs[idx] for idx in range(len(self.imgs)) if idx in selected]
-            self.labels = [self.labels[idx] for idx in range(len(self.labels)) if idx in selected]
+            if self.filter_null:
+                self.filter()
+                print ("The number of images with at least one detectable object is:", len(self.imgs))
 
-        print ("The subsampled number of images is:", len(self.imgs))
+            # select a subset of these images for training and validation
+            # the reason for this subsampling is computational complexity only
+            if self.subsample_percentage != 1.0:
+                num_subsampled_imgs = int(self.subsample_percentage * len(self.imgs))
+                selected = random.sample(range(0,len(self.imgs)), num_subsampled_imgs)
+            
+                self.imgs = [self.imgs[idx] for idx in range(len(self.imgs)) if idx in selected]
+                self.labels = [self.labels[idx] for idx in range(len(self.labels)) if idx in selected]
+
+            print ("The subsampled number of images is:", len(self.imgs))
 
     def filter (self):
         filtered_imgs, filtered_labels = [],  []
@@ -98,78 +100,83 @@ class DotaDataset(BaseDataset):
 
         # load images and masks
         img_path = os.path.join(self.root, self.subset, "images", self.imgs[idx])
-        label_path = os.path.join(self.root, self.subset, "labelTxt", self.labels[idx])
-        
+
         img = Image.open(img_path).convert("RGB")
         
-        '''
-        should end up with a dictionary like this:
+        if "test" not in self.subset:
+            label_path = os.path.join(self.root, self.subset, "labelTxt", self.labels[idx])
         
-        target = {}
-        target["boxes"] = boxes
-        target["labels"] = labels
-        target["masks"] = masks
-        target["image_id"] = image_id
-        target["area"] = area
-        target["iscrowd"] = iscrowd
+            '''
+            should end up with a dictionary like this:
+            
+            target = {}
+            target["boxes"] = boxes
+            target["labels"] = labels
+            target["masks"] = masks
+            target["image_id"] = image_id
+            target["area"] = area
+            target["iscrowd"] = iscrowd
 
-        '''
-        boxes = []
-        labels = []
+            '''
+            boxes = []
+            labels = []
 
-        with open(label_path, "r") as a_file:
-            for line in a_file:
-                line = line.strip()
+            with open(label_path, "r") as a_file:
+                for line in a_file:
+                    line = line.strip()
 
-                xmin, xmax, ymin, ymax = np.inf, 0, np.inf, 0
+                    xmin, xmax, ymin, ymax = np.inf, 0, np.inf, 0
 
-                for i in range(8):
-                    value = float(line.split(" ")[i])
-                    # x-axis coord
-                    if i%2==0:
-                        if value < xmin:
-                            xmin = value
-                        elif value > xmax:
-                            xmax = value
-                    # y-axis coord
-                    else:
-                        if value < ymin:
-                            ymin = value
-                        elif value > ymax:
-                            ymax = value
+                    for i in range(8):
+                        value = float(line.split(" ")[i])
+                        # x-axis coord
+                        if i%2==0:
+                            if value < xmin:
+                                xmin = value
+                            elif value > xmax:
+                                xmax = value
+                        # y-axis coord
+                        else:
+                            if value < ymin:
+                                ymin = value
+                            elif value > ymax:
+                                ymax = value
 
-                if (((xmax - xmin) <= 0.0) or ((ymax - ymin) <= 0.0)):
-                    continue
-                                    
-                boxes.append([xmin, ymin, xmax, ymax])
-                labels.append(self.mappings[line.split(" ")[8]])
+                    if (((xmax - xmin) <= 0.0) or ((ymax - ymin) <= 0.0)):
+                        continue
+                                        
+                    boxes.append([xmin, ymin, xmax, ymax])
+                    labels.append(self.mappings[line.split(" ")[8]])
 
-        # if we have chosen not to filter empty images and the current images does not contain any objects 
-        # append a dummy bbox and label it as background
-        if (not self.filter_null) and (not len(boxes)):
-            boxes.append([0, 1, 2, 3])
-            labels.append(0)
-    
-        if not len(boxes):
-            boxes.append([0, 1, 2, 3])
-            labels.append(0)
+            # if we have chosen not to filter empty images and the current images does not contain any objects 
+            # append a dummy bbox and label it as background
+            if (not self.filter_null) and (not len(boxes)):
+                boxes.append([0, 1, 2, 3])
+                labels.append(0)
         
-        # convert to torch.Tensor
-        boxes = torch.as_tensor(boxes, dtype=torch.float32)
-        labels = torch.as_tensor(labels, dtype=torch.int64)
-        # calculate the area of the bounding boxes
-        area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])    
-        iscrowd = torch.zeros((boxes.shape[0],), dtype=torch.int64)
-        # set the image index as the image identifier
-        image_id = torch.tensor([idx])
+            if not len(boxes):
+                boxes.append([0, 1, 2, 3])
+                labels.append(0)
+        
+            # convert to torch.Tensor
+            boxes = torch.as_tensor(boxes, dtype=torch.float32)
+            labels = torch.as_tensor(labels, dtype=torch.int64)
+            # calculate the area of the bounding boxes
+            area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])    
+            iscrowd = torch.zeros((boxes.shape[0],), dtype=torch.int64)
+            # set the image index as the image identifier
+            image_id = torch.tensor([idx])
 
-        target = {}
-        target["boxes"] = boxes
-        target["labels"] = labels
-        target["image_id"] = image_id
-        target["area"] = area
-        target["iscrowd"] = iscrowd
+            target = {}
+            target["boxes"] = boxes
+            target["labels"] = labels
+            target["image_id"] = image_id
+            target["area"] = area
+            target["iscrowd"] = iscrowd
 
+        else:
+            target = None
+            
         if self.transform:
             img = self.transform(img)
 
