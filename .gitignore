@@ -131,10 +131,12 @@ dmypy.json
 # PyCharm folder
 .idea/
 
+# VSCode folder
+/.vscode
+
 # ignore data folder
 data/
 /data
-
 
 # ignore experiment folder
 experiment/
