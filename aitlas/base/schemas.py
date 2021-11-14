@@ -33,7 +33,7 @@ class BaseModelSchema(Schema):
         description="Metrics you want to calculate",
         example=["accuracy", "precision", "iou"],
         validate=validate.ContainsOnly(
-            ["accuracy", "precision", "recall", "f1_score", "iou"]
+            ["accuracy", "precision", "recall", "f1_score", "iou", "kappa"]
         ),
     )
     weights = fields.List(

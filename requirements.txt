@@ -21,6 +21,7 @@ pyarrow<1.0.2
 tqdm~=4.56.0
 scikit-image~=0.18.1
 jupyter<1.0.1
+h5py<3.2.1
 pytorch-ignite<0.5
 faiss-cpu<1.7.9
 
@@ -32,3 +33,6 @@ timm~=0.4.12
 segmentation-models-pytorch~=0.2.0
 
 albumentations~=1.0.3
+
+eo-learn-geometry==0.10.0
+eo-learn-core==0.10.0

@@ -1,0 +1,33 @@
+{
+    "model": {
+        "classname": "aitlas.models.TransformerModel",
+        "config": {
+            "input_dim":11,
+            "num_classes": 10,
+            "pretrained":false,
+            "learning_rate": 0.001,
+            "metrics":["accuracy","f1_score", "kappa"]
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainTask",
+        "config": {
+            "epochs": 26,
+            "model_directory": "./examples/experiment",
+            "save_epochs": 2,
+            "id": "slocrops",
+            "dataset_config":{
+                "classname": "aitlas.datasets.EOPatchCrops",
+                "config": {
+                    "root":"./data/slocrops_dataset",
+                    "year":2017,
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "csv_file_path":"index.csv",
+                    "num_workers": 4,
+                    "regions":["train"]
+                }
+            }
+        }
+    }
+}
