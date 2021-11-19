@@ -20,7 +20,7 @@ test_y  100000x6 uint8 (containing 6x1 vectors having labels for the 100000 test
 LABELS = ["barren land", "trees", "grassland", "roads", "buildings", "water bodies"]
 
 
-class SAT6(BaseDataset):
+class SAT6Dataset(BaseDataset):
     schema = MatDatasetSchema
 
     url = "http://csc.lsu.edu/~saikat/deepsat/"
@@ -73,6 +73,7 @@ class SAT6(BaseDataset):
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
+        ax.set_title("Image distribution for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig
 
     def show_image(self, index):
@@ -92,14 +93,13 @@ class SAT6(BaseDataset):
         image_indices = random.sample(range(0, len(self.data)), size)
         figure_height = int(size / 3) * 4
         figure, ax = plt.subplots(int(size / 3), 3, figsize=(20, figure_height))
-        figure.suptitle("Example images with labels from {}".format(self.get_name()), fontsize=32)
+        figure.suptitle("Example images with labels from {}".format(self.get_name()), fontsize=32, y=1.006)
         for axes, image_index in zip(ax.flatten(), image_indices):
             axes.imshow(self[image_index][0])
-            axes.set_title(self.labels[self[image_index][1]], fontsize=18)
+            axes.set_title(self.labels[self[image_index][1]], fontsize=18, pad=10)
             axes.set_xticks([])
             axes.set_yticks([])
         figure.tight_layout()
-        # figure.subplots_adjust(top=1.0)
         return figure
 
     def load_dataset(self, file_path):

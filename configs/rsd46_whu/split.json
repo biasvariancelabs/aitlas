@@ -5,18 +5,18 @@
             "split": {
                 "train": {
                     "ratio": 100,
-                    "file": "/media/hdd/multi-class/AID/train.csv"
+                    "file": "/media/hdd/multi-class/RSD46-WHU/train/train.csv"
                 },
                 "val": {
                     "ratio": 0,
-                    "file": "/media/hdd/multi-class/AID/val.csv"
+                    "file": "/media/hdd/multi-class/RSD46-WHU/train/val.csv"
                 },
                 "test": {
                     "ratio": 0,
-                    "file": "/media/hdd/multi-class/AID/test.csv"
+                    "file": "/media/hdd/multi-class/RSD46-WHU/train/test.csv"
                 }
             },
-            "dir_path": "/media/hdd/multi-class/AID"
+            "dir_path": "/media/hdd/multi-class/RSD46-WHU/train"
         }
     }
 }

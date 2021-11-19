@@ -17,18 +17,12 @@ class MatDatasetSchema(BaseDatasetSchema):
     )
 
 
-class MultiClassClassificationDatasetSchema(BaseDatasetSchema):
-    download = fields.Bool(
-        missing=False, description="Whether to download the dataset", example=True
+class ClassificationDatasetSchema(BaseDatasetSchema):
+    dir_path = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
     )
     csv_file_path = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv",
-    )
-
-
-class MultiLabelClassificationDatasetSchema(BaseDatasetSchema):
-    root = fields.String(
-        missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
     )
 
 

@@ -11,7 +11,7 @@ LABELS = ["airplane", "airport", "bare soil", "baseball diamond", "basketball co
           "track", "trail", "transmission tower", "trees", "water", "chaparral", "wetland", "wind turbine"]
 
 
-class MLRSNet(MultiLabelClassificationDataset):
+class MLRSNetMultiLabelDataset(MultiLabelClassificationDataset):
     url = "https://data.mendeley.com/datasets/7j9bv9vwsx/2"
 
     labels = LABELS

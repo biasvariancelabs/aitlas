@@ -1,6 +1,6 @@
 {
     "model": {
-        "classname": "aitlas.models.ResNet50MultiLabel",
+        "classname": "aitlas.models.DenseNet201MultiLabel",
         "config": {
             "num_classes": 17,
             "learning_rate": 0.0001,
@@ -10,12 +10,12 @@
     "task": {
         "classname": "aitlas.tasks.PredictTask",
         "config": {
-            "model_path": "/media/ssd/aitlas/examples/experiment/checkpoint.pth.tar",
+            "model_path": "/media/ssd/aitlas_new/examples/experiment/planet_uas/checkpoint.pth.tar",
             "dir": "/media/ssd/Planet/test-jpg/",
-            "output_path": "/media/ssd/Planet/results.csv",
+            "output_path": "/media/ssd/aitlas_new/examples/experiment/planet_uas/results.csv",
             "output_format": "csv",
             "batch_size": 1,
-            "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"],
+            "transforms": ["aitlas.transforms.ConvertToRGBResizeCenterCropToTensor"],
             "labels": ["haze", "primary", "agriculture", "clear", "water", "habitation", "road", "cultivation", "slash_burn",
           "cloudy", "partly_cloudy", "conventional_mine", "bare_ground", "artisinal_mine", "blooming",
           "selective_logging", "blow_down"]

@@ -74,7 +74,7 @@ class RunningScore(object):
             "F1_score Micro": float(micro),
             "F1_score Macro": np.mean(per_class),
             "F1_score Weighted": np.sum(self.weights() * per_class),
-            "F1_score per Class": per_class.tolist(),
+            "F1_score per Class": per_class,
         }
 
     def iou(self):
@@ -180,16 +180,16 @@ class MultiLabelRunningScore(RunningScore):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
 
-        accuracy = (tp_total + tn_total) / (tp_total + tn_total + fp_total + fn_total)
-        accuracy_per_class = (tp + tn) / (tp + tn + fp + fn)
+        accuracy = (tp_total + tn_total) / (tp_total + tn_total + fp_total + fn_total + 1e-15)
+        accuracy_per_class = (tp + tn) / (tp + tn + fp + fn + 1e-15)
 
         return {"Accuracy": accuracy, "Accuracy per Class": accuracy_per_class}
 
     def precision(self):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
-        micro = tp_total / (tp_total + fp_total)
-        per_class = tp / (tp + fp)
+        micro = tp_total / (tp_total + fp_total + 1e-15)
+        per_class = tp / (tp + fp + 1e-15)
         macro = np.mean(per_class)
         weighted = np.sum(per_class * self.weights())
         return {
@@ -207,8 +207,8 @@ class MultiLabelRunningScore(RunningScore):
     def recall(self):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
-        micro = tp_total / (tp_total + fn_total)
-        per_class = tp / (tp + fn)
+        micro = tp_total / (tp_total + fn_total + 1e-15)
+        per_class = tp / (tp + fn + 1e-15)
         macro = np.mean(per_class)
         weighted = np.sum(per_class * self.weights())
         return {
@@ -246,13 +246,13 @@ class MultiLabelRunningScore(RunningScore):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
 
-        iou_per_class = tp / (tp + fp + fn)
-        iou = tp_total / (tp_total + fp_total + fn_total)
+        iou_per_class = tp / (tp + fp + fn + 1e-15)
+        iou = tp_total / (tp_total + fp_total + fn_total + 1e-15)
 
         return {
             "IOU": float(iou),
             "IOU mean": np.mean(iou_per_class),
-            "IOU per Class": iou_per_class.tolist(),
+            "IOU per Class": iou_per_class.numpy(),
         }
 
 

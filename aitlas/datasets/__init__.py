@@ -19,7 +19,7 @@ from .inria import InriaDataset
 from .landcover_ai import LandCoverAiDataset
 from .massachusetts_buildings import MassachusettsBuildingsDataset
 from .massachusetts_roads import MassachusettsRoadsDataset
-from .mlrs_net import MLRSNet
+from .mlrs_net import MLRSNetMultiLabelDataset
 from .multiclass_classification import MultiClassClassificationDataset
 from .multilabel_classification import MultiLabelClassificationDataset
 from .pattern_net import PatternNetDataset
@@ -28,7 +28,7 @@ from .resisc45 import Resisc45Dataset
 from .rsd46_whu import RSD46WHUDataset
 from .rsi_cb256 import RSICB256Dataset
 from .rsscn7 import RSSCN7Dataset
-from .sat6 import SAT6
+from .sat6 import SAT6Dataset
 from .siri_whu import SiriWhuDataset
 
 # from .spacenet6 import SpaceNet6Dataset

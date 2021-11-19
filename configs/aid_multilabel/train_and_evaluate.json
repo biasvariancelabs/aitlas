@@ -1,12 +1,12 @@
 {
     "model": {
-        "classname": "aitlas.models.VGG16MultiLabel",
+        "classname": "aitlas.models.ResNet50MultiLabel",
         "config": {
             "num_classes": 17,
             "learning_rate": 0.0001,
             "pretrained": true,
             "threshold": 0.5,
-            "metrics": ["f1_score"]
+            "metrics": ["accuracy", "precision", "f1_score", "recall"]
         }
     },
     "task": {
@@ -15,13 +15,15 @@
             "epochs": 100,
             "model_directory": "./examples/experiment",
             "save_epochs": 10,
+            "id": "aid_multilabel",
             "train_dataset_config": {
                 "classname": "aitlas.datasets.AIDMultiLabelDataset",
                 "config": {
                     "batch_size": 16,
                     "shuffle": true,
                     "num_workers": 4,
-                    "root": "/media/hdd/AID_multilabel/train",
+                    "dir_path": "/media/hdd/multi-label/AID_multilabel/train/images",
+                    "csv_file_path": "/media/hdd/multi-label/AID_multilabel/train/multilabels.txt",
 					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             },
@@ -31,7 +33,8 @@
                     "batch_size": 1,
                     "shuffle": false,
                     "num_workers": 4,
-                    "root": "/media/hdd/AID_multilabel/test",
+                    "dir_path": "/media/hdd/multi-label/AID_multilabel/test/images",
+                    "csv_file_path": "/media/hdd/multi-label/AID_multilabel/test/multilabels.txt",
                     "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
                 }
             }

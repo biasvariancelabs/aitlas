@@ -1,11 +1,9 @@
 import logging
-import os
-
 import numpy as np
+
 from sklearn.model_selection import train_test_split
 from skmultilearn.model_selection import iterative_train_test_split
 from torch.utils.data import random_split
-
 from ..base import BaseModel, BaseTask
 from ..utils import (
     load_aitlas_format_dataset,
@@ -34,15 +32,17 @@ class BaseSplitTask(BaseTask):
         ".pgm",
         ".tif",
         ".tiff",
-        "webp",
+        ".webp",
     ]
 
     def __init__(self, model: BaseModel, config):
         super().__init__(model, config)
+        self.dir_path = self.config.dir_path
+        self.csv_file_path = self.config.csv_file_path
 
     def run(self):
         logging.info("Loading data...")
-        self.images = self.load_images(self.config.path)
+        self.images = self.load_images(self.dir_path, self.csv_file_path)
 
         logging.info("Making splits...")
 
@@ -87,26 +87,26 @@ class BaseSplitTask(BaseTask):
                     f.write(f"{xx},{yy}\n")
             f.close()
 
-    def load_images(self, path, extensions=None):
+    def load_images(self, dir_path, csv_file_path, extensions=None):
         """Attempts to read in VOC format, then in internal format, then in folder per class format"""
         images = []
         try:
-            images = load_voc_format_dataset(path)
+            images = load_voc_format_dataset(self.dir_path, self.csv_file_path)
 
             # if this format is load, it's a multilabel dataset
             self.is_multilabel = True
 
             # read the header again. TODO: Maybe this can be a bit better implemented.
-            with open(path + "/multilabels.txt", "rb") as f:
+            with open(csv_file_path, "rb") as f:
                 self.header = f.readline().decode("utf-8").strip().split("\t")
 
-        except FileNotFoundError:  # it's not in VOC format, then let's try aitlas (CSV) internal one
-            if not os.path.isdir(path):
-                images = load_aitlas_format_dataset(path)
+        except TypeError:  # it's not in VOC format, then let's try aitlas (CSV) internal one
+            if csv_file_path is not None:
+                images = load_aitlas_format_dataset(csv_file_path)
             else:
                 if not extensions:
                     extensions = self.extensions
-                images = load_folder_per_class_dataset(path, extensions)
+                images = load_folder_per_class_dataset(dir_path, extensions)
 
         if not images:
             raise ValueError("No images were found!")

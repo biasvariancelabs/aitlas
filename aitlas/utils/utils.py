@@ -120,22 +120,22 @@ def split_images(images_dir, ext_images, masks_dir, ext_masks, output_dir, targe
     file.close()
 
 
-def load_voc_format_dataset(dir):
+def load_voc_format_dataset(dir_path, csv_file_path):
     """Loads a dataset in the Pascal VOC format. It expects a `multilabels.txt` file and `images` in the root folder"""
 
     # read labels
     multi_hot_labels = {}
-    with open(dir + "/multilabels.txt", "rb") as f:
+    with open(csv_file_path, "rb") as f:
         lines = f.readlines()
         for line in lines[1:]:
             line = line.decode("utf-8")
-            labels_list = line[line.find("\t") + 1 :].split("\t")
+            labels_list = line[line.find("\t") + 1:].split("\t")
             multi_hot_labels[line[: line.find("\t")]] = np.asarray(
                 list((map(float, labels_list)))
             )
 
     images = []
-    images_folder = os.path.expanduser(dir + "/images")
+    images_folder = os.path.expanduser(dir_path)
     # this ensures the image always have the same index numbers
     for root, _, fnames in sorted(os.walk(images_folder)):
         for fname in sorted(fnames):
@@ -177,7 +177,7 @@ def load_folder_per_class_dataset(dir, extensions=None):
         for root, _, fnames in sorted(os.walk(d)):
             for fname in sorted(fnames):
                 if has_file_allowed_extension(fname, extensions):
-                    path = os.path.join(root, fname)
+                    path = os.path.join(os.path.basename(os.path.normpath(root)), fname)
                     item = (path, target)
                     images.append(item)
 
