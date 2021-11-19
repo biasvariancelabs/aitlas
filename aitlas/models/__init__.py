@@ -1,7 +1,7 @@
 from .alexnet import AlexNet, AlexNetMultiLabel
 from .cnn_rnn import CNNRNN
 from .deeplabv3 import DeepLabV3
-from .densenet import DenseNet201, DenseNet201MultiLabel
+from .densenet import DenseNet161, DenseNet161MultiLabel
 from .fastrcnn import FastRCNN
 from .hrnet import HRNet
 from .inceptiontime import InceptionTime
@@ -14,6 +14,9 @@ from .starrnn import StarRNN
 from .tempcnn import TempCNN
 from .transformer import TransformerModel
 from .unet import Unet
-
+from .efficientnet import (
+    EfficientNetB0, EfficientNetB0MultiLabel, EfficientNetB4, EfficientNetB4MultiLabel,
+    EfficientNetB7, EfficientNetB7MultiLabel
+)
 # from .unet_efficientnet import UNetEfficientNet
 from .vgg import VGG16, VGG19, VGG16MultiLabel, VGG19MultiLabel

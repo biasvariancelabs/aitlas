@@ -45,8 +45,8 @@ class BaseMulticlassClassifier(BaseModel):
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.SGD(
-            self.model.parameters(), lr=self.config.learning_rate, momentum=0.9
+        return optim.Adam(
+            self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4
         )
 
     def load_criterion(self):
