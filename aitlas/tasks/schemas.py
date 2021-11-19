@@ -27,10 +27,13 @@ class SplitObjectSchema(Schema):
 
 
 class SplitTaskSchema(BaseTaskShema):
-    path = fields.String(
+    dir_path = fields.String(
         required=True,
         description="Dataset path on disk",
         example="./data/tmp/ or ./data/tmp/images.csv",
+    )
+    csv_file_path = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv",
     )
     split = fields.Nested(
         SplitObjectSchema,
