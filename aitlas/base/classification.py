@@ -30,7 +30,7 @@ class BaseMulticlassClassifier(BaseModel):
         predicted_probs, predicted = probs.topk(1, dim=1)
         return probs, predicted
 
-    def report(self, labels, running_metrics, **kwargs):
+    def report(self, labels, dataset_name, running_metrics, **kwargs):
         """Report for multiclass classification"""
         run_id = kwargs.get("id", "experiment")
         from ..visualizations import plot_multiclass_confusion_matrix
@@ -40,13 +40,13 @@ class BaseMulticlassClassifier(BaseModel):
 
         # plot confusion matrix for model evaluation
         plot_multiclass_confusion_matrix(
-            np.array(cm), labels, f"{run_id}_cm.png"
+            np.array(cm), labels, dataset_name, f"{run_id}_cm.png"
         )
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.SGD(
-            self.model.parameters(), lr=self.config.learning_rate, momentum=0.9
+        return optim.Adam(
+            self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4
         )
 
     def load_criterion(self):
@@ -69,25 +69,23 @@ class BaseMultilabelClassifier(BaseModel):
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.SGD(
-            self.model.parameters(), lr=self.config.learning_rate, momentum=0.9
+        return optim.Adam(
+            self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4
         )
 
     def load_criterion(self):
         """Load the loss function"""
-        return nn.MSELoss(reduction="mean")
+        return nn.BCEWithLogitsLoss(weight=self.weights)
 
     def load_lr_scheduler(self):
         return None
 
     def get_predicted(self, outputs, threshold=None):
         predicted_probs = torch.sigmoid(outputs)
-        predicted = (predicted_probs >= self.config.threshold).type(
-            predicted_probs.dtype
-        )
+        predicted = predicted_probs >= (threshold if threshold else self.config.threshold)
         return predicted_probs, predicted
 
-    def report(self, labels, running_metrics, **kwargs):
+    def report(self, labels, dataset_name, running_metrics, **kwargs):
         """Report for multilabel classification"""
         run_id = kwargs.get("id", "experiment")
         cm_array = []
@@ -103,5 +101,5 @@ class BaseMultilabelClassifier(BaseModel):
         from ..visualizations import plot_multilabel_confusion_matrix
         # plot confusion matrix for model evaluation
         plot_multilabel_confusion_matrix(
-            np.array(cm_array), labels, f"{run_id}_cm.png"
+            np.array(cm_array), labels, dataset_name, f"{run_id}_cm.png"
         )

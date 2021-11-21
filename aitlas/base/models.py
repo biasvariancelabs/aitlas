@@ -7,14 +7,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
-from torchvision import transforms
 from tqdm import tqdm
-from sklearn.metrics import f1_score
 
-from ..utils import current_ts, get_class, image_loader, stringify
+from ..utils import current_ts, stringify
 from .config import Configurable
 from .datasets import BaseDataset
-from .metrics import RunningScore
 from .schemas import BaseModelSchema
 
 
@@ -33,13 +30,12 @@ class BaseModel(nn.Module, Configurable):
 
         device_name = "cpu"
         if self.config.use_cuda and torch.cuda.is_available():
-            device_name = "cuda"
+            device_name = f"cuda:{self.config.rank}"
 
         self.device = torch.device(device_name)
 
         self.metrics = self.config.metrics
         self.num_classes = self.config.num_classes
-        self.running_metrics = RunningScore(self.num_classes, self.device)
         self.weights = self.config.weights
 
     def prepare(self):
@@ -100,6 +96,7 @@ class BaseModel(nn.Module, Configurable):
                 self.lr_scheduler.step()
 
             # evaluate against the train set
+            self.running_metrics.reset()
             train_loss = self.evaluate_model(
                 train_loader,
                 criterion=self.criterion,
@@ -112,10 +109,10 @@ class BaseModel(nn.Module, Configurable):
                 self.writer,
                 epoch + 1,
             )
-            self.running_metrics.reset()
 
             # evaluate against a validation set if there is one
             if val_loader:
+                self.running_metrics.reset()
                 val_loss = self.evaluate_model(
                     val_loader,
                     criterion=self.criterion,
@@ -129,7 +126,6 @@ class BaseModel(nn.Module, Configurable):
                     epoch + 1,
                 )
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
-                self.running_metrics.reset()
 
         self.writer.close()
 
@@ -293,15 +289,15 @@ class BaseModel(nn.Module, Configurable):
 
         :return: tuple of (y_true, y_pred, y_pred_probs)
         """
-        # load the image and apply transformations, if transforms in None convert only to Tensor
+        # load the image and apply transformations
         self.model.eval()
         if data_transforms:
             image = data_transforms(image)
+        # check if tensor and convert to batch of size 1, otherwise convert to tensor and then to batch of size 1
+        if torch.is_tensor(image):
+            inputs = image.unsqueeze(0).to(self.device)
         else:
-            data_transforms = transforms.Compose([transforms.ToTensor(),])
-            image = data_transforms(image)
-        # convert to batch of size 1
-        inputs = image.unsqueeze(0).to(self.device)
+            inputs = torch.from_numpy(image).unsqueeze(0).to(self.device)
         outputs = self(inputs)
         # check if outputs is OrderedDict for segmentation
         if isinstance(outputs, collections.Mapping):
@@ -312,7 +308,7 @@ class BaseModel(nn.Module, Configurable):
         y_pred = list(predicted.cpu().detach().numpy())
         y_true = None
 
-        return y_true, y_pred, y_pred_probs
+        return y_true, y_pred[0], y_pred_probs[0]
 
     def predict_output_per_batch(self, dataloader, description):
         """Run predictions on a dataloader and return inputs, outputs, labels per batch"""
@@ -342,13 +338,13 @@ class BaseModel(nn.Module, Configurable):
         """
         raise NotImplementedError
 
-    def get_predicted(self, outputs):
+    def get_predicted(self, outputs, threshold=None):
         """Gets the output from the model and return the predictions
         :return: tuple in the format (probabilities, predicted classes/labels)
         """
         raise NotImplementedError("Please implement `get_predicted` for your model. ")
 
-    def report(self, labels, **kwargs):
+    def report(self, labels, dataset_name, running_metrics, **kwargs):
         """The report we want to generate for the model"""
         return ()
 
@@ -371,9 +367,11 @@ class BaseModel(nn.Module, Configurable):
         Put the model on CPU or GPU
         :return:
         """
-        if torch.cuda.device_count() > 1:
-            self.model = nn.DataParallel(self.model)
         self.model = self.model.to(self.device)
+        if self.config.use_ddp:
+            self.model = nn.parallel.DistributedDataParallel(
+                self.model, device_ids=[self.device]
+            )
         return self.model
 
     def save_model(self, model_directory, epoch, optimizer, loss, start, run_id):
@@ -422,7 +420,7 @@ class BaseModel(nn.Module, Configurable):
             checkpoint = torch.load(file_path)
 
             if "state_dict" in checkpoint:
-                self.model.load_state_dict(checkpoint["state_dict"])
+                self.model.load_state_dict(checkpoint["state_dict"], strict=False)
                 self.allocate_device()
 
                 start_epoch = checkpoint["epoch"]

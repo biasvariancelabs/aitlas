@@ -16,6 +16,9 @@ class BaseDatasetSchema(Schema):
     target_transforms = fields.List(
         fields.String, missing=None, description="Classes to run transformations.",
     )
+    joint_transforms = fields.List(
+        fields.String, missing=None, description="Classes to run transformations.",
+    )
     labels = fields.List(
         fields.String, missing=None, description="Labels for the dataset",
     )
@@ -30,7 +33,7 @@ class BaseModelSchema(Schema):
         description="Metrics you want to calculate",
         example=["accuracy", "precision", "iou"],
         validate=validate.ContainsOnly(
-            ["accuracy", "precision", "recall", "f1_score", "iou","kappa"]
+            ["accuracy", "precision", "recall", "f1_score", "iou", "kappa"]
         ),
     )
     weights = fields.List(
@@ -38,6 +41,10 @@ class BaseModelSchema(Schema):
         missing=None,
         description="Classes weights you want to apply for the loss",
         example=[1.0, 2.3, 1.0],
+    )
+    rank = fields.Integer(required=False, missing=0)
+    use_ddp = fields.Boolean(
+        required=False, missing=False, description="Turn on distributed data processing"
     )
 
 
@@ -56,7 +63,7 @@ class BaseClassifierSchema(BaseModelSchema):
 class BaseSegmentationClassifierSchema(BaseClassifierSchema):
     metrics = fields.List(
         fields.String,
-        missing=["iou"],
+        missing=["iou", "f1_score", "accuracy"],
         description="Classes of metrics you want to calculate",
         example=["accuracy", "precision", "recall", "f1_score", "iou"],
     )

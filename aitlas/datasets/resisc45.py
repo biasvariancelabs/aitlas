@@ -1,5 +1,6 @@
 from .multiclass_classification import MultiClassClassificationDataset
 
+
 LABELS = ["airplane", "airport", "baseball_diamond", "basketball_court", "beach", "bridge", "chaparral", "church",
           "circular_farmland", "cloud", "commercial_area", "dense_residential", "desert", "forest", "freeway",
           "golf_course", "ground_track_field", "harbor", "industrial_area", "intersection", "island", "lake",
@@ -11,7 +12,10 @@ LABELS = ["airplane", "airport", "baseball_diamond", "basketball_court", "beach"
 
 class Resisc45Dataset(MultiClassClassificationDataset):
 
+    url = "https://www.tensorflow.org/datasets/catalog/resisc45"
     labels = LABELS
+
+    name = "RESISC45 dataset"
 
     def __init__(self, config):
         # now call the constructor to validate the schema and load the data

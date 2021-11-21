@@ -50,5 +50,5 @@ def save_predicted_masks(y_pred, labels, base_filepath_name):
     # save predicted masks
     for i in range(len(labels)):
         mask = Image.fromarray(y_pred[i].astype(np.uint8)*255)
-        mask = ImageOps.invert(mask)
+        #mask = ImageOps.invert(mask)
         mask.save("{}_{}.png".format(base_filepath_name, labels[i]))

@@ -1,13 +1,13 @@
-import os
-
-import numpy as np
+import random
+import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
+
 from itertools import compress
 from ..base import BaseDataset
-from ..utils import image_loader
-from .schemas import MultiLabelClassificationDatasetSchema
+from ..utils import image_loader, load_voc_format_dataset
+from .schemas import ClassificationDatasetSchema
+
 
 """
 The MultiLabelClassificationdataset is using the Pascal VOC data format
@@ -15,7 +15,7 @@ The MultiLabelClassificationdataset is using the Pascal VOC data format
 
 
 class MultiLabelClassificationDataset(BaseDataset):
-    schema = MultiLabelClassificationDatasetSchema
+    schema = ClassificationDatasetSchema
 
     def __init__(self, config):
         # now call the constuctor to validate the schema
@@ -25,8 +25,9 @@ class MultiLabelClassificationDataset(BaseDataset):
         self.image_loader = image_loader
 
         # load the data
-        self.dir_path = self.config.root
-        self.data = self.load_dataset(self.dir_path)
+        self.dir_path = self.config.dir_path
+        self.csv_file_path = self.config.csv_file_path
+        self.data = self.load_dataset(self.dir_path, self.csv_file_path)
 
     def __getitem__(self, index):
         """
@@ -52,7 +53,7 @@ class MultiLabelClassificationDataset(BaseDataset):
         return self.labels
 
     def data_distribution_table(self):
-        df = pd.read_csv(self.dir_path + "/multilabels.txt", sep="\t")
+        df = pd.read_csv(self.csv_file_path, sep="\t")
         label_count = pd.DataFrame(df.sum(axis=0)).reset_index()
         label_count.columns = ["Label", "Count"]
         label_count.drop(label_count.index[0], inplace=True)
@@ -62,41 +63,66 @@ class MultiLabelClassificationDataset(BaseDataset):
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
+        ax.set_title("Image distribution for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig
 
     def show_samples(self):
-        df = pd.read_csv(self.dir_path + "/multilabels.txt", sep="\t")
+        df = pd.read_csv(self.csv_file_path, sep="\t")
         return df.head(20)
 
     def show_image(self, index):
+        print(self[index][0])
         labels_list = list(compress(self.labels, self[index][1]))
         fig = plt.figure(figsize=(8, 6))
-        plt.title(f"Image with index {index} from the dataset {self.get_name()}, with labels:\n {labels_list}\n",
-                  fontsize=14)
-        plt.axis('off')
+        plt.title(
+            f"Image with index {index} from the dataset {self.get_name()}, with labels:\n "
+            f"{str(labels_list).strip('[]')}\n",
+            fontsize=14,
+        )
+        plt.axis("off")
         plt.imshow(self[index][0])
         return fig
 
-    def load_dataset(self, dir_path):
-        # read labels
-        multi_hot_labels = {}
-        with open(dir_path + "/multilabels.txt", "rb") as f:
-            lines = f.readlines()
-            for line in lines[1:]:
-                line = line.decode("utf-8")
-                labels_list = line[line.find("\t") + 1:].split("\t")
-                multi_hot_labels[line[: line.find("\t")]] = np.asarray(
-                    list((map(float, labels_list)))
-                )
+    def show_batch(self, size):
+        if size % 3:
+            raise ValueError("The provided size should be divided by 3!")
+        image_indices = random.sample(range(0, len(self.data)), size)
+        figure_height = int(size / 3) * 4
+        figure, ax = plt.subplots(int(size / 3), 3, figsize=(20, figure_height))
+        figure.suptitle(
+            "Example images with labels from {}".format(self.get_name()), fontsize=32, y=1.006
+        )
+        for axes, image_index in zip(ax.flatten(), image_indices):
+            axes.imshow(self[image_index][0])
+            labels_list = list(compress(self.labels, self[image_index][1]))
+            str_label_list = ""
+            if len(labels_list) > 4:
+                str_label_list = f"{str(labels_list[0:4]).strip('[]')}\n"
+                str_label_list += f"{str(labels_list[4:]).strip('[]')}\n"
+            else:
+                str_label_list = f"{str(labels_list).strip('[]')}\n"
+            axes.set_title(str_label_list[:-1], fontsize=18, pad=10)
+            axes.set_xticks([])
+            axes.set_yticks([])
+        figure.tight_layout()
+        return figure
 
-        images = []
-        dir = os.path.expanduser(dir_path + "/images")
-        # this ensures the image always have the same index numbers
-        for root, _, fnames in sorted(os.walk(dir)):
-            for fname in sorted(fnames):
-                path = os.path.join(root, fname)
-                multi_hot_label = multi_hot_labels[fname[: fname.find(".")]]
-                item = (path, multi_hot_label)
-                images.append(item)
+    def load_dataset(self, dir_path, csv_file_path):
+        return load_voc_format_dataset(dir_path, csv_file_path)
 
-        return images
+    def labels_stats(self):
+        min_number = float('inf')
+        max_number = float('-inf')
+        average_number = 0
+        for img, labels in self.data:
+            if sum(labels) < min_number:
+                min_number = sum(labels)
+
+            if sum(labels) > max_number:
+                max_number = sum(labels)
+
+            average_number += sum(labels)
+
+        return f"Minimum number of labels: {min_number}, Maximum number of labels: {max_number}, " \
+               f"Average number of labels: {average_number/len(self.data)}"
+

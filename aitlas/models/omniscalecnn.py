@@ -14,14 +14,18 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from ..base import BaseMulticlassClassifier
-from .schemas import OmniScaleCNNSchema 
+from .schemas import OmniScaleCNNSchema
 
 
 class SampaddingConv1D_BN(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
         super(SampaddingConv1D_BN, self).__init__()
-        self.padding = nn.ConstantPad1d((int((kernel_size - 1) / 2), int(kernel_size / 2)), 0)
-        self.conv1d = torch.nn.Conv1d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size)
+        self.padding = nn.ConstantPad1d(
+            (int((kernel_size - 1) / 2), int(kernel_size / 2)), 0
+        )
+        self.conv1d = torch.nn.Conv1d(
+            in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size
+        )
         self.bn = nn.BatchNorm1d(num_features=out_channels)
 
     def forward(self, X):
@@ -35,6 +39,7 @@ class build_layer_with_layer_parameter(nn.Module):
     """
     formerly build_layer_with_layer_parameter
     """
+
     def __init__(self, layer_parameters):
         """
         layer_parameters format
@@ -68,10 +73,14 @@ class OmniScaleCNN(BaseMulticlassClassifier):
     schema = OmniScaleCNNSchema
 
     def __init__(self, config):
-        BaseMulticlassClassifier.__init__(self, config)
-        receptive_field_shape = self.config.sequence_length//4
-        layer_parameter_list = generate_layer_parameter_list(1,receptive_field_shape,
-                                                             self.config.parameter_number_of_layer_list, in_channel=self.config.input_dim)
+        super().__init__(config)
+        receptive_field_shape = self.config.sequence_length // 4
+        layer_parameter_list = generate_layer_parameter_list(
+            1,
+            receptive_field_shape,
+            self.config.parameter_number_of_layer_list,
+            in_channel=self.config.input_dim,
+        )
         self.layer_parameter_list = layer_parameter_list
         self.layer_list = []
 
@@ -90,7 +99,7 @@ class OmniScaleCNN(BaseMulticlassClassifier):
         self.model.hidden = nn.Linear(out_put_channel_numebr, self.config.num_classes)
 
     def forward(self, X):
-        X = self.model.net(X.transpose(1,2))
+        X = self.model.net(X.transpose(1, 2))
         X = self.model.averagepool(X)
         X = X.squeeze_(-1)
         if not self.config.few_shot:
@@ -99,7 +108,12 @@ class OmniScaleCNN(BaseMulticlassClassifier):
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)        
+        return optim.Adam(
+            self.model.parameters(),
+            lr=self.config.learning_rate,
+            weight_decay=self.config.weight_decay,
+        )
+
 
 def get_Prime_number_in_a_range(start, end):
     Prime_list = []
@@ -119,12 +133,16 @@ def get_out_channel_number(paramenter_layer, in_channel, prime_list):
     return out_channel_expect
 
 
-def generate_layer_parameter_list(start, end, paramenter_number_of_layer_list, in_channel=1):
+def generate_layer_parameter_list(
+    start, end, paramenter_number_of_layer_list, in_channel=1
+):
     prime_list = get_Prime_number_in_a_range(start, end)
 
     layer_parameter_list = []
     for paramenter_number_of_layer in paramenter_number_of_layer_list:
-        out_channel = get_out_channel_number(paramenter_number_of_layer, in_channel, prime_list)
+        out_channel = get_out_channel_number(
+            paramenter_number_of_layer, in_channel, prime_list
+        )
 
         tuples_in_layer = []
         for prime in prime_list:
@@ -134,7 +152,9 @@ def generate_layer_parameter_list(start, end, paramenter_number_of_layer_list, i
         layer_parameter_list.append(tuples_in_layer)
 
     tuples_in_layer_last = []
-    first_out_channel = len(prime_list) * get_out_channel_number(paramenter_number_of_layer_list[0], 1, prime_list)
+    first_out_channel = len(prime_list) * get_out_channel_number(
+        paramenter_number_of_layer_list[0], 1, prime_list
+    )
     tuples_in_layer_last.append((in_channel, first_out_channel, 1))
     tuples_in_layer_last.append((in_channel, first_out_channel, 2))
     layer_parameter_list.append(tuples_in_layer_last)

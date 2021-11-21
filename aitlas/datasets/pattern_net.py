@@ -1,6 +1,5 @@
 from .multiclass_classification import MultiClassClassificationDataset
 
-
 LABELS = ["airplane", "baseball_field", "basketball_court", "beach", "bridge", "cemetery", "chaparral",
           "christmas_tree_farm", "closed_road", "coastal_mansion", "crosswalk", "dense_residential",
           "ferry_terminal", "football_field", "forest", "freeway", "golf_course", "harbor", "intersection",
@@ -11,4 +10,11 @@ LABELS = ["airplane", "baseball_field", "basketball_court", "beach", "bridge", "
 
 class PatternNetDataset(MultiClassClassificationDataset):
 
+    url = "https://arxiv.org/abs/1706.03424"
     labels = LABELS
+
+    name = "PatternNet dataset"
+
+    def __init__(self, config):
+        # now call the constructor to validate the schema and load the data
+        MultiClassClassificationDataset.__init__(self, config)

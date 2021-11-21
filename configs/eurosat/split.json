@@ -1,22 +1,22 @@
 {
     "task": {
-        "classname": "aitlas.tasks.SplitTask",
+        "classname": "aitlas.tasks.RandomSplitTask",
         "config": {
             "split": {
                 "train": {
-                    "ratio": 80,
-                    "file": "/media/hdd/EuroSAT/train.csv"
+                    "ratio": 100,
+                    "file": "/media/hdd/multi-class/EuroSAT/train.csv"
                 },
                 "val": {
-                    "ratio": 20,
-                    "file": "/media/hdd/EuroSAT/val.csv"
+                    "ratio": 0,
+                    "file": "/media/hdd/multi-class/EuroSAT/val.csv"
                 },
                 "test": {
                     "ratio": 0,
-                    "file": "/media/hdd/EuroSAT/test.csv"
+                    "file": "/media/hdd/multi-class/EuroSAT/test.csv"
                 }
             },
-            "root": "/media/hdd/EuroSAT"
+            "dir_path": "/media/hdd/multi-class/EuroSAT"
         }
     }
 }

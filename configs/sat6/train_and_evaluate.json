@@ -1,0 +1,44 @@
+{
+    "model": {
+        "classname": "aitlas.models.ResNet50",
+        "config": {
+            "num_classes": 6,
+            "learning_rate": 0.0001,
+            "pretrained": true,
+            "metrics": ["f1_score"]
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+        "config": {
+            "epochs": 50,
+            "model_directory": "examples/experiments/sat6",
+            "save_epochs": 5,
+            "id": "sat6",
+            "train_dataset_config":{
+                "classname": "aitlas.datasets.SAT6",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "download": false,
+                    "mat_file_path": "/media/hdd/SAT/sat-6-full.mat",
+                    "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"],
+                    "mode": "train"
+                }
+            },
+            "val_dataset_config":{
+                  "classname": "aitlas.datasets.SAT6",
+                  "config": {
+                      "batch_size": 16,
+                      "shuffle": false,
+                      "num_workers": 4,
+                      "download": false,
+                      "mat_file_path": "/media/hdd/SAT/sat-6-full.mat",
+                      "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"],
+                      "mode": "test"
+                  }
+              }
+        }
+    }
+}

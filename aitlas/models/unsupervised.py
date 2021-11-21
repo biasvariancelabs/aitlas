@@ -1,6 +1,4 @@
 import math
-import time
-from random import random as rd
 
 import numpy as np
 import torch
@@ -17,7 +15,7 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
     schema = UnsupervisedDeepMulticlassClassifierSchema
 
     def __init__(self, config):
-        BaseMulticlassClassifier.__init__(self, config)
+        super().__init__(config)
 
         self.learning_rate = self.config.learning_rate
         self.weight_decay = self.config.weight_decay

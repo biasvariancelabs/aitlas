@@ -2,7 +2,7 @@
     "model": {
         "classname": "aitlas.models.ResNet50MultiLabel",
         "config": {
-            "pretrained": true,
+            "pretrained": false,
             "learning_rate": 0.0001
         }
     },

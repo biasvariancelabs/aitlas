@@ -7,3 +7,8 @@ class DFC15MultiLabelDataset(MultiLabelClassificationDataset):
     url = "https://github.com/Hua-YS/DFC15-Multilabel-Dataset"
 
     labels = LABELS
+    name = "DFC15 dataset"
+
+    def __init__(self, config):
+        # now call the constructor to validate the schema and load the data
+        MultiLabelClassificationDataset.__init__(self, config)

@@ -1,3 +1,4 @@
+import dill
 import numpy as np
 import torch
 from ignite.metrics import confusion_matrix
@@ -19,6 +20,16 @@ class RunningScore(object):
         self.num_classes = num_classes
         self.device = device
         self.confusion_matrix = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["confusion_matrix"] = dill.dumps(state["confusion_matrix"])
+        return state
+
+    def __setstate__(self, state):
+        new_state = state
+        new_state["confusion_matrix"] = dill.loads(state["confusion_matrix"])
+        self.__dict__.update(new_state)
 
     def update(self, y_true, y_pred):
         """Updates stats on each batch"""
@@ -63,7 +74,7 @@ class RunningScore(object):
             "F1_score Micro": float(micro),
             "F1_score Macro": np.mean(per_class),
             "F1_score Weighted": np.sum(self.weights() * per_class),
-            "F1_score per Class": per_class.tolist(),
+            "F1_score per Class": per_class,
         }
 
     def iou(self):
@@ -98,7 +109,9 @@ class MultiClassRunningScore(RunningScore):
     def recall(self):
         cm = self.get_computed()
         micro = cm.diag().sum() / (cm.sum() + 1e-15)  # same as accuracy for multiclass
-        macro = (cm.diag() / (cm.sum(dim=1) + 1e-15)).mean() # same as average accuracy in breizhcrops
+        macro = (
+            cm.diag() / (cm.sum(dim=1) + 1e-15)
+        ).mean()  # same as average accuracy in breizhcrops
         weighted = (
             (cm.diag() / (cm.sum(dim=1) + 1e-15))
             * ((cm.sum(dim=1)) / (cm.sum() + 1e-15))
@@ -138,20 +151,21 @@ class MultiClassRunningScore(RunningScore):
     def kappa(self):
         cm = self.get_computed()
         N = cm.shape[0]
-        
+
         act_hist = cm.sum(axis=1)
-        
+
         pred_hist = cm.sum(axis=0)
 
         num_samples = cm.sum()
-        
+
         total_agreements = cm.diag().sum()
         agreements_chance = (act_hist * pred_hist) / num_samples
         agreements_chance = agreements_chance.sum()
-        kappa =  (total_agreements - agreements_chance) / (num_samples - agreements_chance)
-        return {
-            "Kappa metric": kappa
-        }
+        kappa = (total_agreements - agreements_chance) / (
+            num_samples - agreements_chance
+        )
+        return {"Kappa metric": kappa}
+
 
 class MultiLabelRunningScore(RunningScore):
     """Calculates a confusion matrix for multi-labelled, multi-class data in addition to the """
@@ -166,16 +180,16 @@ class MultiLabelRunningScore(RunningScore):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
 
-        accuracy = (tp_total + tn_total) / (tp_total + tn_total + fp_total + fn_total)
-        accuracy_per_class = (tp + tn) / (tp + tn + fp + fn)
+        accuracy = (tp_total + tn_total) / (tp_total + tn_total + fp_total + fn_total + 1e-15)
+        accuracy_per_class = (tp + tn) / (tp + tn + fp + fn + 1e-15)
 
         return {"Accuracy": accuracy, "Accuracy per Class": accuracy_per_class}
 
     def precision(self):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
-        micro = tp_total / (tp_total + fp_total)
-        per_class = tp / (tp + fp)
+        micro = tp_total / (tp_total + fp_total + 1e-15)
+        per_class = tp / (tp + fp + 1e-15)
         macro = np.mean(per_class)
         weighted = np.sum(per_class * self.weights())
         return {
@@ -193,8 +207,8 @@ class MultiLabelRunningScore(RunningScore):
     def recall(self):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
-        micro = tp_total / (tp_total + fn_total)
-        per_class = tp / (tp + fn)
+        micro = tp_total / (tp_total + fn_total + 1e-15)
+        per_class = tp / (tp + fn + 1e-15)
         macro = np.mean(per_class)
         weighted = np.sum(per_class * self.weights())
         return {
@@ -215,7 +229,7 @@ class MultiLabelRunningScore(RunningScore):
         fp = cm[:, 0, 1]
         fn = cm[:, 1, 0]
 
-        if total:  # sum it all if we need to calculate to totals
+        if total:  # sum it all if we need to calculate the totals
             tp, tn, fp, fn = tp.sum(), tn.sum(), fp.sum(), fn.sum()
 
         return tp.numpy(), tn.numpy(), fp.numpy(), fn.numpy()
@@ -232,13 +246,13 @@ class MultiLabelRunningScore(RunningScore):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
 
-        iou_per_class = tp / (tp + fp + fn)
-        iou = tp_total / (tp_total + fp_total + fn_total)
+        iou_per_class = tp / (tp + fp + fn + 1e-15)
+        iou = tp_total / (tp_total + fp_total + fn_total + 1e-15)
 
         return {
             "IOU": float(iou),
             "IOU mean": np.mean(iou_per_class),
-            "IOU per Class": iou_per_class.tolist(),
+            "IOU per Class": iou_per_class.numpy(),
         }
 
 
@@ -247,29 +261,76 @@ class SegmentationRunningScore(RunningScore):
 
     def __init__(self, num_classes, device):
         super().__init__(num_classes, device)
-        self.iou_per_class = torch.zeros(num_classes, dtype=torch.float64).to(self.device)
-        self.f1_score_per_class = torch.zeros(num_classes, dtype=torch.float64).to(self.device)
-        self.pixel_accuracy_per_class = torch.zeros(num_classes, dtype=torch.float64).to(self.device)
+        self.iou_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
+            self.device
+        )
+        self.f1_score_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
+            self.device
+        )
+        self.intersection_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
+            self.device
+        )
+        self.total_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
+            self.device
+        )
+        self.pixel_accuracy_per_class = torch.zeros(
+            num_classes, dtype=torch.float64
+        ).to(self.device)
         self.samples = 0
 
     def update(self, y_true, y_pred):
         """Updates metrics on each batch"""
-        num_batches, num_labels, h, w = y_true.shape
-        self.samples += num_batches
-        for i in range(num_batches):
+        num_images, num_labels, h, w = y_true.shape
+        self.samples += num_images
+        for i in range(num_images):
             for j in range(num_labels):
-                intersection = (y_pred[i, j, :, :].unsqueeze(0) & y_true[i, j, :, :].unsqueeze(0)).float().sum(
-                    (1, 2))
-                union = (y_pred[i, j, :, :].unsqueeze(0) | y_true[i, j, :, :].unsqueeze(0)).float().sum(
-                    (1, 2))
-                self.iou_per_class[j] += ((intersection + 1e-15) / (union + 1e-15))[0]
+                y_pred_local = y_pred[i, j, :, :].unsqueeze(0)
+                y_true_local = y_true[i, j, :, :].unsqueeze(0)
+                intersection = (y_pred_local & y_true_local).float().sum()
+                union = (y_pred_local | y_true_local).float().sum()
+                correct = (y_pred_local == y_true_local).int().sum()
+
+                total = y_true_local.numel()
+                trues = y_pred_local.float().sum() + y_true_local.float().sum()
+
+                self.iou_per_class[j] += 1 if union == 0 else (intersection / union)
+                self.f1_score_per_class[j] += (
+                    1 if trues == 0 else (2 * intersection / trues)
+                )
+                self.pixel_accuracy_per_class[j] += correct / total
 
     def reset(self):
         """Reset the metrics"""
-        self.iou_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(self.device)
-        self.f1_score_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(self.device)
-        self.pixel_accuracy_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(self.device)
+        self.iou_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(
+            self.device
+        )
+        self.f1_score_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(
+            self.device
+        )
+        self.intersection_per_class = torch.zeros(
+            self.num_classes, dtype=torch.float64
+        ).to(self.device)
+        self.total_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(
+            self.device
+        )
+        self.pixel_accuracy_per_class = torch.zeros(
+            self.num_classes, dtype=torch.float64
+        ).to(self.device)
         self.samples = 0
+
+    def accuracy(self):
+        self.pixel_accuracy_per_class = self.pixel_accuracy_per_class / self.samples
+        return {
+            "Accuracy mean": float(self.pixel_accuracy_per_class.mean()),
+            "Accuracy per Class": self.pixel_accuracy_per_class.tolist(),
+        }
+
+    def f1_score(self):
+        self.f1_score_per_class = self.f1_score_per_class / self.samples
+        return {
+            "F1 mean": float(self.f1_score_per_class.mean()),
+            "F1 per Class": self.f1_score_per_class.tolist(),
+        }
 
     def iou(self):
         self.iou_per_class = self.iou_per_class / self.samples

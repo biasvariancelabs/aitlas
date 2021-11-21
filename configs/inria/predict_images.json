@@ -1,0 +1,22 @@
+{
+    "model": {
+        "classname": "aitlas.models.DeepLabV3",
+        "config": {
+            "num_classes": 2,
+            "learning_rate": 0.0001,
+            "threshold": 0.5
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.PredictSegmentationTask",
+        "config": {
+            "model_path": "/media/ssd/chactun_new/experiments/checkpoint.pth.tar",
+            "batch_size": 1,
+            "dir": "/media/ssd/chactun_new/predict",
+            "output_path": "/media/ssd/chactun_new/predict",
+            "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
+            "labels": ["Background", "Buildings"],
+            "output_format": "image"
+        }
+    }
+}

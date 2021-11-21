@@ -27,3 +27,16 @@ class ResizeCenterCropToTensor(BaseTransforms):
         ])
 
         return data_transforms(sample)
+
+
+class ConvertToRGBResizeCenterCropToTensor(BaseTransforms):
+    def __call__(self, sample):
+        sample = sample[:, :, :3]
+        data_transforms = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+        ])
+
+        return data_transforms(sample)

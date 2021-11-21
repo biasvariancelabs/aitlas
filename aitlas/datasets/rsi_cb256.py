@@ -12,6 +12,7 @@ class RSICB256Dataset(MultiClassClassificationDataset):
 
     url = "https://github.com/lehaifeng/RSI-CB"
     labels = LABELS
+
     name = "RSI-CB256 dataset"
 
     def __init__(self, config):

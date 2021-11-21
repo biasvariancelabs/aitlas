@@ -1,0 +1,20 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.PrepareTask",
+        "config": {
+            "dataset_config": {
+                "classname": "aitlas.datasets.SpaceNet6Dataset",
+                "config": {
+                    "root_directory": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam",
+                    "segmentation_directory": "/home/dkocev/stefanp/spaceNetChallenge6/results/segmentation_masks",
+                    "folds_dir": "/home/dkocev/stefanp/spaceNetChallenge6/results/folds",
+                    "num_threads": 12,
+                    "edge_width": 3,
+                    "contact_width": 9,
+                    "orients": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.txt",
+                    "orients_output": "/home/dkocev/stefanp/spaceNetChallenge6/train/AOI_11_Rotterdam/SummaryData/SAR_orientations.csv"
+                }
+            }
+        }
+    }
+}

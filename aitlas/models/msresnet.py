@@ -14,7 +14,6 @@ import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as Functional
-
 import torch.optim as optim
 
 from ..base import BaseMulticlassClassifier
@@ -23,18 +22,21 @@ from .schemas import MSResNetSchema
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
-    return nn.Conv1d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding=1, bias=False)
+    return nn.Conv1d(
+        in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False
+    )
 
 
 def conv5x5(in_planes, out_planes, stride=1):
-    return nn.Conv1d(in_planes, out_planes, kernel_size=5, stride=stride,
-                     padding=1, bias=False)
+    return nn.Conv1d(
+        in_planes, out_planes, kernel_size=5, stride=stride, padding=1, bias=False
+    )
 
 
 def conv7x7(in_planes, out_planes, stride=1):
-    return nn.Conv1d(in_planes, out_planes, kernel_size=7, stride=stride,
-                     padding=1, bias=False)
+    return nn.Conv1d(
+        in_planes, out_planes, kernel_size=7, stride=stride, padding=1, bias=False
+    )
 
 
 class BasicBlock3x3(nn.Module):
@@ -142,48 +144,91 @@ class MSResNet(BaseMulticlassClassifier):
     schema = MSResNetSchema
 
     def __init__(self, config):
-        BaseMulticlassClassifier.__init__(self, config)
+        super().__init__(config)
 
-        #self.d_model = self.config.hidden_dims
         self.inplanes3 = self.config.hidden_dims
         self.inplanes5 = self.config.hidden_dims
         self.inplanes7 = self.config.hidden_dims
         stride = 2
 
-        self.model.conv1 = nn.Conv1d(self.config.input_dim, self.config.hidden_dims, kernel_size=7, stride=2, padding=3, bias=False)
+        self.model.conv1 = nn.Conv1d(
+            self.config.input_dim,
+            self.config.hidden_dims,
+            kernel_size=7,
+            stride=2,
+            padding=3,
+            bias=False,
+        )
         self.model.bn1 = nn.BatchNorm1d(self.config.hidden_dims)
         self.model.relu = nn.ReLU(inplace=True)
         self.model.maxpool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
 
-        self.model.layer3x3_1 = self._make_layer3(BasicBlock3x3, self.config.hidden_dims, self.config.layers[0], stride=stride)
-        self.model.layer3x3_2 = self._make_layer3(BasicBlock3x3, 2 * self.config.hidden_dims, self.config.layers[1], stride=stride)
-        self.model.layer3x3_3 = self._make_layer3(BasicBlock3x3, 4 * self.config.hidden_dims, self.config.layers[2], stride=stride)
+        self.model.layer3x3_1 = self._make_layer3(
+            BasicBlock3x3, self.config.hidden_dims, self.config.layers[0], stride=stride
+        )
+        self.model.layer3x3_2 = self._make_layer3(
+            BasicBlock3x3,
+            2 * self.config.hidden_dims,
+            self.config.layers[1],
+            stride=stride,
+        )
+        self.model.layer3x3_3 = self._make_layer3(
+            BasicBlock3x3,
+            4 * self.config.hidden_dims,
+            self.config.layers[2],
+            stride=stride,
+        )
         # self.layer3x3_4 = self._make_layer3(BasicBlock3x3, 512, self.config.layers[3], stride=2)
 
         # maxplooing kernel size: 16, 11, 6
         self.model.maxpool3 = nn.AvgPool1d(kernel_size=16, stride=1, padding=0)
 
-        self.model.layer5x5_1 = self._make_layer5(BasicBlock5x5, self.config.hidden_dims, self.config.layers[0], stride=stride)
-        self.model.layer5x5_2 = self._make_layer5(BasicBlock5x5, 2 * self.config.hidden_dims, self.config.layers[1], stride=stride)
-        self.model.layer5x5_3 = self._make_layer5(BasicBlock5x5, 4 * self.config.hidden_dims, self.config.layers[2], stride=stride)
+        self.model.layer5x5_1 = self._make_layer5(
+            BasicBlock5x5, self.config.hidden_dims, self.config.layers[0], stride=stride
+        )
+        self.model.layer5x5_2 = self._make_layer5(
+            BasicBlock5x5,
+            2 * self.config.hidden_dims,
+            self.config.layers[1],
+            stride=stride,
+        )
+        self.model.layer5x5_3 = self._make_layer5(
+            BasicBlock5x5,
+            4 * self.config.hidden_dims,
+            self.config.layers[2],
+            stride=stride,
+        )
         # self.layer5x5_4 = self._make_layer5(BasicBlock5x5, 512, self.config.layers[3], stride=2)
         self.model.maxpool5 = nn.AvgPool1d(kernel_size=11, stride=1, padding=0)
 
-        self.model.layer7x7_1 = self._make_layer7(BasicBlock7x7, self.config.hidden_dims, self.config.layers[0], stride=2)
-        self.model.layer7x7_2 = self._make_layer7(BasicBlock7x7, 2 * self.config.hidden_dims, self.config.layers[1], stride=2)
-        self.model.layer7x7_3 = self._make_layer7(BasicBlock7x7, 4 * self.config.hidden_dims, self.config.layers[2], stride=2)
+        self.model.layer7x7_1 = self._make_layer7(
+            BasicBlock7x7, self.config.hidden_dims, self.config.layers[0], stride=2
+        )
+        self.model.layer7x7_2 = self._make_layer7(
+            BasicBlock7x7, 2 * self.config.hidden_dims, self.config.layers[1], stride=2
+        )
+        self.model.layer7x7_3 = self._make_layer7(
+            BasicBlock7x7, 4 * self.config.hidden_dims, self.config.layers[2], stride=2
+        )
         # self.layer7x7_4 = self._make_layer7(BasicBlock7x7, 512, self.config.layers[3], stride=2)
         self.model.maxpool7 = nn.AvgPool1d(kernel_size=6, stride=1, padding=0)
 
         # self.drop = nn.Dropout(p=0.2)
-        self.model.fc = nn.Linear(4 * self.config.hidden_dims * 3, self.config.num_classes)
+        self.model.fc = nn.Linear(
+            4 * self.config.hidden_dims * 3, self.config.num_classes
+        )
 
     def _make_layer3(self, block, planes, blocks, stride=2):
         downsample = None
         if stride != 1 or self.inplanes3 != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv1d(self.inplanes3, planes * block.expansion,
-                          kernel_size=1, stride=stride, bias=False),
+                nn.Conv1d(
+                    self.inplanes3,
+                    planes * block.expansion,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False,
+                ),
                 nn.BatchNorm1d(planes * block.expansion),
             )
 
@@ -199,8 +244,13 @@ class MSResNet(BaseMulticlassClassifier):
         downsample = None
         if stride != 1 or self.inplanes5 != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv1d(self.inplanes5, planes * block.expansion,
-                          kernel_size=1, stride=stride, bias=False),
+                nn.Conv1d(
+                    self.inplanes5,
+                    planes * block.expansion,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False,
+                ),
                 nn.BatchNorm1d(planes * block.expansion),
             )
 
@@ -216,8 +266,13 @@ class MSResNet(BaseMulticlassClassifier):
         downsample = None
         if stride != 1 or self.inplanes7 != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv1d(self.inplanes7, planes * block.expansion,
-                          kernel_size=1, stride=stride, bias=False),
+                nn.Conv1d(
+                    self.inplanes7,
+                    planes * block.expansion,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False,
+                ),
                 nn.BatchNorm1d(planes * block.expansion),
             )
 
@@ -231,7 +286,7 @@ class MSResNet(BaseMulticlassClassifier):
 
     def _logits(self, x0):
         # require NxTxD format
-        x0 = x0.transpose(1,2)
+        x0 = x0.transpose(1, 2)
         x0 = torch.nn.functional.interpolate(x0, size=512)
 
         x0 = self.model.conv1(x0)
@@ -274,5 +329,8 @@ class MSResNet(BaseMulticlassClassifier):
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.Adam(self.model.parameters(), lr=self.config.learning_rate, weight_decay=self.config.weight_decay)
-
+        return optim.Adam(
+            self.model.parameters(),
+            lr=self.config.learning_rate,
+            weight_decay=self.config.weight_decay,
+        )

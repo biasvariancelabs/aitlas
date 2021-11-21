@@ -19,7 +19,7 @@ class CamVidDataset(BaseDataset):
     labels = LABELS
 
     def __init__(self, config):
-        # now call the constructor to validate the schema and split the data
+        # now call the constructor to validate the schema
         BaseDataset.__init__(self, config)
         self.images = []
         self.masks = []
