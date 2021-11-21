@@ -22,10 +22,10 @@
                     "root":"./data/slocrops_dataset",
                     "year":2017,
                     "batch_size": 16,
-                    "shuffle": true,
+                    "shuffle": false,
                     "csv_file_path":"index.csv",
                     "num_workers": 4,
-                    "regions":["train"]
+                    "regions":["train", "val"]
                 }
             }
         }
