@@ -82,9 +82,9 @@ class EOPatchCrops(CropsDataset):
 
         for region in self.regions[1:]:
             region_ind = pd.read_csv(
-                os.path.join(self.config.root, f"{region.csv}"), index_col=None
+                os.path.join(self.config.root, f"{region}.csv"), index_col=None
             )
-            self.index = pd.concatenate([self.index, region_ind], axis=0)
+            self.index = pd.concat([self.index, region_ind], axis=0, ignore_index=True)
 
         self.X_list = None
 
