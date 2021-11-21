@@ -206,7 +206,7 @@ class PredictEOPatchTask(BaseTask):
             test_index = test_dataset.index
 
             for patch in eopatches:
-                display_eopatch_predictions(eopatches_path, patch, y_pred, test_index, self.output_path)
+                display_eopatch_predictions(eopatches_path, patch, y_pred, test_index, self.output_path, y_true, test_dataset.mapping)
 
 
     def export_predictions_to_csv(self, file, fnames, probs, labels):
