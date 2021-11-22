@@ -14,17 +14,6 @@ from eolearn.geometry import VectorToRasterTask
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-from ..base import BaseDataset
-from .urls import (
-    CLASSMAPPINGURL,
-    CODESURL,
-    FILESIZES,
-    RAW_CSV_URL,
-    H5_URLs,
-    INDEX_FILE_URLs,
-    SHP_URLs,
-)
-
 
 class DownloadProgressBar(tqdm):
     def update_to(self, b=1, bsize=1, tsize=None):
@@ -58,7 +47,7 @@ class EOPatchCrops(CropsDataset):
         CropsDataset.__init__(self, config)
 
         self.root = self.config.root
-        self.regions = self.config.regions  #'slovenia'
+        self.regions = self.config.regions
         self.indexfile = os.path.join(self.config.root, self.config.csv_file_path)
         self.h5path = {}
 
@@ -126,10 +115,10 @@ class EOPatchCrops(CropsDataset):
                         columns[1]: patch,
                         columns[2]: poly_id,
                         columns[3]: row.ct_eu_code,
-                        columns[4]: 0,  # temp_X.shape[0],
+                        columns[4]: 0,
                         columns[5]: classid,
                         columns[6]: classname,
-                        columns[7]: "",  # self.region
+                        columns[7]: "",
                     }
                 )
         self.index = pd.DataFrame(list_index)
@@ -149,7 +138,6 @@ class EOPatchCrops(CropsDataset):
                 if row.ct_eu_code not in self.mapping.index.values:
                     continue
                 poly_id = int(row.polygon_id)
-                print(self.index)
                 index_row = self.index.loc[os.path.join(patch, str(poly_id))]
 
                 polygon = polygons[polygons.polygon_id == poly_id]
