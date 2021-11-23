@@ -37,12 +37,12 @@ class BaseSplitTask(BaseTask):
 
     def __init__(self, model: BaseModel, config):
         super().__init__(model, config)
-        self.dir_path = self.config.dir_path
-        self.csv_file_path = self.config.csv_file_path
+        self.data_dir = self.config.data_dir
+        self.csv_file = self.config.csv_file
 
     def run(self):
         logging.info("Loading data...")
-        self.images = self.load_images(self.dir_path, self.csv_file_path)
+        self.images = self.load_images(self.data_dir, self.csv_file)
 
         logging.info("Making splits...")
 
@@ -81,32 +81,32 @@ class BaseSplitTask(BaseTask):
                     # save in VOC format again
                     img = xx[0] if isinstance(xx, np.ndarray) else xx
                     img = img[img.rfind("images") + 7 : img.rfind(".")]
-                    row = "\t".join([str(i) for i in yy])
+                    row = "\t".join([str(int(i)) for i in yy])
                     f.write(f"{img}\t{row}\n")
                 else:
                     f.write(f"{xx},{yy}\n")
             f.close()
 
-    def load_images(self, dir_path, csv_file_path, extensions=None):
+    def load_images(self, data_dir, csv_file, extensions=None):
         """Attempts to read in VOC format, then in internal format, then in folder per class format"""
         images = []
         try:
-            images = load_voc_format_dataset(self.dir_path, self.csv_file_path)
+            images = load_voc_format_dataset(data_dir, csv_file)
 
             # if this format is load, it's a multilabel dataset
             self.is_multilabel = True
 
             # read the header again. TODO: Maybe this can be a bit better implemented.
-            with open(csv_file_path, "rb") as f:
+            with open(csv_file, "rb") as f:
                 self.header = f.readline().decode("utf-8").strip().split("\t")
 
         except TypeError:  # it's not in VOC format, then let's try aitlas (CSV) internal one
-            if csv_file_path is not None:
-                images = load_aitlas_format_dataset(csv_file_path)
+            if csv_file is not None:
+                images = load_aitlas_format_dataset(csv_file)
             else:
                 if not extensions:
                     extensions = self.extensions
-                images = load_folder_per_class_dataset(dir_path, extensions)
+                images = load_folder_per_class_dataset(data_dir, extensions)
 
         if not images:
             raise ValueError("No images were found!")

@@ -12,10 +12,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class ImageFolderDataset(BaseDataset):
-    def __init__(self, root, labels, transforms, batch_size):
+    def __init__(self, data_dir, labels, transforms, batch_size):
         BaseDataset.__init__(self, {})
 
-        self.root = root
+        self.data_dir = data_dir
         self.labels = labels
         self.transform = self.load_transforms(transforms)
         self.shuffle = False
@@ -24,8 +24,8 @@ class ImageFolderDataset(BaseDataset):
         self.data = []
         self.fnames = []
 
-        dir = os.path.expanduser(self.root)
-        for root, _, fnames in sorted(os.walk(dir)):
+        data_dir = os.path.expanduser(self.data_dir)
+        for root, _, fnames in sorted(os.walk(data_dir)):
             for fname in sorted(fnames):
                 self.data.append(os.path.join(root, fname))
                 self.fnames.append(fname)
@@ -47,8 +47,8 @@ class PredictTask(BaseTask):
     def __init__(self, model: BaseModel, config):
         super().__init__(model, config)
 
-        self.dir = self.config.dir
-        self.output_path = self.config.output_path
+        self.data_dir = self.config.data_dir
+        self.output_dir = self.config.output_dir
         self.output_format = self.config.output_format
 
     def run(self):
@@ -65,7 +65,7 @@ class PredictTask(BaseTask):
             transforms = self.config.transforms
             batch_size = self.config.batch_size
 
-        test_dataset = ImageFolderDataset(self.dir, labels, transforms, batch_size,)
+        test_dataset = ImageFolderDataset(self.data_dir, labels, transforms, batch_size,)
 
         # load the model
         self.model.load_model(self.config.model_path)
@@ -78,7 +78,7 @@ class PredictTask(BaseTask):
         if self.output_format == "plot":
             for i, image_path in enumerate(test_dataset.data):
                 plot_path = os.path.join(
-                    self.output_path, f"{test_dataset.fnames[i]}_plot.png"
+                    self.output_dir, f"{test_dataset.fnames[i]}_plot.png"
                 )
                 # y_true, y_pred, y_prob, labels, file
                 display_image_labels(
@@ -91,7 +91,7 @@ class PredictTask(BaseTask):
                 )
         else:
             self.export_predictions_to_csv(
-                self.output_path, test_dataset.fnames, y_prob, test_dataset.labels
+                self.output_dir, test_dataset.fnames, y_prob, test_dataset.labels
             )
 
     def export_predictions_to_csv(self, file, fnames, probs, labels):
@@ -129,7 +129,7 @@ class PredictSegmentationTask(BaseTask):
             transforms = self.config.transforms
             batch_size = self.config.batch_size
 
-        test_dataset = ImageFolderDataset(self.config.dir, labels, transforms, batch_size,)
+        test_dataset = ImageFolderDataset(self.config.data_dir, labels, transforms, batch_size,)
 
         # load the model
         self.model.load_model(self.config.model_path)
@@ -141,9 +141,9 @@ class PredictSegmentationTask(BaseTask):
 
         if self.output_format == "plot":
             # plot predictions
-            for i, image_path in enumerate(test_dataset.data):
+            for i, image_path in enumerate(test_dataset.data_dir):
                 plot_path = os.path.join(
-                    self.config.output_path, f"{test_dataset.fnames[i]}_plot.png"
+                    self.config.output_dir, f"{test_dataset.fnames[i]}_plot.png"
                 )
                 display_image_segmentation(
                     image_path,
@@ -155,9 +155,9 @@ class PredictSegmentationTask(BaseTask):
                 )
         else:
             # save raw masks
-            for i, image_path in enumerate(test_dataset.data):
+            for i, image_path in enumerate(test_dataset.data_dir):
                 base_filepath_name = os.path.join(
-                    self.config.output_path, os.path.splitext(test_dataset.fnames[i])[0]
+                    self.config.output_dir, os.path.splitext(test_dataset.fnames[i])[0]
                 )
                 save_predicted_masks(
                     y_pred[i],
