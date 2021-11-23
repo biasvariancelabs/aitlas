@@ -22,7 +22,7 @@
                       "shuffle": true,
                       "num_workers": 1,
                       "csv_file_path": "/home/dkocev/data/inria/train.txt",
-                      "root": "/home/dkocev/data/inria/output",
+                      "dir_path": "/home/dkocev/data/inria/output",
                       "joint_transforms": ["aitlas.transforms.FlipHVRandomRotate"],
                       "transforms": ["aitlas.transforms.ColorTransformations", "aitlas.transforms.MinMaxNormTransponse"],
                       "target_transforms": ["aitlas.transforms.Transponse"]

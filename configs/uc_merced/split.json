@@ -16,7 +16,7 @@
                     "file": "/media/hdd/multi-class/UCMerced/test.csv"
                 }
             },
-            "dir_path": "/media/hdd/multi-class/UCMerced"
+            "data_dir": "/media/hdd/multi-class/UCMerced"
         }
     }
 }

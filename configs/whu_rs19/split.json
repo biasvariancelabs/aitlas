@@ -16,7 +16,7 @@
                     "file": "/media/hdd/multi-class/WHU-RS19/test.csv"
                 }
             },
-            "dir_path": "/media/hdd/multi-class/WHU-RS19"
+            "data_dir": "/media/hdd/multi-class/WHU-RS19"
         }
     }
 }

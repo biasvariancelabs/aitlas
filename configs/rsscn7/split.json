@@ -16,7 +16,7 @@
                     "file": "/media/hdd/multi-class/RSSCN7/test.csv"
                 }
             },
-            "dir_path": "/media/hdd/multi-class/RSSCN7"
+            "data_dir": "/media/hdd/multi-class/RSSCN7"
         }
     }
 }

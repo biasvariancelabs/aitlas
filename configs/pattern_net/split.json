@@ -16,7 +16,7 @@
                     "file": "/media/hdd/multi-class/PatternNet/test.csv"
                 }
             },
-            "dir_path": "/media/hdd/multi-class/PatternNet"
+            "data_dir": "/media/hdd/multi-class/PatternNet"
         }
     }
 }

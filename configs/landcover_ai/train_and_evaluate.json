@@ -21,7 +21,7 @@
                       "shuffle": true,
                       "num_workers": 1,
                       "csv_file_path": "/media/ssd/landcover_ai/train.txt",
-                      "root": "/media/ssd/landcover_ai/output",
+                      "dir_path": "/media/ssd/landcover_ai/output",
                       "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
                       "target_transforms": ["aitlas.transforms.Transponse"]
                   }
@@ -33,7 +33,7 @@
                         "shuffle": false,
                         "num_workers": 1,
                         "csv_file_path": "/media/ssd/landcover_ai/test.txt",
-                        "root": "/media/ssd/landcover_ai/output",
+                        "dir_path": "/media/ssd/landcover_ai/output",
                         "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
                         "target_transforms": ["aitlas.transforms.Transponse"]
                     }

@@ -16,7 +16,7 @@
                     "file": "/media/hdd/multi-class/RSD46-WHU/train/test.csv"
                 }
             },
-            "dir_path": "/media/hdd/multi-class/RSD46-WHU/train"
+            "data_dir": "/media/hdd/multi-class/RSD46-WHU/train"
         }
     }
 }

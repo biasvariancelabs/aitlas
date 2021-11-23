@@ -20,7 +20,7 @@
                       "batch_size": 4,
                       "shuffle": true,
                       "num_workers": 4,
-                      "root": "/media/ssd/chactun_new/train",
+                      "dir_path": "/media/ssd/chactun_new/train",
                       "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
                       "target_transforms": ["aitlas.transforms.MinMaxNorm"]
                   }
@@ -31,7 +31,7 @@
                         "batch_size": 1,
                         "shuffle": false,
                         "num_workers": 1,
-                        "root": "/media/ssd/chactun_new/test",
+                        "dir_path": "/media/ssd/chactun_new/test",
                         "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
                         "target_transforms": ["aitlas.transforms.MinMaxNorm"]
                     }

@@ -21,7 +21,7 @@
                       "shuffle": true,
                       "num_workers": 1,
                       "csv_file_path": "/home/dkocev/data/MassachusettsRoads/train.txt",
-                      "root": "/home/dkocev/data/MassachusettsRoads/train_splits",
+                      "dir_path": "/home/dkocev/data/MassachusettsRoads/train_splits",
                       "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
                       "target_transforms": ["aitlas.transforms.Transponse"]
                   }
@@ -33,7 +33,7 @@
                         "shuffle": false,
                         "num_workers": 1,
                         "csv_file_path": "/home/dkocev/data/MassachusettsRoads/val.txt",
-                        "root": "/home/dkocev/data/MassachusettsRoads/val_splits",
+                        "dir_path": "/home/dkocev/data/MassachusettsRoads/val_splits",
                         "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
                         "target_transforms": ["aitlas.transforms.Transponse"]
                     }

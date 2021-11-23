@@ -16,7 +16,7 @@
                     "file": "/media/hdd/multi-class/RSI-CB256/test.csv"
                 }
             },
-            "dir_path": "/media/hdd/multi-class/RSI-CB256"
+            "data_dir": "/media/hdd/multi-class/RSI-CB256"
         }
     }
 }

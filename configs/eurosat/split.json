@@ -16,7 +16,7 @@
                     "file": "/media/hdd/multi-class/EuroSAT/test.csv"
                 }
             },
-            "dir_path": "/media/hdd/multi-class/EuroSAT"
+            "data_dir": "/media/hdd/multi-class/EuroSAT"
         }
     }
 }

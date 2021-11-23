@@ -140,9 +140,10 @@ def load_voc_format_dataset(dir_path, csv_file_path):
     for root, _, fnames in sorted(os.walk(images_folder)):
         for fname in sorted(fnames):
             path = os.path.join(root, fname)
-            multi_hot_label = multi_hot_labels[fname[: fname.find(".")]]
-            item = (path, multi_hot_label)
-            images.append(item)
+            if fname[: fname.find(".")] in multi_hot_labels:
+                multi_hot_label = multi_hot_labels[fname[: fname.find(".")]]
+                item = (path, multi_hot_label)
+                images.append(item)
 
     return images
 
@@ -212,4 +213,3 @@ def submit_inria_results(input_dir, output_dir):
             command = "gdal_translate --config GDAL_PAM_ENABLED NO -co COMPRESS=CCITTFAX4 -co NBITS=1 " \
                       + input_file + " " + output_file
             subprocess.call(command, shell=True)
-

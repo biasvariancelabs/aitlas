@@ -4,19 +4,20 @@
         "config": {
             "split": {
                 "train": {
-                    "ratio": 60,
-                    "file": "./data/UCMerced_multilabels/train.csv"
+                    "ratio": 80,
+                    "file": "/media/hdd/multi-label/UCMerced_multilabels/train.csv"
                 },
                 "val": {
-                    "ratio": 20,
-                    "file": "./data/UCMerced_multilabels/val.csv"
+                    "ratio": 0,
+                    "file": "/media/hdd/multi-label/UCMerced_multilabels/val.csv"
                 },
                 "test": {
                     "ratio": 20,
-                    "file": "./data/UCMerced_multilabels/test.csv"
+                    "file": "/media/hdd/multi-label/UCMerced_multilabels/test.csv"
                 }
             },
-            "path": "./data/UCMerced_multilabels/"
+            "data_dir": "/media/hdd/multi-label/UCMerced_multilabels/images",
+            "csv_file": "/media/hdd/multi-label/UCMerced_multilabels/multilabels.txt"
         }
     }
 }
