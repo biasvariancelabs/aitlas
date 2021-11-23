@@ -38,7 +38,7 @@ class InriaDataset(BaseDataset):
         BaseDataset.__init__(self, config)
         self.images = []
         self.masks = []
-        self.load_dataset(self.config.root, self.config.csv_file_path)
+        self.load_dataset(self.config.data_dir, self.config.csv_file)
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
@@ -56,16 +56,16 @@ class InriaDataset(BaseDataset):
     def __len__(self):
         return len(self.images)
 
-    def load_dataset(self, root_dir, file_path):
+    def load_dataset(self, data_dir, csv_file):
         if not self.labels:
             raise ValueError(
                 "You need to provide the list of labels for the dataset"
             )
-        with open(file_path, "r") as f:
+        with open(csv_file, "r") as f:
             csv_reader = csv.reader(f)
             for index, row in enumerate(csv_reader):
-                self.images.append(os.path.join(root_dir, row[0] + '.jpg'))
-                self.masks.append(os.path.join(root_dir, row[0] + '_m.png'))
+                self.images.append(os.path.join(data_dir, row[0] + '.jpg'))
+                self.masks.append(os.path.join(data_dir, row[0] + '_m.png'))
 
     def get_labels(self):
         return self.labels
@@ -81,13 +81,14 @@ class InriaDataset(BaseDataset):
             img_mask[np.where(mask[:, :, i] == 1)] = self.color_mapping[i]
 
         fig = plt.figure(figsize=(10, 8))
-        fig.legend(handles=legend_elements)
-        plt.title(f"Image and mask with index {index} from the dataset {self.get_name()}\n", fontsize=14)
+        fig.suptitle(f"Image and mask with index {index} from the dataset {self.get_name()}\n", fontsize=16, y=1.006)
+        fig.legend(handles=legend_elements, bbox_to_anchor=[0.5, 0.85], loc='center')
         plt.subplot(1, 2, 1)
-        plt.imshow(img_mask)
-        plt.axis('off')
-        plt.subplot(1, 2, 2)
         plt.imshow(img)
         plt.axis('off')
+        plt.subplot(1, 2, 2)
+        plt.imshow(img_mask)
+        plt.axis('off')
+        fig.tight_layout()
         plt.show()
         return fig

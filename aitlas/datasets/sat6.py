@@ -33,7 +33,7 @@ class SAT6Dataset(BaseDataset):
 
         # load the data
         self.mode = self.config.mode
-        self.data = self.load_dataset(self.config.mat_file_path)
+        self.data = self.load_dataset(self.config.mat_file)
 
     def __getitem__(self, index):
         """
@@ -60,7 +60,7 @@ class SAT6Dataset(BaseDataset):
         return self.labels
 
     def data_distribution_table(self):
-        mat_data = scipy.io.loadmat(self.config.mat_file_path)
+        mat_data = scipy.io.loadmat(self.config.mat_file)
         img_labels = mat_data[f'{self.mode}_y'].transpose()
         data = list(np.where(img_labels == 1)[1])
         res_list = [[i, self.labels[index]] for i, index in enumerate(data)]
@@ -102,14 +102,14 @@ class SAT6Dataset(BaseDataset):
         figure.tight_layout()
         return figure
 
-    def load_dataset(self, file_path):
+    def load_dataset(self, mat_file):
         if not self.labels:
             raise ValueError(
                 "You need to provide the list of labels for the dataset"
             )
         data = []
-        if file_path:
-            mat_data = scipy.io.loadmat(file_path)
+        if mat_file:
+            mat_data = scipy.io.loadmat(mat_file)
             images = mat_data[f'{self.mode}_x'].transpose(3, 0, 1, 2)
             img_labels = mat_data[f'{self.mode}_y'].transpose()
             data = list(zip(images[:, :, :, 0:3],  np.where(img_labels == 1)[1]))

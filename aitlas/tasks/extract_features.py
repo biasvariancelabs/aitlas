@@ -19,7 +19,7 @@ class ExtractFeaturesTask(BaseTask):
     def __init__(self, model: BaseModel, config):
         super().__init__(model, config)
 
-        self.dir = self.config.dir
+        self.data_dir = self.config.data_dir
         self.output_dir = self.config.output_dir
         self.transforms = self.config.transforms
 
@@ -42,8 +42,8 @@ class ExtractFeaturesTask(BaseTask):
 
         # run through the directory
         with torch.no_grad():
-            dir = os.path.expanduser(self.dir)
-            for root, _, fnames in sorted(os.walk(dir)):
+            data_dir = os.path.expanduser(self.data_dir)
+            for root, _, fnames in sorted(os.walk(data_dir)):
                 for fname in sorted(fnames):
                     full_path = os.path.join(root, fname)
                     img = image_loader(full_path)

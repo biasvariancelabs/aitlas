@@ -34,7 +34,7 @@ class AmazonRainforestDataset(BaseDataset):
         BaseDataset.__init__(self, config)
         self.images = []
         self.masks = []
-        self.load_dataset(self.config.root)
+        self.load_dataset(self.config.data_dir)
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
@@ -50,16 +50,15 @@ class AmazonRainforestDataset(BaseDataset):
     def __len__(self):
         return len(self.images)
 
-    def load_dataset(self, root_dir):
+    def load_dataset(self, data_dir):
         if not self.labels:
             raise ValueError(
                 "You need to provide the list of labels for the dataset"
             )
 
-        ids = os.listdir(os.path.join(root_dir, 'images'))
-        self.images = [os.path.join(root_dir, 'images', image_id) for image_id in ids]
-        self.masks = [os.path.join(root_dir, 'masks', image_id[:image_id.rfind(".")] + '.png') for image_id in ids]
-        print(self.masks)
+        ids = os.listdir(os.path.join(data_dir, 'images'))
+        self.images = [os.path.join(data_dir, 'images', image_id) for image_id in ids]
+        self.masks = [os.path.join(data_dir, 'masks', image_id[:image_id.rfind(".")] + '.png') for image_id in ids]
 
     def get_labels(self):
         return self.labels
@@ -75,14 +74,15 @@ class AmazonRainforestDataset(BaseDataset):
             img_mask[np.where(mask[:, :, i] == 1)] = self.color_mapping[i]
 
         fig = plt.figure(figsize=(10, 8))
-        fig.legend(handles=legend_elements)
-        plt.title(f"Image and mask with index {index} from the dataset {self.get_name()}\n", fontsize=14)
+        fig.suptitle(f"Image and mask with index {index} from the dataset {self.get_name()}\n", fontsize=16, y=1.006)
+        fig.legend(handles=legend_elements, bbox_to_anchor=[0.5, 0.85], loc='center')
         plt.subplot(1, 2, 1)
-        plt.imshow(img_mask)
-        plt.axis('off')
-        plt.subplot(1, 2, 2)
         plt.imshow(img)
         plt.axis('off')
+        plt.subplot(1, 2, 2)
+        plt.imshow(img_mask)
+        plt.axis('off')
+        fig.tight_layout()
         plt.show()
         return fig
 

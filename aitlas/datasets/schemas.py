@@ -4,7 +4,7 @@ from ..base.schemas import BaseDatasetSchema
 
 
 class MatDatasetSchema(BaseDatasetSchema):
-    mat_file_path = fields.String(
+    mat_file = fields.String(
         missing=None, description="mat file on disk", example="./data/dataset.mat",
     )
     mode = fields.String(
@@ -18,19 +18,19 @@ class MatDatasetSchema(BaseDatasetSchema):
 
 
 class ClassificationDatasetSchema(BaseDatasetSchema):
-    dir_path = fields.String(
+    data_dir = fields.String(
         missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
     )
-    csv_file_path = fields.String(
+    csv_file = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv",
     )
 
 
 class SegmentationDatasetSchema(BaseDatasetSchema):
-    root = fields.String(
+    data_dir = fields.String(
         missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
     )
-    csv_file_path = fields.String(
+    csv_file = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv",
     )
 

@@ -25,8 +25,8 @@ class MultiClassClassificationDataset(BaseDataset):
         BaseDataset.__init__(self, config)
 
         # load the data
-        self.dir_path = self.config.dir_path
-        self.csv_file_path = self.config.csv_file_path
+        self.data_dir = self.config.data_dir
+        self.csv_file = self.config.csv_file
         self.data = self.load_dataset()
 
     def __getitem__(self, index):
@@ -54,7 +54,7 @@ class MultiClassClassificationDataset(BaseDataset):
         return self.labels
 
     def data_distribution_table(self):
-        df = pd.read_csv(self.csv_file_path, sep=",", names=["File name", "Label"])
+        df = pd.read_csv(self.csv_file, sep=",", names=["File name", "Label"])
         label_count = df.groupby("Label").count().reset_index()
         label_count.columns = ['Label', 'Count']
         return label_count
@@ -102,11 +102,11 @@ class MultiClassClassificationDataset(BaseDataset):
                 "You need to provide the list of labels for the dataset"
             )
         data = []
-        if self.csv_file_path:
-            with open(self.csv_file_path, "r") as f:
+        if self.csv_file:
+            with open(self.csv_file, "r") as f:
                 csv_reader = csv.reader(f)
                 for index, row in enumerate(csv_reader):
                     file_name = row[0]
-                    item = (os.path.join(self.dir_path, file_name), self.labels.index(row[1]))
+                    item = (os.path.join(self.data_dir, file_name), self.labels.index(row[1]))
                     data.append(item)
         return data

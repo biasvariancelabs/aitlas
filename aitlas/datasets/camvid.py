@@ -23,7 +23,7 @@ class CamVidDataset(BaseDataset):
         BaseDataset.__init__(self, config)
         self.images = []
         self.masks = []
-        self.load_dataset(self.config.root)
+        self.load_dataset(self.config.data_dir)
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
@@ -39,15 +39,15 @@ class CamVidDataset(BaseDataset):
     def __len__(self):
         return len(self.images)
 
-    def load_dataset(self, root_dir):
+    def load_dataset(self, data_dir):
         if not self.labels:
             raise ValueError(
                 "You need to provide the list of labels for the dataset"
             )
 
-        ids = os.listdir(os.path.join(root_dir, 'images'))
-        self.images = [os.path.join(root_dir, 'images', image_id) for image_id in ids]
-        self.masks = [os.path.join(root_dir, 'masks', image_id) for image_id in ids]
+        ids = os.listdir(os.path.join(data_dir, 'images'))
+        self.images = [os.path.join(data_dir, 'images', image_id) for image_id in ids]
+        self.masks = [os.path.join(data_dir, 'masks', image_id) for image_id in ids]
 
     def get_labels(self):
         return self.labels

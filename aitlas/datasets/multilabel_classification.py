@@ -25,9 +25,9 @@ class MultiLabelClassificationDataset(BaseDataset):
         self.image_loader = image_loader
 
         # load the data
-        self.dir_path = self.config.dir_path
-        self.csv_file_path = self.config.csv_file_path
-        self.data = self.load_dataset(self.dir_path, self.csv_file_path)
+        self.data_dir = self.config.data_dir
+        self.csv_file = self.config.csv_file
+        self.data = self.load_dataset(self.data_dir, self.csv_file)
 
     def __getitem__(self, index):
         """
@@ -53,7 +53,7 @@ class MultiLabelClassificationDataset(BaseDataset):
         return self.labels
 
     def data_distribution_table(self):
-        df = pd.read_csv(self.csv_file_path, sep="\t")
+        df = pd.read_csv(self.csv_file, sep="\t")
         label_count = pd.DataFrame(df.sum(axis=0)).reset_index()
         label_count.columns = ["Label", "Count"]
         label_count.drop(label_count.index[0], inplace=True)
@@ -67,7 +67,7 @@ class MultiLabelClassificationDataset(BaseDataset):
         return fig
 
     def show_samples(self):
-        df = pd.read_csv(self.csv_file_path, sep="\t")
+        df = pd.read_csv(self.csv_file, sep="\t")
         return df.head(20)
 
     def show_image(self, index):
@@ -107,8 +107,8 @@ class MultiLabelClassificationDataset(BaseDataset):
         figure.tight_layout()
         return figure
 
-    def load_dataset(self, dir_path, csv_file_path):
-        return load_voc_format_dataset(dir_path, csv_file_path)
+    def load_dataset(self, data_dir, csv_file):
+        return load_voc_format_dataset(data_dir, csv_file)
 
     def labels_stats(self):
         min_number = float('inf')
