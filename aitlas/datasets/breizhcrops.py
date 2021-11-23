@@ -172,19 +172,6 @@ class BreizhCropsDataset(CropsDataset):
 
     def __init__(self, config):
         super().__init__(config)
-
-        #      (self,
-        #          region,
-        #          root="breizhcrops_dataset",
-        #          year=2017, level="L1C",
-        #          transform=None,
-        #          target_transform=None,
-        #          filter_length=0,
-        #          verbose=False,
-        #          load_timeseries=True,
-        #          recompile_h5_from_csv=False,
-        #          preload_ram=False)
-
         # :param region: dataset region. choose from "frh01", "frh02", "frh03", "frh04", "belle-ile"
         # :param root: where the data will be stored. defaults to `./breizhcrops_dataset`
         # :param year: year of the data. currently only `2017`
@@ -230,7 +217,6 @@ class BreizhCropsDataset(CropsDataset):
             )
 
             self.load_classmapping(self.classmapping)
-            # self.classes_to_idx = self.get_classes_to_ind(self.classmapping)
             logging.info("Path " + self.h5path[region])
             if os.path.exists(self.h5path[region]):
                 h5_database_ok = (
@@ -304,13 +290,6 @@ class BreizhCropsDataset(CropsDataset):
             download_file(CODESURL, self.codesfile)
         self.codes = pd.read_csv(self.codesfile, delimiter=";", index_col=0)
 
-        # if self.config.preload_ram:
-        #     self.X_list = list()
-        #     with h5py.File(self.h5path, "r") as dataset:
-        #         for idx, row in tqdm(self.index.iterrows(), desc="loading data into RAM", total=len(self.index)):
-        #             self.X_list.append(np.array(dataset[(row.path)]))
-        # else:
-
         # for now
         self.X_list = None
 
@@ -342,9 +321,6 @@ class BreizhCropsDataset(CropsDataset):
 
         # translate CODE_CULTU to class id
         y = self.mapping.loc[row["CODE_CULTU"]].id
-
-        # npad = self.maxseqlength - X.shape[0]
-        # X = np.pad(X, [(0, npad), (0, 0)], 'constant', constant_values=PADDING_VALUE)
 
         if self.transform:
             X, y = self.transform((X, y))
@@ -405,9 +381,6 @@ class BreizhCropsDataset(CropsDataset):
         ax.legend(BANDS[self.config.level][: X.shape[1]])
         ax.set_ylabel("ρ ")  # x ${10^4}$
 
-        # for months
-        # plt.locator_params(axis='x', nbins=17)
-        # ax.set_xticklabels(["x","j","f","m","a","m","j","j","a","s","o","n","d"])
         return fig
 
     """
