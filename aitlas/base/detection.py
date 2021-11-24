@@ -19,6 +19,11 @@ from .datasets import BaseDataset
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s\n")
 
+''' 
+    Notes: 
+    1. "train_epoch" is overwritten in order to handle the targets properly. 
+'''
+
 class BaseDetectionClassifier(BaseModel):
     # Define a schema which uses mAP as the base metric
     schema = BaseDetectionClassifierSchema
@@ -29,10 +34,8 @@ class BaseDetectionClassifier(BaseModel):
         self.running_metrics = DetectionRunningScore(self.num_classes, self.device)
 
     def load_optimizer(self):
-        """The optimizer is set to SGD because these are the default values used in the intro paper to RetinaNet"""
-        return optim.SGD(
-            self.model.parameters(), lr=0.01, momentum=0.9, weight_decay=0.0001
-        )
+        """Load the optimizer"""
+        return optim.Adam([dict(params=self.model.parameters(), lr=0.0001),])
 
     def load_criterion(self):
         """Load the loss function"""
