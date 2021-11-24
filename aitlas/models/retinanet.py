@@ -10,11 +10,11 @@ class RetinaNet(BaseDetectionClassifier):
     def __init__(self, config):
         BaseDetectionClassifier.__init__(self, config)
 
-        self.model = torchvision.models.detection.retinanet_resnet50_fpn(pretrained = self.config.pretrained,
-                                                                         pretrained_backbone = self.config.pretrained_backbone,
-                                                                         trainable_backbone_layers = self.config.trainable_backbone_layers,
-                                                                         detections_per_img = self.config.detections_per_img, 
-                                                                         max_size = self.config.max_size)
+        self.model = torchvision.models.detection.retinanet_resnet50_fpn(pretrained = config.pretrained,
+                                                                         pretrained_backbone = config.pretrained_backbone,
+                                                                         trainable_backbone_layers = config.trainable_backbone_layers,
+                                                                         detections_per_img = config.detections_per_img,
+                                                                         max_size = config.max_size)
 
         self.model.head.classification_head = RetinaNetClassificationHead(self.model.backbone.out_channels, 
                                                                           self.model.anchor_generator.num_anchors_per_location()[0], 
