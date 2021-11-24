@@ -75,9 +75,19 @@ class BaseTransformsSchema(Schema):
 class BaseDetectionClassifierSchema(BaseClassifierSchema):
     metrics = fields.List(
         fields.String,
-        # we apparently don't use the metrics.detection classes
-        # missing=["aitlas.metrics.detection.mAP"],
         missing = ['cocoAP'],
         description="Classes of metrics you want to calculate",
         example=['cocoAP'],
+    )
+    pretrained_backbone = fields.Bool(
+        missing=False, description="Whether to use a pretrained backbone or not."
+    )
+    detections_per_img = fields.Int(
+        missing=300, description="Number of k best proposals to keep after NMS."
+    )
+    max_size = fields.Int(
+        missing=1300, description="Maximum size to be reshaped before processed by the network."
+    )
+    trainable_backbone_layers = fields.Int(
+        missing=5, description="Number of not frozen backbone layers."
     )
