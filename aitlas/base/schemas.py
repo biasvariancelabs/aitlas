@@ -91,3 +91,6 @@ class BaseDetectionClassifierSchema(BaseClassifierSchema):
     trainable_backbone_layers = fields.Int(
         missing=5, description="Number of not frozen backbone layers."
     )
+    use_step_scheduling = fields.Bool(
+        missing=False, description="Whether to use a step_LR_scheduler."
+    )

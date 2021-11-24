@@ -23,7 +23,7 @@ class RetinaNet(BaseDetectionClassifier):
                                                                   self.model.anchor_generator.num_anchors_per_location()[0])
     
     def load_lr_scheduler(self):
-        if self.config.use_dota_scheduling:
+        if self.config.use_step_scheduling:
             return torch.optim.lr_scheduler.MultiStepLR(self.load_optimizer(), milestones=[0, 120000, 160000], gamma=0.1)
         else:
             return None
