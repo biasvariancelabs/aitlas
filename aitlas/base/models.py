@@ -168,6 +168,13 @@ class BaseModel(nn.Module, Configurable):
             )  # TODO: Check this converion OUT!!!
             loss.backward()
 
+            # apply gradient clipping if parameter set to true
+            if self.config.clip_gradients:
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 
+                                               max_norm = self.config.clip_max_norm,
+                                               norm_type=self.config.clip_norm_type
+                                               )
+
             # perform a single optimization step
             if isinstance(optimizer, tuple):
                 for opt in optimizer:

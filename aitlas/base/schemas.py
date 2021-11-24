@@ -46,6 +46,15 @@ class BaseModelSchema(Schema):
     use_ddp = fields.Boolean(
         required=False, missing=False, description="Turn on distributed data processing"
     )
+    clip_gradients = fields.Boolean(
+        missing=False, description = "Turn on gradient clipping"
+    )
+    clip_max_norm = fields.Integer(
+        missing=35, description='Max norm for the gradient clipping'
+    )
+    clip_norm_type = fields.Integer(
+        missing=2, description='Norm type for the gradient clipping'
+    )
 
 
 class BaseClassifierSchema(BaseModelSchema):
