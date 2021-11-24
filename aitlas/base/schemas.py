@@ -73,6 +73,9 @@ class BaseTransformsSchema(Schema):
     pass
 
 class BaseDetectionClassifierSchema(BaseClassifierSchema):
+    learning_rate = fields.Float(
+        missing=0.01, description="Learning rate used in training.", example=0.01
+    )
     metrics = fields.List(
         fields.String,
         missing = ['cocoAP'],
@@ -93,4 +96,7 @@ class BaseDetectionClassifierSchema(BaseClassifierSchema):
     )
     use_step_scheduling = fields.Bool(
         missing=False, description="Whether to use a step_LR_scheduler."
+    )
+    optimizer = fields.String(
+        missing='SGD', description = 'Optimizer to use when training'
     )

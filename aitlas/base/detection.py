@@ -35,7 +35,15 @@ class BaseDetectionClassifier(BaseModel):
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.Adam([dict(params=self.model.parameters(), lr=0.0001),])
+        if self.config.optimizer == 'Adam':
+            return optim.Adam([dict(params=self.model.parameters(), lr=0.0001),])
+        elif self.config.optimizer == 'SGD':
+            return optim.SGD(
+                self.model.parameters(), lr=self.config.learning_rate, momentum=0.9
+            )
+        else:
+            print ("Not a valid selection for the optimizer")
+
 
     def load_criterion(self):
         """Load the loss function"""
