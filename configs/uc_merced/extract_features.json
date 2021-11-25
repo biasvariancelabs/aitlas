@@ -1,0 +1,21 @@
+{
+    "model": {
+        "classname": "aitlas.models.ResNet50",
+        "config": {
+            "pretrained": true,
+            "learning_rate": 0.0001
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.ExtractFeaturesTask",
+        "config": {
+            "model_path": "/media/ssd/aitlas_new/examples/experiment/ucmerced/checkpoint.pth.tar",
+            "data_dir": "/media/hdd/predict/UC_merced/images",
+            "output_dir": "/media/hdd/predict/UC_merced/results",
+            "transforms": ["torchvision.transforms.ToPILImage",
+                "torchvision.transforms.Resize",
+                "torchvision.transforms.CenterCrop",
+                "torchvision.transforms.ToTensor"]
+        }
+    }
+}
