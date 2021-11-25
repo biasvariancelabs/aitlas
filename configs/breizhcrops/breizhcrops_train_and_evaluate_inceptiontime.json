@@ -24,7 +24,6 @@
                   "config": {
                     "regions":["frh01","frh02","frh03"],
                     "root":"./data/breizhcrops_dataset",
-                    "year":2017,
                     "level":"L1C",
                     "batch_size": 1024,
                     "shuffle": true,
@@ -37,7 +36,6 @@
                     "config": {
                         "regions":["frh04"],
                         "root":"./data/breizhcrops_dataset",
-                        "year":2017,
                         "level":"L1C",
                         "batch_size": 1024,
                         "shuffle": false,

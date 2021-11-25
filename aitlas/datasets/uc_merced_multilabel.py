@@ -1,7 +1,25 @@
 from .multilabel_classification import MultiLabelClassificationDataset
 
-LABELS = ["airplane", "bare-soil", "buildings", "cars", "chaparral", "court", "dock", "field",
-          "grass", "mobile-home", "pavement", "sand", "sea", "ship", "tanks", "trees", "water"]
+
+LABELS = [
+    "airplane",
+    "bare-soil",
+    "buildings",
+    "cars",
+    "chaparral",
+    "court",
+    "dock",
+    "field",
+    "grass",
+    "mobile-home",
+    "pavement",
+    "sand",
+    "sea",
+    "ship",
+    "tanks",
+    "trees",
+    "water",
+]
 
 
 class UcMercedMultiLabelDataset(MultiLabelClassificationDataset):
@@ -12,5 +30,4 @@ class UcMercedMultiLabelDataset(MultiLabelClassificationDataset):
 
     def __init__(self, config):
         # now call the constructor to validate the schema and load the data
-        MultiLabelClassificationDataset.__init__(self, config)
-
+        super().__init__(config)

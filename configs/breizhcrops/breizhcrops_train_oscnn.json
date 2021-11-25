@@ -19,7 +19,6 @@
                 "config": {
                     "regions":["frh01"],
                     "root":"./data/breizhcrops_dataset",
-                    "year":2017,
                     "level":"L1C",
                     "filter_length":0,
                     "verbose":false,

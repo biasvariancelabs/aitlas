@@ -190,10 +190,7 @@ class CropsDatasetSchema(BaseDatasetSchema):
     root = fields.String(
         required=True, description="Dataset path on disk", example="./slovenia-crops"
     )
-    year = fields.Integer(
-        missing=2017, description="year", validate=validate.OneOf([2017, 2018])
-    )
-    verbose = fields.Bool(missing=False, description="verbose")  # change to true
+    verbose = fields.Bool(missing=False, description="verbose")
     level = fields.String(
         missing="L1C",
         description="L1C or L2A",

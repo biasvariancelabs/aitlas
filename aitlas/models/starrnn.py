@@ -6,10 +6,8 @@
     Original implementation of StarRNN model:
         https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/StarRNN.py
 
-"""
-
-"""
-__author__ = Türkoglu Mehmet Özgür <ozgur.turkoglu@geod.baug.ethz.ch>
+    Author:
+        Türkoglu Mehmet Özgür <ozgur.turkoglu@geod.baug.ethz.ch>
 """
 
 import math

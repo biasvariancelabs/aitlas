@@ -174,7 +174,7 @@ class BreizhCropsDataset(CropsDataset):
         super().__init__(config)
         # :param region: dataset region. choose from "frh01", "frh02", "frh03", "frh04", "belle-ile"
         # :param root: where the data will be stored. defaults to `./breizhcrops_dataset`
-        # :param year: year of the data. currently only `2017`
+        # :param ф: year of the data. currently only `2017`
         # :param level: Sentinel 2 processing level. Either `L1C` (top of atmosphere) or `L2A` (bottom of atmosphere)
         # :param transform: a transformation function applied to the raw data before retrieving a sample. Can be used for featured extraction or data augmentaiton
         # :param target_transform: a transformation function applied to the label.

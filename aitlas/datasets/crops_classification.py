@@ -1,15 +1,11 @@
 import logging
 import os
-import tarfile
-import urllib
-import zipfile
 
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from tqdm import tqdm
 
 from ..base import BaseDataset
 from .schemas import CropsDatasetSchema
@@ -24,7 +20,7 @@ class CropsDataset(BaseDataset):
     schema = CropsDatasetSchema
 
     def __init__(self, config):
-        BaseDataset.__init__(self, config)
+        super().__init__(config)
 
     def preprocess(self):
         raise NotImplementedError(
@@ -108,7 +104,7 @@ class CropsDataset(BaseDataset):
         label = row = self.index.iloc[index].loc["classname"]
         fig, ax = plt.subplots(figsize=(8, 6))
         ax.set_title(
-            f"Timeseries with index {index} from the region {self.index.iloc[index].loc['region']}, with label {label}\n",
+            f"Time series with index {index} from the region {self.index.iloc[index].loc['region']}, with label {label}\n",
             fontsize=14,
         )
         ax.plot(X)
@@ -128,7 +124,7 @@ class CropsDataset(BaseDataset):
                 """
         else:
             if self.config.verbose:
-                logging.info(f"found classmapping at {classmapping}")
+                logging.info(f"Found class mapping at {classmapping}")
 
         self.mapping = pd.read_csv(classmapping, index_col=0).sort_values(by="id")
         self.mapping = self.mapping.set_index("code")

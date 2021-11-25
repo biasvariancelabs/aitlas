@@ -1,18 +1,19 @@
+import logging
 import os
-import tarfile
 import urllib
-import zipfile
 
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from aitlas.datasets.crops_classification import CropsDataset
 from eolearn.core import EOPatch, FeatureType
 from eolearn.geometry import VectorToRasterTask
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
+
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 class DownloadProgressBar(tqdm):
@@ -34,7 +35,9 @@ def download_file(url, output_path, overwrite=False):
                 url, filename=output_path, reporthook=t.update_to
             )
     else:
-        print(f"file exists in {output_path}. specify overwrite=True if intended")
+        logging.info(
+            f"file exists in {output_path}. specify overwrite=True if intended"
+        )
 
 
 BANDS = ["B3", "B4", "B5", "B6", "B7", "B8", "B11", "B12", "NDVI", "NDWI", "Brightness"]
@@ -44,7 +47,7 @@ class EOPatchCrops(CropsDataset):
     """EOPatchCrops - a crop type classification dataset"""
 
     def __init__(self, config):
-        CropsDataset.__init__(self, config)
+        super().__init__(config)
 
         self.root = self.config.root
         self.regions = self.config.regions
@@ -132,7 +135,7 @@ class EOPatchCrops(CropsDataset):
         self.index.set_index("path", drop=False, inplace=True)
 
         for patch in self.eopatches:
-            eop = EOPatch.load(self.root + os.sep + "eopatches" + os.sep + patch)
+            eop = EOPatch.load(os.path.join(self.root, "eopatches", patch))
             polygons = eop.vector_timeless["CROP_TYPE_GDF"]
             for row in polygons.itertuples():
                 if row.ct_eu_code not in self.mapping.index.values:

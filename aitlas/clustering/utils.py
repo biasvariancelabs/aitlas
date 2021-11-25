@@ -1,13 +1,14 @@
+import logging
 import time
 
 import faiss
 import numpy as np
 import torch
 import torch.utils.data as data
-import torchvision.transforms as transforms
-from scipy.sparse import csr_matrix, find
+from scipy.sparse import csr_matrix
 
-from ..utils import image_loader
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 def preprocess_features(npdata, pca=256):
@@ -131,7 +132,7 @@ def run_kmeans(x, nmb_clusters, verbose=False):
     dists, I = clus.index.search(x, 1)
     losses = faiss.vector_to_array(clus.obj)
     if verbose:
-        print("k-means loss evolution: {0}".format(losses))
+        logging.info("k-means loss evolution: {0}".format(losses))
 
     return [int(n[0]) for n in I], losses[-1]
 

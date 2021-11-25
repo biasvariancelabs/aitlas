@@ -1,6 +1,16 @@
 from .multilabel_classification import MultiLabelClassificationDataset
 
-LABELS = ["impervious", "water", "clutter", "vegetation", "building", "tree", "boat", "car"]
+
+LABELS = [
+    "impervious",
+    "water",
+    "clutter",
+    "vegetation",
+    "building",
+    "tree",
+    "boat",
+    "car",
+]
 
 
 class DFC15MultiLabelDataset(MultiLabelClassificationDataset):
@@ -11,4 +21,4 @@ class DFC15MultiLabelDataset(MultiLabelClassificationDataset):
 
     def __init__(self, config):
         # now call the constructor to validate the schema and load the data
-        MultiLabelClassificationDataset.__init__(self, config)
+        super().__init__(config)
