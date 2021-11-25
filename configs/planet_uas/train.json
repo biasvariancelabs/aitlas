@@ -1,6 +1,6 @@
 {
     "model": {
-        "classname": "aitlas.models.DenseNet201MultiLabel",
+        "classname": "aitlas.models.EfficientNetB4MultiLabel",
         "config": {
             "num_classes": 17,
             "learning_rate": 0.0001,
@@ -14,7 +14,7 @@
         "config": {
             "epochs": 100,
             "model_directory": "./examples/experiment",
-            "save_epochs": 10,
+            "save_epochs": 25,
             "id": "planet_uas",
             "dataset_config": {
                 "classname": "aitlas.datasets.PlanetUASMultiLabelDataset",
@@ -22,8 +22,8 @@
                     "batch_size": 16,
                     "shuffle": true,
                     "num_workers": 4,
-                    "dir_path": "/media/hdd/multi-label/PlanetUAS/images",
-                    "csv_file_path": "/media/hdd/multi-label/PlanetUAS/multilabels.txt",
+                    "data_dir": "/media/hdd/multi-label/PlanetUAS/images",
+                    "csv_file": "/media/hdd/multi-label/PlanetUAS/multilabels.txt",
 					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             }
