@@ -4,7 +4,7 @@ import os
 
 from ..base import BaseDataset, BaseModel, BaseTask, Configurable
 from ..utils import get_class, image_loader, stringify
-from ..visualizations import display_image_labels, display_image_segmentation, save_predicted_masks
+from ..visualizations import display_image_labels, display_image_segmentation, save_predicted_masks, display_eopatch_predictions
 from .schemas import PredictTaskSchema
 
 
@@ -165,3 +165,65 @@ class PredictSegmentationTask(BaseTask):
                     test_dataset.labels,
                     base_filepath_name,
                 )
+
+
+class PredictEOPatchTask(BaseTask):
+    schema = PredictTaskSchema
+
+    def __init__(self, model: BaseModel, config):
+        super().__init__(model, config)
+
+        self.dir = self.config.dir 
+        self.output_path = self.config.output_path # use this
+        self.output_format = self.config.output_format
+
+    def run(self):
+        """Do something awesome here"""
+
+        # load the configs
+        if self.config.dataset_config:
+            dataset = self.create_dataset(self.config.dataset_config)
+            labels = dataset.get_labels()
+            transforms = dataset.config.transforms
+        else:
+            labels = self.config.labels
+            transforms = self.config.transforms
+
+        test_dataset = dataset
+        # load the model
+        self.model.load_model(self.config.model_path)
+
+        # run predictions
+        y_true, y_pred, y_prob = self.model.predict(
+            dataset=test_dataset,
+        )
+        # print(y_true)
+        # print(y_pred)
+
+        if not os.path.isdir(self.output_path):
+            os.makedirs(self.output_path)
+
+        if self.output_format == "plot":
+            # this for should be in a separate function
+            eopatches = [f.name for f in os.scandir(test_dataset.root+os.sep+'eopatches') if f.is_dir()]
+
+            # assume all eopatches in the test dataset are in the same "eopatches" folder
+            eopatches_path = test_dataset.root+os.sep+'eopatches'
+            test_index = test_dataset.index
+
+            for patch in eopatches:
+                display_eopatch_predictions(eopatches_path, patch, y_pred, test_index, self.output_path, y_true, test_dataset.mapping)
+
+
+    def export_predictions_to_csv(self, file, fnames, probs, labels):
+        with open(file, "w", newline="") as csvfile:
+            fieldnames = ["image"] + labels
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=";")
+            writer.writeheader()
+
+            for i, fname in enumerate(fnames):
+                obj = {label: probs[i][j] for j, label in enumerate(labels)}
+                obj["image"] = fname
+
+                writer.writerow(obj)
+
