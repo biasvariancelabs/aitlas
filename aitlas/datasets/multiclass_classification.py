@@ -67,7 +67,7 @@ class MultiClassClassificationDataset(BaseDataset):
         return fig
 
     def show_samples(self):
-        df = pd.read_csv(self.csv_file_path, sep=",", names=["File name", "Label"])
+        df = pd.read_csv(self.csv_file, sep=",", names=["File name", "Label"])
         return df.head(20)
 
     def show_image(self, index):

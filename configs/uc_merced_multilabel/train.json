@@ -6,7 +6,7 @@
             "learning_rate": 0.0001,
             "pretrained": true,
             "threshold": 0.5,
-            "metrics": ["f1_score"]
+            "metrics": ["accuracy", "precision", "recall", "f1_score"]
         }
     },
     "task": {
@@ -14,14 +14,16 @@
         "config": {
             "epochs": 50,
             "model_directory": "./examples/experiment",
-            "save_epochs": 5,
+            "save_epochs": 10,
+            "id": "uc_merced_test",
             "dataset_config": {
                 "classname": "aitlas.datasets.UcMercedMultiLabelDataset",
                 "config": {
                     "batch_size": 16,
                     "shuffle": true,
                     "num_workers": 4,
-                    "root": "/media/hdd/UCMerced_multilabels/train",
+                    "data_dir": "/media/hdd/multi-label/UCMerced_multilabel/images",
+                    "csv_file": "/media/hdd/multi-label/UCMerced_multilabel/train.csv",
 					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             }

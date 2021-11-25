@@ -5,19 +5,19 @@
             "split": {
                 "train": {
                     "ratio": 80,
-                    "file": "/media/hdd/multi-label/UCMerced_multilabels/train.csv"
+                    "file": "/media/hdd/multi-label/UCMerced_multilabel/train.csv"
                 },
                 "val": {
                     "ratio": 0,
-                    "file": "/media/hdd/multi-label/UCMerced_multilabels/val.csv"
+                    "file": "/media/hdd/multi-label/UCMerced_multilabel/val.csv"
                 },
                 "test": {
                     "ratio": 20,
-                    "file": "/media/hdd/multi-label/UCMerced_multilabels/test.csv"
+                    "file": "/media/hdd/multi-label/UCMerced_multilabel/test.csv"
                 }
             },
-            "data_dir": "/media/hdd/multi-label/UCMerced_multilabels/images",
-            "csv_file": "/media/hdd/multi-label/UCMerced_multilabels/multilabels.txt"
+            "data_dir": "/media/hdd/multi-label/UCMerced_multilabel/images",
+            "csv_file": "/media/hdd/multi-label/UCMerced_multilabel/multilabels.txt"
         }
     }
 }

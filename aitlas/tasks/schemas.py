@@ -140,8 +140,12 @@ class PredictTaskSchema(BaseTaskShema):
         example="/tmp/model/checkpoint.pth.tar",
     )
     output_dir = fields.String(
+        missing="/predictions",
+        description="Folder path where the plot images with predictions will be stored",
+    )
+    output_file = fields.String(
         missing="predictions.csv",
-        description="File or folder path where the csv or plot predictions will be stored",
+        description="CSV file path where the predictions will be stored",
     )
     dataset_config = fields.Nested(
         missing=None,

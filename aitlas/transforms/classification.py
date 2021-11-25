@@ -11,7 +11,7 @@ class ResizeCenterCropFlipHVToTensor(BaseTransforms):
             transforms.CenterCrop(224),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
-            transforms.ToTensor(),
+            transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
         ])
 
         return data_transforms(sample)

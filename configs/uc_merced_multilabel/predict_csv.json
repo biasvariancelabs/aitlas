@@ -10,9 +10,9 @@
     "task": {
         "classname": "aitlas.tasks.PredictTask",
         "config": {
-            "model_path": "/media/ssd/uc_merced_multilabel/experiments/checkpoint.pth.tar",
-            "dir": "/media/ssd/uc_merced_multilabel/predict/",
-            "output_path": "/media/ssd/uc_merced_multilabel/experiments/results.csv",
+            "model_path": "/media/ssd/aitlas_new/examples/experiment/uc_merced_test/checkpoint.pth.tar",
+            "data_dir": "/media/ssd/uc_merced_multilabel/predict",
+            "output_file": "/media/ssd/uc_merced_multilabel/results/predictions.csv",
             "output_format": "csv",
             "batch_size": 1,
             "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"],

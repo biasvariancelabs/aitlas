@@ -6,22 +6,24 @@
             "learning_rate": 0.0001,
             "pretrained": true,
             "threshold": 0.5,
-            "metrics": ["f1_score"]
+            "metrics": ["accuracy", "precision", "recall", "f1_score"]
         }
     },
     "task": {
         "classname": "aitlas.tasks.TrainAndEvaluateTask",
         "config": {
-            "epochs": 100,
+            "epochs": 50,
             "model_directory": "./examples/experiment",
             "save_epochs": 10,
+            "id": "uc_merced_test",
             "train_dataset_config": {
                 "classname": "aitlas.datasets.UcMercedMultiLabelDataset",
                 "config": {
                     "batch_size": 16,
                     "shuffle": true,
                     "num_workers": 4,
-                    "root": "/media/hdd/UCMerced_multilabels/train",
+                    "data_dir": "/media/hdd/multi-label/UCMerced_multilabel/images",
+                    "csv_file": "/media/hdd/multi-label/UCMerced_multilabel/train1.csv",
 					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             },
@@ -31,7 +33,8 @@
                     "batch_size": 1,
                     "shuffle": false,
                     "num_workers": 4,
-                    "root": "/media/hdd/UCMerced_multilabels/test",
+                    "data_dir": "/media/hdd/multi-label/UCMerced_multilabel/images",
+                    "csv_file": "/media/hdd/multi-label/UCMerced_multilabel/test1.csv",
 					"transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
                 }
             }

@@ -5,15 +5,15 @@
             "split": {
                 "train": {
                     "ratio": 100,
-                    "file": "/media/hdd/multi-class/UCMerced/train.csv"
+                    "file": "/media/hdd/multi-class/UCMerced/trainval.csv"
                 },
                 "val": {
                     "ratio": 0,
-                    "file": "/media/hdd/multi-class/UCMerced/val.csv"
+                    "file": "/media/hdd/multi-class/UCMerced/val1.csv"
                 },
                 "test": {
                     "ratio": 0,
-                    "file": "/media/hdd/multi-class/UCMerced/test.csv"
+                    "file": "/media/hdd/multi-class/UCMerced/test1.csv"
                 }
             },
             "data_dir": "/media/hdd/multi-class/UCMerced"

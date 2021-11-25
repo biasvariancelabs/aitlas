@@ -5,20 +5,21 @@
             "num_classes": 17,
             "learning_rate": 0.0001,
 			"threshold": 0.5,
-			"metrics":["f1_score"]
+			"metrics": ["accuracy", "precision", "recall", "f1_score"]
         }
     },
     "task": {
         "classname": "aitlas.tasks.EvaluateTask",
         "config": {
-            "model_path": "/media/hdd/aitlas/examples/experiment/checkpoint.pth.tar",
+            "model_path": "/media/ssd/aitlas_new/examples/experiment/uc_merced_test/checkpoint.pth.tar",
             "dataset_config":{
                 "classname": "aitlas.datasets.UcMercedMultiLabelDataset",
                 "config": {
                     "batch_size": 1,
                     "shuffle": false,
                     "num_workers": 4,
-                    "root": "/media/hdd/UCMerced_multilabels/test",
+                    "data_dir": "/media/hdd/multi-label/UCMerced_multilabel/images",
+                    "csv_file": "/media/hdd/multi-label/UCMerced_multilabel/test.csv",
 					"transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
                 }
             }

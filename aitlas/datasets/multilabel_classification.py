@@ -71,7 +71,6 @@ class MultiLabelClassificationDataset(BaseDataset):
         return df.head(20)
 
     def show_image(self, index):
-        print(self[index][0])
         labels_list = list(compress(self.labels, self[index][1]))
         fig = plt.figure(figsize=(8, 6))
         plt.title(

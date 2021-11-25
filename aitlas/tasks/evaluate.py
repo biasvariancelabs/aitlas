@@ -1,7 +1,7 @@
 import logging
 
-from ..base import BaseDataset, BaseModel, BaseTask
-from ..utils import get_class, stringify
+from ..base import BaseModel, BaseTask
+from ..utils import stringify
 from .schemas import EvaluateTaskSchema
 
 

@@ -1,13 +1,16 @@
 import collections
 import logging
 import os
-from shutil import copyfile
+import pandas as pd
+import copy
 
+from shutil import copyfile
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 from ..utils import current_ts, stringify
 from .config import Configurable
@@ -157,7 +160,7 @@ class BaseModel(nn.Module, Configurable):
             outputs = self(inputs)
 
             # check if outputs is OrderedDict for segmentation
-            if isinstance(outputs, collections.Mapping):
+            if isinstance(outputs, collections.abc.Mapping):
                 outputs = outputs["out"]
 
             loss = criterion(
@@ -281,6 +284,7 @@ class BaseModel(nn.Module, Configurable):
     def predict_image(
         self,
         image=None,
+        labels=None,
         data_transforms=None,
         description="running prediction for single image",
     ):
@@ -290,6 +294,7 @@ class BaseModel(nn.Module, Configurable):
         :return: tuple of (y_true, y_pred, y_pred_probs)
         """
         # load the image and apply transformations
+        original_image = copy.deepcopy(image)
         self.model.eval()
         if data_transforms:
             image = data_transforms(image)
@@ -300,15 +305,32 @@ class BaseModel(nn.Module, Configurable):
             inputs = torch.from_numpy(image).unsqueeze(0).to(self.device)
         outputs = self(inputs)
         # check if outputs is OrderedDict for segmentation
-        if isinstance(outputs, collections.Mapping):
+        if isinstance(outputs, collections.abc.Mapping):
             outputs = outputs["out"]
 
         predicted_probs, predicted = self.get_predicted(outputs)
         y_pred_probs = list(predicted_probs.cpu().detach().numpy())
-        y_pred = list(predicted.cpu().detach().numpy())
-        y_true = None
 
-        return y_true, y_pred[0], y_pred_probs[0]
+        """Display image and predictions from model"""
+        # Convert results to dataframe for plotting
+        result = pd.DataFrame({"p": y_pred_probs[0]}, index=labels)
+        # Show the image
+        fig = plt.figure(figsize=(16, 5))
+        ax = plt.subplot(1, 2, 1)
+        ax.axis('off')
+        ax.imshow(original_image)
+
+        # Set title to be the actual class
+        ax.set_title("", size=20)
+
+        ax = plt.subplot(1, 2, 2)
+        # Plot a bar plot of predictions
+        result.sort_values("p")["p"].plot.barh(color="blue", edgecolor="k", ax=ax)
+        plt.xlabel("Predicted Probability")
+        plt.tight_layout()
+
+        return fig
+
 
     def predict_output_per_batch(self, dataloader, description):
         """Run predictions on a dataloader and return inputs, outputs, labels per batch"""
@@ -326,7 +348,7 @@ class BaseModel(nn.Module, Configurable):
                 outputs = self(inputs)
 
                 # check if outputs is OrderedDict for segmentation
-                if isinstance(outputs, collections.Mapping):
+                if isinstance(outputs, collections.abc.Mapping):
                     outputs = outputs["out"]
 
                 yield inputs, outputs, labels

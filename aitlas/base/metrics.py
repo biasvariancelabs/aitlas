@@ -100,7 +100,7 @@ class MultiClassRunningScore(RunningScore):
     def accuracy(self):
         cm = self.get_computed()
         accuracy = cm.diag().sum() / (cm.sum() + 1e-15)
-        return {"Accuracy": accuracy}
+        return {"Accuracy": float(accuracy)}
 
     def weights(self):
         cm = self.get_computed()
@@ -119,9 +119,9 @@ class MultiClassRunningScore(RunningScore):
         per_class = cm.diag() / (cm.sum(dim=1) + 1e-15)
 
         return {
-            "Recall Micro": micro,
-            "Recall Macro": macro,
-            "Recall Weighted": weighted,
+            "Recall Micro": float(micro),
+            "Recall Macro": float(macro),
+            "Recall Weighted": float(weighted),
             "Recall per Class": per_class.numpy(),
         }
 
@@ -136,9 +136,9 @@ class MultiClassRunningScore(RunningScore):
         per_class = cm.diag() / (cm.sum(dim=0) + 1e-15)
 
         return {
-            "Precision Micro": micro,
-            "Precision Macro": macro,
-            "Precision Weighted": weighted,
+            "Precision Micro": float(micro),
+            "Precision Macro": float(macro),
+            "Precision Weighted": float(weighted),
             "Precision per Class": per_class.numpy(),
         }
 

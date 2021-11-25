@@ -3,16 +3,16 @@
         "classname": "aitlas.models.ResNet50",
         "config": {
             "num_classes": 21,
-            "learning_rate": 0.001,
+            "learning_rate": 0.0001,
             "threshold": 0.5
         }
     },
     "task": {
         "classname": "aitlas.tasks.PredictTask",
         "config": {
-            "model_path": "/media/hdd/aitlas/examples/experiments/checkpoint.pth.tar",
-            "dir": "/media/hdd/predict/UC_merced",
-            "output_path": "/media/hdd/predict",
+            "model_path": "/media/ssd/aitlas_new/examples/experiment/ucmerced/checkpoint.pth.tar",
+            "data_dir": "/media/hdd/predict/UC_merced/images",
+            "output_dir": "/media/hdd/predict/UC_merced/results",
             "output_format": "plot",
             "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"],
             "labels": ["agricultural", "airplane", "baseballdiamond", "beach", "buildings", "chaparral",

@@ -3,21 +3,23 @@
         "classname": "aitlas.models.ResNet50",
         "config": {
             "num_classes": 21,
-            "learning_rate": 0.001,
-			"metrics": ["f1_score"]
+            "learning_rate": 0.0001,
+            "pretrained": true,
+            "metrics": ["accuracy", "precision", "recall", "f1_score"]
         }
     },
     "task": {
         "classname": "aitlas.tasks.EvaluateTask",
         "config": {
-            "model_path": "/media/hdd/aitlas/examples/experiments/checkpoint.pth.tar",
+            "model_path": "/media/ssd/aitlas_new/examples/experiment/ucmerced/checkpoint.pth.tar",
             "dataset_config":{
                 "classname": "aitlas.datasets.UcMercedDataset",
                 "config": {
                     "batch_size": 16,
                     "shuffle": false,
                     "num_workers": 4,
-                    "csv_file_path": "/media/hdd/UCMerced/val.csv",
+                    "data_dir": "/media/hdd/multi-class/UCMerced",
+                    "csv_file": "/media/hdd/multi-class/UCMerced/test.csv",
 					"transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
                 }
             }

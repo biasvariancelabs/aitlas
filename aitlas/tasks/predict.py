@@ -49,6 +49,7 @@ class PredictTask(BaseTask):
 
         self.data_dir = self.config.data_dir
         self.output_dir = self.config.output_dir
+        self.output_file = self.config.output_file
         self.output_format = self.config.output_format
 
     def run(self):
@@ -91,7 +92,7 @@ class PredictTask(BaseTask):
                 )
         else:
             self.export_predictions_to_csv(
-                self.output_dir, test_dataset.fnames, y_prob, test_dataset.labels
+                self.output_file, test_dataset.fnames, y_prob, test_dataset.labels
             )
 
     def export_predictions_to_csv(self, file, fnames, probs, labels):
