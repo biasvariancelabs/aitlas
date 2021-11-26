@@ -31,7 +31,7 @@ from .planet_uas import PlanetUASMultiLabelDataset
 from .amazon_rainforest import AmazonRainforestDataset
 from .airs import AIRSDataset
 from .camvid import CamVidDataset
-# from .spacenet6 import SpaceNet6Dataset
+from .spacenet6 import SpaceNet6Dataset
 from .massachusetts_buildings import MassachusettsBuildingsDataset
 from .massachusetts_roads import MassachusettsRoadsDataset
 from .inria import InriaDataset

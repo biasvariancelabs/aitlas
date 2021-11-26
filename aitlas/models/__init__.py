@@ -18,5 +18,5 @@ from .efficientnet import (
     EfficientNetB0, EfficientNetB0MultiLabel, EfficientNetB4, EfficientNetB4MultiLabel,
     EfficientNetB7, EfficientNetB7MultiLabel
 )
-# from .unet_efficientnet import UNetEfficientNet
+from .unet_efficientnet import UNetEfficientNet
 from .vgg import VGG16, VGG19, VGG16MultiLabel, VGG19MultiLabel
