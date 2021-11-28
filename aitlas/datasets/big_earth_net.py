@@ -1,17 +1,22 @@
 import csv
 import json
 import os
-
 import lmdb
 import numpy as np
-import pyarrow as pa
 import torch
+import random
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import textwrap
+import pickle5
+
+from itertools import compress
 from skimage.transform import resize
 from torch.utils.data import DataLoader, Dataset
-
 from ..base import BaseDataset
 from .schemas import BigEarthNetSchema
-
+from ..utils import tiff_loader
 
 LABELS = {
     "original_labels": {
@@ -137,21 +142,21 @@ def update_json_labels(f_j_path, BigEarthNet_19_labels):
         json.dump(j_f_c, f)
 
 
-def loads_pyarrow(buf):
+def loads_pickle5(buf):
     """
     Args:
         buf: the output of `dumps`.
     """
-    return pa.deserialize(buf)
+    return pickle5.loads(buf)
 
 
-def dumps_pyarrow(obj):
+def dumps_pickle5(obj):
     """
     Serialize an object.
     Returns:
         Implementation-dependent bytes-like object
     """
-    return pa.serialize(obj).to_buffer()
+    return pickle5.dumps(obj, protocol=5)
 
 
 def cls2multihot(cls_vec, label_indices):
@@ -169,105 +174,195 @@ def cls2multihot(cls_vec, label_indices):
 
     for i in range(len(label_conversion)):
         bigearthnet_19_labels_multihot[i] = (
-            np.sum(original_labels_multihot[label_conversion[i]]) > 0
+                np.sum(original_labels_multihot[label_conversion[i]]) > 0
         ).astype(int)
 
     bigearthnet_19_labels = []
     for i in np.where(bigearthnet_19_labels_multihot == 1)[0]:
         bigearthnet_19_labels.append(bigearthnet_19_label_idx[i])
 
-    return bigearthnet_19_labels_multihot, bigearthnet_19_labels
+    return bigearthnet_19_labels_multihot, original_labels_multihot
 
 
-def read_scale_raster(file_path, scale=1):
-    """
-    read raster file with specified scale
-    :param file_path:
-    :param scale:
-    :return:
-    """
-    try:
-        import gdal
-
-        band_ds = gdal.Open(file_path, gdal.GA_ReadOnly)
-        raster_band = band_ds.GetRasterBand(1)
-        return raster_band.ReadAsArray()
-    except ImportError:
-        try:
-            import rasterio
-
-            band_ds = rasterio.open(file_path)
-            return np.array(band_ds.read(1))
-        except ImportError:
-            raise ImportError("You need to have `gdal` or `rasterio` installed. ")
-
-
-class BaseBigEarthNetDataset(BaseDataset):
+class BigEarthNetDataset(BaseDataset):
     """BigEarthNet dataset adaptation"""
 
     schema = BigEarthNetSchema
+    name = "Big Earth Net"
 
     def __init__(self, config):
-        # now call the constructor to validate the schema and split the data
         BaseDataset.__init__(self, config)
+        torch.multiprocessing.set_sharing_strategy("file_system")
 
-        self.root = self.config.root
-        self.num_workers = self.config.num_workers
+        self.data_dir = self.config.data_dir
+        self.lmdb_path = self.config.lmdb_path
+        self.version = self.config.version
+        self.selection = self.config.selection
 
-        self.db = lmdb.open(config.lmdb_path)
-        self.patches = self.load_patches(self.root)
+        if self.lmdb_path and not self.config.import_to_lmdb:
+            self.db = lmdb.open(self.lmdb_path, readonly=True, lock=False, readahead=False, meminit=False)
+
+        if self.version == '19 labels':
+            self.labels = LABELS['BigEarthNet-19_labels']
+        else:
+            self.labels = LABELS['original_labels']
+
+        self.patches = self.load_patches()
 
     def __getitem__(self, index):
+
         patch_name = self.patches[index]
 
         with self.db.begin(write=False) as txn:
             byteflow = txn.get(patch_name.encode())
+            bands10, bands20, _, multihots_19, multihots_43 = loads_pickle5(byteflow)
 
-        bands10, _, _, multihots = loads_pyarrow(byteflow)
+            if self.version == '19 labels':
+                multihots = multihots_19.astype(np.float32)
+            else:
+                multihots = multihots_43.astype(np.float32)
 
-        bands10 = bands10.astype(np.float32)[0][0:3]
-        multihots = multihots.astype(np.float32)[0]
+            if self.selection == 'rgb':
+                bands10 = bands10.astype(np.float32)[:, :, 0:3]
+                if self.transform:
+                    bands10, multihots = self.transform((bands10, multihots))
+                return bands10, multihots
 
-        if self.transform:
-            bands10, multihots = self.transform((bands10, multihots))
+            elif self.selection == 'all':
+                bands20 = interp_band(bands20)
+                bands10 = bands10.astype(np.float32)
+                bands20 = bands20.astype(np.float32)
 
-        return bands10, multihots
+                if self.transform:
+                    bands10, bands20, bands60, multihots = self.transform(
+                        (bands10, bands20, multihots)
+                    )
+                return bands10, bands20, multihots
 
     def __len__(self):
         return len(self.patches)
 
-    def load_patches(self, root):
-        dir = os.path.expanduser(root)
-        if os.path.isdir(dir):
-            return sorted(os.listdir(dir))
-        raise ValueError("`root` should be a folder")
+    def get_labels(self):
+        return list(self.labels.keys())
+
+    def load_patches(self):
+        if self.lmdb_path:
+            patch_names = []
+            if self.config.csv_file:
+                with open(self.config.csv_file, "r") as f:
+                    csv_reader = csv.reader(f)
+                    for row in csv_reader:
+                        patch_names.append(row[0])
+            return patch_names
 
     def get_item_name(self, index):
         return self.patches[index]
+
+    def show_image(self, index):
+        labels_list = list(compress(self.labels.keys(), self[index][2]))
+        fig = plt.figure(figsize=(8, 6))
+        plt.title(
+            f"Image with index {index} from the dataset {self.get_name()}, with labels:\n "
+            f"{str(labels_list).strip('[]')}\n",
+            fontsize=14,
+        )
+        plt.axis("off")
+        plt.imshow(self[index][0].astype('uint16') / 4096.0)
+        return fig
+
+    def show_batch(self, size):
+        if size % 2:
+            raise ValueError("The provided size should be divided by 2!")
+        image_indices = random.sample(range(0, len(self.patches)), int(size / 2))
+        #figure_height = int(size / 3) * 4
+        figure, ax = plt.subplots(int(size / 4), 4, figsize=(20, 30))
+        figure.suptitle(
+            "Example images with labels from {}".format(self.get_name()), fontsize=32, y=1.006
+        )
+        for image_index, axes in enumerate(ax.flatten()):
+            if image_index % 2 == 1:
+                labels_list = list(compress(self.labels.keys(), self[image_indices[int(image_index / 2)]][2]))
+                str_label_list = f"{str(labels_list).strip('[]')}"
+                #str_label_list = str_label_list.replace(",", "\n")
+                str_label_list = '\n'.join(textwrap.wrap(str_label_list, 25, break_long_words=False))
+                axes.text(0.1, 0.5, str_label_list, fontsize=18)
+                axes.axis('off')
+            else:
+                axes.imshow(self[image_indices[int(image_index / 2)]][0].astype('uint16') / 4096.0)
+                axes.set_title(self.get_item_name(image_indices[int(image_index / 2)]), fontsize=18, pad=10)
+                axes.axis('off')
+        figure.tight_layout()
+        return figure
+
+    def show_stats(self):
+        distribution_table = {}
+        for label in self.labels.keys():
+            distribution_table[label] = 0
+
+        min_number = float('inf')
+        max_number = float('-inf')
+        average_number = 0
+        for patch_index, patch_name in enumerate(self.patches):
+            if patch_index and patch_index % 50000 == 0:
+                print(f"Processed {patch_index} of {len(self.patches)}")
+
+            _, _, multihots = self[patch_index]
+
+            indices = [index for index, element in enumerate(multihots) if element == 1]
+            for index in indices:
+                key = [k for k, v in self.labels.items() if v == index]
+                distribution_table[key[0]] += 1
+
+            if sum(multihots) < min_number:
+                min_number = sum(multihots)
+
+            if sum(multihots) > max_number:
+                max_number = sum(multihots)
+
+            average_number += sum(multihots)
+
+        # creating a Dataframe object from a list of tuples of key, value pair
+        label_count = pd.DataFrame(list(distribution_table.items()))
+        label_count.columns = ["Label", "Count"]
+
+        fig, ax = plt.subplots(figsize=(12, 10))
+        sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
+        ax.set_title("Image distribution for {}".format(self.get_name()), pad=20, fontsize=18)
+
+        return fig, label_count, f"Minimum number of labels: {min_number}, Maximum number of labels: {max_number}, " \
+                                 f"Average number of labels: {average_number / len(self.patches)}"
 
     def prepare(self):
         super().prepare()
         self.process_to_lmdb()
 
     def process_to_lmdb(self):
+        patches = []
+        dir = os.path.expanduser(self.data_dir)
+        if os.path.isdir(dir):
+            patches = sorted(os.listdir(dir))
+
         datagen = PrepBigEarthNetDataset(
-            self.root, patch_names_list=self.patches, label_indices=LABELS
+            self.data_dir, patch_names_list=patches, label_indices=LABELS
         )
-        dataloader = DataLoader(datagen, num_workers=self.num_workers)
+        dataloader = DataLoader(datagen, batch_size=1, num_workers=self.num_workers)
 
         patch_names = []
+        self.db = lmdb.open(self.lmdb_path, map_size=1e12, readonly=False, meminit=False, map_async=True)
         txn = self.db.begin(write=True)
         for idx, data in enumerate(dataloader):
-            bands10, bands20, bands60, patch_name, multihots = data
+            print(f"Processed {idx} of {len(dataloader)}")
+            bands10, bands20, bands60, patch_name, multihots_19, multihots_43 = data
             patch_name = patch_name[0]
             txn.put(
                 u"{}".format(patch_name).encode("ascii"),
-                dumps_pyarrow(
+                dumps_pickle5(
                     (
                         bands10[0].numpy(),
                         bands20[0].numpy(),
                         bands60[0].numpy(),
-                        multihots[0].numpy(),
+                        multihots_19[0].numpy(),
+                        multihots_43[0].numpy()
                     )
                 ),
             )
@@ -281,105 +376,16 @@ class BaseBigEarthNetDataset(BaseDataset):
         keys = [u"{}".format(patch_name).encode("ascii") for patch_name in patch_names]
 
         with self.db.begin(write=True) as txn:
-            txn.put(b"__keys__", dumps_pyarrow(keys))
-            txn.put(b"__len__", dumps_pyarrow(len(keys)))
+            txn.put(b"__keys__", dumps_pickle5(keys))
+            txn.put(b"__len__", dumps_pickle5(len(keys)))
 
         self.db.sync()
         self.db.close()
 
 
-class BigEarthNetRGBCsvDataset(BaseDataset):
-    """BigEartNet dataset adaptation"""
-
-    schema = BigEarthNetSchema
-
-    def __init__(self, config):
-        # now call the constructor to validate the schema and split the data
-        BaseDataset.__init__(self, config)
-        torch.multiprocessing.set_sharing_strategy("file_system")
-
-        self.root = self.config.root
-        self.num_workers = self.config.num_workers
-        self.should_prepare = self.config.import_to_lmdb
-
-        self.db = lmdb.open(
-            config.lmdb_path, readonly=True, lock=False, readahead=False, meminit=False
-        )
-        self.patches = self.load_patches()
-
-    def __getitem__(self, index):
-        patch_name = self.patches[index]
-
-        with self.db.begin(write=False) as txn:
-            byteflow = txn.get(patch_name.encode())
-
-        bands10, _, _, multihots = loads_pyarrow(byteflow)
-
-        bands10 = bands10.astype(np.float32)[0:3]
-        multihots = multihots.astype(np.float32)
-
-        if self.transform:
-            bands10, multihots = self.transform((bands10, multihots))
-
-        return bands10, multihots
-
-    def __len__(self):
-        return len(self.patches)
-
-    def load_patches(self):
-        patch_names = []
-        if self.config.csv_file_path:
-            with open(self.config.csv_file_path, "r") as f:
-                csv_reader = csv.reader(f)
-                for row in csv_reader:
-                    patch_names.append(row[0])
-        return patch_names
-
-
-class BigEarthNetRGBDataset(BaseBigEarthNetDataset):
-    def __getitem__(self, index):
-        patch_name = self.patches[index]
-
-        with self.db.begin(write=False) as txn:
-            byteflow = txn.get(patch_name.encode())
-
-        bands10, _, _, multihots = loads_pyarrow(byteflow)
-
-        bands10 = bands10.astype(np.float32)[0:3]  # Return only RGB channels
-        multihots = multihots.astype(np.float32)
-
-        if self.transform:
-            bands10, bands20, bands60, multihots = self.transform((bands10, multihots))
-
-        return bands10, multihots
-
-
-class BigEarthNetAllBandsDataset(BaseBigEarthNetDataset):
-    def __getitem__(self, index):
-        patch_name = self.patches[index]
-
-        with self.db.begin(write=False) as txn:
-            byteflow = txn.get(patch_name.encode())
-
-        bands10, bands20, _, multihots = loads_pyarrow(byteflow)
-
-        bands20 = interp_band(bands20)
-
-        bands10 = bands10.astype(np.float32)
-        bands20 = bands20.astype(np.float32)
-        multihots = multihots.astype(np.float32)
-
-        if self.transform:
-            bands10, bands20, bands60, multihots = self.transform(
-                (bands10, bands20, multihots)
-            )
-
-        return bands10, bands20, multihots
-
-
 class PrepBigEarthNetDataset(Dataset):
-    def __init__(self, root=None, patch_names_list=None, label_indices=None):
-        self.root = root
+    def __init__(self, data_dir=None, patch_names_list=None, label_indices=None):
+        self.data_dir = data_dir
         self.label_indices = label_indices
         self.bands10 = ["02", "03", "04", "08"]
         self.bands20 = ["05", "06", "07", "8A", "11", "12"]
@@ -393,48 +399,39 @@ class PrepBigEarthNetDataset(Dataset):
         return self.__data_generation(index)
 
     def __data_generation(self, idx):
-        imgNm = self.patch_names_list[idx]
-
+        patch_name = self.patch_names_list[idx]
         bands10_array = []
         bands20_array = []
         bands60_array = []
 
         for band in self.bands10:
-            bands10_array.append(
-                read_scale_raster(
-                    os.path.join(self.root, imgNm, imgNm + "_B" + band + ".tif")
-                )
-            )
+            bands10_array.append(tiff_loader(
+                os.path.join(self.data_dir, patch_name, patch_name + "_B" + band + ".tif")).astype(np.float32)
+                                 )
 
         for band in self.bands20:
-            bands20_array.append(
-                read_scale_raster(
-                    os.path.join(self.root, imgNm, imgNm + "_B" + band + ".tif")
-                )
-            )
+            bands20_array.append(tiff_loader(
+                os.path.join(self.data_dir, patch_name, patch_name + "_B" + band + ".tif")).astype(np.float32)
+                                 )
 
         for band in self.bands60:
-            bands60_array.append(
-                read_scale_raster(
-                    os.path.join(self.root, imgNm, imgNm + "_B" + band + ".tif")
-                )
-            )
-
-        bands10_array = np.asarray(bands10_array).astype(np.float32)
-        bands20_array = np.asarray(bands20_array).astype(np.float32)
-        bands60_array = np.asarray(bands60_array).astype(np.float32)
+            bands60_array.append(tiff_loader(
+                os.path.join(self.data_dir, patch_name, patch_name + "_B" + band + ".tif")).astype(np.float32)
+                                 )
 
         labels = parse_json_labels(
-            os.path.join(self.root, imgNm, imgNm + "_labels_metadata.json")
+            os.path.join(self.data_dir, patch_name, patch_name + "_labels_metadata.json")
         )
-        BigEartNet_19_labels_multiHot, BigEarthNet_19_labels = cls2multihot(
+
+        labels_multihot_19, labels_multihot_43 = cls2multihot(
             labels, self.label_indices
         )
 
         return (
-            bands10_array,
-            bands20_array,
-            bands60_array,
-            imgNm,
-            BigEartNet_19_labels_multiHot,
+            np.array(bands10_array).transpose(1, 2, 0),
+            np.array(bands20_array).transpose(1, 2, 0),
+            np.array(bands60_array).transpose(1, 2, 0),
+            patch_name,
+            np.array(labels_multihot_19),
+            np.array(labels_multihot_43)
         )

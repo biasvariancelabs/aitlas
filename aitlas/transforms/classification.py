@@ -1,5 +1,6 @@
-from torchvision import transforms
+import numpy as np
 
+from torchvision import transforms
 from ..base import BaseTransforms
 
 
@@ -17,6 +18,20 @@ class ResizeCenterCropFlipHVToTensor(BaseTransforms):
         return data_transforms(sample)
 
 
+class ResizeFlipHV(BaseTransforms):
+    def __call__(self, sample):
+        bands10, multihots = sample
+
+        data_transforms = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+        ])
+
+        return data_transforms(np.uint8(bands10)), multihots
+
+
 class ResizeCenterCropToTensor(BaseTransforms):
     def __call__(self, sample):
         data_transforms = transforms.Compose([
@@ -27,6 +42,18 @@ class ResizeCenterCropToTensor(BaseTransforms):
         ])
 
         return data_transforms(sample)
+
+
+class Resize(BaseTransforms):
+    def __call__(self, sample):
+        bands10, multihots = sample
+
+        data_transforms = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize(224),
+        ])
+
+        return data_transforms(np.uint8(bands10)), multihots
 
 
 class ConvertToRGBResizeCenterCropToTensor(BaseTransforms):

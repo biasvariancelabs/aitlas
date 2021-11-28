@@ -36,12 +36,18 @@ class SegmentationDatasetSchema(BaseDatasetSchema):
 
 
 class BigEarthNetSchema(BaseDatasetSchema):
-    csv_file_path = fields.String(
+    csv_file = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv"
     )
-    lmdb_path = fields.String(required=True, description="Path to the lmdb storage")
-    root = fields.String(
-        required=True, description="Dataset path on disk", example="./data/BigEarthNet/"
+    lmdb_path = fields.String(missing=None, description="Path to the lmdb storage")
+    data_dir = fields.String(
+        missing=None, description="Dataset path on disk", example="./data/BigEarthNet/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or 13 channels", example="all/rgb"
+    )
+    version = fields.String(
+        missing="19 labels", description="43 or 19 labels", example="43 labels/19 labels"
     )
     import_to_lmdb = fields.Bool(
         missing=False, description="Should the data be moved to LMDB"

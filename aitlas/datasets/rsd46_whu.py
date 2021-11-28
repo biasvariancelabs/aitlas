@@ -1,5 +1,9 @@
-from .multiclass_classification import MultiClassClassificationDataset
+import numpy as np
 
+from PIL import Image
+
+from .multiclass_classification import MultiClassClassificationDataset
+from ..utils import image_loader
 
 LABELS = ["Airplane", "Airport", "Artificial dense forest land", "Artificial sparse forest land", "Bare land",
           "Basketball court", "Blue structured factory building", "Building", "Construction site", "Cross river bridge",
@@ -23,6 +27,24 @@ class RSD46WHUDataset(MultiClassClassificationDataset):
         # now call the constructor to validate the schema and load the data
         MultiClassClassificationDataset.__init__(self, config)
 
+    def __getitem__(self, index):
+        """
+        Args:
+            index (int): Index
+
+        Returns:
+            tuple: (image, target) where target is index of the target class.
+        """
+        # load image
+        img = np.asarray(Image.fromarray(image_loader(self.data[index][0])).convert('RGB'))
+
+        # apply transformations
+        if self.transform:
+            img = self.transform(img)
+        target = self.data[index][1]
+        if self.target_transform:
+            target = self.target_transform(self.data[index][1])
+        return img, target
 
 
 

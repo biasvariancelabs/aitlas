@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 from ..base import BaseTransforms
 
@@ -25,7 +26,7 @@ class NormalizeRGB(BaseTransforms):
 class ToTensorRGB(BaseTransforms):
     def __call__(self, input, target=None):
         bands10, multihots = input
-        return torch.tensor(bands10), multihots
+        return torch.tensor(np.array(bands10)).permute(2, 0, 1), multihots
 
 
 class NormalizeAllBands(BaseTransforms):
@@ -55,4 +56,4 @@ class NormalizeAllBands(BaseTransforms):
 class ToTensorAllBands(BaseTransforms):
     def __call__(self, input, target=None):
         bands10, bands20, multihots = input
-        return torch.tensor(bands10), torch.tensor(bands20), multihots
+        return torch.tensor(bands10).permute(2, 0, 1), torch.tensor(bands20).permute(2, 0, 1), multihots

@@ -16,12 +16,7 @@ from .whu_rs19 import WHURS19Dataset
 # Multi label datasets for land use and land cover classification
 from .multilabel_classification import MultiLabelClassificationDataset
 from .aid_multilabel import AIDMultiLabelDataset
-from .big_earth_net import (
-    BaseBigEarthNetDataset,
-    BigEarthNetAllBandsDataset,
-    BigEarthNetRGBCsvDataset,
-    BigEarthNetRGBDataset,
-)
+from .big_earth_net import BigEarthNetDataset
 from .dfc15_multilabel import DFC15MultiLabelDataset
 from .uc_merced_multilabel import UcMercedMultiLabelDataset
 from .mlrs_net import MLRSNetMultiLabelDataset

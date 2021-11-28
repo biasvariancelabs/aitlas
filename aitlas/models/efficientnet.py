@@ -62,7 +62,7 @@ class EfficientNetB4(BaseMulticlassClassifier):
 
         if self.config.pretrained:
             self.model = models.efficientnet_b4(self.config.pretrained, False)
-            num_ftrs = self.model.classifier.in_features
+            num_ftrs = self.model.classifier[1].in_features
             self.model.classifier[1] = nn.Linear(num_ftrs, self.config.num_classes)
         else:
             self.model = models.efficientnet_b4(
