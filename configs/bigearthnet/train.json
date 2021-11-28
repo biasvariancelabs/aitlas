@@ -15,18 +15,19 @@
             "save_epochs": 1,
             "id": "bigearthnet",
             "dataset_config":{
-                "classname": "aitlas.datasets.BigEarthNetRGBCsvDataset",
-                "config": {
-                    "root": "./data/BigEarthNet/",
-                    "lmdb_path": "./data/lmbd/",
-                    "batch_size": 256,
-                    "shuffle": true,
-                    "num_workers": 8,
-                    "csv_file_path": "./data/Eurosat/2750/train.csv",
-                    "bands10_mean": [429.9430203, 614.21682446, 590.23569706],
-                    "bands10_std": [572.41639287, 582.87945694, 675.88746967],
-                    "transforms": ["aitlas.transforms.ToTensorRGB", "aitlas.transforms.NormalizeRGB"]
-                }
+                "classname": "aitlas.datasets.BigEarthNetDataset",
+                  "config": {
+                      "batch_size": 256,
+                      "shuffle": true,
+                      "num_workers": 8,
+                      "lmdb_path": "./data/lmdb",
+                      "import_to_lmdb": false,
+                      "csv_file": "./data/splits/train.csv",
+                      "data_dir": "./data/BigEarthNet-v1.0/",
+                      "transforms": ["aitlas.transforms.ToTensorRGB", "aitlas.transforms.NormalizeRGB"],
+                      "bands10_mean": [429.9430203,614.21682446,590.23569706],
+                      "bands10_std": [572.41639287,582.87945694,675.88746967]
+                  }
             }
         }
     }

@@ -3,10 +3,11 @@
         "classname": "aitlas.tasks.PrepareTask",
         "config": {
             "dataset_config":{
-                "classname": "aitlas.datasets.BaseBigEarthNetDataset",
+                "classname": "aitlas.datasets.BigEarthNetDataset",
                 "config": {
-                    "root": "./data/BigEarthNet/",
-                    "lmdb_path": "./data/lmbd/",
+                    "data_dir": "/media/hdd/BigEarthNet/BigEarthNet-v1.0",
+                    "lmdb_path": "/media/hdd/BigEarthNet/lmdb",
+                    "import_to_lmdb": true,
                     "num_workers": 8,
                     "batch_size": 256
                 }

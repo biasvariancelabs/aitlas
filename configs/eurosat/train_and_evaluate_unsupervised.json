@@ -2,7 +2,7 @@
     "model": {
         "classname": "aitlas.models.UnsupervisedDeepMulticlassClassifier",
         "config": {
-            "num_classes": 10,
+            "num_classes": 10
         }
     },
     "task": {

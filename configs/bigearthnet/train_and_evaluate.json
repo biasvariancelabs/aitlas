@@ -1,10 +1,11 @@
 {
     "model": {
-        "classname": "aitlas.models.VGG16MultiLabel",
+        "classname": "aitlas.models.ResNet50MultiLabel",
         "config": {
             "num_classes": 19,
-            "learning_rate": 0.001,
-            "pretrained": false
+            "learning_rate": 0.0001,
+            "pretrained": false,
+            "metrics": ["accuracy", "precision", "recall", "f1_score"]
         }
     },
     "task": {
@@ -12,32 +13,34 @@
           "config": {
               "epochs": 50,
               "model_directory": "examples/experiments/",
-              "save_epochs": 5,
+              "save_epochs": 25,
               "id": "bigearthnet",
               "train_dataset_config":{
-                  "classname": "aitlas.datasets.BigEarthNetRGBCsvDataset",
+                  "classname": "aitlas.datasets.BigEarthNetDataset",
                   "config": {
                       "batch_size": 256,
                       "shuffle": true,
                       "num_workers": 8,
-                      "lmdb_path": "/media/hdd/BigEarthNet/lmdb/BigEarthNet-19.lmdb",
+                      "lmdb_path": "./data/lmdb",
                       "import_to_lmdb": false,
-                      "csv_file_path": "/media/hdd/BigEarthNet/bigearthnet-19-models/splits/train.csv",
-                      "root": "/media/hdd/BigEarthNet/BigEarthNet-v1.0/",
+                      "csv_file": "./data/splits/train.csv",
+                      "data_dir": "./data/BigEarthNet-v1.0/",
+                      "transforms": ["aitlas.transforms.ToTensorRGB", "aitlas.transforms.NormalizeRGB"],
                       "bands10_mean": [429.9430203,614.21682446,590.23569706],
                       "bands10_std": [572.41639287,582.87945694,675.88746967]
                   }
               },
               "val_dataset_config":{
-                    "classname": "aitlas.datasets.BigEarthNetRGBCsvDataset",
+                    "classname": "aitlas.datasets.BigEarthNetDataset",
                     "config": {
                         "batch_size": 16,
                         "shuffle": false,
                         "num_workers": 8,
-                        "lmdb_path": "/media/hdd/BigEarthNet/lmdb/BigEarthNet-19.lmdb",
+                        "lmdb_path": "/home/dkocev/aitlas_new/data/lmdb",
                         "import_to_lmdb": false,
-                        "csv_file_path": "/media/hdd/BigEarthNet/bigearthnet-19-models/splits/val.csv",
-                        "root": "/media/hdd/BigEarthNet/BigEarthNet-v1.0/",
+                        "csv_file": "./data/splits/val.csv",
+                        "data_dir": "./data/BigEarthNet-v1.0/",
+                        "transforms": ["aitlas.transforms.ToTensorRGB", "aitlas.transforms.NormalizeRGB"],
                         "bands10_mean": [429.9430203,614.21682446,590.23569706],
                         "bands10_std": [572.41639287,582.87945694,675.88746967]
                     }
