@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+import math
 
 from sklearn.model_selection import train_test_split
 from skmultilearn.model_selection import iterative_train_test_split
@@ -147,7 +148,7 @@ class RandomSplitTask(BaseSplitTask):
     def perform_split(self, X, y, test_size):
         """Peform actual split using pytorch random split"""
         size = len(X)
-        train_num = int(size * (1 - test_size))
+        train_num = int(math.ceil(size * (1 - test_size)))
         test_num = int(size * test_size)
 
         arr_num = [train_num, test_num]
