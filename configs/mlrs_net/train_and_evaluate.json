@@ -1,0 +1,43 @@
+{
+    "model": {
+        "classname": "aitlas.models.AlexNetMultiLabel",
+        "config": {
+            "num_classes": 60,
+            "learning_rate": 0.0001,
+            "pretrained": true,
+            "threshold": 0.5,
+            "metrics": ["accuracy", "precision", "recall", "f1_score"]
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+        "config": {
+            "epochs": 50,
+            "model_directory": "./data/experiments",
+            "save_epochs": 25,
+            "id": "mlrsnet_alexnet_pretrained",
+            "train_dataset_config": {
+                "classname": "aitlas.datasets.MLRSNetMultiLabelDataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "data_dir": "./data/multi-label/MLRSNet_multilabel/images",
+                    "csv_file": "./data/multi-label/MLRSNet_multilabel/train.csv",
+					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
+                }
+            },
+			"val_dataset_config": {
+                "classname": "aitlas.datasets.MLRSNetMultiLabelDataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": false,
+                    "num_workers": 4,
+                    "data_dir": "./data/multi-label/MLRSNet_multilabel/images",
+                    "csv_file": "./data/multi-label/MLRSNet_multilabel/test.csv",
+                    "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
+                }
+            }
+        }
+    }
+}

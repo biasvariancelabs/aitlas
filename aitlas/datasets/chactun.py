@@ -33,7 +33,7 @@ class ChactunDataset(BaseDataset):
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
-        mask = np.zeros(shape=(len(self.masks[index]), image.shape[0], image.shape[1]), dtype=float)
+        mask = np.zeros(shape=(len(self.masks[index]), image.shape[0], image.shape[1]), dtype=np.float64)
         for i, path in enumerate(self.masks[index]):
             mask[i] = image_invert(path, True)
         if self.transform:
