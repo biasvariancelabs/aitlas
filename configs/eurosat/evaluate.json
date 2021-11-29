@@ -17,7 +17,8 @@
                     "batch_size": 16,
                     "shuffle": false,
                     "num_workers": 4,
-                    "csv_file_path": "/media/hdd/EuroSAT/val.csv",
+                    "data_dir": "/media/hdd/EuroSAT",
+                    "csv_file": "/media/hdd/EuroSAT/val.csv",
 					"transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
                 }
             }

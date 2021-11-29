@@ -20,7 +20,8 @@
                     "batch_size": 16,
                     "shuffle": true,
                     "num_workers": 4,
-                    "root": "/media/hdd/DFC15_multilabel/train",
+                    "data_dir": "/media/hdd/DFC15_multilabel/train",
+                    "csv_file": "/media/hdd/DFC15_multilabel/train/train.csv",
 					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             },
@@ -30,7 +31,8 @@
                     "batch_size": 1,
                     "shuffle": false,
                     "num_workers": 4,
-                    "root": "/media/hdd/DFC15_multilabel/test",
+                    "data_dir": "/media/hdd/DFC15_multilabel/test",
+                    "csv_file": "/media/hdd/DFC15_multilabel/test/test.csv",
                     "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
                 }
             }

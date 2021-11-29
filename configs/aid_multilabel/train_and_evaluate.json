@@ -22,8 +22,8 @@
                     "batch_size": 16,
                     "shuffle": true,
                     "num_workers": 4,
-                    "dir_path": "/media/hdd/multi-label/AID_multilabel/train/images",
-                    "csv_file_path": "/media/hdd/multi-label/AID_multilabel/train/multilabels.txt",
+                    "data_dir": "/media/hdd/multi-label/AID_multilabel/train/images",
+                    "csv_file": "/media/hdd/multi-label/AID_multilabel/train/multilabels.txt",
 					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             },
@@ -33,8 +33,8 @@
                     "batch_size": 1,
                     "shuffle": false,
                     "num_workers": 4,
-                    "dir_path": "/media/hdd/multi-label/AID_multilabel/test/images",
-                    "csv_file_path": "/media/hdd/multi-label/AID_multilabel/test/multilabels.txt",
+                    "data_dir": "/media/hdd/multi-label/AID_multilabel/test/images",
+                    "csv_file": "/media/hdd/multi-label/AID_multilabel/test/multilabels.txt",
                     "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
                 }
             }

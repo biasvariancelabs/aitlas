@@ -12,8 +12,8 @@
         "config": {
             "model_path": "/media/ssd/chactun_new/experiments/checkpoint.pth.tar",
             "batch_size": 1,
-            "dir": "/media/ssd/chactun_new/predict",
-            "output_path": "/media/ssd/chactun_new/predict",
+            "data_dir": "/media/ssd/chactun_new/predict",
+            "output_dir": "/media/ssd/chactun_new/predict",
             "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
             "labels": ["Background", "Buildings"],
             "output_format": "image"

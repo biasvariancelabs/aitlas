@@ -11,8 +11,8 @@
         "classname": "aitlas.tasks.PredictTask",
         "config": {
             "model_path": "./experiment/eurosat/checkpoint.pth.tar",
-            "dir": "./data/test/",
-            "output_path": "./examples/",
+            "data_dir": "./data/test/",
+            "output_dir": "./examples/",
             "output_format": "plot",
             "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"],
             "labels": ["AnnualCrop", "Forest", "HerbaceousVegetation", "Highway", "Industrial", "Pasture",

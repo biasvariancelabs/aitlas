@@ -22,7 +22,8 @@
                     "shuffle": true,
                     "num_workers": 4,
                     "download": false,
-                    "csv_file_path": "/media/hdd/AID/train.csv",
+                    "data_dir": "/media/hdd/multi-class/AID",
+                    "csv_file": "/media/hdd/AID/train.csv",
                     "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             },
@@ -33,7 +34,8 @@
                       "shuffle": false,
                       "num_workers": 4,
                       "download": false,
-                      "csv_file_path": "/media/hdd/AID/val.csv",
+                      "data_dir": "/media/hdd/multi-class/AID",
+                      "csv_file": "/media/hdd/AID/val.csv",
                       "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
                   }
               }

@@ -20,8 +20,8 @@
                       "batch_size": 8,
                       "shuffle": true,
                       "num_workers": 1,
-                      "csv_file_path": "/home/dkocev/data/MassachusettsRoads/train.txt",
-                      "dir_path": "/home/dkocev/data/MassachusettsRoads/train_splits",
+                      "csv_file": "/home/dkocev/data/MassachusettsRoads/train.txt",
+                      "data_dir": "/home/dkocev/data/MassachusettsRoads/train_splits",
                       "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
                       "target_transforms": ["aitlas.transforms.Transponse"]
                   }
@@ -32,8 +32,8 @@
                         "batch_size": 1,
                         "shuffle": false,
                         "num_workers": 1,
-                        "csv_file_path": "/home/dkocev/data/MassachusettsRoads/val.txt",
-                        "dir_path": "/home/dkocev/data/MassachusettsRoads/val_splits",
+                        "csv_file": "/home/dkocev/data/MassachusettsRoads/val.txt",
+                        "data_dir": "/home/dkocev/data/MassachusettsRoads/val_splits",
                         "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
                         "target_transforms": ["aitlas.transforms.Transponse"]
                     }

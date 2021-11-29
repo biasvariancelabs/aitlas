@@ -18,7 +18,8 @@
                     "batch_size": 16,
                     "shuffle": true,
                     "num_workers": 4,
-                    "root": "/Users/spopov/Downloads/UC_merced_multilabel/train/",
+                    "data_dir": "/Users/spopov/Downloads/UC_merced_multilabel/train/",
+                    "csv_file": "/Users/spopov/Downloads/UC_merced_multilabel/train/train.csv",
 					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             },
@@ -28,7 +29,8 @@
                     "batch_size": 16,
                     "shuffle": true,
                     "num_workers": 4,
-                    "root": "/Users/spopov/Downloads/UC_merced_multilabel/test",
+                    "data_dir": "/Users/spopov/Downloads/UC_merced_multilabel/test",
+                    "csv_file": "/Users/spopov/Downloads/UC_merced_multilabel/test/test.csv",
 					"transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             }

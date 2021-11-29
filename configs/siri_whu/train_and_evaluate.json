@@ -22,6 +22,7 @@
                     "shuffle": true,
                     "num_workers": 4,
                     "download": false,
+                    "data_dir": "/media/hdd/SIRI-WHU",
                     "csv_file_path": "/media/hdd/SIRI-WHU/train.csv",
                     "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
@@ -33,6 +34,7 @@
                       "shuffle": false,
                       "num_workers": 4,
                       "download": false,
+                      "data_dir": "/media/hdd/SIRI-WHU",
                       "csv_file_path": "/media/hdd/SIRI-WHU/val.csv",
                       "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
                   }

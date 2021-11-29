@@ -19,7 +19,8 @@
                     "shuffle": true,
                     "num_workers": 4,
                     "download": false,
-                    "csv_file_path": "/media/hdd/EuroSAT/train.csv"
+                    "data_dir": "/media/hdd/EuroSAT",
+                    "csv_file": "/media/hdd/EuroSAT/train.csv"
                 }
             },
             "val_dataset_config":{
@@ -29,7 +30,8 @@
                       "shuffle": false,
                       "num_workers": 4,
                       "download": false,
-                      "csv_file_path": "/media/hdd/EuroSAT/val.csv"
+                      "data_dir": "/media/hdd/EuroSAT",
+                      "csv_file": "/media/hdd/EuroSAT/val.csv"
                   }
             }
         }

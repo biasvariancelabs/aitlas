@@ -3,7 +3,7 @@
         "classname": "aitlas.models.DeepLabV3",
         "config": {
             "num_classes": 3,
-            "learning_rate": 0.001,
+            "learning_rate": 0.0001,
             "threshold": 0.5
         }
     },
@@ -11,8 +11,9 @@
         "classname": "aitlas.tasks.PredictSegmentationTask",
         "config": {
             "model_path": "/media/ssd/chactun_new/experiments/checkpoint.pth.tar",
-            "dir": "/media/ssd/chactun_new/predict",
-            "output_path": "/media/ssd/chactun_new/predict",
+            "data_dir": "/media/ssd/chactun_new/predict",
+            "output_dir": "/media/ssd/chactun_new/predict",
+            "output_format": "plot",
             "dataset_config":{
                 "classname": "aitlas.datasets.ChactunDataset",
                 "config": {

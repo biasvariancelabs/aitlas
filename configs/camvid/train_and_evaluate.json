@@ -20,7 +20,7 @@
                       "batch_size": 2,
                       "shuffle": true,
                       "num_workers": 1,
-                      "dir_path": "./data/CamVid/train",
+                      "data_dir": "./data/CamVid/train",
                       "transforms": ["aitlas.transforms.ResizeToTensor"],
                       "target_transforms": ["aitlas.transforms.Transponse", "aitlas.transforms.ResizePerChannelToTensor"]
                   }
@@ -31,9 +31,9 @@
                         "batch_size": 1,
                         "shuffle": false,
                         "num_workers": 1,
-                        "dir_path": "./data/CamVid/test",
-                      "transforms": ["aitlas.transforms.ResizeToTensor"],
-                      "target_transforms": ["aitlas.transforms.Transponse", "aitlas.transforms.ResizePerChannelToTensor"]
+                        "data_dir": "./data/CamVid/test",
+                        "transforms": ["aitlas.transforms.ResizeToTensor"],
+                        "target_transforms": ["aitlas.transforms.Transponse", "aitlas.transforms.ResizePerChannelToTensor"]
                     }
               }
         }

@@ -21,7 +21,8 @@
                     "shuffle": true,
                     "num_workers": 4,
                     "download": false,
-                    "csv_file_path": "/media/hdd/EuroSAT/train.csv",
+                    "data_dir": "/media/hdd/EuroSAT",
+                    "csv_file": "/media/hdd/EuroSAT/train.csv",
                     "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             }

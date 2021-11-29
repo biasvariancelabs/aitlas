@@ -22,7 +22,8 @@
                     "shuffle": true,
                     "num_workers": 4,
                     "download": false,
-                    "csv_file_path": "/media/hdd/RSI-CB256/train.csv",
+                    "data_dir": "/media/hdd/RSI-CB256",
+                    "csv_file": "/media/hdd/RSI-CB256/train.csv",
                     "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             },
@@ -33,7 +34,8 @@
                       "shuffle": false,
                       "num_workers": 4,
                       "download": false,
-                      "csv_file_path": "/media/hdd/RSI-CB256/val.csv",
+                      "data_dir": "/media/hdd/RSI-CB256",
+                      "csv_file": "/media/hdd/RSI-CB256/val.csv",
                       "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
                   }
               }
