@@ -291,7 +291,7 @@ class BaseModel(nn.Module, Configurable):
         """
         Predicts using a model against for a specified image
 
-        :return: tuple of (y_true, y_pred, y_pred_probs)
+        :return: plot
         """
         # load the image and apply transformations
         original_image = copy.deepcopy(image)
@@ -331,6 +331,57 @@ class BaseModel(nn.Module, Configurable):
 
         return fig
 
+    def predict_masks(
+        self,
+        image=None,
+        labels=None,
+        data_transforms=None,
+        description="running prediction for single image",
+    ):
+        """
+        Predicts using a model against for a specified image
+
+        :return: plot
+        """
+        # load the image and apply transformations
+        original_image = copy.deepcopy(image)
+        self.model.eval()
+        if data_transforms:
+            image = data_transforms(image)
+        # check if tensor and convert to batch of size 1, otherwise convert to tensor and then to batch of size 1
+        if torch.is_tensor(image):
+            inputs = image.unsqueeze(0).to(self.device)
+        else:
+            inputs = torch.from_numpy(image).unsqueeze(0).to(self.device)
+        outputs = self(inputs)
+        # check if outputs is OrderedDict for segmentation
+        if isinstance(outputs, collections.abc.Mapping):
+            outputs = outputs["out"]
+
+        predicted_probs, predicted = self.get_predicted(outputs)
+        predicted_probs = list(predicted_probs.cpu().detach().numpy())
+        predicted = list(predicted.cpu().detach().numpy())
+
+        """Display image and masks from model"""
+        # Show the image
+        fig = plt.figure(figsize=(10, 10))
+
+        # plot image
+        plt.subplot(1, len(labels) + 1, 1)
+        plt.imshow(original_image)
+        plt.title("Image")
+        plt.axis("off")
+
+        # plot masks
+        for i in range(len(labels)):
+            plt.subplot(1, len(labels) + 1, i + 2)
+            plt.imshow(predicted[0][i].astype(np.uint8) * 255, cmap='gray', vmin=0, vmax=255)
+            plt.title(labels[i])
+            plt.axis("off")
+
+        plt.tight_layout()
+
+        return fig
 
     def predict_output_per_batch(self, dataloader, description):
         """Run predictions on a dataloader and return inputs, outputs, labels per batch"""

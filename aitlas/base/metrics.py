@@ -321,20 +321,20 @@ class SegmentationRunningScore(RunningScore):
     def accuracy(self):
         self.pixel_accuracy_per_class = self.pixel_accuracy_per_class / self.samples
         return {
-            "Accuracy mean": float(self.pixel_accuracy_per_class.mean()),
+            "Accuracy Mean": float(self.pixel_accuracy_per_class.mean()),
             "Accuracy per Class": self.pixel_accuracy_per_class.tolist(),
         }
 
     def f1_score(self):
         self.f1_score_per_class = self.f1_score_per_class / self.samples
         return {
-            "F1 mean": float(self.f1_score_per_class.mean()),
-            "F1 per Class": self.f1_score_per_class.tolist(),
+            "F1_score Mean": float(self.f1_score_per_class.mean()),
+            "F1_score per Class": self.f1_score_per_class.tolist(),
         }
 
     def iou(self):
         self.iou_per_class = self.iou_per_class / self.samples
         return {
-            "IOU mean": float(self.iou_per_class.mean()),
+            "IOU Mean": float(self.iou_per_class.mean()),
             "IOU per Class": self.iou_per_class.tolist(),
         }
