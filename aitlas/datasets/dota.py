@@ -10,6 +10,12 @@ import numpy as np
 
 import torch
 
+'''
+    The dataset, development kit and all other resources needed to process the DOTA dataset can be found here:
+
+    https://captain-whu.github.io/DOTA/dataset.html
+'''
+
 def collate_fn(batch):
     return tuple(zip(*batch))
 

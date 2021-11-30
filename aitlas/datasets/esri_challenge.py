@@ -9,6 +9,12 @@ from PIL import Image
 
 import torch
 
+'''
+    The dataset used in the 2019 ESRI Data Science Challenge can be found here:
+
+    https://www.kaggle.com/kbhartiya83/swimming-pool-and-car-detection
+'''
+
 def collate_fn(batch):
     return tuple(zip(*batch))
 
