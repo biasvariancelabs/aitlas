@@ -1,9 +1,10 @@
 import random
+from itertools import compress
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from itertools import compress
 from ..base import BaseDataset
 from ..utils import image_loader, load_voc_format_dataset
 from .schemas import ClassificationDatasetSchema
@@ -19,7 +20,7 @@ class MultiLabelClassificationDataset(BaseDataset):
 
     def __init__(self, config):
         # now call the constuctor to validate the schema
-        BaseDataset.__init__(self, config)
+        super().__init__(config)
 
         # this can be overridden if needed
         self.image_loader = image_loader
@@ -63,7 +64,9 @@ class MultiLabelClassificationDataset(BaseDataset):
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
-        ax.set_title("Image distribution for {}".format(self.get_name()), pad=20, fontsize=18)
+        ax.set_title(
+            "Image distribution for {}".format(self.get_name()), pad=20, fontsize=18
+        )
         return fig
 
     def show_samples(self):
@@ -89,7 +92,9 @@ class MultiLabelClassificationDataset(BaseDataset):
         figure_height = int(size / 3) * 4
         figure, ax = plt.subplots(int(size / 3), 3, figsize=(20, figure_height))
         figure.suptitle(
-            "Example images with labels from {}".format(self.get_name()), fontsize=32, y=1.006
+            "Example images with labels from {}".format(self.get_name()),
+            fontsize=32,
+            y=1.006,
         )
         for axes, image_index in zip(ax.flatten(), image_indices):
             axes.imshow(self[image_index][0])
@@ -110,8 +115,8 @@ class MultiLabelClassificationDataset(BaseDataset):
         return load_voc_format_dataset(data_dir, csv_file)
 
     def labels_stats(self):
-        min_number = float('inf')
-        max_number = float('-inf')
+        min_number = float("inf")
+        max_number = float("-inf")
         average_number = 0
         for img, labels in self.data:
             if sum(labels) < min_number:
@@ -122,6 +127,7 @@ class MultiLabelClassificationDataset(BaseDataset):
 
             average_number += sum(labels)
 
-        return f"Minimum number of labels: {min_number}, Maximum number of labels: {max_number}, " \
-               f"Average number of labels: {average_number/len(self.data)}"
-
+        return (
+            f"Minimum number of labels: {min_number}, Maximum number of labels: {max_number}, "
+            f"Average number of labels: {average_number/len(self.data)}"
+        )

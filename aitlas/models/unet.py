@@ -1,8 +1,4 @@
 import segmentation_models_pytorch as smp
-import torch
-import torch.nn as nn
-from torch.nn import functional as F
-from torchvision import models
 
 from ..base import BaseSegmentationClassifier
 

@@ -39,7 +39,6 @@ class InceptionTime(BaseMulticlassClassifier):
             for _ in range(self.config.num_layers)
         ]
 
-        # ? I don't see it used anywhere
         self.inception_modules = nn.Sequential(*self.model.inception_modules_list)
 
         self.model.avgpool = nn.AdaptiveAvgPool1d(1)
@@ -56,9 +55,6 @@ class InceptionTime(BaseMulticlassClassifier):
         for i in range(self.config.num_layers):
             x = self.model.inception_modules_list[i](x)
 
-            # if self.use_residual and d % 3 == 2:
-            #    x = self._shortcut_layer(input_res, x)
-            #    input_res = x
         x = self.model.avgpool(x).squeeze(2)
         x = self.model.outlinear(x)
         logprobabilities = F.log_softmax(x, dim=-1)

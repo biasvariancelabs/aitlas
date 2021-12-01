@@ -1,13 +1,31 @@
 import csv
-import matplotlib.pyplot as plt
 import random
-
 from itertools import compress
+
+import matplotlib.pyplot as plt
+
 from .multilabel_classification import MultiLabelClassificationDataset
 
-LABELS = ["haze", "primary", "agriculture", "clear", "water", "habitation", "road", "cultivation", "slash_burn",
-          "cloudy", "partly_cloudy", "conventional_mine", "bare_ground", "artisinal_mine", "blooming",
-          "selective_logging", "blow_down"]
+
+LABELS = [
+    "haze",
+    "primary",
+    "agriculture",
+    "clear",
+    "water",
+    "habitation",
+    "road",
+    "cultivation",
+    "slash_burn",
+    "cloudy",
+    "partly_cloudy",
+    "conventional_mine",
+    "bare_ground",
+    "artisinal_mine",
+    "blooming",
+    "selective_logging",
+    "blow_down",
+]
 
 
 class PlanetUASMultiLabelDataset(MultiLabelClassificationDataset):
@@ -18,7 +36,7 @@ class PlanetUASMultiLabelDataset(MultiLabelClassificationDataset):
 
     def __init__(self, config):
         # now call the constructor to validate the schema and load the data
-        MultiLabelClassificationDataset.__init__(self, config)
+        super().__init__(config)
 
     def __getitem__(self, index):
         """
@@ -56,7 +74,9 @@ class PlanetUASMultiLabelDataset(MultiLabelClassificationDataset):
         figure_height = int(size / 3) * 4
         figure, ax = plt.subplots(int(size / 3), 3, figsize=(20, figure_height))
         figure.suptitle(
-            "Example images with labels from {}".format(self.get_name()), fontsize=32, y=1.006
+            "Example images with labels from {}".format(self.get_name()),
+            fontsize=32,
+            y=1.006,
         )
         for axes, image_index in zip(ax.flatten(), image_indices):
             axes.imshow(self[image_index][0])
@@ -81,20 +101,20 @@ def prepare(csv_train_file):
     images = {}
 
     with open(csv_train_file) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
+        csv_reader = csv.reader(csv_file, delimiter=",")
         line_count = 0
         for row in csv_reader:
             if line_count == 0:
                 line_count += 1
             else:
-                tmp_labels = row[1].split(' ')
+                tmp_labels = row[1].split(" ")
                 images[row[0]] = tmp_labels
                 for label in tmp_labels:
                     if label not in labels:
                         labels.append(label)
                 line_count += 1
 
-    header = '\t'.join(labels)
+    header = "\t".join(labels)
     f.write("image\t" + header + "\n")
 
     for k, v in images.items():
@@ -114,7 +134,7 @@ def kaggle_format(csv_file_path, output_file, threshold):
     images = {}
 
     with open(output_file) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=';')
+        csv_reader = csv.reader(csv_file, delimiter=";")
         line_count = 0
         for row in csv_reader:
             if line_count == 0:

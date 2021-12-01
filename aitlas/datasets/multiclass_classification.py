@@ -1,13 +1,15 @@
 import csv
 import os
+import random
+
+import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
-import random
 
 from ..base import BaseDataset
 from ..utils import image_loader
 from .schemas import ClassificationDatasetSchema
+
 
 """
 The format of the multiclass classification dataset is:
@@ -22,7 +24,7 @@ class MultiClassClassificationDataset(BaseDataset):
 
     def __init__(self, config):
         # now call the constructor to validate the schema
-        BaseDataset.__init__(self, config)
+        super().__init__(config)
 
         # load the data
         self.data_dir = self.config.data_dir
@@ -56,14 +58,16 @@ class MultiClassClassificationDataset(BaseDataset):
     def data_distribution_table(self):
         df = pd.read_csv(self.csv_file, sep=",", names=["File name", "Label"])
         label_count = df.groupby("Label").count().reset_index()
-        label_count.columns = ['Label', 'Count']
+        label_count.columns = ["Label", "Count"]
         return label_count
 
     def data_distribution_barchart(self):
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
-        ax.set_title("Image distribution for {}".format(self.get_name()), pad=20, fontsize=18)
+        ax.set_title(
+            "Image distribution for {}".format(self.get_name()), pad=20, fontsize=18
+        )
         return fig
 
     def show_samples(self):
@@ -73,21 +77,25 @@ class MultiClassClassificationDataset(BaseDataset):
     def show_image(self, index):
         label = self.labels[self[index][1]]
         fig = plt.figure(figsize=(8, 6))
-        plt.title(f"Image with index {index} from the dataset {self.get_name()}, with label {label}\n",
-                  fontsize=14)
-        plt.axis('off')
+        plt.title(
+            f"Image with index {index} from the dataset {self.get_name()}, with label {label}\n",
+            fontsize=14,
+        )
+        plt.axis("off")
         plt.imshow(self[index][0])
         return fig
 
     def show_batch(self, size):
         if size % 3:
-            raise ValueError(
-                "The provided size should be divided by 3!"
-            )
+            raise ValueError("The provided size should be divided by 3!")
         image_indices = random.sample(range(0, len(self.data)), size)
         figure_height = int(size / 3) * 4
         figure, ax = plt.subplots(int(size / 3), 3, figsize=(20, figure_height))
-        figure.suptitle("Example images with labels from {}".format(self.get_name()), fontsize=32, y=1.006)
+        figure.suptitle(
+            "Example images with labels from {}".format(self.get_name()),
+            fontsize=32,
+            y=1.006,
+        )
         for axes, image_index in zip(ax.flatten(), image_indices):
             axes.imshow(self[image_index][0])
             axes.set_title(self.labels[self[image_index][1]], fontsize=18, pad=10)
@@ -98,15 +106,16 @@ class MultiClassClassificationDataset(BaseDataset):
 
     def load_dataset(self):
         if not self.labels:
-            raise ValueError(
-                "You need to provide the list of labels for the dataset"
-            )
+            raise ValueError("You need to provide the list of labels for the dataset")
         data = []
         if self.csv_file:
             with open(self.csv_file, "r") as f:
                 csv_reader = csv.reader(f)
                 for index, row in enumerate(csv_reader):
                     file_name = row[0]
-                    item = (os.path.join(self.data_dir, file_name), self.labels.index(row[1]))
+                    item = (
+                        os.path.join(self.data_dir, file_name),
+                        self.labels.index(row[1]),
+                    )
                     data.append(item)
         return data

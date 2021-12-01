@@ -1,11 +1,13 @@
 import os
-import numpy as np
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.patches import Patch
+
 from ..base import BaseDataset
-from ..utils import image_loader, image_invert
+from ..utils import image_invert, image_loader
 from .schemas import SegmentationDatasetSchema
+
 
 LABELS = ["Aguada", "Building", "Platform"]
 COLOR_MAPPING = [[255, 255, 0], [100, 100, 100], [0, 255, 0]]
@@ -26,14 +28,16 @@ class ChactunDataset(BaseDataset):
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
-        BaseDataset.__init__(self, config)
+        super().__init__(config)
         self.images = []
         self.masks = []
         self.load_dataset(self.config.data_dir)
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
-        mask = np.zeros(shape=(len(self.masks[index]), image.shape[0], image.shape[1]), dtype=np.float64)
+        mask = np.zeros(
+            shape=(len(self.masks[index]), image.shape[0], image.shape[1]), dtype=float
+        )
         for i, path in enumerate(self.masks[index]):
             mask[i] = image_invert(path, True)
         if self.transform:
@@ -47,9 +51,7 @@ class ChactunDataset(BaseDataset):
 
     def load_dataset(self, data_dir):
         if not self.labels:
-            raise ValueError(
-                "You need to provide the list of labels for the dataset"
-            )
+            raise ValueError("You need to provide the list of labels for the dataset")
 
         masks_for_image = []
         for root, _, fnames in sorted(os.walk(data_dir)):
@@ -72,28 +74,36 @@ class ChactunDataset(BaseDataset):
         legend_elements = []
         img_mask = []
         for i, label in enumerate(self.labels):
-            legend_elements.append(Patch(facecolor=tuple([x / 255 for x in self.color_mapping[i]]),
-                                         label=self.labels[i]))
+            legend_elements.append(
+                Patch(
+                    facecolor=tuple([x / 255 for x in self.color_mapping[i]]),
+                    label=self.labels[i],
+                )
+            )
             img_mask.append(np.zeros([mask.shape[0], mask.shape[1], 3], np.uint8))
             img_mask[i][np.where(mask[:, :, i] == 255)] = self.color_mapping[i]
 
         fig = plt.figure(figsize=(10, 8))
-        fig.suptitle(f"Image and mask with index {index} from the dataset {self.get_name()}\n", fontsize=16, y=1.006)
-        fig.legend(handles=legend_elements, bbox_to_anchor=[0.95, 0.95], loc='upper right')
+        fig.suptitle(
+            f"Image and mask with index {index} from the dataset {self.get_name()}\n",
+            fontsize=16,
+            y=1.006,
+        )
+        fig.legend(
+            handles=legend_elements, bbox_to_anchor=[0.95, 0.95], loc="upper right"
+        )
         plt.subplot(2, 2, 1)
         plt.imshow(img)
-        plt.axis('off')
+        plt.axis("off")
         plt.subplot(2, 2, 2)
         plt.imshow(img_mask[0])
-        plt.axis('off')
+        plt.axis("off")
         plt.subplot(2, 2, 3)
         plt.imshow(img_mask[1])
-        plt.axis('off')
+        plt.axis("off")
         plt.subplot(2, 2, 4)
         plt.imshow(img_mask[2])
-        plt.axis('off')
+        plt.axis("off")
         fig.tight_layout()
         plt.show()
         return fig
-
-

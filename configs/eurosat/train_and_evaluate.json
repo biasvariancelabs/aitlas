@@ -21,7 +21,6 @@
                     "batch_size": 64,
                     "shuffle": true,
                     "num_workers": 4,
-                    "download": false,
                     "data_dir": "/media/hdd/EuroSAT",
                     "csv_file": "/media/hdd/EuroSAT/train.csv",
                     "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
@@ -33,7 +32,6 @@
                       "batch_size": 16,
                       "shuffle": false,
                       "num_workers": 4,
-                      "download": false,
                       "data_dir": "/media/hdd/EuroSAT",
                       "csv_file": "/media/hdd/EuroSAT/val.csv",
                       "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]

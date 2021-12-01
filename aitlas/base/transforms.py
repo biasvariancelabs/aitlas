@@ -1,7 +1,6 @@
 from torchvision import transforms
 
 from ..utils import get_class
-from .config import Configurable
 from .schemas import BaseTransformsSchema
 
 

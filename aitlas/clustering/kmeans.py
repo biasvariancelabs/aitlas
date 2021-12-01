@@ -1,13 +1,12 @@
+import logging
 import time
 
-import numpy as np
-import torch
-import torch.utils.data as data
-import torchvision.transforms as transforms
-from PIL import Image, ImageFile
-from scipy.sparse import csr_matrix, find
+from PIL import ImageFile
 
 from .utils import preprocess_features, run_kmeans
+
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -33,7 +32,7 @@ class Kmeans:
         for i in range(len(data)):
             self.images_lists[I[i]].append(i)
 
-        # if verbose:
-        #    print('k-means time: {0:.0f} s'.format(time.time() - start))
+        if verbose:
+            logging.info("k-means time: {0:.0f} s".format(time.time() - start))
 
         return loss

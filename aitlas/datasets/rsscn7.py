@@ -1,6 +1,15 @@
 from .multiclass_classification import MultiClassClassificationDataset
 
-LABELS = ["farm_land", "forest", "grass_land", "industrial_region", "parking_lot", "residential_region", "river_lake"]
+
+LABELS = [
+    "farm_land",
+    "forest",
+    "grass_land",
+    "industrial_region",
+    "parking_lot",
+    "residential_region",
+    "river_lake",
+]
 
 
 class RSSCN7Dataset(MultiClassClassificationDataset):
@@ -12,7 +21,4 @@ class RSSCN7Dataset(MultiClassClassificationDataset):
 
     def __init__(self, config):
         # now call the constructor to validate the schema and load the data
-        MultiClassClassificationDataset.__init__(self, config)
-
-
-
+        super().__init__(config)

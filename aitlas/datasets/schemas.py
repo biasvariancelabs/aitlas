@@ -47,7 +47,9 @@ class BigEarthNetSchema(BaseDatasetSchema):
         missing="rgb", description="Read RGB channels or 13 channels", example="all/rgb"
     )
     version = fields.String(
-        missing="19 labels", description="43 or 19 labels", example="43 labels/19 labels"
+        missing="19 labels",
+        description="43 or 19 labels",
+        example="43 labels/19 labels",
     )
     import_to_lmdb = fields.Bool(
         missing=False, description="Should the data be moved to LMDB"
@@ -196,10 +198,7 @@ class CropsDatasetSchema(BaseDatasetSchema):
     root = fields.String(
         required=True, description="Dataset path on disk", example="./slovenia-crops"
     )
-    year = fields.Integer(
-        missing=2017, description="year", validate=validate.OneOf([2017, 2018])
-    )
-    verbose = fields.Bool(missing=False, description="verbose")  # change to true
+    verbose = fields.Bool(missing=False, description="verbose")
     level = fields.String(
         missing="L1C",
         description="L1C or L2A",

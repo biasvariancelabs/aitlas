@@ -1,9 +1,29 @@
 from .multiclass_classification import MultiClassClassificationDataset
 
 
-LABELS = ["agricultural", "airplane", "baseballdiamond", "beach", "buildings", "chaparral", "denseresidential",
-          "forest", "freeway", "golfcourse", "harbor", "intersection", "mediumresidential", "mobilehomepark",
-          "overpass", "parkinglot", "river", "runway", "sparseresidential", "storagetanks", "tenniscourt"]
+LABELS = [
+    "agricultural",
+    "airplane",
+    "baseballdiamond",
+    "beach",
+    "buildings",
+    "chaparral",
+    "denseresidential",
+    "forest",
+    "freeway",
+    "golfcourse",
+    "harbor",
+    "intersection",
+    "mediumresidential",
+    "mobilehomepark",
+    "overpass",
+    "parkinglot",
+    "river",
+    "runway",
+    "sparseresidential",
+    "storagetanks",
+    "tenniscourt",
+]
 
 
 class UcMercedDataset(MultiClassClassificationDataset):
@@ -13,4 +33,4 @@ class UcMercedDataset(MultiClassClassificationDataset):
 
     def __init__(self, config):
         # now call the constructor to validate the schema and load the data
-        MultiClassClassificationDataset.__init__(self, config)
+        super().__init__(config)

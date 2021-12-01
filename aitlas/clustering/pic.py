@@ -1,6 +1,10 @@
+import logging
 import time
 
 from .utils import make_graph, preprocess_features, run_pic
+
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 class PIC:
@@ -66,6 +70,7 @@ class PIC:
         for c in images_lists:
             self.images_lists.append(images_lists[c])
 
-        # if verbose:
-        #     print('pic time: {0:.0f} s'.format(time.time() - start))
+        if verbose:
+            logging.info("pic time: {0:.0f} s".format(time.time() - start))
+
         return 0

@@ -4,7 +4,6 @@
         "config": {
             "input_dim":11,
             "num_classes": 10,
-            "pretrained":false,
             "learning_rate": 0.001,
             "metrics":["accuracy","f1_score", "kappa"]
         }
@@ -20,7 +19,6 @@
                 "classname": "aitlas.datasets.EOPatchCrops",
                 "config": {
                     "root":"./data/slocrops_dataset",
-                    "year":2017,
                     "batch_size": 16,
                     "shuffle": false,
                     "csv_file_path":"index.csv",

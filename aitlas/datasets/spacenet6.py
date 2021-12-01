@@ -124,7 +124,7 @@ class SpaceNet6Dataset(BaseDataset):
     schema = SpaceNet6DatasetSchema
 
     def __init__(self, config):
-        BaseDataset.__init__(self, config)
+        super().__init__(config)
         self.image_paths = list()
         self.mask_paths = list()
         self.orients = pd.read_csv(config.orients, index_col=0)

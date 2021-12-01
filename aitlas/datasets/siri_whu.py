@@ -1,8 +1,20 @@
 from .multiclass_classification import MultiClassClassificationDataset
 
 
-LABELS = ["agriculture", "commercial", "harbor", "idle_land", "industrial", "meadow", "overpass", "park", "pond",
-          "residential", "river", "water"]
+LABELS = [
+    "agriculture",
+    "commercial",
+    "harbor",
+    "idle_land",
+    "industrial",
+    "meadow",
+    "overpass",
+    "park",
+    "pond",
+    "residential",
+    "river",
+    "water",
+]
 
 
 class SiriWhuDataset(MultiClassClassificationDataset):
@@ -13,4 +25,4 @@ class SiriWhuDataset(MultiClassClassificationDataset):
 
     def __init__(self, config):
         # now call the constructor to validate the schema and load the data
-        MultiClassClassificationDataset.__init__(self, config)
+        super().__init__(config)

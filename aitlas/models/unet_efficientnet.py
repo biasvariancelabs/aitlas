@@ -237,7 +237,7 @@ class UNetEfficientNet(BaseSegmentationClassifier):
             config : Config
                 the configuration for this model
         """
-        BaseSegmentationClassifier.__init__(self, config)
+        super().__init__(config)
         dec_ch = [32, 64, 128, 256, 1024]
         # Placeholder variables to avoid "might be referenced before assignment" warnings
         enc_ch = list()

@@ -1,11 +1,43 @@
 from .multiclass_classification import MultiClassClassificationDataset
 
 
-LABELS = ["airplane", "airport_runway", "artificial_grassland", "avenue", "bare_land", "bridge", "city_building",
-          "coastline", "container", "crossroads", "dam", "desert", "dry_farm", "forest", "green_farmland", "highway",
-          "hirst", "lakeshore", "mangrove", "marina", "mountain", "parkinglot", "pipeline", "residents", "river",
-          "river_protection_forest", "sandbeach", "sapling", "sea", "shrubwood", "snow_mountain", "sparse_forest",
-          "storage_room", "stream", "town"]
+LABELS = [
+    "airplane",
+    "airport_runway",
+    "artificial_grassland",
+    "avenue",
+    "bare_land",
+    "bridge",
+    "city_building",
+    "coastline",
+    "container",
+    "crossroads",
+    "dam",
+    "desert",
+    "dry_farm",
+    "forest",
+    "green_farmland",
+    "highway",
+    "hirst",
+    "lakeshore",
+    "mangrove",
+    "marina",
+    "mountain",
+    "parkinglot",
+    "pipeline",
+    "residents",
+    "river",
+    "river_protection_forest",
+    "sandbeach",
+    "sapling",
+    "sea",
+    "shrubwood",
+    "snow_mountain",
+    "sparse_forest",
+    "storage_room",
+    "stream",
+    "town",
+]
 
 
 class RSICB256Dataset(MultiClassClassificationDataset):
@@ -17,8 +49,4 @@ class RSICB256Dataset(MultiClassClassificationDataset):
 
     def __init__(self, config):
         # now call the constructor to validate the schema and load the data
-        MultiClassClassificationDataset.__init__(self, config)
-
-
-
-
+        super().__init__(config)

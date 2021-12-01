@@ -100,7 +100,6 @@ class BasicBlock5x5(nn.Module):
         d = residual.shape[2] - out.shape[2]
         out1 = residual[:, :, 0:-d] + out
         out1 = self.relu(out1)
-        # out += residual
 
         return out1
 
@@ -134,7 +133,6 @@ class BasicBlock7x7(nn.Module):
         d = residual.shape[2] - out.shape[2]
         out1 = residual[:, :, 0:-d] + out
         out1 = self.relu(out1)
-        # out += residual
 
         return out1
 
@@ -178,7 +176,6 @@ class MSResNet(BaseMulticlassClassifier):
             self.config.layers[2],
             stride=stride,
         )
-        # self.layer3x3_4 = self._make_layer3(BasicBlock3x3, 512, self.config.layers[3], stride=2)
 
         # maxplooing kernel size: 16, 11, 6
         self.model.maxpool3 = nn.AvgPool1d(kernel_size=16, stride=1, padding=0)
@@ -198,7 +195,6 @@ class MSResNet(BaseMulticlassClassifier):
             self.config.layers[2],
             stride=stride,
         )
-        # self.layer5x5_4 = self._make_layer5(BasicBlock5x5, 512, self.config.layers[3], stride=2)
         self.model.maxpool5 = nn.AvgPool1d(kernel_size=11, stride=1, padding=0)
 
         self.model.layer7x7_1 = self._make_layer7(
@@ -210,10 +206,8 @@ class MSResNet(BaseMulticlassClassifier):
         self.model.layer7x7_3 = self._make_layer7(
             BasicBlock7x7, 4 * self.config.hidden_dims, self.config.layers[2], stride=2
         )
-        # self.layer7x7_4 = self._make_layer7(BasicBlock7x7, 512, self.config.layers[3], stride=2)
         self.model.maxpool7 = nn.AvgPool1d(kernel_size=6, stride=1, padding=0)
 
-        # self.drop = nn.Dropout(p=0.2)
         self.model.fc = nn.Linear(
             4 * self.config.hidden_dims * 3, self.config.num_classes
         )
@@ -297,25 +291,21 @@ class MSResNet(BaseMulticlassClassifier):
         x = self.model.layer3x3_1(x0)
         x = self.model.layer3x3_2(x)
         x = self.model.layer3x3_3(x)
-        # x = self.layer3x3_4(x)
         x = self.model.maxpool3(x)
 
         y = self.model.layer5x5_1(x0)
         y = self.model.layer5x5_2(y)
         y = self.model.layer5x5_3(y)
-        # y = self.layer5x5_4(y)
         y = self.model.maxpool5(y)
 
         z = self.model.layer7x7_1(x0)
         z = self.model.layer7x7_2(z)
         z = self.model.layer7x7_3(z)
-        # z = self.layer7x7_4(z)
         z = self.model.maxpool7(z)
 
         out = torch.cat([x, y, z], dim=1)
 
         out = out.squeeze()
-        # out = self.drop(out)
         out1 = self.model.fc(out)
 
         return out1, out
