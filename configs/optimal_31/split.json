@@ -1,0 +1,22 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.RandomSplitTask",
+        "config": {
+            "split": {
+                "train": {
+                    "ratio": 80,
+                    "file": "/media/ssd/Optimal31/Images/train.csv"
+                },
+                "val": {
+                    "ratio": 10,
+                    "file": "/media/ssd/Optimal31/Images/val.csv"
+                },
+                "test": {
+                    "ratio": 10,
+                    "file": "/media/ssd/Optimal31/Images/test.csv"
+                }
+            },
+            "data_dir": "/media/ssd/Optimal31/Images"
+        }
+    }
+}
