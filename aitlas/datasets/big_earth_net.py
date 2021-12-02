@@ -225,18 +225,25 @@ class BigEarthNetDataset(BaseDataset):
             if self.selection == 'rgb':
                 bands10 = bands10.astype(np.float32)[:, :, 0:3]
                 if self.transform:
-                    bands10, multihots = self.transform((bands10, multihots))
+                    bands10 = self.transform(bands10)
+                if self.target_transform:
+                    multihots = self.target_transform(multihots)
+
                 return bands10, multihots
 
             elif self.selection == 'all':
+                # TODO interpolate/merge bands10 and bands20
                 bands20 = interp_band(bands20)
                 bands10 = bands10.astype(np.float32)
                 bands20 = bands20.astype(np.float32)
 
                 if self.transform:
                     bands10, bands20, bands60, multihots = self.transform(
-                        (bands10, bands20, multihots)
+                        (bands10, bands20)
                     )
+                if self.target_transform:
+                    multihots = self.target_transform(multihots)
+
                 return bands10, bands20, multihots
 
     def __len__(self):

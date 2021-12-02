@@ -1,10 +1,10 @@
 {
     "model": {
-        "classname": "aitlas.models.ResNet50MultiLabel",
+        "classname": "aitlas.models.AlexNetMultiLabel",
         "config": {
             "num_classes": 19,
             "learning_rate": 0.0001,
-            "pretrained": false,
+            "pretrained": true,
             "metrics": ["accuracy", "precision", "recall", "f1_score"]
         }
     },
@@ -12,9 +12,9 @@
         "classname": "aitlas.tasks.TrainAndEvaluateTask",
           "config": {
               "epochs": 50,
-              "model_directory": "examples/experiments/",
+              "model_directory": "./data/experiments",
               "save_epochs": 25,
-              "id": "bigearthnet",
+              "id": "bigearthnet_alexnet",
               "train_dataset_config":{
                   "classname": "aitlas.datasets.BigEarthNetDataset",
                   "config": {
@@ -25,7 +25,7 @@
                       "import_to_lmdb": false,
                       "csv_file": "./data/splits/train.csv",
                       "data_dir": "./data/BigEarthNet-v1.0/",
-                      "transforms": ["aitlas.transforms.ToTensorRGB", "aitlas.transforms.NormalizeRGB"],
+                      "transforms": ["aitlas.transforms.ResizeToTensorRGB"],
                       "bands10_mean": [429.9430203,614.21682446,590.23569706],
                       "bands10_std": [572.41639287,582.87945694,675.88746967]
                   }
@@ -40,7 +40,7 @@
                         "import_to_lmdb": false,
                         "csv_file": "./data/splits/val.csv",
                         "data_dir": "./data/BigEarthNet-v1.0/",
-                        "transforms": ["aitlas.transforms.ToTensorRGB", "aitlas.transforms.NormalizeRGB"],
+                        "transforms": ["aitlas.transforms.ResizeToTensorRGB"],
                         "bands10_mean": [429.9430203,614.21682446,590.23569706],
                         "bands10_std": [572.41639287,582.87945694,675.88746967]
                     }
