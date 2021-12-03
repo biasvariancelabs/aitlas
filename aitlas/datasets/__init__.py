@@ -14,6 +14,7 @@ from .uc_merced import UcMercedDataset
 from .whu_rs19 import WHURS19Dataset
 from .brazilian_coffee_scenes import BrazilianCoffeeScenesDataset
 from .optimal_31 import Optimal31Dataset
+from .so2sat import So2SatDataset
 
 # Multi label datasets for land use and land cover classification
 from .multilabel_classification import MultiLabelClassificationDataset
