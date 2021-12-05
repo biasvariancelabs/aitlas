@@ -54,6 +54,7 @@ class BaseMulticlassClassifier(BaseModel):
         return nn.CrossEntropyLoss(weight=self.weights)
 
     def load_lr_scheduler(self):
+        #return torch.optim.lr_scheduler.ExponentialLR(self.load_optimizer(), gamma=0.9)
         return None
 
 

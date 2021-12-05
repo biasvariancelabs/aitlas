@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from ignite.metrics import confusion_matrix
 from ignite.metrics.multilabel_confusion_matrix import MultiLabelConfusionMatrix
-
+from sklearn.metrics import average_precision_score
 
 class BaseMetric:
     """Base class for implementing metrics """
@@ -31,7 +31,7 @@ class RunningScore(object):
         new_state["confusion_matrix"] = dill.loads(state["confusion_matrix"])
         self.__dict__.update(new_state)
 
-    def update(self, y_true, y_pred):
+    def update(self, y_true, y_pred, y_prob=None):
         """Updates stats on each batch"""
         self.confusion_matrix.update((y_pred, y_true))
 
@@ -175,6 +175,17 @@ class MultiLabelRunningScore(RunningScore):
         self.confusion_matrix = MultiLabelConfusionMatrix(
             num_classes=self.num_classes, device=self.device,
         )
+        self.list_y_prob = []
+        self.list_y_true = []
+
+    def update(self, y_true, y_pred, y_prob=None):
+        """Updates stats on each batch"""
+        self.confusion_matrix.update((y_pred, y_true))
+        self.list_y_prob.append(y_prob.tolist()[0])
+        self.list_y_true.append(y_true.tolist()[0])
+
+    def map(self):
+        return {"mAP": average_precision_score(np.array(self.list_y_true), np.array(self.list_y_prob))}
 
     def accuracy(self):
         tp, tn, fp, fn = self.get_outcomes()
@@ -278,7 +289,7 @@ class SegmentationRunningScore(RunningScore):
         ).to(self.device)
         self.samples = 0
 
-    def update(self, y_true, y_pred):
+    def update(self, y_true, y_pred, y_prob=None):
         """Updates metrics on each batch"""
         num_images, num_labels, h, w = y_true.shape
         self.samples += num_images

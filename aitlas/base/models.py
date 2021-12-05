@@ -249,7 +249,7 @@ class BaseModel(nn.Module, Configurable):
                 predicted = predicted.to(self.device)
 
             self.running_metrics.update(
-                labels.type(torch.int64), predicted.type(torch.int64)
+                labels.type(torch.int64), predicted.type(torch.int64), predicted_probs
             )
 
         if criterion:
