@@ -189,8 +189,7 @@ class PredictEOPatchTask(BaseTask):
             labels = dataset.get_labels()
             transforms = dataset.config.transforms
         else:
-            labels = self.config.labels
-            transforms = self.config.transforms
+            raise ValueError("Please provide a test dataset config.")
 
         test_dataset = dataset
         # load the model
@@ -203,27 +202,24 @@ class PredictEOPatchTask(BaseTask):
             os.makedirs(self.output_path)
 
         if self.output_format == "plot":
-            # this for should be in a separate function
-            eopatches = [
-                f.name
-                for f in os.scandir(test_dataset.root + os.sep + "eopatches")
-                if f.is_dir()
-            ]
-
             # assume all eopatches in the test dataset are in the same "eopatches" folder
-            eopatches_path = test_dataset.root + os.sep + "eopatches"
+            eopatches_path = os.path.join(test_dataset.root, "eopatches")
             test_index = test_dataset.index
 
-            for patch in eopatches:
-                display_eopatch_predictions(
-                    eopatches_path,
-                    patch,
-                    y_pred,
-                    test_index,
-                    self.output_path,
-                    y_true,
-                    test_dataset.mapping,
-                )
+            # this for should be in a separate function
+            for f in os.scandir(eopatches_path):  # TODO: the dataset should return this
+                if f.is_dir():
+                    patch = f.name
+
+                    display_eopatch_predictions(
+                        eopatches_path,
+                        patch,
+                        y_pred,
+                        test_index,
+                        self.output_path,
+                        y_true,
+                        test_dataset.mapping,
+                    )
 
     def export_predictions_to_csv(self, file, fnames, probs, labels):
         with open(file, "w", newline="") as csvfile:
