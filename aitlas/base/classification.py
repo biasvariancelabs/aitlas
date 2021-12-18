@@ -1,10 +1,10 @@
 import logging
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
 import torch.optim as optim
-import numpy as np
 
 from ..utils import stringify
 from .metrics import MultiClassRunningScore, MultiLabelRunningScore
@@ -54,7 +54,7 @@ class BaseMulticlassClassifier(BaseModel):
         return nn.CrossEntropyLoss(weight=self.weights)
 
     def load_lr_scheduler(self):
-        #return torch.optim.lr_scheduler.ExponentialLR(self.load_optimizer(), gamma=0.9)
+        # return torch.optim.lr_scheduler.ExponentialLR(self.load_optimizer(), gamma=0.9)
         return None
 
 
@@ -71,7 +71,9 @@ class BaseMultilabelClassifier(BaseModel):
     def load_optimizer(self):
         """Load the optimizer"""
         return optim.Adam(
-            self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4
+            self.model.parameters(),
+            lr=self.config.learning_rate,
+            weight_decay=self.config.weight_decay,
         )
 
     def load_criterion(self):
@@ -83,7 +85,9 @@ class BaseMultilabelClassifier(BaseModel):
 
     def get_predicted(self, outputs, threshold=None):
         predicted_probs = torch.sigmoid(outputs)
-        predicted = predicted_probs >= (threshold if threshold else self.config.threshold)
+        predicted = predicted_probs >= (
+            threshold if threshold else self.config.threshold
+        )
         return predicted_probs, predicted
 
     def report(self, labels, dataset_name, running_metrics, **kwargs):
@@ -100,6 +104,7 @@ class BaseMultilabelClassifier(BaseModel):
                 cm_array.append([[int(tn), int(fp)], [int(fn), int(tp)]])
 
         from ..visualizations import plot_multilabel_confusion_matrix
+
         # plot confusion matrix for model evaluation
         plot_multilabel_confusion_matrix(
             np.array(cm_array), labels, dataset_name, f"{run_id}_cm.png"
