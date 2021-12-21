@@ -52,17 +52,28 @@ class TrainAndEvaluateTask(BaseTask):
         )
 
 
-def generate_parameters_for_range(range, steps):
-    return np.arange(range[0], range[1], (range[1] - range[0]) / steps)
+def generate_parameters_for_range(method, parameter):
+    if method == "grid":
+        return np.arange(
+            parameter.low,
+            parameter.high,
+            (parameter.high - parameter.low) / parameter.steps,
+        )
+    elif method == "random":
+        return np.random.uniform(
+            low=parameter.low, high=parameter.high, size=(parameter.steps,)
+        )
+    else:
+        raise ValueError("Incorrect parameter search method!")
 
 
-def generate_parameters(method, parameters, steps):
+def generate_parameters(method, parameters):
     """Generate parameters to search"""
     names = [parameter.name for parameter in parameters]
 
     values = []
     for parameter in parameters:
-        ranges = generate_parameters_for_range(parameter.range, steps)
+        ranges = generate_parameters_for_range(method, parameter)
         values.append(ranges)
 
     total = np.array(np.meshgrid(*values)).T.reshape(-1, len(parameters))
@@ -94,9 +105,7 @@ class OptimizeTask(BaseTask):
         print("done")
         print(self.config.parameters)
 
-        parameters = generate_parameters(
-            self.config.method, self.config.parameters, self.config.steps
-        )
+        parameters = generate_parameters(self.config.method, self.config.parameters)
 
         best_parameters = None
         best_loss = None

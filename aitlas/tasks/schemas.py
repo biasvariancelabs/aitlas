@@ -105,20 +105,14 @@ class TrainAndEvaluateTaskSchema(BaseTaskShema):
 
 class ParameterSchema(Schema):
     name = fields.String(required=True, description="Parameter to optimize")
-    range = fields.List(
-        fields.Float,
-        required=False,
-        missing=[0.01, 0.001],
-        description="Range of values to run against.",
+    low = fields.Float(missing=0, description="Lower end of range.",)
+    high = fields.Float(missing=0.5, description="Higher end of range.",)
+    steps = fields.Int(
+        missing=10, description="In how mane steps to iterate the range",
     )
 
 
 class OptimizeTaskSchema(BaseTaskShema):
-    steps = fields.Int(
-        required=True,
-        description="How many attempts to run for optimization",
-        example=10,
-    )
     epochs = fields.Int(
         required=True, description="Number of epochs used in training", example=50
     )

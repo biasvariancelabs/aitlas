@@ -10,16 +10,19 @@
     "task": {
         "classname": "aitlas.tasks.OptimizeTask",
         "config": {
-            "steps": 10,
             "method": "grid",
             "parameters": [
                 {
                     "name": "learning_rate",
-                    "range": [0.01, 0.001]
+                    "low": 0.001,
+                    "high": 0.01,
+                    "steps": 10
                 },
                 {
                     "name": "weight_decay",
-                    "range": [0.01, 0.001]
+                    "low": 0.001,
+                    "high": 0.01,
+                    "steps": 3
                 }
             ],
             "epochs": 1,
@@ -31,8 +34,8 @@
                     "batch_size": 64,
                     "shuffle": true,
                     "num_workers": 4,
-                    "data_dir": "./data/EuroSAT/2750",
-                    "csv_file": "./data/EuroSAT/train.csv",
+                    "data_dir": "/media/hdd/EuroSAT/2750",
+                    "csv_file": "/media/hdd/EuroSAT/train.csv",
                     "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
                 }
             },
@@ -42,8 +45,8 @@
                       "batch_size": 16,
                       "shuffle": false,
                       "num_workers": 4,
-                      "data_dir": "./data/EuroSAT/2750",
-                      "csv_file": "./data/EuroSAT/val.csv",
+                      "data_dir": "/media/hdd/EuroSAT/2750",
+                      "csv_file": "/media/hdd/EuroSAT/val.csv",
                       "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
                   }
             }
