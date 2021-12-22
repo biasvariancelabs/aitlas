@@ -105,8 +105,8 @@ class TrainAndEvaluateTaskSchema(BaseTaskShema):
 
 class ParameterSchema(Schema):
     name = fields.String(required=True, description="Parameter to optimize")
-    low = fields.Float(missing=0, description="Lower end of range.",)
-    high = fields.Float(missing=0.5, description="Higher end of range.",)
+    min = fields.Float(missing=0, description="Lower end of range.",)
+    max = fields.Float(missing=0.5, description="Higher end of range.",)
     steps = fields.Int(
         missing=10, description="In how mane steps to iterate the range",
     )

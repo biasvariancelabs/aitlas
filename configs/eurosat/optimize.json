@@ -14,14 +14,14 @@
             "parameters": [
                 {
                     "name": "learning_rate",
-                    "low": 0.001,
-                    "high": 0.01,
+                    "min": 0.001,
+                    "max": 0.01,
                     "steps": 10
                 },
                 {
                     "name": "weight_decay",
-                    "low": 0.001,
-                    "high": 0.01,
+                    "min": 0.001,
+                    "max": 0.01,
                     "steps": 3
                 }
             ],

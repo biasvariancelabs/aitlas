@@ -1,7 +1,14 @@
+import logging
+import os
+from shutil import copyfile
+
 import numpy as np
 
 from ..base import BaseDataset, BaseModel, BaseTask
 from .schemas import OptimizeTaskSchema, TrainAndEvaluateTaskSchema, TrainTaskSchema
+
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 class TrainTask(BaseTask):
@@ -55,13 +62,13 @@ class TrainAndEvaluateTask(BaseTask):
 def generate_parameters_for_range(method, parameter):
     if method == "grid":
         return np.arange(
-            parameter.low,
-            parameter.high,
-            (parameter.high - parameter.low) / parameter.steps,
+            parameter.min,
+            parameter.max,
+            (parameter.max - parameter.min) / parameter.steps,
         )
     elif method == "random":
         return np.random.uniform(
-            low=parameter.low, high=parameter.high, size=(parameter.steps,)
+            low=parameter.min, high=parameter.max, size=(parameter.steps,)
         )
     else:
         raise ValueError("Incorrect parameter search method!")
@@ -98,22 +105,22 @@ class OptimizeTask(BaseTask):
 
     def run(self):
         """Do something awesome here"""
-
+        logging.info(f"Searching parameters")
         train_dataset = self.create_dataset(self.config.train_dataset_config)
         val_dataset = self.create_dataset(self.config.val_dataset_config)
-
-        print("done")
-        print(self.config.parameters)
 
         parameters = generate_parameters(self.config.method, self.config.parameters)
 
         best_parameters = None
+        best_run_id = None
+        best_model_output_directory = os.path.join(self.config.model_directory, "best")
         best_loss = None
         loss = 0
 
-        for parameter_set in parameters:
+        for i, parameter_set in enumerate(parameters):
+            logging.info(f"Testing {i} for parameters: {parameter_set}")
+            run_id = f"{self.id}-{i}"
 
-            print(parameter_set)
             for parameter in parameter_set:
                 setattr(self.model.config, parameter["name"], parameter["value"])
 
@@ -123,7 +130,7 @@ class OptimizeTask(BaseTask):
                 epochs=self.config.epochs,
                 model_directory=self.config.model_directory,
                 save_epochs=self.config.epochs,
-                run_id=self.id,
+                run_id=run_id,
                 iterations_log=100,
                 metrics=self.model.metrics,
             )
@@ -131,5 +138,24 @@ class OptimizeTask(BaseTask):
             if not best_loss or loss < best_loss:
                 best_loss = loss
                 best_parameters = parameter_set
+                best_run_id = run_id
 
-        print(best_parameters)
+        logging.info(f"Best parameters: {best_parameters}")
+
+        if not os.path.isdir(best_model_output_directory):
+            os.makedirs(best_model_output_directory)
+
+        checkpoint = sorted(
+            filter(
+                lambda x: "checkpoint" in x,
+                os.listdir(os.path.join(self.config.model_directory, best_run_id)),
+            ),
+            reverse=True,
+        )[0]
+
+        copyfile(
+            checkpoint, os.path.join(best_model_output_directory, "checkpoint.pth.tar")
+        )
+        logging.info(
+            f"Best models saved at: {os.path.join(best_model_output_directory, 'checkpoint.pth.tar')}"
+        )

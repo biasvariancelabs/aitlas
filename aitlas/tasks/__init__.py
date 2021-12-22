@@ -1,6 +1,6 @@
 from .evaluate import EvaluateTask
 from .extract_features import ExtractFeaturesTask
-from .predict import PredictSegmentationTask, PredictTask, PredictEOPatchTask
+from .predict import PredictEOPatchTask, PredictSegmentationTask, PredictTask
 from .prepare import PrepareTask
 from .split import RandomSplitTask, StratifiedSplitTask
-from .train import TrainAndEvaluateTask, TrainTask
+from .train import OptimizeTask, TrainAndEvaluateTask, TrainTask
