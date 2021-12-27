@@ -10,6 +10,7 @@
             "num_layers" : 4,
             "hidden_dims" : 128,
             "dropout" : 0.5713,
+            "bidirectional" : true,
             "metrics":["accuracy","f1_score", "kappa"]
         }
     },

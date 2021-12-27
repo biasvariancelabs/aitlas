@@ -9,6 +9,7 @@
             "weight_decay" : 0.00000222,
             "num_layers" : 3,
             "hidden_dims" : 128,
+            "bidirectional" : false,
             "metrics":["accuracy","f1_score", "kappa"]
         }
     },

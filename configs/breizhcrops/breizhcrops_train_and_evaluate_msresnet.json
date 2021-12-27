@@ -5,7 +5,7 @@
             "input_dim":13,
             "num_classes": 9,
             "pretrained":false,
-            "learning_rate": 0.000000627,
+            "learning_rate": 0.000627,
             "weight_decay" : 0.00000475,
             "hidden_dims" : 32,
             "metrics":["accuracy","f1_score", "kappa"]
