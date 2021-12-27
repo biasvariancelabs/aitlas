@@ -20,9 +20,7 @@ class TransformerModelSchema(BaseClassifierSchema):
 
     d_inner = fields.Int(required=False, missing=128, description="None")
 
-    dropout = fields.Float(
-        required=False, missing=0.4, description="None"
-    )
+    dropout = fields.Float(required=False, missing=0.4, description="None")
 
     activation = fields.String(
         required=False, missing="relu", description="Which activation function to use"
