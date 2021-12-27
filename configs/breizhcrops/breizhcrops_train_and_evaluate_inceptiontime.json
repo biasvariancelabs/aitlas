@@ -5,10 +5,10 @@
             "input_dim":13,
             "num_classes": 9,
             "pretrained":false,
-            "learning_rate": 0.00896,
-            "weight_decay" : 0.00000222,
-            "num_layers" : 3,
-            "hidden_dims" : 128,
+            "learning_rate": 0.00059,
+            "weight_decay" : 0.00001866,
+            "num_layers" : 4,
+            "hidden_dims" : 64,
             "metrics":["accuracy","f1_score", "kappa"]
         }
     },
