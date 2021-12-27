@@ -21,7 +21,7 @@ class TransformerModelSchema(BaseClassifierSchema):
     d_inner = fields.Int(required=False, missing=128, description="None")
 
     dropout = fields.Float(
-        required=False, missing=0.017998950510888446, description="None"
+        required=False, missing=0.4, description="None"
     )
 
     activation = fields.String(
