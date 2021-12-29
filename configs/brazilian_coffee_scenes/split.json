@@ -1,0 +1,22 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.RandomSplitTask",
+        "config": {
+            "split": {
+                "train": {
+                    "ratio": 80,
+                    "file": "/media/ssd/BrazilianCoffeScenes/brazilian_coffee_scenes/train.csv"
+                },
+                "val": {
+                    "ratio": 10,
+                    "file": "/media/ssd/BrazilianCoffeScenes/brazilian_coffee_scenes/val.csv"
+                },
+                "test": {
+                    "ratio": 10,
+                    "file": "/media/ssd/BrazilianCoffeScenes/brazilian_coffee_scenes/test.csv"
+                }
+            },
+            "data_dir": "/media/ssd/BrazilianCoffeScenes/brazilian_coffee_scenes"
+        }
+    }
+}

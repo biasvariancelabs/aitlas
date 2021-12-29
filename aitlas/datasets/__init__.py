@@ -12,6 +12,9 @@ from .sat6 import SAT6Dataset
 from .siri_whu import SiriWhuDataset
 from .uc_merced import UcMercedDataset
 from .whu_rs19 import WHURS19Dataset
+from .brazilian_coffee_scenes import BrazilianCoffeeScenesDataset
+from .optimal_31 import Optimal31Dataset
+from .so2sat import So2SatDataset
 
 # Multi label datasets for land use and land cover classification
 from .multilabel_classification import MultiLabelClassificationDataset
@@ -26,15 +29,8 @@ from .planet_uas import PlanetUASMultiLabelDataset
 from .amazon_rainforest import AmazonRainforestDataset
 from .airs import AIRSDataset
 from .camvid import CamVidDataset
-# from .spacenet6 import SpaceNet6Dataset
 from .massachusetts_buildings import MassachusettsBuildingsDataset
 from .massachusetts_roads import MassachusettsRoadsDataset
 from .inria import InriaDataset
 from .landcover_ai import LandCoverAiDataset
 from .chactun import ChactunDataset
-
-# Datasets for crop type prediction
-from .crops_classification import CropsDataset
-from .eopatch_crops import EOPatchCrops
-from .breizhcrops import BreizhCropsDataset
-

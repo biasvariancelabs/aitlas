@@ -213,11 +213,7 @@ class CropsDatasetSchema(BaseDatasetSchema):
     )
 
 
-class BreizhCropsSchema(CropsDatasetSchema):
-
-    filter_length = fields.Integer(missing=0, description="filter_length")
-    load_timeseries = fields.Bool(missing=True, description="load_timeseries")
-    recompile_h5_from_csv = fields.Bool(
-        missing=False, description="recompile_h5_from_csv"
+class So2SatDatasetSchema(BaseDatasetSchema):
+    h5_file = fields.String(
+        required=True, description="H5 file on disk", example="./data/train.h5"
     )
-    preload_ram = fields.Bool(missing=False, description="preload_ram")
