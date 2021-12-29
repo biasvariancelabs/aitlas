@@ -1,0 +1,55 @@
+{
+    "model": {
+        "classname": "aitlas.models.ResNet50",
+        "config": {
+            "num_classes": 10,
+            "pretrained": true,
+            "metrics": ["f1_score", "accuracy", "iou"]
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.OptimizeTask",
+        "config": {
+            "method": "grid",
+            "parameters": [
+                {
+                    "name": "learning_rate",
+                    "min": 0.001,
+                    "max": 0.01,
+                    "steps": 10
+                },
+                {
+                    "name": "weight_decay",
+                    "min": 0.001,
+                    "max": 0.01,
+                    "steps": 3
+                }
+            ],
+            "epochs": 1,
+            "model_directory": "./experiment/eurosat_optimize",
+            "id": "eurosat_optimize",
+            "train_dataset_config":{
+                "classname": "aitlas.datasets.EurosatDataset",
+                "config": {
+                    "batch_size": 64,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "data_dir": "/media/hdd/EuroSAT/2750",
+                    "csv_file": "/media/hdd/EuroSAT/train.csv",
+                    "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
+                }
+            },
+            "val_dataset_config":{
+                  "classname": "aitlas.datasets.EurosatDataset",
+                  "config": {
+                      "batch_size": 16,
+                      "shuffle": false,
+                      "num_workers": 4,
+                      "data_dir": "/media/hdd/EuroSAT/2750",
+                      "csv_file": "/media/hdd/EuroSAT/val.csv",
+                      "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
+                  }
+            }
+        }
+    }
+}

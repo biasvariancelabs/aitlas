@@ -103,6 +103,48 @@ class TrainAndEvaluateTaskSchema(BaseTaskShema):
     )
 
 
+class ParameterSchema(Schema):
+    name = fields.String(required=True, description="Parameter to optimize")
+    min = fields.Float(missing=0, description="Lower end of range.",)
+    max = fields.Float(missing=0.5, description="Higher end of range.",)
+    steps = fields.Int(
+        missing=10, description="In how mane steps to iterate the range",
+    )
+
+
+class OptimizeTaskSchema(BaseTaskShema):
+    epochs = fields.Int(
+        required=True, description="Number of epochs used in training", example=50
+    )
+    model_directory = fields.String(
+        required=True,
+        description="Directory of the model output",
+        example="/tmp/model/",
+    )
+    train_dataset_config = fields.Nested(
+        nested=ObjectConfig,
+        required=True,
+        description="Train dataset type and configuration.",
+    )
+    val_dataset_config = fields.Nested(
+        nested=ObjectConfig,
+        required=True,
+        description="Validation dataset type and configuration.",
+    )
+    parameters = fields.Nested(
+        ParameterSchema,
+        required=True,
+        many=True,
+        description="Parameters to optimize.",
+    )
+    method = fields.String(
+        required=True,
+        description="How to search through the ranges: grid or random",
+        example="grid",
+        validate=validate.OneOf(["grid", "random"]),
+    )
+
+
 class EvaluateTaskSchema(BaseTaskShema):
     dataset_config = fields.Nested(
         nested=ObjectConfig,

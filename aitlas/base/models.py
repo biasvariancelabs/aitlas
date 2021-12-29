@@ -1,16 +1,16 @@
 import collections
+import copy
 import logging
 import os
-import pandas as pd
-import copy
-
 from shutil import copyfile
+
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 
 from ..utils import current_ts, stringify
 from .config import Configurable
@@ -136,6 +136,8 @@ class BaseModel(nn.Module, Configurable):
         self.save_model(model_directory, epochs, self.optimizer, loss, start, run_id)
 
         logging.info(f"finished training. training time: {current_ts() - start}")
+
+        return loss
 
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
         start = current_ts()
@@ -317,7 +319,7 @@ class BaseModel(nn.Module, Configurable):
         # Show the image
         fig = plt.figure(figsize=(16, 5))
         ax = plt.subplot(1, 2, 1)
-        ax.axis('off')
+        ax.axis("off")
         ax.imshow(original_image)
 
         # Set title to be the actual class
@@ -375,7 +377,9 @@ class BaseModel(nn.Module, Configurable):
         # plot masks
         for i in range(len(labels)):
             plt.subplot(1, len(labels) + 1, i + 2)
-            plt.imshow(predicted[0][i].astype(np.uint8) * 255, cmap='gray', vmin=0, vmax=255)
+            plt.imshow(
+                predicted[0][i].astype(np.uint8) * 255, cmap="gray", vmin=0, vmax=255
+            )
             plt.title(labels[i])
             plt.axis("off")
 
