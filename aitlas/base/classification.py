@@ -45,7 +45,10 @@ class BaseMulticlassClassifier(BaseModel):
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.Adam(
+        # return optim.Adam(
+        #    self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4
+        # )
+        return optim.RAdam(
             self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4
         )
 
@@ -55,7 +58,8 @@ class BaseMulticlassClassifier(BaseModel):
 
     def load_lr_scheduler(self):
         # return torch.optim.lr_scheduler.ExponentialLR(self.load_optimizer(), gamma=0.9)
-        return None
+        return torch.optim.lr_scheduler.ReduceLROnPlateau(self.load_optimizer(), 'min')
+        # return None
 
 
 class BaseMultilabelClassifier(BaseModel):

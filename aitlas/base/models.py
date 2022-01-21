@@ -96,7 +96,7 @@ class BaseModel(nn.Module, Configurable):
 
             # adjust learning rate if needed
             if self.lr_scheduler:
-                self.lr_scheduler.step()
+                self.lr_scheduler.step(loss)
 
             # evaluate against the train set
             self.running_metrics.reset()
