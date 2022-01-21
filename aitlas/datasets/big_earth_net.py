@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import textwrap
-import pickle5
+import pickle
 
 from itertools import compress
 from skimage.transform import resize
@@ -142,21 +142,21 @@ def update_json_labels(f_j_path, BigEarthNet_19_labels):
         json.dump(j_f_c, f)
 
 
-def loads_pickle5(buf):
+def loads_pickle(buf):
     """
     Args:
         buf: the output of `dumps`.
     """
-    return pickle5.loads(buf)
+    return pickle.loads(buf)
 
 
-def dumps_pickle5(obj):
+def dumps_pickle(obj):
     """
     Serialize an object.
     Returns:
         Implementation-dependent bytes-like object
     """
-    return pickle5.dumps(obj, protocol=5)
+    return pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def cls2multihot(cls_vec, label_indices):
@@ -215,7 +215,7 @@ class BigEarthNetDataset(BaseDataset):
 
         with self.db.begin(write=False) as txn:
             byteflow = txn.get(patch_name.encode())
-            bands10, bands20, _, multihots_19, multihots_43 = loads_pickle5(byteflow)
+            bands10, bands20, _, multihots_19, multihots_43 = loads_pickle(byteflow)
 
             if self.version == '19 labels':
                 multihots = multihots_19.astype(np.float32)
@@ -363,7 +363,7 @@ class BigEarthNetDataset(BaseDataset):
             patch_name = patch_name[0]
             txn.put(
                 u"{}".format(patch_name).encode("ascii"),
-                dumps_pickle5(
+                dumps_pickle(
                     (
                         bands10[0].numpy(),
                         bands20[0].numpy(),
@@ -383,8 +383,8 @@ class BigEarthNetDataset(BaseDataset):
         keys = [u"{}".format(patch_name).encode("ascii") for patch_name in patch_names]
 
         with self.db.begin(write=True) as txn:
-            txn.put(b"__keys__", dumps_pickle5(keys))
-            txn.put(b"__len__", dumps_pickle5(len(keys)))
+            txn.put(b"__keys__", dumps_pickle(keys))
+            txn.put(b"__len__", dumps_pickle(len(keys)))
 
         self.db.sync()
         self.db.close()
