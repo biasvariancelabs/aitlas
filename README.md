@@ -40,3 +40,17 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 And, that's it, you can start using `aitlas`!
+
+
+## Citation
+For attribution in academic contexts, please cite this [work](https://arxiv.org/abs/2201.08789) as
+```
+@article{dimitrovski2022aitlas,
+      title={AiTLAS: Artificial Intelligence Toolbox for Earth Observation}, 
+      author={Ivica Dimitrovski and Ivan Kitanovski and Panče Panov and Nikola Simidjievski and Dragi Kocev},
+      year={2022},
+      journal={arXiv preprint arXiv:2201.08789},
+}
+```
+
+
