@@ -12,7 +12,12 @@ from functools import partial
 from multiprocessing import Pool
 
 import cv2
-import gdal
+
+try:
+    import gdal
+except ModuleNotFoundError as err:
+    from osgeo import gdal
+
 import numpy as np
 import pandas as pd
 import torch
