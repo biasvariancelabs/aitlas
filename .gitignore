@@ -139,3 +139,7 @@ data/
 # ignore experiment folder
 experiment/
 experiments/
+
+
+# Wheel files for pip install
+*.whl
