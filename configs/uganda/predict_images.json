@@ -1,0 +1,21 @@
+{
+    "model": {
+        "classname": "aitlas.models.DeepLabV3",
+        "config": {
+            "num_classes": 3,
+            "learning_rate": 0.0001,
+            "threshold": 0.5
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.PredictSegmentationTask",
+        "config": {
+            "model_path": ".\\examples\\experiments\\ceois2_rgb01\\checkpoint_1643396339.pth.tar",
+            "data_dir": "z:\\samples_Uganda_v1_predict",
+            "output_dir": "z:\\samples_Uganda_v1_predict_results",
+            "transforms": ["aitlas.transforms.Transponse"],
+            "labels": ["Buildings", "Both", "Roads"],
+            "output_format": "image"
+        }
+    }
+}

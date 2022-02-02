@@ -1,0 +1,39 @@
+{
+    "model": {
+        "classname": "aitlas.models.DeepLabV3",
+        "config": {
+            "num_classes": 3,
+            "learning_rate": 0.0001,
+            "pretrained": true
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+          "config": {
+              "epochs": 50,
+              "model_directory": "examples/experiments/",
+              "save_epochs": 10,
+              "id": "ceois2_rgb01",
+              "train_dataset_config":{
+                  "classname": "aitlas.datasets.Uganda_RGB_Dataset",
+                  "config": {
+                      "batch_size": 2,
+                      "shuffle": true,
+                      "num_workers": 4,
+                      "data_dir": "z:\\samples_Uganda_v1_training",
+                      "transforms": ["aitlas.transforms.Transponse"]
+                  }
+              },
+              "val_dataset_config":{
+                    "classname": "aitlas.datasets.Uganda_RGB_Dataset",
+                    "config": {
+                        "batch_size": 1,
+                        "shuffle": false,
+                        "num_workers": 1,
+                        "data_dir": "z:/samples_Uganda_v1_validation",
+                        "transforms": ["aitlas.transforms.Transponse"]
+                    }
+              }
+        }
+    }
+}
