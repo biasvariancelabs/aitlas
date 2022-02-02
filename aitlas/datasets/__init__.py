@@ -34,4 +34,4 @@ from .massachusetts_roads import MassachusettsRoadsDataset
 from .inria import InriaDataset
 from .landcover_ai import LandCoverAiDataset
 from .chactun import ChactunDataset
-from .uganda import UgandaDataset
+from .uganda import UgandaDataset, Uganda_RGB_Dataset
