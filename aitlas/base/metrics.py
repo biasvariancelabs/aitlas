@@ -308,7 +308,7 @@ class SegmentationRunningScore(RunningScore):
                 self.f1_score_per_class[j] += (
                     1 if trues == 0 else (2 * intersection / trues)
                 )
-                self.pixel_accuracy_per_class[j] += correct / total
+                self.pixel_accuracy_per_class[j] += correct // total
 
     def reset(self):
         """Reset the metrics"""

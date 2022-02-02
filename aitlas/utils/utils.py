@@ -49,6 +49,7 @@ def image_loader(file_path, convert_to_grayscale=False):
 
 def image_invert(file_path, convert_to_grayscale=False):
     img = Image.open(file_path).convert("L")
+    # convert_to_grayscale should be renamed invert (0 to 255 and 255 to 0)
     if convert_to_grayscale:
         img = ImageOps.invert(img)
     return np.asarray(img)
