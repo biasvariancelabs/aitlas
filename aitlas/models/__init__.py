@@ -26,3 +26,4 @@ from .unet import Unet
 
 # from .unet_efficientnet import UNetEfficientNet
 from .vgg import VGG16, VGG19, VGG16MultiLabel, VGG19MultiLabel
+from .vision_transformer import VisionTransfomer, VisionTransfomerMultilabel
