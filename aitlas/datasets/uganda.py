@@ -10,7 +10,7 @@ from .schemas import SegmentationDatasetSchema
 
 
 LABELS = ["Buildings", "Both", "Roads"]
-COLOR_MAPPING = [[255, 255, 0], [100, 100, 100], [0, 255, 0]]
+COLOR_MAPPING = [[255, 255, 0], [255, 0, 255], [0, 255, 0]]
 
 
 """
@@ -125,7 +125,7 @@ class Uganda_RGB_Dataset(BaseDataset):
         self.load_dataset(self.config.data_dir)
 
     def __getitem__(self, index):
-        image = image_loader(self.images[index])[:3]  # load only first 3 bands
+        image = image_loader(self.images[index])[..., :3]  # load only first 3 bands
         # image = image_loader(self.images[index])[..., -4:-1]  # bands 5, 6, 7
         mask = np.zeros(
             shape=(len(self.masks[index]), image.shape[0], image.shape[1]), dtype=float
@@ -161,7 +161,7 @@ class Uganda_RGB_Dataset(BaseDataset):
         return self.labels
 
     def show_image(self, index):
-        img = self[index][0]
+        img = self[index][0].transpose(1, 2, 0)
         mask = self[index][1].transpose(1, 2, 0)
         legend_elements = []
         img_mask = []
@@ -173,7 +173,7 @@ class Uganda_RGB_Dataset(BaseDataset):
                 )
             )
             img_mask.append(np.zeros([mask.shape[0], mask.shape[1], 3], np.uint8))
-            img_mask[i][np.where(mask[:, :, i] == 255)] = self.color_mapping[i]
+            img_mask[i][np.where(mask[:, :, i] == 1)] = self.color_mapping[i]
 
         fig = plt.figure(figsize=(10, 8))
         fig.suptitle(
@@ -188,13 +188,13 @@ class Uganda_RGB_Dataset(BaseDataset):
         plt.imshow(img)
         plt.axis("off")
         plt.subplot(2, 2, 2)
-        plt.imshow(img_mask[0])
+        plt.imshow(img_mask[2])
         plt.axis("off")
         plt.subplot(2, 2, 3)
-        plt.imshow(img_mask[1])
+        plt.imshow(img_mask[0])
         plt.axis("off")
         plt.subplot(2, 2, 4)
-        plt.imshow(img_mask[2])
+        plt.imshow(img_mask[1])
         plt.axis("off")
         fig.tight_layout()
         plt.show()
