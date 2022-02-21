@@ -31,12 +31,12 @@ conda create -n aitlas python=3.8
 ```bash
 conda activate aitlas
 ```
-Before installing `aitlas` on Windows it is recommended to install the following packages 
+- Before installing `aitlas` on Windows it is recommended to install the following packages 
 from [Unofficial Windows wheels repository](https://www.lfd.uci.edu/~gohlke/pythonlibs/):
-- gdal - GDAL-3.4.1-cp38-cp38-win_amd64.whl 
-- fiona - Fiona-1.8.20-cp38-cp38-win_amd64.whl
-- rasterio - rasterio-1.2.10-cp38-cp38-win_amd64.whl
-Install the requirements
+  - gdal - GDAL-3.4.1-cp38-cp38-win_amd64.whl 
+  - fiona - Fiona-1.8.20-cp38-cp38-win_amd64.whl
+  - rasterio - rasterio-1.2.10-cp38-cp38-win_amd64.whl
+- Install the requirements
 ```bash
 pip install -r requirements.txt
 ```
