@@ -36,7 +36,7 @@ from [Unofficial Windows wheels repository](https://www.lfd.uci.edu/~gohlke/pyth
 - gdal - GDAL-3.4.1-cp38-cp38-win_amd64.whl 
 - fiona - Fiona-1.8.20-cp38-cp38-win_amd64.whl
 - rasterio - rasterio-1.2.10-cp38-cp38-win_amd64.whl
-- Install the requirements
+Install the requirements
 ```bash
 pip install -r requirements.txt
 ```
