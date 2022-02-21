@@ -21,27 +21,29 @@ AiTLAS examples:
 
 # Installation
 
-The best way to install `aitlas`, is if you create a virtual environment and install the  requirements with `pip` (or `pipenv`). Here are the steps:
+The best way to install `aitlas`, is if you create a virtual environment and install the  requirements with `pip`. Here are the steps:
 - Go to the folder where you cloned the repo.
 - Create a virtual environment
 ```bash
-virtualenv venv
+conda create -n aitlas python=3.8
 ```
 - Use the virtual environment
 ```bash
-source venv/bin/activate
+conda activate aitlas
 ```
-if you are using Windows, that step would be
-```bash
-venv\Scripts\activate
-```
+Before installing `aitlas` on Windows it is recommended to install the following packages 
+from [Unofficial Windows wheels repository](https://www.lfd.uci.edu/~gohlke/pythonlibs/):
+- gdal - GDAL-3.4.1-cp38-cp38-win_amd64.whl 
+- fiona - Fiona-1.8.20-cp38-cp38-win_amd64.whl
+- rasterio - rasterio-1.2.10-cp38-cp38-win_amd64.whl
 - Install the requirements
 ```bash
 pip install -r requirements.txt
 ```
 And, that's it, you can start using `aitlas`!
-
-
+```bash
+python -m aitlas.run configs/example_config.json
+```
 ## Citation
 For attribution in academic contexts, please cite this [work](https://arxiv.org/abs/2201.08789) as
 ```
