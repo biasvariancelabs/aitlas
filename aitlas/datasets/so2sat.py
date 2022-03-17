@@ -64,8 +64,8 @@ class So2SatDataset(BaseDataset):
     def __getitem__(self, index):
         label = self.data["label"][index]
 
-        # we are using sentinel 2 data onyl for now
-        img = self.data["sen2"][index][:, :, 2:5]
+        # we are using sentinel 2 data only for now
+        img = self.data["sen2"][index][:, :, 2:5].astype(np.float32)
 
         if self.transform:
             img = self.transform(img)
@@ -99,7 +99,7 @@ class So2SatDataset(BaseDataset):
     def show_batch(self, size):
         if size % 3:
             raise ValueError("The provided size should be divided by 3!")
-        image_indices = random.sample(range(0, len(self.data)), size)
+        image_indices = random.sample(range(0, len(self.data["sen2"])), size)
         figure_height = int(size / 3) * 4
         figure, ax = plt.subplots(int(size / 3), 3, figsize=(20, figure_height))
         figure.suptitle(
@@ -109,14 +109,7 @@ class So2SatDataset(BaseDataset):
         )
         for axes, image_index in zip(ax.flatten(), image_indices):
             axes.imshow(self[image_index][0])  # just show the RGB channel
-            labels_list = list(compress(self.labels, self[image_index][1]))
-            str_label_list = ""
-            if len(labels_list) > 4:
-                str_label_list = f"{str(labels_list[0:4]).strip('[]')}\n"
-                str_label_list += f"{str(labels_list[4:]).strip('[]')}\n"
-            else:
-                str_label_list = f"{str(labels_list).strip('[]')}\n"
-            axes.set_title(str_label_list[:-1], fontsize=18, pad=10)
+            axes.set_title(self.labels[self[image_index][1]], fontsize=18, pad=10)
             axes.set_xticks([])
             axes.set_yticks([])
         figure.tight_layout()
