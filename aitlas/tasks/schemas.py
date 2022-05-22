@@ -250,3 +250,28 @@ class ExtractFeaturesTaskSchema(BaseTaskShema):
         ],
         description="Classes to run transformations.",
     )
+
+
+class VisualizeSplitSetObjectSchema(Schema):
+    dataset_config = fields.Nested(
+        nested=ObjectConfig,
+        required=True,
+        description="Dataset type and configuration.",
+    )
+
+
+class VisualizeSplitObjectSchema(Schema):
+    train = fields.Nested(ObjectConfig, required=False, missing=None)
+    val = fields.Nested(ObjectConfig, required=False, missing=None)
+    test = fields.Nested(ObjectConfig, required=False, missing=None)
+
+
+class VisualizeTaskSchema(BaseTaskShema):
+    output_file = fields.String(
+        missing="plot.jpg", description="Image file path where the plots will be shown",
+    )
+    split = fields.Nested(
+        VisualizeSplitObjectSchema,
+        description="Configuration with the splits to the dataset.",
+        missing=None,
+    )
