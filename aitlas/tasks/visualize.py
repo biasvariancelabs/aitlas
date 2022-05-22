@@ -52,7 +52,7 @@ class VisualizeTask(BaseTask):
         return fig
 
     def run(self):
-        """Visualize the distributoin of the dataset"""
+        """Visualize the distribution of the dataset"""
 
         logging.info("Loading config...")
 

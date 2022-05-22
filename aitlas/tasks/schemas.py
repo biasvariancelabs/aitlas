@@ -253,9 +253,6 @@ class ExtractFeaturesTaskSchema(BaseTaskShema):
 
 
 class VisualizeSplitSetObjectSchema(Schema):
-    # file = fields.String(
-    #     required=True, description="File indices", example="./data/indices.csv"
-    # )
     dataset_config = fields.Nested(
         nested=ObjectConfig,
         required=True,
