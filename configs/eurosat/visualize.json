@@ -1,0 +1,30 @@
+{
+    "task": {
+        "classname": "aitlas.tasks.VisualizeTask",
+        "config": {
+            "split": {
+                "train": {
+                    "classname": "aitlas.datasets.EurosatDataset",
+                    "config": {
+                        "data_dir": "/media/hdd/EuroSAT/2750",
+                        "csv_file": "/media/hdd/EuroSAT/2750/train.csv"
+                    }
+                },
+                "val": {
+                    "classname": "aitlas.datasets.EurosatDataset",
+                    "config": {
+                        "data_dir": "/media/hdd/EuroSAT/2750",
+                        "csv_file": "/media/hdd/EuroSAT/2750/val.csv"
+                    }
+                },
+                "test": {
+                    "classname": "aitlas.datasets.EurosatDataset",
+                    "config": {
+                        "data_dir": "/media/hdd/EuroSAT/2750",
+                        "csv_file": "/media/hdd/EuroSAT/2750/test.csv"
+                    }
+                }
+            }
+        }
+    }
+}
