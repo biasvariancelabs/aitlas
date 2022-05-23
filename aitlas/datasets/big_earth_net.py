@@ -281,7 +281,7 @@ class BigEarthNetDataset(BaseDataset):
         if size % 2:
             raise ValueError("The provided size should be divided by 2!")
         image_indices = random.sample(range(0, len(self.patches)), int(size / 2))
-        #figure_height = int(size / 3) * 4
+        # figure_height = int(size / 3) * 4
         figure, ax = plt.subplots(int(size / 4), 4, figsize=(20, 30))
         figure.suptitle(
             "Example images with labels from {}".format(self.get_name()), fontsize=32, y=1.006
@@ -290,7 +290,7 @@ class BigEarthNetDataset(BaseDataset):
             if image_index % 2 == 1:
                 labels_list = list(compress(self.labels.keys(), self[image_indices[int(image_index / 2)]][2]))
                 str_label_list = f"{str(labels_list).strip('[]')}"
-                #str_label_list = str_label_list.replace(",", "\n")
+                # str_label_list = str_label_list.replace(",", "\n")
                 str_label_list = '\n'.join(textwrap.wrap(str_label_list, 25, break_long_words=False))
                 axes.text(0.1, 0.5, str_label_list, fontsize=18)
                 axes.axis('off')
@@ -301,11 +301,36 @@ class BigEarthNetDataset(BaseDataset):
         figure.tight_layout()
         return figure
 
-    def show_stats(self):
+    def data_distribution_table(self):
         distribution_table = {}
         for label in self.labels.keys():
             distribution_table[label] = 0
 
+        for patch_index, patch_name in enumerate(self.patches):
+            if patch_index and patch_index % 50000 == 0:
+                print(f"Processed {patch_index} of {len(self.patches)}")
+
+            _, multihots = self[patch_index]
+
+            indices = [index for index, element in enumerate(multihots) if element == 1]
+            for index in indices:
+                key = [k for k, v in self.labels.items() if v == index]
+                distribution_table[key[0]] += 1
+
+        # creating a Dataframe object from a list of tuples of key, value pair
+        label_count = pd.DataFrame(list(distribution_table.items()))
+        label_count.columns = ["Label", "Count"]
+
+        return label_count
+
+    def data_distribution_barchart(self):
+        label_count = self.data_distribution_table()
+        fig, ax = plt.subplots(figsize=(12, 10))
+        sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
+        ax.set_title("Image distribution for {}".format(self.get_name()), pad=20, fontsize=18)
+        return fig
+
+    def labels_stats(self):
         min_number = float('inf')
         max_number = float('-inf')
         average_number = 0
@@ -313,12 +338,7 @@ class BigEarthNetDataset(BaseDataset):
             if patch_index and patch_index % 50000 == 0:
                 print(f"Processed {patch_index} of {len(self.patches)}")
 
-            _, _, multihots = self[patch_index]
-
-            indices = [index for index, element in enumerate(multihots) if element == 1]
-            for index in indices:
-                key = [k for k, v in self.labels.items() if v == index]
-                distribution_table[key[0]] += 1
+            _, multihots = self[patch_index]
 
             if sum(multihots) < min_number:
                 min_number = sum(multihots)
@@ -328,16 +348,8 @@ class BigEarthNetDataset(BaseDataset):
 
             average_number += sum(multihots)
 
-        # creating a Dataframe object from a list of tuples of key, value pair
-        label_count = pd.DataFrame(list(distribution_table.items()))
-        label_count.columns = ["Label", "Count"]
-
-        fig, ax = plt.subplots(figsize=(12, 10))
-        sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
-        ax.set_title("Image distribution for {}".format(self.get_name()), pad=20, fontsize=18)
-
-        return fig, label_count, f"Minimum number of labels: {min_number}, Maximum number of labels: {max_number}, " \
-                                 f"Average number of labels: {average_number / len(self.patches)}"
+        return f"Minimum number of labels: {min_number}, Maximum number of labels: {max_number}, " \
+               f"Average number of labels: {average_number / len(self.patches)}"
 
     def prepare(self):
         super().prepare()
