@@ -267,6 +267,9 @@ class VisualizeSplitObjectSchema(Schema):
 
 
 class VisualizeTaskSchema(BaseTaskShema):
+    output_xls = fields.String(
+        missing=None, description="Excel file path where the splits will be saved",
+    )
     output_file = fields.String(
         missing="plot.jpg", description="Image file path where the plots will be shown",
     )
