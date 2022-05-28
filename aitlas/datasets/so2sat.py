@@ -1,14 +1,10 @@
 import logging
-import os
 import random
-from itertools import compress
-
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import torch
 
 from ..base import BaseDataset
 from .schemas import So2SatDatasetSchema
@@ -18,23 +14,23 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 LABELS = [
-    "1_compact_high_rise",
-    "2_compact_middle_rise",
-    "3_compact_low_rise",
-    "4_open_high_rise",
-    "5_open_middle_rise",
-    "6_open_low_rise",
-    "7_lightweight_low_rise",
-    "8_large_low_rise",
-    "9_sparsely_built",
-    "10_heavy_industry",
-    "A_dense_trees",
-    "B_scattered_trees",
-    "C_bush_scrub",
-    "D_low_plants",
-    "E_bare_rock_or_paved",
-    "F_bare_soil_or_sand",
-    "G_water",
+    "Compact high_rise",
+    "Compact middle_rise",
+    "Compact low_rise",
+    "Open high_rise",
+    "Open middle_rise",
+    "Open low_rise",
+    "Lightweight low_rise",
+    "Large low_rise",
+    "Sparsely built",
+    "Heavy industry",
+    "Dense trees",
+    "Scattered trees",
+    "Bush or scrub",
+    "Low plants",
+    "Bare rock or paved",
+    "Bare soil or sand",
+    "Water",
 ]
 
 
@@ -65,7 +61,7 @@ class So2SatDataset(BaseDataset):
         label = self.data["label"][index]
 
         # we are using sentinel 2 data only for now
-        img = self.data["sen2"][index][:, :, 2:5].astype(np.float32)
+        img = self.data["sen2"][index][:, :, [2, 1, 0]].astype(np.float32)
 
         if self.transform:
             img = self.transform(img)
@@ -73,7 +69,8 @@ class So2SatDataset(BaseDataset):
         if self.target_transform:
             label = self.target_transform(label)
 
-        return img, np.where(label == 1.0)[0][0]
+        # Calibration for the optical RGB channels of Sentinel-2 in this dataset.
+        return np.clip(img * 3.5 * 255.0, 0, 255).astype(np.uint8), np.where(label == 1.0)[0][0]
 
     def __len__(self):
         return self.data["label"].shape[0]
@@ -82,11 +79,10 @@ class So2SatDataset(BaseDataset):
         return self.labels
 
     def show_image(self, index):
-        labels_list = list(compress(self.labels, self[index][1]))
+        label = self.labels[self[index][1]]
         fig = plt.figure(figsize=(8, 6))
         plt.title(
-            f"Image with index {index} from the dataset {self.get_name()}, with labels:\n "
-            f"{str(labels_list).strip('[]')}\n",
+            f"Image with index {index} from the dataset {self.get_name()}, with label {label}\n",
             fontsize=14,
         )
         plt.axis("off")
@@ -96,17 +92,17 @@ class So2SatDataset(BaseDataset):
     def show_samples(self):
         return self.data["label"][:20]
 
-    def show_batch(self, size):
-        if size % 3:
-            raise ValueError("The provided size should be divided by 3!")
+    def show_batch(self, size, show_title=True):
+        if size % 5:
+            raise ValueError("The provided size should be divided by 5!")
         image_indices = random.sample(range(0, len(self.data["sen2"])), size)
-        figure_height = int(size / 3) * 4
-        figure, ax = plt.subplots(int(size / 3), 3, figsize=(20, figure_height))
-        figure.suptitle(
-            "Example images with labels from {}".format(self.get_name()),
-            fontsize=32,
-            y=1.006,
-        )
+        figure, ax = plt.subplots(int(size / 5), 5, figsize=(13.75, 2.8*int(size/5)))
+        if show_title:
+            figure.suptitle(
+                "Example images with labels from {}".format(self.get_name()),
+                fontsize=32,
+                y=1.006,
+            )
         for axes, image_index in zip(ax.flatten(), image_indices):
             axes.imshow(self[image_index][0])  # just show the RGB channel
             axes.set_title(self.labels[self[image_index][1]], fontsize=18, pad=10)

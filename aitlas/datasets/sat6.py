@@ -18,7 +18,7 @@ test_x  28x28x4x100000 uint8 (containing 100000 test samples of 28x28 images eac
 test_y  100000x6 uint8 (containing 6x1 vectors having labels for the 100000 test samples)
 """
 
-LABELS = ["barren land", "trees", "grassland", "roads", "buildings", "water bodies"]
+LABELS = ["buildings", "barren land", "trees", "grassland", "roads", "water bodies"]
 
 
 class SAT6Dataset(BaseDataset):
@@ -90,17 +90,17 @@ class SAT6Dataset(BaseDataset):
         plt.imshow(self[index][0])
         return fig
 
-    def show_batch(self, size):
-        if size % 3:
-            raise ValueError("The provided size should be divided by 4!")
+    def show_batch(self, size, show_title=True):
+        if size % 5:
+            raise ValueError("The provided size should be divided by 5!")
         image_indices = random.sample(range(0, len(self.data)), size)
-        figure_height = int(size / 3) * 4
-        figure, ax = plt.subplots(int(size / 3), 3, figsize=(20, figure_height))
-        figure.suptitle(
-            "Example images with labels from {}".format(self.get_name()),
-            fontsize=32,
-            y=1.006,
-        )
+        figure, ax = plt.subplots(int(size / 5), 5, figsize=(13.75, 2.8*int(size/5)))
+        if show_title:
+            figure.suptitle(
+                "Example images with labels from {}".format(self.get_name()),
+                fontsize=32,
+                y=1.006,
+            )
         for axes, image_index in zip(ax.flatten(), image_indices):
             axes.imshow(self[image_index][0])
             axes.set_title(self.labels[self[image_index][1]], fontsize=18, pad=10)
