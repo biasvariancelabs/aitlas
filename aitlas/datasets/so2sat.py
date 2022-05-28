@@ -123,6 +123,6 @@ class So2SatDataset(BaseDataset):
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
         ax.set_title(
-            "Image distribution for {}".format(self.get_name()), pad=20, fontsize=18
+            "Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18
         )
         return fig
