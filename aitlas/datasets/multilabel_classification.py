@@ -1,9 +1,11 @@
 import random
 from itertools import compress
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import numpy as np
+import cv2
+import math
 
 from ..base import BaseDataset
 from ..utils import image_loader, load_voc_format_dataset
@@ -85,29 +87,44 @@ class MultiLabelClassificationDataset(BaseDataset):
         plt.imshow(self[index][0])
         return fig
 
-    def show_batch(self, size):
-        if size % 3:
-            raise ValueError("The provided size should be divided by 3!")
+    def show_batch(self, size, show_title=True):
+        if size % 4:
+            raise ValueError("The provided size should be divided by 4!")
         image_indices = random.sample(range(0, len(self.data)), size)
-        figure_height = int(size / 3) * 4
-        figure, ax = plt.subplots(int(size / 3), 3, figsize=(20, figure_height))
-        figure.suptitle(
-            "Example images with labels from {}".format(self.get_name()),
-            fontsize=32,
-            y=1.006,
-        )
+        figure, ax = plt.subplots(int(size / 4), 4, figsize=(13.75, 2.0*int(size/4)))
+        if show_title:
+            figure.suptitle(
+                "Example images with labels from {}".format(self.get_name()),
+                fontsize=32,
+                y=1.006,
+            )
         for axes, image_index in zip(ax.flatten(), image_indices):
-            axes.imshow(self[image_index][0])
             labels_list = list(compress(self.labels, self[image_index][1]))
-            str_label_list = ""
-            if len(labels_list) > 4:
-                str_label_list = f"{str(labels_list[0:4]).strip('[]')}\n"
-                str_label_list += f"{str(labels_list[4:]).strip('[]')}\n"
-            else:
-                str_label_list = f"{str(labels_list).strip('[]')}\n"
-            axes.set_title(str_label_list[:-1], fontsize=18, pad=10)
+            height, width, depth = self[image_index][0].shape
+            white_image = np.zeros([height, width, 3], dtype=np.uint8)
+            white_image.fill(255)
+            text = '\n'. join(labels_list)
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_size = width/600 * 2.5
+            font_thickness = math.ceil(width/600 * 4)
+            x = 30
+
+            for i, line in enumerate(text.split('\n')):
+                textsize = cv2.getTextSize(line, font, font_size, font_thickness)[0]
+                gap = textsize[1] + 5
+                y = textsize[1] + i * gap
+                cv2.putText(white_image, line, (x, y), font,
+                            font_size,
+                            (0, 0, 0),
+                            font_thickness,
+                            lineType=cv2.LINE_AA)
+
+            display_image = np.hstack((self[image_index][0], white_image))
+            axes.imshow(display_image)
             axes.set_xticks([])
             axes.set_yticks([])
+            axes.axis('off')
         figure.tight_layout()
         return figure
 
