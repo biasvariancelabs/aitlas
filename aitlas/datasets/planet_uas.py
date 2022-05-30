@@ -1,8 +1,4 @@
 import csv
-import random
-from itertools import compress
-
-import matplotlib.pyplot as plt
 
 from .multilabel_classification import MultiLabelClassificationDataset
 
@@ -54,44 +50,6 @@ class PlanetUASMultiLabelDataset(MultiLabelClassificationDataset):
         if self.target_transform:
             target = self.target_transform(self.data[index][1])
         return img, target
-
-    def show_image(self, index):
-        labels_list = list(compress(self.labels, self[index][1]))
-        fig = plt.figure(figsize=(8, 6))
-        plt.title(
-            f"Image with index {index} from the dataset {self.get_name()}, with labels:\n "
-            f"{str(labels_list).strip('[]')}\n",
-            fontsize=14,
-        )
-        plt.axis("off")
-        plt.imshow(self[index][0])
-        return fig
-
-    def show_batch(self, size):
-        if size % 3:
-            raise ValueError("The provided size should be divided by 3!")
-        image_indices = random.sample(range(0, len(self.data)), size)
-        figure_height = int(size / 3) * 4
-        figure, ax = plt.subplots(int(size / 3), 3, figsize=(20, figure_height))
-        figure.suptitle(
-            "Example images with labels from {}".format(self.get_name()),
-            fontsize=32,
-            y=1.006,
-        )
-        for axes, image_index in zip(ax.flatten(), image_indices):
-            axes.imshow(self[image_index][0])
-            labels_list = list(compress(self.labels, self[image_index][1]))
-            str_label_list = ""
-            if len(labels_list) > 4:
-                str_label_list = f"{str(labels_list[0:4]).strip('[]')}\n"
-                str_label_list += f"{str(labels_list[4:]).strip('[]')}\n"
-            else:
-                str_label_list = f"{str(labels_list).strip('[]')}\n"
-            axes.set_title(str_label_list[:-1], fontsize=18, pad=10)
-            axes.set_xticks([])
-            axes.set_yticks([])
-        figure.tight_layout()
-        return figure
 
 
 # Run this Function to convert the dataset in PASCAL VOC data format
