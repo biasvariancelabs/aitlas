@@ -8,8 +8,8 @@ import random
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import textwrap
 import pickle
+import cv2
 
 from itertools import compress
 from skimage.transform import resize
@@ -106,6 +106,15 @@ LABELS = {
         "Inland waters": 17,
         "Marine waters": 18,
     },
+}
+
+DISPLAY_NAMES = {
+    "Land principally occupied by agriculture, with significant areas of natural vegetation":
+        "Agriculture and vegetation",
+    "Annual crops associated with permanent crops": "Crops",
+    "Natural grassland and sparsely vegetated areas": "Grassland",
+    "Moors, heathland and sclerophyllous vegetation": "Moors and heathland",
+    "Road and rail networks and associated land": "Road and rail networks",
 }
 
 
@@ -223,11 +232,14 @@ class BigEarthNetDataset(BaseDataset):
                 multihots = multihots_43.astype(np.float32)
 
             if self.selection == 'rgb':
-                bands10 = bands10.astype(np.float32)[:, :, 0:3]
+                bands10 = bands10.astype(np.float32)[:, :, [2, 1, 0]]
                 if self.transform:
                     bands10 = self.transform(bands10)
                 if self.target_transform:
                     multihots = self.target_transform(multihots)
+
+                bands10 = bands10 / 2000 * 255.0
+                bands10 = np.clip(bands10, 0, 255).astype(np.uint8)
 
                 return bands10, multihots
 
@@ -277,27 +289,46 @@ class BigEarthNetDataset(BaseDataset):
         plt.imshow(self[index][0].astype('uint16') / 4096.0)
         return fig
 
-    def show_batch(self, size):
-        if size % 2:
-            raise ValueError("The provided size should be divided by 2!")
-        image_indices = random.sample(range(0, len(self.patches)), int(size / 2))
-        # figure_height = int(size / 3) * 4
-        figure, ax = plt.subplots(int(size / 4), 4, figsize=(20, 30))
-        figure.suptitle(
-            "Example images with labels from {}".format(self.get_name()), fontsize=32, y=1.006
-        )
-        for image_index, axes in enumerate(ax.flatten()):
-            if image_index % 2 == 1:
-                labels_list = list(compress(self.labels.keys(), self[image_indices[int(image_index / 2)]][2]))
-                str_label_list = f"{str(labels_list).strip('[]')}"
-                # str_label_list = str_label_list.replace(",", "\n")
-                str_label_list = '\n'.join(textwrap.wrap(str_label_list, 25, break_long_words=False))
-                axes.text(0.1, 0.5, str_label_list, fontsize=18)
-                axes.axis('off')
-            else:
-                axes.imshow(self[image_indices[int(image_index / 2)]][0].astype('uint16') / 4096.0)
-                axes.set_title(self.get_item_name(image_indices[int(image_index / 2)]), fontsize=18, pad=10)
-                axes.axis('off')
+    def show_batch(self, size, show_title=True):
+        if size % 3:
+            raise ValueError("The provided size should be divided by 3!")
+        image_indices = random.sample(range(0, len(self.patches)), size)
+        figure, ax = plt.subplots(int(size / 3), 3, figsize=(13.75, 2.0 * int(size / 3)))
+        if show_title:
+            figure.suptitle(
+                "Example images with labels from {}".format(self.get_name()),
+                fontsize=32,
+                y=1.006,
+            )
+        for axes, image_index in zip(ax.flatten(), image_indices):
+            labels_list = list(compress(self.labels.keys(), self[image_index][1]))
+            height, width, depth = self[image_index][0].shape
+            white_image = np.zeros([height, 2*width, 3], dtype=np.uint8)
+            white_image.fill(255)
+            text = '\n'.join(labels_list)
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_size = 0.5
+            font_thickness = 1
+            x = 10
+
+            for i, line in enumerate(text.split('\n')):
+                if line in DISPLAY_NAMES.keys():
+                    line = DISPLAY_NAMES[line]
+                textsize = cv2.getTextSize(line, font, font_size, font_thickness)[0]
+                gap = textsize[1] + 5
+                y = textsize[1] + i * gap
+                cv2.putText(white_image, line, (x, y), font,
+                            font_size,
+                            (0, 0, 0),
+                            font_thickness,
+                            lineType=cv2.LINE_AA)
+
+            display_image = np.hstack((self[image_index][0], white_image))
+            axes.imshow(display_image)
+            axes.set_xticks([])
+            axes.set_yticks([])
+            axes.axis('off')
         figure.tight_layout()
         return figure
 
@@ -307,7 +338,7 @@ class BigEarthNetDataset(BaseDataset):
             distribution_table[label] = 0
 
         for patch_index, patch_name in enumerate(self.patches):
-            if patch_index and patch_index % 50000 == 0:
+            if patch_index and patch_index % 100000 == 0:
                 print(f"Processed {patch_index} of {len(self.patches)}")
 
             _, multihots = self[patch_index]
@@ -335,7 +366,7 @@ class BigEarthNetDataset(BaseDataset):
         max_number = float('-inf')
         average_number = 0
         for patch_index, patch_name in enumerate(self.patches):
-            if patch_index and patch_index % 50000 == 0:
+            if patch_index and patch_index % 100000 == 0:
                 print(f"Processed {patch_index} of {len(self.patches)}")
 
             _, multihots = self[patch_index]
