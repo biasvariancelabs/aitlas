@@ -5,17 +5,6 @@ import torchvision.models as models
 from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
-def weights_init_kaiming(m):
-    classname = m.__class__.__name__
-    if classname.find("Conv2d") != -1:
-        init.kaiming_normal_(m.weight.data)
-
-
-def fc_init_weights(m):
-    if type(m) == nn.Linear:
-        init.kaiming_normal_(m.weight.data)
-
-
 class VGG16(BaseMulticlassClassifier):
     def __init__(self, config):
         super().__init__(config)
@@ -26,7 +15,8 @@ class VGG16(BaseMulticlassClassifier):
             self.model.classifier.add_module(
                 "6", nn.Linear(4096, self.config.num_classes, bias=True)
             )
-
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.vgg16(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -34,6 +24,12 @@ class VGG16(BaseMulticlassClassifier):
 
     def forward(self, x):
         return self.model(x)
+
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.classifier.parameters():
+            param.require_grad = True
 
     def extract_features(self):
         """ Remove final layers if we only need to extract features """
@@ -52,7 +48,8 @@ class VGG19(BaseMulticlassClassifier):
             self.model.classifier.add_module(
                 "6", nn.Linear(4096, self.config.num_classes, bias=True)
             )
-
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.vgg19(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -67,6 +64,12 @@ class VGG19(BaseMulticlassClassifier):
 
         return self.model
 
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.classifier.parameters():
+            param.require_grad = True
+
 
 class VGG16MultiLabel(BaseMultilabelClassifier):
     def __init__(self, config):
@@ -78,7 +81,8 @@ class VGG16MultiLabel(BaseMultilabelClassifier):
             self.model.classifier.add_module(
                 "6", nn.Linear(4096, self.config.num_classes, bias=True)
             )
-
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.vgg16(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -93,6 +97,12 @@ class VGG16MultiLabel(BaseMultilabelClassifier):
 
         return self.model
 
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.classifier.parameters():
+            param.require_grad = True
+
 
 class VGG19MultiLabel(BaseMultilabelClassifier):
     def __init__(self, config):
@@ -104,7 +114,8 @@ class VGG19MultiLabel(BaseMultilabelClassifier):
             self.model.classifier.add_module(
                 "6", nn.Linear(4096, self.config.num_classes, bias=True)
             )
-
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.vgg19(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -112,6 +123,12 @@ class VGG19MultiLabel(BaseMultilabelClassifier):
 
     def forward(self, x):
         return self.model(x)
+
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.classifier.parameters():
+            param.require_grad = True
 
     def extract_features(self):
         """ Remove final layers if we only need to extract features """

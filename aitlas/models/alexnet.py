@@ -14,7 +14,8 @@ class AlexNet(BaseMulticlassClassifier):
             self.model.classifier.add_module(
                 "6", nn.Linear(4096, self.config.num_classes, bias=True)
             )
-
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.alexnet(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -28,6 +29,12 @@ class AlexNet(BaseMulticlassClassifier):
         self.model.classifier = self.model.classifier[:-3]
 
         return self.model
+
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.classifier.parameters():
+            param.require_grad = True
 
 
 class AlexNetMultiLabel(BaseMultilabelClassifier):
@@ -40,6 +47,8 @@ class AlexNetMultiLabel(BaseMultilabelClassifier):
             self.model.classifier.add_module(
                 "6", nn.Linear(4096, self.config.num_classes, bias=True)
             )
+            if self.config.freeze:
+                self.freeze()
 
         else:
             self.model = models.alexnet(
@@ -54,3 +63,9 @@ class AlexNetMultiLabel(BaseMultilabelClassifier):
         self.model.classifier = self.model.classifier[:-3]
 
         return self.model
+
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.classifier.parameters():
+            param.require_grad = True

@@ -45,21 +45,18 @@ class BaseMulticlassClassifier(BaseModel):
 
     def load_optimizer(self):
         """Load the optimizer"""
-        # return optim.Adam(
-        #    self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4
-        # )
-        return optim.RAdam(
-            self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4
+        return optim.Adam(
+            self.model.parameters(),
+            lr=self.config.learning_rate,
+            weight_decay=self.config.weight_decay,
         )
 
     def load_criterion(self):
         """Load the loss function"""
         return nn.CrossEntropyLoss(weight=self.weights)
 
-    def load_lr_scheduler(self):
-        # return torch.optim.lr_scheduler.ExponentialLR(self.load_optimizer(), gamma=0.9)
-        return torch.optim.lr_scheduler.ReduceLROnPlateau(self.load_optimizer(), 'min')
-        # return None
+    def load_lr_scheduler(self, optimizer):
+        return torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)
 
 
 class BaseMultilabelClassifier(BaseModel):
@@ -84,8 +81,8 @@ class BaseMultilabelClassifier(BaseModel):
         """Load the loss function"""
         return nn.BCEWithLogitsLoss(weight=self.weights)
 
-    def load_lr_scheduler(self):
-        return None
+    def load_lr_scheduler(self, optimizer):
+        return torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)
 
     def get_predicted(self, outputs, threshold=None):
         predicted_probs = torch.sigmoid(outputs)

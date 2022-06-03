@@ -12,6 +12,8 @@ class ResNet50(BaseMulticlassClassifier):
             self.model = models.resnet50(self.config.pretrained, False)
             num_ftrs = self.model.fc.in_features
             self.model.fc = nn.Linear(num_ftrs, self.config.num_classes)
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.resnet50(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -41,6 +43,8 @@ class ResNet152(BaseMulticlassClassifier):
             self.model = models.resnet152(self.config.pretrained, False)
             num_ftrs = self.model.fc.in_features
             self.model.fc = nn.Linear(num_ftrs, self.config.num_classes)
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.resnet152(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -55,6 +59,12 @@ class ResNet152(BaseMulticlassClassifier):
 
         return self.model
 
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.fc.parameters():
+            param.require_grad = True
+
 
 class ResNet50MultiLabel(BaseMultilabelClassifier):
     def __init__(self, config):
@@ -64,6 +74,8 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
             self.model = models.resnet50(self.config.pretrained, False)
             num_ftrs = self.model.fc.in_features
             self.model.fc = nn.Linear(num_ftrs, self.config.num_classes)
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.resnet50(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -78,6 +90,12 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
 
         return self.model
 
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.fc.parameters():
+            param.require_grad = True
+
 
 class ResNet152MultiLabel(BaseMultilabelClassifier):
     def __init__(self, config):
@@ -87,6 +105,8 @@ class ResNet152MultiLabel(BaseMultilabelClassifier):
             self.model = models.resnet152(self.config.pretrained, False)
             num_ftrs = self.model.fc.in_features
             self.model.fc = nn.Linear(num_ftrs, self.config.num_classes)
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.resnet152(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -100,3 +120,9 @@ class ResNet152MultiLabel(BaseMultilabelClassifier):
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model
+
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.fc.parameters():
+            param.require_grad = True

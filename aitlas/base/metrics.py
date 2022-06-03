@@ -61,7 +61,7 @@ class RunningScore(object):
             2
             * precision["Precision Micro"]
             * recall["Recall Micro"]
-            / (precision["Precision Micro"] + recall["Recall Micro"])
+            / (precision["Precision Micro"] + recall["Recall Micro"] + 1e-15)
         )
         per_class = (
             2

@@ -4,7 +4,7 @@ import torch.nn as nn
 from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
-class VisionTransfomer(BaseMulticlassClassifier):
+class VisionTransformer(BaseMulticlassClassifier):
     def __init__(self, config):
         super().__init__(config)
 
@@ -19,7 +19,7 @@ class VisionTransfomer(BaseMulticlassClassifier):
         return self.model(x)
 
 
-class VisionTransfomerMultilabel(BaseMultilabelClassifier):
+class VisionTransformerMultilabel(BaseMultilabelClassifier):
     def __init__(self, config):
         super().__init__(config)
 

@@ -53,13 +53,16 @@ class BaseClassifierSchema(BaseModelSchema):
         missing=0.01, description="Learning rate used in training.", example=0.01
     )
     weight_decay = fields.Float(
-        missing=1e-4, description="Learning rate used in training.", example=0.01
+        missing=0.0, description="Learning rate used in training.", example=0.01
     )
     pretrained = fields.Bool(
         missing=True, description="Whether to use a pretrained network or not."
     )
     threshold = fields.Float(
         missing=0.5, description="Prediction threshold if needed", example=0.5
+    )
+    freeze = fields.Bool(
+        missing=False, description="Whether to freeze all the layers except for the classifier layer(s)."
     )
 
 

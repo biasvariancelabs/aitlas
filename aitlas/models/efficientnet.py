@@ -10,8 +10,10 @@ class EfficientNetB0(BaseMulticlassClassifier):
 
         if self.config.pretrained:
             self.model = models.efficientnet_b0(self.config.pretrained, False)
-            num_ftrs = self.model.classifier.in_features
+            num_ftrs = self.model.classifier[1].in_features
             self.model.classifier[1] = nn.Linear(num_ftrs, self.config.num_classes)
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.efficientnet_b0(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -23,7 +25,7 @@ class EfficientNetB0(BaseMulticlassClassifier):
     def freeze(self):
         for param in self.model.parameters():
             param.require_grad = False
-        for param in self.model.fc.parameters():
+        for param in self.model.classifier.parameters():
             param.require_grad = True
 
     """ Remove final layers if we only need to extract features """
@@ -41,6 +43,8 @@ class EfficientNetB0MultiLabel(BaseMultilabelClassifier):
             self.model = models.efficientnet_b0(self.config.pretrained, False)
             num_ftrs = self.model.classifier[1].in_features
             self.model.classifier[1] = nn.Linear(num_ftrs, self.config.num_classes)
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.efficientnet_b0(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -55,6 +59,12 @@ class EfficientNetB0MultiLabel(BaseMultilabelClassifier):
 
         return self.model
 
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.classifier.parameters():
+            param.require_grad = True
+
 
 class EfficientNetB4(BaseMulticlassClassifier):
     def __init__(self, config):
@@ -64,6 +74,8 @@ class EfficientNetB4(BaseMulticlassClassifier):
             self.model = models.efficientnet_b4(self.config.pretrained, False)
             num_ftrs = self.model.classifier[1].in_features
             self.model.classifier[1] = nn.Linear(num_ftrs, self.config.num_classes)
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.efficientnet_b4(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -75,7 +87,7 @@ class EfficientNetB4(BaseMulticlassClassifier):
     def freeze(self):
         for param in self.model.parameters():
             param.require_grad = False
-        for param in self.model.fc.parameters():
+        for param in self.model.classifier.parameters():
             param.require_grad = True
 
     """ Remove final layers if we only need to extract features """
@@ -93,6 +105,8 @@ class EfficientNetB4MultiLabel(BaseMultilabelClassifier):
             self.model = models.efficientnet_b4(self.config.pretrained, False)
             num_ftrs = self.model.classifier[1].in_features
             self.model.classifier[1] = nn.Linear(num_ftrs, self.config.num_classes)
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.efficientnet_b4(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -107,6 +121,12 @@ class EfficientNetB4MultiLabel(BaseMultilabelClassifier):
 
         return self.model
 
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.classifier.parameters():
+            param.require_grad = True
+
 
 class EfficientNetB7(BaseMulticlassClassifier):
     def __init__(self, config):
@@ -116,6 +136,8 @@ class EfficientNetB7(BaseMulticlassClassifier):
             self.model = models.efficientnet_b7(self.config.pretrained, False)
             num_ftrs = self.model.classifier.in_features
             self.model.classifier[1] = nn.Linear(num_ftrs, self.config.num_classes)
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.efficientnet_b7(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -145,6 +167,8 @@ class EfficientNetB7MultiLabel(BaseMultilabelClassifier):
             self.model = models.efficientnet_b7(self.config.pretrained, False)
             num_ftrs = self.model.classifier[1].in_features
             self.model.classifier[1] = nn.Linear(num_ftrs, self.config.num_classes)
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.efficientnet_b7(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -158,6 +182,12 @@ class EfficientNetB7MultiLabel(BaseMultilabelClassifier):
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model
+
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.classifier.parameters():
+            param.require_grad = True
 
 
 

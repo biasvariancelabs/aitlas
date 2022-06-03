@@ -12,6 +12,8 @@ class DenseNet161(BaseMulticlassClassifier):
             self.model = models.densenet161(self.config.pretrained, False)
             num_ftrs = self.model.classifier.in_features
             self.model.classifier = nn.Linear(num_ftrs, self.config.num_classes)
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.densenet161(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -25,6 +27,12 @@ class DenseNet161(BaseMulticlassClassifier):
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model
+
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.classifier.parameters():
+            param.require_grad = True
 
 
 class DenseNet161MultiLabel(BaseMultilabelClassifier):
@@ -35,6 +43,8 @@ class DenseNet161MultiLabel(BaseMultilabelClassifier):
             self.model = models.densenet161(self.config.pretrained, False)
             num_ftrs = self.model.classifier.in_features
             self.model.classifier = nn.Linear(num_ftrs, self.config.num_classes)
+            if self.config.freeze:
+                self.freeze()
         else:
             self.model = models.densenet161(
                 self.config.pretrained, False, num_classes=self.config.num_classes
@@ -48,3 +58,9 @@ class DenseNet161MultiLabel(BaseMultilabelClassifier):
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model
+
+    def freeze(self):
+        for param in self.model.parameters():
+            param.require_grad = False
+        for param in self.model.classifier.parameters():
+            param.require_grad = True
