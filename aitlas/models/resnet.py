@@ -5,6 +5,8 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class ResNet50(BaseMulticlassClassifier):
+    name = "ResNet50"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -36,6 +38,8 @@ class ResNet50(BaseMulticlassClassifier):
 
 
 class ResNet152(BaseMulticlassClassifier):
+    name = "ResNet152"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -67,6 +71,8 @@ class ResNet152(BaseMulticlassClassifier):
 
 
 class ResNet50MultiLabel(BaseMultilabelClassifier):
+    name = "ResNet50"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -98,6 +104,8 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
 
 
 class ResNet152MultiLabel(BaseMultilabelClassifier):
+    name = "ResNet152"
+
     def __init__(self, config):
         super().__init__(config)
 

@@ -5,6 +5,8 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class DenseNet161(BaseMulticlassClassifier):
+    name = "DenseNet161"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -36,6 +38,8 @@ class DenseNet161(BaseMulticlassClassifier):
 
 
 class DenseNet161MultiLabel(BaseMultilabelClassifier):
+    name = "DenseNet161"
+
     def __init__(self, config):
         super().__init__(config)
 

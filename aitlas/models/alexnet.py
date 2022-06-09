@@ -5,6 +5,8 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class AlexNet(BaseMulticlassClassifier):
+    name = "AlexNet"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -38,6 +40,8 @@ class AlexNet(BaseMulticlassClassifier):
 
 
 class AlexNetMultiLabel(BaseMultilabelClassifier):
+    name = "AlexNet"
+
     def __init__(self, config):
         super().__init__(config)
 

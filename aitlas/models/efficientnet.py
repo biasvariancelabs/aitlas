@@ -5,6 +5,8 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class EfficientNetB0(BaseMulticlassClassifier):
+    name = "EfficientNetB0"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -36,6 +38,8 @@ class EfficientNetB0(BaseMulticlassClassifier):
 
 
 class EfficientNetB0MultiLabel(BaseMultilabelClassifier):
+    name = "EfficientNetB0"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -67,6 +71,8 @@ class EfficientNetB0MultiLabel(BaseMultilabelClassifier):
 
 
 class EfficientNetB4(BaseMulticlassClassifier):
+    name = "EfficientNetB4"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -98,6 +104,8 @@ class EfficientNetB4(BaseMulticlassClassifier):
 
 
 class EfficientNetB4MultiLabel(BaseMultilabelClassifier):
+    name = "EfficientNetB4"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -129,6 +137,8 @@ class EfficientNetB4MultiLabel(BaseMultilabelClassifier):
 
 
 class EfficientNetB7(BaseMulticlassClassifier):
+    name = "EfficientNetB7"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -160,6 +170,8 @@ class EfficientNetB7(BaseMulticlassClassifier):
 
 
 class EfficientNetB7MultiLabel(BaseMultilabelClassifier):
+    name = "EfficientNetB7"
+
     def __init__(self, config):
         super().__init__(config)
 

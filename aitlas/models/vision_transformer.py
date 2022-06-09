@@ -5,6 +5,8 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class VisionTransformer(BaseMulticlassClassifier):
+    name = "ViT base_patch16_224"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -20,6 +22,8 @@ class VisionTransformer(BaseMulticlassClassifier):
 
 
 class VisionTransformerMultilabel(BaseMultilabelClassifier):
+    name = "ViT base_patch16_224"
+
     def __init__(self, config):
         super().__init__(config)
 

@@ -5,6 +5,8 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class MLPMixer(BaseMulticlassClassifier):
+    name = "MLP mixer b16_224"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -20,6 +22,8 @@ class MLPMixer(BaseMulticlassClassifier):
 
 
 class MLPMixerMultilabel(BaseMultilabelClassifier):
+    name = "MLP mixer b16_224"
+
     def __init__(self, config):
         super().__init__(config)
 

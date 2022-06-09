@@ -6,6 +6,8 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class VGG16(BaseMulticlassClassifier):
+    name = "VGG16"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -39,6 +41,8 @@ class VGG16(BaseMulticlassClassifier):
 
 
 class VGG19(BaseMulticlassClassifier):
+    name = "VGG19"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -72,6 +76,8 @@ class VGG19(BaseMulticlassClassifier):
 
 
 class VGG16MultiLabel(BaseMultilabelClassifier):
+    name = "VGG16"
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -105,6 +111,8 @@ class VGG16MultiLabel(BaseMultilabelClassifier):
 
 
 class VGG19MultiLabel(BaseMultilabelClassifier):
+    name = "VGG19"
+
     def __init__(self, config):
         super().__init__(config)
 
