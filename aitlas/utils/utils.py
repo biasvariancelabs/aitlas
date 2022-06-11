@@ -213,3 +213,31 @@ def submit_inria_results(input_dir, output_dir):
             command = "gdal_translate --config GDAL_PAM_ENABLED NO -co COMPRESS=CCITTFAX4 -co NBITS=1 " \
                       + input_file + " " + output_file
             subprocess.call(command, shell=True)
+
+
+def save_best_model(model, model_directory, epoch, optimizer, loss, start, run_id):
+    """
+    Saves the model on disk
+    :param model_directory:
+    :return:
+    """
+    if not os.path.isdir(os.path.join(model_directory, run_id)):
+        os.makedirs(os.path.join(model_directory, run_id))
+
+    timestamp = current_ts()
+    checkpoint = os.path.join(
+        model_directory, run_id, f"best_checkpoint_{timestamp}_{epoch}.pth.tar"
+    )
+
+    # create timestamped checkpoint
+    torch.save(
+        {
+            "epoch": epoch + 1,
+            "state_dict": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "loss": loss,
+            "start": start,
+            "id": run_id,
+        },
+        checkpoint,
+    )
