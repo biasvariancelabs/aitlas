@@ -1,4 +1,5 @@
 import random
+import csv
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,6 +35,7 @@ class SAT6Dataset(BaseDataset):
 
         # load the data
         self.mode = self.config.mode
+        self.csv_file = self.config.csv_file
         self.data = self.load_dataset(self.config.mat_file)
 
     def __getitem__(self, index):
@@ -63,6 +65,22 @@ class SAT6Dataset(BaseDataset):
     def data_distribution_table(self):
         mat_data = scipy.io.loadmat(self.config.mat_file)
         img_labels = mat_data[f"{self.mode}_y"].transpose()
+
+        indices = None
+        if self.csv_file:
+            with open(self.csv_file) as infile:
+                data = csv.reader(infile)
+                indices = [int(row[0]) for row in data]
+                indices = sorted(indices, reverse=True)
+        if indices:
+            # generate list of indices
+            indices_range = list(range(len(img_labels)))
+            for idx in indices:
+                if idx < len(img_labels):
+                    indices_range.pop(idx)
+
+            img_labels = np.delete(img_labels, indices_range, 0)
+
         data = list(np.where(img_labels == 1)[1])
         res_list = [[i, self.labels[index]] for i, index in enumerate(data)]
         df = pd.DataFrame(res_list, columns=["id", "Label"])
@@ -112,10 +130,30 @@ class SAT6Dataset(BaseDataset):
     def load_dataset(self, mat_file):
         if not self.labels:
             raise ValueError("You need to provide the list of labels for the dataset")
+
+        indices = None
+        if self.csv_file:
+            with open(self.csv_file) as infile:
+                data = csv.reader(infile)
+                indices = [int(row[0]) for row in data]
+                indices = sorted(indices, reverse=True)
+
         data = []
         if mat_file:
             mat_data = scipy.io.loadmat(mat_file)
             images = mat_data[f"{self.mode}_x"].transpose(3, 0, 1, 2)
             img_labels = mat_data[f"{self.mode}_y"].transpose()
+
+            if indices:
+                # generate list of indices
+                indices_range = list(range(len(images)))
+                for idx in indices:
+                    if idx < len(images):
+                        indices_range.pop(idx)
+
+                images = np.delete(images, indices_range, 0)
+                img_labels = np.delete(img_labels, indices_range, 0)
+
             data = list(zip(images[:, :, :, 0:3], np.where(img_labels == 1)[1]))
+
         return data

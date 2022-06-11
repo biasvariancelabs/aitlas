@@ -12,6 +12,9 @@ class MatDatasetSchema(BaseDatasetSchema):
         description="Which split to use, train or test.",
         example="train",
     )
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv",
+    )
     download = fields.Bool(
         missing=False, description="Whether to download the dataset", example=True
     )
