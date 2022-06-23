@@ -46,7 +46,12 @@ And, that's it, you can start using `aitlas`!
 ```bash
 python -m aitlas.run configs/example_config.json
 ```
-## Citation
+# AiTLAS Semantic Data Catalog of Earth Observation (EO) datasets (beta)
+
+A novel semantic data catalog of numerous EO datasets, pertaining to various different EO and ML tasks. The catalog, that includes properties of different datasets and provides further details for their use, is available [here](http://eodata.bvlabs.ai)
+
+
+# Citation
 For attribution in academic contexts, please cite this [work](https://arxiv.org/abs/2201.08789) as
 ```
 @article{dimitrovski2022aitlas,
