@@ -225,6 +225,8 @@ class BigEarthNetDataset(BaseDataset):
         with self.db.begin(write=False) as txn:
             byteflow = txn.get(patch_name.encode())
             bands10, bands20, _, multihots_19, multihots_43 = loads_pickle(byteflow)
+            bands10 = bands10 / 2000 * 255.0
+            bands10 = np.clip(bands10, 0, 255).astype(np.uint8)
 
             if self.version == '19 labels':
                 multihots = multihots_19.astype(np.float32)
@@ -237,9 +239,6 @@ class BigEarthNetDataset(BaseDataset):
                     bands10 = self.transform(bands10)
                 if self.target_transform:
                     multihots = self.target_transform(multihots)
-
-                bands10 = bands10 / 2000 * 255.0
-                bands10 = np.clip(bands10, 0, 255).astype(np.uint8)
 
                 return bands10, multihots
 

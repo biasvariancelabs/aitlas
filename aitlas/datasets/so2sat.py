@@ -62,6 +62,8 @@ class So2SatDataset(BaseDataset):
 
         # we are using sentinel 2 data only for now
         img = self.data["sen2"][index][:, :, [2, 1, 0]].astype(np.float32)
+        # Calibration for the optical RGB channels of Sentinel-2 in this dataset.
+        img = np.clip(img * 3.5 * 255.0, 0, 255).astype(np.uint8)
 
         if self.transform:
             img = self.transform(img)
@@ -69,8 +71,7 @@ class So2SatDataset(BaseDataset):
         if self.target_transform:
             label = self.target_transform(label)
 
-        # Calibration for the optical RGB channels of Sentinel-2 in this dataset.
-        return np.clip(img * 3.5 * 255.0, 0, 255).astype(np.uint8), np.where(label == 1.0)[0][0]
+        return img, np.where(label == 1.0)[0][0]
 
     def __len__(self):
         return self.data["label"].shape[0]
