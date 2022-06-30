@@ -1,11 +1,10 @@
 import torch
-import cv2
 
 from torchvision import transforms
 from ..base import BaseTransforms
 
 
-class ToTensorNormalizeRGB(BaseTransforms):
+class ResizeToTensorNormalizeRGB(BaseTransforms):
 
     configurables = ["bands10_mean", "bands10_std"]
 
@@ -18,26 +17,50 @@ class ToTensorNormalizeRGB(BaseTransforms):
     def __call__(self, sample):
         data_transforms = transforms.Compose([
             transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
+            transforms.Resize((224, 224)),
             transforms.Normalize(self.bands10_mean, self.bands10_std)
         ])
         return data_transforms(sample)
 
 
-class ResizeToTensorRGB(BaseTransforms):
-
-    configurables = ["bands10_mean", "bands10_std"]
-
+class ToTensorResizeRandomCropFlipHV(BaseTransforms):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
-        self.bands10_mean = kwargs["bands10_mean"]
-        self.bands10_std = kwargs["bands10_std"]
-
     def __call__(self, sample):
-        sample = cv2.resize(sample, (224, 224), interpolation=cv2.INTER_AREA)
-
         data_transforms = transforms.Compose([
             transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
+            transforms.Resize((256, 256)),
+            transforms.RandomCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+        ])
+
+        return data_transforms(sample)
+
+
+class ToTensorResizeCenterCrop(BaseTransforms):
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+
+    def __call__(self, sample):
+        data_transforms = transforms.Compose([
+            transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
+            transforms.Resize((256, 256)),
+            transforms.CenterCrop(224),
+        ])
+
+        return data_transforms(sample)
+
+
+class ToTensorResize(BaseTransforms):
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+
+    def __call__(self, sample):
+        data_transforms = transforms.Compose([
+            transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
+            transforms.Resize((224, 224)),
         ])
         return data_transforms(sample)
 

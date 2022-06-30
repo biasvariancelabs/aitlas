@@ -2,12 +2,12 @@ from torchvision import transforms
 from ..base import BaseTransforms
 
 
-class ResizeCenterCropFlipHVToTensor(BaseTransforms):
+class ResizeRandomCropFlipHVToTensor(BaseTransforms):
     def __call__(self, sample):
         data_transforms = transforms.Compose([
             transforms.ToPILImage(),
             transforms.Resize(256),
-            transforms.CenterCrop(224),
+            transforms.RandomCrop(224),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
