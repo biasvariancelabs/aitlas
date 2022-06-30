@@ -6,7 +6,6 @@ import torch.nn as nn
 import torch.nn.functional as nnf
 import torch.optim as optim
 
-from ..utils import stringify
 from .metrics import MultiClassRunningScore, MultiLabelRunningScore
 from .models import BaseModel
 from .schemas import BaseClassifierSchema
@@ -40,12 +39,12 @@ class BaseMulticlassClassifier(BaseModel):
 
         # plot confusion matrix for model evaluation
         plot_multiclass_confusion_matrix(
-            np.array(cm), labels, dataset_name, f"{run_id}_cm.png"
+            np.array(cm), labels, dataset_name, f"{dataset_name}_{self.name}_{run_id}_cm.png"
         )
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.Adam(
+        return optim.RAdam(
             self.model.parameters(),
             lr=self.config.learning_rate,
             weight_decay=self.config.weight_decay,
@@ -56,7 +55,7 @@ class BaseMulticlassClassifier(BaseModel):
         return nn.CrossEntropyLoss(weight=self.weights)
 
     def load_lr_scheduler(self, optimizer):
-        return torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)
+        return torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)
 
 
 class BaseMultilabelClassifier(BaseModel):
@@ -71,7 +70,7 @@ class BaseMultilabelClassifier(BaseModel):
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.Adam(
+        return optim.RAdam(
             self.model.parameters(),
             lr=self.config.learning_rate,
             weight_decay=self.config.weight_decay,
@@ -82,7 +81,7 @@ class BaseMultilabelClassifier(BaseModel):
         return nn.BCEWithLogitsLoss(weight=self.weights)
 
     def load_lr_scheduler(self, optimizer):
-        return torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)
+        return torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)
 
     def get_predicted(self, outputs, threshold=None):
         predicted_probs = torch.sigmoid(outputs)
@@ -108,5 +107,5 @@ class BaseMultilabelClassifier(BaseModel):
 
         # plot confusion matrix for model evaluation
         plot_multilabel_confusion_matrix(
-            np.array(cm_array), labels, dataset_name, f"{run_id}_cm.png"
+            np.array(cm_array), labels, dataset_name, f"{dataset_name}_{self.name}_{run_id}_cm.png"
         )
