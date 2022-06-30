@@ -178,11 +178,17 @@ class MultiLabelRunningScore(RunningScore):
         self.list_y_prob = []
         self.list_y_true = []
 
+    def reset(self):
+        """Reset the confusion matrix and list of probabilities"""
+        self.confusion_matrix.reset()
+        self.list_y_prob = []
+        self.list_y_true = []
+
     def update(self, y_true, y_pred, y_prob=None):
         """Updates stats on each batch"""
         self.confusion_matrix.update((y_pred, y_true))
-        self.list_y_prob.append(y_prob.tolist()[0])
-        self.list_y_true.append(y_true.tolist()[0])
+        self.list_y_prob.extend(y_prob.tolist())
+        self.list_y_true.extend(y_true.tolist())
 
     def map(self):
         return {"mAP": average_precision_score(np.array(self.list_y_true), np.array(self.list_y_prob))}
