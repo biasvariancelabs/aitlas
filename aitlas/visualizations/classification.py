@@ -20,11 +20,11 @@ def plot_confusion_matrix(confusion_matrix, axes, class_label, class_names, font
     heatmap.xaxis.set_ticklabels(heatmap.xaxis.get_ticklabels(), rotation=45, ha='right', fontsize=fontsize)
     axes.set_ylabel('True label')
     axes.set_xlabel('Predicted label')
-    axes.set_title("CM - " + class_label)
+    axes.set_title(class_label)
 
 
 def plot_multilabel_confusion_matrix(cm_array, labels, dataset_name, output_file):
-    figure, ax = plt.subplots(4, math.ceil(len(labels)/4), figsize=(12, 7))
+    figure, ax = plt.subplots(math.ceil(len(labels)/5), 5, figsize=(12, 7))
     # figure.suptitle("Confusion matrix of predictions for {}".format(dataset_name), fontsize=20)
     for axes, cfs_matrix, label in zip(ax.flatten(), cm_array, labels):
         plot_confusion_matrix(cfs_matrix, axes, label, ["N", "P"])

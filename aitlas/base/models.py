@@ -12,7 +12,7 @@ import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from ..utils import current_ts, stringify
+from ..utils import current_ts, stringify, save_best_model
 from .config import Configurable
 from .datasets import BaseDataset
 from .schemas import BaseModelSchema
@@ -21,9 +21,43 @@ from .schemas import BaseModelSchema
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
+class EarlyStopping:
+    """
+    Early stopping to stop the training when the loss does not improve after
+    certain epochs.
+    """
+    def __init__(self, patience=10, min_delta=0):
+        """
+        :param patience: how many epochs to wait before stopping when loss is
+               not improving
+        :param min_delta: minimum difference between new loss and old loss for
+               new loss to be considered as an improvement
+        """
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.best_loss = None
+        self.early_stop = False
+
+    def __call__(self, val_loss):
+        if self.best_loss is None:
+            self.best_loss = val_loss
+        elif self.best_loss - val_loss > self.min_delta:
+            self.best_loss = val_loss
+            # reset counter if validation loss improves
+            self.counter = 0
+        elif self.best_loss - val_loss < self.min_delta:
+            self.counter += 1
+            logging.info(f"INFO: Early stopping counter {self.counter} of {self.patience}")
+            if self.counter >= self.patience:
+                logging.info('INFO: Early stopping')
+                self.early_stop = True
+
+
 class BaseModel(nn.Module, Configurable):
 
     schema = BaseModelSchema
+    name = None
 
     def __init__(self, config=None):
         Configurable.__init__(self, config)
@@ -39,7 +73,7 @@ class BaseModel(nn.Module, Configurable):
 
         self.metrics = self.config.metrics
         self.num_classes = self.config.num_classes
-        self.weights = self.config.weights
+        self.weights = torch.tensor(self.config.weights, dtype=torch.float32) if self.config.weights else None
 
     def prepare(self):
         """Prepare the model before using it """
@@ -47,7 +81,8 @@ class BaseModel(nn.Module, Configurable):
         # load loss, optimizer and lr scheduler
         self.criterion = self.load_criterion()
         self.optimizer = self.load_optimizer()
-        self.lr_scheduler = self.load_lr_scheduler()
+        self.lr_scheduler = self.load_lr_scheduler(self.optimizer)
+        self.early_stopping = EarlyStopping()
 
     def fit(
         self,
@@ -64,7 +99,14 @@ class BaseModel(nn.Module, Configurable):
         logging.info("Starting training.")
 
         start_epoch = 0
-        start = current_ts()
+        train_losses = []
+        val_losses = []
+        train_time_epoch = []
+        total_train_time = 0
+
+        best_loss = None
+        best_epoch = None
+        best_model = None
 
         # load the model if needs to resume training
         if resume_model:
@@ -85,18 +127,19 @@ class BaseModel(nn.Module, Configurable):
             val_loader = val_dataset.dataloader()
 
         for epoch in range(start_epoch, epochs):  # loop over the dataset multiple times
+            start = current_ts()
             loss = self.train_epoch(
                 epoch, train_loader, self.optimizer, self.criterion, iterations_log
             )
+            train_time = (current_ts() - start)
+            total_train_time += train_time
+            train_time_epoch.append(train_time)
+
             self.writer.add_scalar("Loss/train", loss, epoch + 1)
             if epoch % save_epochs == 0:
                 self.save_model(
                     model_directory, epoch, self.optimizer, loss, start, run_id
                 )
-
-            # adjust learning rate if needed
-            if self.lr_scheduler:
-                self.lr_scheduler.step(loss)
 
             # evaluate against the train set
             self.running_metrics.reset()
@@ -112,6 +155,7 @@ class BaseModel(nn.Module, Configurable):
                 self.writer,
                 epoch + 1,
             )
+            train_losses.append(train_loss)
 
             # evaluate against a validation set if there is one
             if val_loader:
@@ -128,14 +172,38 @@ class BaseModel(nn.Module, Configurable):
                     self.writer,
                     epoch + 1,
                 )
+                val_losses.append(val_loss)
+                if not best_loss or val_loss < best_loss:
+                    best_loss = val_loss
+                    best_epoch = epoch
+                    best_model = copy.deepcopy(self.model)
+
+                # adjust learning rate if needed
+                if self.lr_scheduler:
+                    self.lr_scheduler.step(val_loss)
+                    # self.lr_scheduler.step()
+
+                self.early_stopping(val_loss)
+                if self.early_stopping.early_stop:
+                    break
+
                 self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
+                for param_group in self.optimizer.param_groups:
+                    print("\nLR", epoch, param_group['lr'])
 
         self.writer.close()
 
         # save the model in the end
         self.save_model(model_directory, epochs, self.optimizer, loss, start, run_id)
 
-        logging.info(f"finished training. training time: {current_ts() - start}")
+        # save the model with lowest validation loss
+        if best_model:
+            save_best_model(best_model, model_directory, best_epoch + 1, self.optimizer, best_loss, start, run_id)
+
+        logging.info(f"Train loss: {train_losses}")
+        logging.info(f"Validation loss: {val_losses}")
+        logging.info(f"Train time per epochs: {train_time_epoch}")
+        logging.info(f"Finished training. training time: {total_train_time}")
 
         return loss
 
@@ -445,6 +513,7 @@ class BaseModel(nn.Module, Configurable):
         :return:
         """
         self.model = self.model.to(self.device)
+        self.criterion = self.criterion.to(self.device)
         if self.config.use_ddp:
             self.model = nn.parallel.DistributedDataParallel(
                 self.model, device_ids=[self.device]
@@ -529,7 +598,7 @@ class BaseModel(nn.Module, Configurable):
         """Load the loss function"""
         raise NotImplementedError("Please implement `load_criterion` for your model. ")
 
-    def load_lr_scheduler(self):
+    def load_lr_scheduler(self, optimizer):
         raise NotImplementedError(
             "Please implement `load_lr_scheduler` for your model. "
         )
