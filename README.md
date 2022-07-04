@@ -46,6 +46,18 @@ And, that's it, you can start using `aitlas`!
 ```bash
 python -m aitlas.run configs/example_config.json
 ```
+If you want to use `aitlas` as a package run
+```bash
+pip install .
+```
+in the folder where you cloned the repo.
+
+---
+
+**Note:** You will have to download the data from the respective source. You can find a link for each dataset in the respective dataset class in `aitlas/datasets/` or use the **AiTLAS Semantic Data Catalog**
+
+---
+
 # AiTLAS Semantic Data Catalog of Earth Observation (EO) datasets (beta)
 
 A novel semantic data catalog of numerous EO datasets, pertaining to various different EO and ML tasks. The catalog, that includes properties of different datasets and provides further details for their use, is available [here](http://eodata.bvlabs.ai)
