@@ -54,7 +54,7 @@ in the folder where you cloned the repo.
 
 ---
 
-**Note:** You will have to download the data from the respective source. You can find a link for each dataset in the respective dataset class in `aitlas/datasets/` or use the **AiTLAS Semantic Data Catalog**
+**Note:** You will have to download dataset from their respective source. You can find a link for each dataset in the respective dataset class in `aitlas/datasets/` or use the **AiTLAS Semantic Data Catalog**
 
 ---
 
