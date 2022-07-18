@@ -57,12 +57,6 @@ in the folder where you cloned the repo.
 **Note:** You will have to download the datasets from their respective source. You can find a link for each dataset in the respective dataset class in `aitlas/datasets/` or use the **AiTLAS Semantic Data Catalog**
 
 ---
-
-# AiTLAS Semantic Data Catalog of Earth Observation (EO) datasets (beta)
-
-A novel semantic data catalog of numerous EO datasets, pertaining to various different EO and ML tasks. The catalog, that includes properties of different datasets and provides further details for their use, is available [here](http://eodata.bvlabs.ai)
-
-
 # Citation
 For attribution in academic contexts, please cite this [work](https://arxiv.org/abs/2201.08789) as
 ```
@@ -73,5 +67,22 @@ For attribution in academic contexts, please cite this [work](https://arxiv.org/
       journal={arXiv preprint arXiv:2201.08789},
 }
 ```
+# The AiTLAS Ecosystem
+
+
+## AiTLAS: Benchmark Arena
+
+An open-source benchmark framework for evaluating state-of-the-art deep learning approaches for image classification in Earth Observation (EO). To this end, it presents a comprehensive comparative analysis of more than 400 models derived from nine different state-of-the-art architectures, and compare them to a variety of multi-class and multi-label classification tasks from 22 datasets with different sizes and properties. All presented approaches are general and can be easily extended to many other remote sensing image classification tasks. To ensure reproducibility and facilitate better usability and further developments, it provides all of the experimental resources.
+
+**repo**: [https://github.com/biasvariancelabs/aitlas-arena](https://github.com/biasvariancelabs/aitlas-arena)
+
+**paper**: [Current Trends in Deep Learning for Earth Observation: An Open-source Benchmark Arena for Image Classification](https://arxiv.org/abs/2207.07189)
+
+
+## AiTLAS Semantic Data Catalog of Earth Observation (EO) datasets (beta)
+
+A novel semantic data catalog of numerous EO datasets, pertaining to various different EO and ML tasks. The catalog, that includes properties of different datasets and provides further details for their use, is available [here](http://eodata.bvlabs.ai)
+
+
 
 
