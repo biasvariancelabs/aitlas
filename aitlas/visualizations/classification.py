@@ -20,14 +20,27 @@ def plot_confusion_matrix(confusion_matrix, axes, class_label, class_names, font
     heatmap.xaxis.set_ticklabels(heatmap.xaxis.get_ticklabels(), rotation=45, ha='right', fontsize=fontsize)
     axes.set_ylabel('True label')
     axes.set_xlabel('Predicted label')
+    if len(class_label) >= 20:
+        class_label = class_label[0:20] + "..."
     axes.set_title(class_label)
 
 
 def plot_multilabel_confusion_matrix(cm_array, labels, dataset_name, output_file):
-    figure, ax = plt.subplots(math.ceil(len(labels)/5), 5, figsize=(12, 7))
+    rows = math.ceil(math.sqrt(len(labels)))
+    columns = rows
+    if (rows * columns - len(labels)) >= rows:
+        columns -= 1
+
+    figure_height = rows * 1.75
+    figure_width = columns * 2.0
+    figure, ax = plt.subplots(rows, columns, figsize=(figure_width, figure_height))
+
     # figure.suptitle("Confusion matrix of predictions for {}".format(dataset_name), fontsize=20)
     for axes, cfs_matrix, label in zip(ax.flatten(), cm_array, labels):
         plot_confusion_matrix(cfs_matrix, axes, label, ["N", "P"])
+    num_ax_remove = rows * columns - len(labels)
+    for i in range(num_ax_remove):
+        ax[-1, columns - 1 - i].axis('off')
     figure.tight_layout()
     figure.savefig(output_file, format="png")
 
