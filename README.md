@@ -1,4 +1,4 @@
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg?style=for-the-badge)](https://www.repostatus.org/#active) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/biasvariancelabs/aitlas/blob/master/LICENSE) [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/release/python-370/)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg?style=for-the-badge)](https://www.repostatus.org/#active) [![License: Apache License 2.0](https://img.shields.io/badge/License-Apache%202.0-olivegreen.svg)](https://github.com/biasvariancelabs/aitlas/blob/master/LICENSE) [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/release/python-370/)
 
 ![logo](media/AiTALS_horizontal_gradient_subtitle.png)
 
@@ -46,11 +46,17 @@ And, that's it, you can start using `aitlas`!
 ```bash
 python -m aitlas.run configs/example_config.json
 ```
-# AiTLAS Semantic Data Catalog of Earth Observation (EO) datasets (beta)
+If you want to use `aitlas` as a package run
+```bash
+pip install .
+```
+in the folder where you cloned the repo.
 
-A novel semantic data catalog of numerous EO datasets, pertaining to various different EO and ML tasks. The catalog, that includes properties of different datasets and provides further details for their use, is available [here](http://eodata.bvlabs.ai)
+---
 
+**Note:** You will have to download the datasets from their respective source. You can find a link for each dataset in the respective dataset class in `aitlas/datasets/` or use the **AiTLAS Semantic Data Catalog**
 
+---
 # Citation
 For attribution in academic contexts, please cite this [work](https://arxiv.org/abs/2201.08789) as
 ```
@@ -61,5 +67,22 @@ For attribution in academic contexts, please cite this [work](https://arxiv.org/
       journal={arXiv preprint arXiv:2201.08789},
 }
 ```
+# The AiTLAS Universe
+
+
+## AiTLAS: Benchmark Arena
+
+An open-source benchmark framework for evaluating state-of-the-art deep learning approaches for image classification in Earth Observation (EO). To this end, it presents a comprehensive comparative analysis of more than 400 models derived from nine different state-of-the-art architectures, and compare them to a variety of multi-class and multi-label classification tasks from 22 datasets with different sizes and properties. All presented approaches are general and can be easily extended to many other remote sensing image classification tasks. To ensure reproducibility and facilitate better usability and further developments, it provides all of the experimental resources.
+
+**repo**: [https://github.com/biasvariancelabs/aitlas-arena](https://github.com/biasvariancelabs/aitlas-arena)
+
+**paper**: [Current Trends in Deep Learning for Earth Observation: An Open-source Benchmark Arena for Image Classification](https://arxiv.org/abs/2207.07189)
+
+
+## AiTLAS Semantic Data Catalog of Earth Observation (EO) datasets (beta)
+
+A novel semantic data catalog of numerous EO datasets, pertaining to various different EO and ML tasks. The catalog, that includes properties of different datasets and provides further details for their use, is available [here](http://eodata.bvlabs.ai)
+
+
 
 
