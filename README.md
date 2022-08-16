@@ -67,7 +67,7 @@ For attribution in academic contexts, please cite this [work](https://arxiv.org/
       journal={arXiv preprint arXiv:2201.08789},
 }
 ```
-# The AiTLAS Universe
+# The AiTLAS Ecosystem
 
 
 ## AiTLAS: Benchmark Arena
