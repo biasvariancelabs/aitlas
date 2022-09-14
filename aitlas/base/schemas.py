@@ -58,6 +58,9 @@ class BaseClassifierSchema(BaseModelSchema):
     pretrained = fields.Bool(
         missing=True, description="Whether to use a pretrained network or not."
     )
+    local_model_path = fields.String(
+        missing=None, description="Local path of the pre-trained model",
+    )
     threshold = fields.Float(
         missing=0.5, description="Prediction threshold if needed", example=0.5
     )

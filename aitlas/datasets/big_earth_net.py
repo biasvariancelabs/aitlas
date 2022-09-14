@@ -10,6 +10,7 @@ import pandas as pd
 import seaborn as sns
 import pickle
 import cv2
+from PIL import Image
 
 from itertools import compress
 from skimage.transform import resize
@@ -277,7 +278,7 @@ class BigEarthNetDataset(BaseDataset):
         return self.patches[index]
 
     def show_image(self, index):
-        labels_list = list(compress(self.labels.keys(), self[index][2]))
+        labels_list = list(compress(self.labels.keys(), self[index][1]))
         fig = plt.figure(figsize=(8, 6))
         plt.title(
             f"Image with index {index} from the dataset {self.get_name()}, with labels:\n "
@@ -285,8 +286,16 @@ class BigEarthNetDataset(BaseDataset):
             fontsize=14,
         )
         plt.axis("off")
-        plt.imshow(self[index][0].astype('uint16') / 4096.0)
+        plt.imshow(self[index][0])
         return fig
+
+    def save_image(self, index):
+        labels_list = list(compress(self.labels.keys(), self[index][1]))
+        text_file = open("annotations_{index}.txt".format(index=index), "w")
+        text_file.write(str(labels_list).strip('[]'))
+        text_file.close()
+        img = Image.fromarray(self[index][0].astype(np.uint8))
+        img.save("image_{index}.jpg".format(index=index))
 
     def show_batch(self, size, show_title=True):
         if size % 3:

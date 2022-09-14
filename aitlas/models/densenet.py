@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torchvision.models as models
 
@@ -11,7 +12,18 @@ class DenseNet161(BaseMulticlassClassifier):
         super().__init__(config)
 
         if self.config.pretrained:
-            self.model = models.densenet161(self.config.pretrained, False)
+            if self.config.local_model_path:
+                checkpoint = torch.load(self.config.local_model_path)
+                last_layer_key = next(reversed(checkpoint["state_dict"]))
+                last_layer = checkpoint["state_dict"][last_layer_key]
+                num_classes = len(last_layer)
+                self.model = models.densenet161(
+                    False, False, num_classes=num_classes
+                )
+                self.model.load_state_dict(checkpoint["state_dict"], strict=False)
+            else:
+                self.model = models.densenet161(self.config.pretrained, False)
+
             num_ftrs = self.model.classifier.in_features
             self.model.classifier = nn.Linear(num_ftrs, self.config.num_classes)
             if self.config.freeze:
@@ -44,7 +56,19 @@ class DenseNet161MultiLabel(BaseMultilabelClassifier):
         super().__init__(config)
 
         if self.config.pretrained:
-            self.model = models.densenet161(self.config.pretrained, False)
+            if self.config.local_model_path:
+                checkpoint = torch.load(self.config.local_model_path)
+                last_layer_key = next(reversed(checkpoint["state_dict"]))
+                last_layer = checkpoint["state_dict"][last_layer_key]
+                num_classes = len(last_layer)
+                self.model = models.densenet161(
+                    False, False, num_classes=num_classes
+                )
+                self.model.load_state_dict(checkpoint["state_dict"], strict=False)
+                print(num_classes)
+            else:
+                self.model = models.densenet161(self.config.pretrained, False)
+
             num_ftrs = self.model.classifier.in_features
             self.model.classifier = nn.Linear(num_ftrs, self.config.num_classes)
             if self.config.freeze:
