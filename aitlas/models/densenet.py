@@ -65,7 +65,6 @@ class DenseNet161MultiLabel(BaseMultilabelClassifier):
                     False, False, num_classes=num_classes
                 )
                 self.model.load_state_dict(checkpoint["state_dict"], strict=False)
-                print(num_classes)
             else:
                 self.model = models.densenet161(self.config.pretrained, False)
 
