@@ -211,14 +211,18 @@ class PredictEOPatchTask(BaseTask):
                 if f.is_dir():
                     patch = f.name
 
-                    display_eopatch_predictions(
+                    fig = display_eopatch_predictions(
                         eopatches_path,
                         patch,
                         y_pred,
                         test_index,
-                        self.output_path,
                         y_true,
                         test_dataset.mapping,
+                    )
+
+                    fig.savefig(
+                        f"{self.output_path}{os.sep}{patch}__visual_predictions.png",
+                        dpi=300,
                     )
 
     def export_predictions_to_csv(self, file, fnames, probs, labels):

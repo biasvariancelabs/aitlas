@@ -12,7 +12,7 @@ from matplotlib.colors import LinearSegmentedColormap, Normalize
 
 
 def display_eopatch_predictions(
-    eopatches_path, patch, y_pred, test_index, output_path, y_true, classmapping
+    eopatches_path, patch, y_pred, test_index, y_true, classmapping
 ):
     eop = EOPatch.load(eopatches_path + os.sep + patch)
     polygons = eop.vector_timeless["CROP_TYPE_GDF"]
@@ -89,6 +89,5 @@ def display_eopatch_predictions(
     # put those patched as legend-handles into the legend
     plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
     plt.subplots_adjust(left=0.15, right=0.7)
-    fig.savefig(
-        output_path + os.sep + "eop" + str(patch) + "_visual_predictions.png", dpi=300
-    )
+
+    return fig
