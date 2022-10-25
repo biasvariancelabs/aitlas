@@ -1,7 +1,8 @@
 import logging
-import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as nnf
+import torch
 
 from .models import BaseModel
 from .schemas import BaseSegmentationClassifierSchema
@@ -20,20 +21,20 @@ class BaseSegmentationClassifier(BaseModel):
         self.running_metrics = SegmentationRunningScore(self.num_classes, self.device)
 
     def get_predicted(self, outputs, threshold=None):
-        predicted_probs = torch.tanh(outputs)
-        predicted = (predicted_probs >= self.config.threshold).type(
-            predicted_probs.dtype
+        predicted_probs = torch.sigmoid(outputs)
+        predicted = predicted_probs >= (
+            threshold if threshold else self.config.threshold
         )
         return predicted_probs, predicted
 
     def load_optimizer(self):
         """Load the optimizer"""
-        return optim.Adam([dict(params=self.model.parameters(), lr=self.config.learning_rate), ])
+        return optim.Adam(params=self.model.parameters(), lr=self.config.learning_rate)
 
     def load_criterion(self):
         """Load the loss function"""
-        return nn.MSELoss(reduction="mean")
+        return nn.BCEWithLogitsLoss()
 
-    def load_lr_scheduler(self):
+    def load_lr_scheduler(self, optimizer):
         return None
 

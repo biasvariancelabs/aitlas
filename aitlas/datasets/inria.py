@@ -45,7 +45,7 @@ class InriaDataset(BaseDataset):
         masks = [(mask == v) for v, label in enumerate(self.labels)]
         mask = np.stack(masks, axis=-1).astype("float32")
         if self.joint_transform:
-            image, mask = self.joint_transform(image, mask)
+            image, mask = self.joint_transform((image, mask))
         if self.transform:
             image = self.transform(image)
         if self.target_transform:

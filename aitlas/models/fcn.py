@@ -4,11 +4,11 @@ from torchvision import models
 from ..base import BaseSegmentationClassifier
 
 
-class DeepLabV3(BaseSegmentationClassifier):
+class FCN(BaseSegmentationClassifier):
     def __init__(self, config):
         super().__init__(config)
 
-        self.model = models.segmentation.deeplabv3_resnet101(
+        self.model = models.segmentation.fcn_resnet101(
             pretrained=self.config.pretrained, progress=True
         )
 

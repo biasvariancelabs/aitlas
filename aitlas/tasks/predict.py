@@ -147,7 +147,7 @@ class PredictSegmentationTask(BaseTask):
 
         if self.output_format == "plot":
             # plot predictions
-            for i, image_path in enumerate(test_dataset.data_dir):
+            for i, image_path in enumerate(test_dataset.data):
                 plot_path = os.path.join(
                     self.config.output_dir, f"{test_dataset.fnames[i]}_plot.png"
                 )
@@ -161,7 +161,7 @@ class PredictSegmentationTask(BaseTask):
                 )
         else:
             # save raw masks
-            for i, image_path in enumerate(test_dataset.data_dir):
+            for i, image_path in enumerate(test_dataset.data):
                 base_filepath_name = os.path.join(
                     self.config.output_dir, os.path.splitext(test_dataset.fnames[i])[0]
                 )
