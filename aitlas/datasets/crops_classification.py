@@ -45,7 +45,6 @@ class CropsDataset(BaseDataset):
             # Looks like this is what I need (load directly from file)
             with h5py.File(h5path, "r") as dataset:
                 X = np.array(dataset[(row.path)])
-                # print(row.path)
         else:
             X = self.X_list[index]
 
@@ -59,8 +58,6 @@ class CropsDataset(BaseDataset):
 
     def get_labels(self):
         return self.index.classid
-
-    # visualization functions
 
     def data_distribution_table(self):
         label_count = (
@@ -98,10 +95,13 @@ class CropsDataset(BaseDataset):
     def show_samples(self):
         return self.index.head(20)
 
+    def show_image(self, index):
+        return self.show_timeseries(index)
+
     def show_timeseries(self, index):
         # Figure 3 in the paper
         X, _ = self.__getitem__(index)
-        label = row = self.index.iloc[index].loc["classname"]
+        label = self.index.iloc[index].loc["classname"]
         fig, ax = plt.subplots(figsize=(8, 6))
         ax.set_title(
             f"Time series with index {index} from the region {self.index.iloc[index].loc['region']}, with label {label}\n",
@@ -120,7 +120,7 @@ class CropsDataset(BaseDataset):
         if not os.path.exists(classmapping):
             if self.config.verbose:
                 """
-                TODOELENA: either add a url for our dataset or remove it for breizhcrops
+                TODO: either add a url for our dataset or remove it for breizhcrops
                 """
         else:
             if self.config.verbose:

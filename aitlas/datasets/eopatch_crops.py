@@ -80,9 +80,6 @@ class EOPatchCrops(CropsDataset):
 
         self.X_list = None
 
-        self.show_timeseries(0)
-        plt.show()
-
     def preprocess(self):
         self.eopatches = [
             f.name
