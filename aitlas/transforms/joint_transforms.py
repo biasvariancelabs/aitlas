@@ -16,4 +16,6 @@ class FlipHVRandomRotate(BaseTransforms):
             A.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.2, rotate_limit=15,
                                p=0.9, border_mode=cv2.BORDER_REFLECT),
         ])
-        return data_transforms(image=image)["image"], data_transforms(image=mask)["image"]
+        transformed = data_transforms(image=image, mask=mask)
+
+        return transformed["image"], transformed["mask"]
