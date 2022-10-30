@@ -23,7 +23,7 @@ class MassachusettsBuildingsDataset(SemanticSegmentationDataset):
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
-        mask = image_loader(self.masks[index])[:, :, 1] / 76
+        mask = image_loader(self.masks[index])[:, :, 0] / 255
         masks = [(mask == v) for v, label in enumerate(self.labels)]
         mask = np.stack(masks, axis=-1).astype("float32")
         return self.apply_transformations(image, mask)
