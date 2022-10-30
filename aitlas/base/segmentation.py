@@ -22,9 +22,11 @@ class BaseSegmentationClassifier(BaseModel):
 
     def get_predicted(self, outputs, threshold=None):
         predicted_probs = torch.sigmoid(outputs)
-        predicted = predicted_probs >= (
+        predicted = (predicted_probs >= (
             threshold if threshold else self.config.threshold
-        )
+        )).long()
+        #predicted_probs = nnf.softmax(outputs, dim=1)
+        #predicted = (outputs >= predicted_probs).long()
         return predicted_probs, predicted
 
     def load_optimizer(self):
@@ -34,6 +36,7 @@ class BaseSegmentationClassifier(BaseModel):
     def load_criterion(self):
         """Load the loss function"""
         return nn.BCEWithLogitsLoss()
+        #return nn.CrossEntropyLoss()
 
     def load_lr_scheduler(self, optimizer):
         return None

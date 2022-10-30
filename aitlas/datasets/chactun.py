@@ -1,17 +1,10 @@
 import os
-
 import matplotlib.pyplot as plt
 import numpy as np
+
 from matplotlib.patches import Patch
-
-from ..base import BaseDataset
 from ..utils import image_invert, image_loader
-from .schemas import SegmentationDatasetSchema
-
-
-LABELS = ["Aguada", "Building", "Platform"]
-COLOR_MAPPING = [[255, 255, 0], [100, 100, 100], [0, 255, 0]]
-
+from .semantic_segmentation import SemanticSegmentationDataset
 
 """
 For the Chactun dataset there is a seperate mask for each label
@@ -19,19 +12,15 @@ The object is black and the background is white
 """
 
 
-class ChactunDataset(BaseDataset):
+class ChactunDataset(SemanticSegmentationDataset):
 
-    schema = SegmentationDatasetSchema
-    labels = LABELS
-    color_mapping = COLOR_MAPPING
+    labels = ["Aguada", "Building", "Platform"]
+    color_mapping = [[255, 255, 0], [100, 100, 100], [0, 255, 0]]
     name = "Chactun"
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
         super().__init__(config)
-        self.images = []
-        self.masks = []
-        self.load_dataset(self.config.data_dir)
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
@@ -40,16 +29,9 @@ class ChactunDataset(BaseDataset):
         )
         for i, path in enumerate(self.masks[index]):
             mask[i] = image_invert(path, True)
-        if self.transform:
-            image = self.transform(image)
-        if self.target_transform:
-            mask = self.target_transform(mask)
-        return image, mask
+        return self.apply_transformations(image, mask)
 
-    def __len__(self):
-        return len(self.images)
-
-    def load_dataset(self, data_dir):
+    def load_dataset(self, data_dir, csv_file=None):
         if not self.labels:
             raise ValueError("You need to provide the list of labels for the dataset")
 
@@ -65,10 +47,7 @@ class ChactunDataset(BaseDataset):
                     if i % 4 == 3:
                         self.masks.append(masks_for_image)
 
-    def get_labels(self):
-        return self.labels
-
-    def show_image(self, index):
+    def show_image(self, index, show_title=True):
         img = self[index][0]
         mask = self[index][1].transpose(1, 2, 0)
         legend_elements = []
@@ -84,11 +63,12 @@ class ChactunDataset(BaseDataset):
             img_mask[i][np.where(mask[:, :, i] == 255)] = self.color_mapping[i]
 
         fig = plt.figure(figsize=(10, 8))
-        fig.suptitle(
-            f"Image and mask with index {index} from the dataset {self.get_name()}\n",
-            fontsize=16,
-            y=1.006,
-        )
+        if show_title:
+            fig.suptitle(
+                f"Image and mask with index {index} from the dataset {self.get_name()}\n",
+                fontsize=16,
+                y=1.006,
+            )
         fig.legend(
             handles=legend_elements, bbox_to_anchor=[0.95, 0.95], loc="upper right"
         )

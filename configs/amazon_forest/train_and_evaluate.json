@@ -19,10 +19,9 @@
                   "config": {
                       "batch_size": 8,
                       "shuffle": true,
-                      "num_workers": 1,
                       "data_dir": "/home/dkocev/data/AmazonForest/Training",
-                      "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
-                      "target_transforms": ["aitlas.transforms.Transponse"]
+                      "transforms": ["aitlas.transforms.MinMaxNormTranspose"],
+                      "target_transforms": ["aitlas.transforms.Transpose"]
                   }
               },
               "val_dataset_config":{
@@ -30,10 +29,9 @@
                     "config": {
                         "batch_size": 1,
                         "shuffle": false,
-                        "num_workers": 1,
                         "data_dir": "/home/dkocev/data/AmazonForest/Validation",
-                        "transforms": ["aitlas.transforms.MinMaxNormTransponse"],
-                        "target_transforms": ["aitlas.transforms.Transponse"]
+                        "transforms": ["aitlas.transforms.MinMaxNormTranspose"],
+                        "target_transforms": ["aitlas.transforms.Transpose"]
                     }
               }
         }

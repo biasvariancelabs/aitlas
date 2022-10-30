@@ -233,9 +233,7 @@ class BaseModel(nn.Module, Configurable):
             if isinstance(outputs, collections.abc.Mapping):
                 outputs = outputs["out"]
 
-            loss = criterion(
-                outputs, labels if len(labels.shape) == 1 else labels.type(torch.float)
-            )  # TODO: Check this converion OUT!!!
+            loss = criterion(outputs, labels)
             loss.backward()
 
             # perform a single optimization step

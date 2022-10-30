@@ -1,29 +1,20 @@
-# Multi class datasets for land use and land cover classification
-from .aid import AIDDataset
-from .aid_multilabel import AIDMultiLabelDataset
-from .airs import AIRSDataset
-
 # Datasets for semantic segmentation
+from .semantic_segmentation import SemanticSegmentationDataset
 from .amazon_rainforest import AmazonRainforestDataset
-from .big_earth_net import BigEarthNetDataset
 from .brazilian_coffee_scenes import BrazilianCoffeeScenesDataset
-
-# Datasset for crop type prediction
-from .breizhcrops import BreizhCropsDataset
-from .camvid import CamVidDataset
-from .chactun import ChactunDataset
-from .clrs import CLRSDataset
-from .dfc15_multilabel import DFC15MultiLabelDataset
-from .eopatch_crops import EOPatchCrops
-from .eurosat import EurosatDataset
 from .inria import InriaDataset
 from .landcover_ai import LandCoverAiDataset
 from .massachusetts_buildings import MassachusettsBuildingsDataset
 from .massachusetts_roads import MassachusettsRoadsDataset
-from .mlrs_net import MLRSNetMultiLabelDataset
-from .multiclass_classification import MultiClassClassificationDataset
+from .camvid import CamVidDataset
+from .chactun import ChactunDataset
+from .airs import AIRSDataset
 
-# Multi label datasets for land use and land cover classification
+# Datasets for crop type prediction
+from .breizhcrops import BreizhCropsDataset
+from .eopatch_crops import EOPatchCrops
+
+# Multi class and multi label datasets for land use and land cover classification
 from .multilabel_classification import MultiLabelClassificationDataset
 from .optimal_31 import Optimal31Dataset
 from .pattern_net import PatternNetDataset
@@ -38,3 +29,11 @@ from .so2sat import So2SatDataset
 from .uc_merced import UcMercedDataset
 from .uc_merced_multilabel import UcMercedMultiLabelDataset
 from .whu_rs19 import WHURS19Dataset
+from .mlrs_net import MLRSNetMultiLabelDataset
+from .multiclass_classification import MultiClassClassificationDataset
+from .big_earth_net import BigEarthNetDataset
+from .eurosat import EurosatDataset
+from .dfc15_multilabel import DFC15MultiLabelDataset
+from .clrs import CLRSDataset
+from .aid import AIDDataset
+from .aid_multilabel import AIDMultiLabelDataset
