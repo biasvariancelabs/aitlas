@@ -39,5 +39,5 @@ class BaseSegmentationClassifier(BaseModel):
         #return nn.CrossEntropyLoss()
 
     def load_lr_scheduler(self, optimizer):
-        return None
+        return torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)
 
