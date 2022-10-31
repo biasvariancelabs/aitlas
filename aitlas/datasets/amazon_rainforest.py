@@ -16,7 +16,7 @@ class AmazonRainforestDataset(SemanticSegmentationDataset):
 
     labels = ["Background", "Forest"]
     # Color mapping for the labels
-    color_mapping = [[0, 0, 0], [255, 255, 255]]
+    color_mapping = [[0, 0, 0], [0, 255, 0]]
     name = "Amazon Rainforest"
 
     def __init__(self, config):

@@ -10,7 +10,8 @@ For the CamVid dataset the mask is in one file, each label is color coded.
 
 
 class CamVidDataset(SemanticSegmentationDataset):
-    name = "CamVid"
+    url = "https://github.com/alexgkendall/SegNet-Tutorial"
+
     labels = [
         "sky",
         "building",
@@ -25,6 +26,10 @@ class CamVidDataset(SemanticSegmentationDataset):
         "byciclist",
         "void",
     ]
+    color_mapping = [[255, 127, 127], [255, 191, 127], [255, 255, 127], [191, 255, 127], [127, 255, 127],
+                     [127, 255, 191], [127, 255, 255], [127, 191, 255], [127, 127, 255],
+                     [191, 127, 255], [255, 127, 255], [255, 127, 191]]
+    name = "CamVid"
 
     def __init__(self, config):
         # now call the constructor to validate the schema

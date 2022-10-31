@@ -11,7 +11,7 @@ class MassachusettsRoadsDataset(SemanticSegmentationDataset):
 
     labels = ["Background", "Roads"]
     # Color mapping for the labels
-    color_mapping = [[0, 0, 0], [255, 255, 255]]
+    color_mapping = [[0, 0, 0], [200, 200, 200]]
     name = "Massachusetts Roads"
 
     def __init__(self, config):

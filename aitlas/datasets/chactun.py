@@ -62,15 +62,14 @@ class ChactunDataset(SemanticSegmentationDataset):
             img_mask[i][np.where(mask[:, :, i] == 1)] = self.color_mapping[i]
 
         fig = plt.figure(figsize=(10, 8))
-        if show_title:
-            fig.suptitle(
-                f"Image and mask with index {index} from the dataset {self.get_name()}\n",
-                fontsize=16,
-                y=1.006,
-            )
-        fig.legend(
-            handles=legend_elements, bbox_to_anchor=[1.00, 0.95], loc="upper left"
-        )
+        # if show_title:
+        #    fig.suptitle(
+        #        f"Image and mask with index {index} from the dataset {self.get_name()}\n",
+        #        fontsize=16,
+        #        y=1.006,
+        #    )
+        fig.legend(handles=legend_elements, bbox_to_anchor=(0.3, 1.0, 0.4, 0.2), ncol=3, mode='expand',
+                   loc='lower left', prop={'size': 12})
         plt.subplot(2, 2, 1)
         plt.imshow(img)
         plt.axis("off")

@@ -1,5 +1,6 @@
 import csv
 import os
+import math
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -79,7 +80,7 @@ class SemanticSegmentationDataset(BaseDataset):
             )
         return fig
 
-    def show_image(self, index, show_title=True):
+    def show_image(self, index, show_title=False):
         img, mask = self[index]
         img_mask = np.zeros([mask.shape[0], mask.shape[1], 3], np.uint8)
         legend_elements = []
@@ -93,15 +94,21 @@ class SemanticSegmentationDataset(BaseDataset):
             img_mask[np.where(mask[:, :, i] == 1)] = self.color_mapping[i]
 
         fig = plt.figure(figsize=(10, 8))
-        offset = 0.038
-        if show_title:
-            fig.suptitle(
-                f"Image and mask with index {index} from the {self.get_name()} dataset\n",
-                fontsize=16,
-                y=0.82,
-            )
-            offset = 0
-        fig.legend(handles=legend_elements, bbox_to_anchor=(1.00, 0.77 + offset), loc='upper left')
+        # if show_title:
+        #    fig.suptitle(
+        #        f"Image and mask with index {index} from the {self.get_name()} dataset\n",
+        #        fontsize=16,
+        #        y=0.82,
+        #    )
+        height_factor = math.ceil(len(self.labels)/3)
+        if height_factor == 4:
+            height_factor = 0.73
+        elif height_factor == 2:
+            height_factor = 0.80
+        else:
+            height_factor = 0.81
+        fig.legend(handles=legend_elements, bbox_to_anchor=(0.2, height_factor, 0.6, 0.2), ncol=3, mode='expand',
+                   loc='lower left', prop={'size': 12})
         plt.subplot(1, 2, 1)
         plt.imshow(img)
         plt.axis("off")
