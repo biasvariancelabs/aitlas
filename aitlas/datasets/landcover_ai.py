@@ -15,7 +15,7 @@ Use function split_images to split the images and the masks in smaller patches
 
 
 class LandCoverAiDataset(SemanticSegmentationDataset):
-    url = "https://landcover.ai/"
+    url = "https://landcover.ai.linuxpolska.com/"
 
     labels = ["Background", "Buildings", "Woodlands", "Water", "Road"]
     color_mapping = [[255, 255, 0], [0, 0, 0], [0, 255, 0], [0, 0, 255], [200, 200, 200]]

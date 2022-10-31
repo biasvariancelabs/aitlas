@@ -1,7 +1,4 @@
-import numpy as np
-
 from .semantic_segmentation import SemanticSegmentationDataset
-from ..utils import image_loader
 
 """
 The training set contains 180 color image tiles of size 5000×5000, covering a surface of 1500 m × 1500 m each

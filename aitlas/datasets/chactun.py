@@ -25,10 +25,10 @@ class ChactunDataset(SemanticSegmentationDataset):
     def __getitem__(self, index):
         image = image_loader(self.images[index])
         mask = np.zeros(
-            shape=(len(self.masks[index]), image.shape[0], image.shape[1]), dtype=float
+            shape=(image.shape[0], image.shape[1], len(self.masks[index])), dtype=float
         )
         for i, path in enumerate(self.masks[index]):
-            mask[i] = image_invert(path, True)
+            mask[:, :, i] = image_invert(path, True) / 255
         return self.apply_transformations(image, mask)
 
     def load_dataset(self, data_dir, csv_file=None):
@@ -48,8 +48,7 @@ class ChactunDataset(SemanticSegmentationDataset):
                         self.masks.append(masks_for_image)
 
     def show_image(self, index, show_title=True):
-        img = self[index][0]
-        mask = self[index][1].transpose(1, 2, 0)
+        img, mask = self[index]
         legend_elements = []
         img_mask = []
         for i, label in enumerate(self.labels):
@@ -60,7 +59,7 @@ class ChactunDataset(SemanticSegmentationDataset):
                 )
             )
             img_mask.append(np.zeros([mask.shape[0], mask.shape[1], 3], np.uint8))
-            img_mask[i][np.where(mask[:, :, i] == 255)] = self.color_mapping[i]
+            img_mask[i][np.where(mask[:, :, i] == 1)] = self.color_mapping[i]
 
         fig = plt.figure(figsize=(10, 8))
         if show_title:
@@ -70,7 +69,7 @@ class ChactunDataset(SemanticSegmentationDataset):
                 y=1.006,
             )
         fig.legend(
-            handles=legend_elements, bbox_to_anchor=[0.95, 0.95], loc="upper right"
+            handles=legend_elements, bbox_to_anchor=[1.00, 0.95], loc="upper left"
         )
         plt.subplot(2, 2, 1)
         plt.imshow(img)
