@@ -12,6 +12,7 @@ from .efficientnet import (
     EfficientNetB7MultiLabel,
 )
 from .fastrcnn import FastRCNN, FastRCNNObjectDetector
+from .fcn import FCN
 from .hrnet import HRNet
 from .inceptiontime import InceptionTime
 from .lstm import LSTM

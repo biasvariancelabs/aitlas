@@ -269,89 +269,17 @@ class MultiLabelRunningScore(RunningScore):
         return {
             "IOU": float(iou),
             "IOU mean": np.mean(iou_per_class),
-            "IOU per Class": iou_per_class.numpy(),
+            "IOU per Class": iou_per_class,
         }
 
 
-class SegmentationRunningScore(RunningScore):
+class SegmentationRunningScore(MultiLabelRunningScore):
     """Calculates a metrics for semantic segmentation"""
 
     def __init__(self, num_classes, device):
         super().__init__(num_classes, device)
-        self.iou_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
-            self.device
-        )
-        self.f1_score_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
-            self.device
-        )
-        self.intersection_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
-            self.device
-        )
-        self.total_per_class = torch.zeros(num_classes, dtype=torch.float64).to(
-            self.device
-        )
-        self.pixel_accuracy_per_class = torch.zeros(
-            num_classes, dtype=torch.float64
-        ).to(self.device)
-        self.samples = 0
 
     def update(self, y_true, y_pred, y_prob=None):
-        """Updates metrics on each batch"""
-        num_images, num_labels, h, w = y_true.shape
-        self.samples += num_images
-        for i in range(num_images):
-            for j in range(num_labels):
-                y_pred_local = y_pred[i, j, :, :].unsqueeze(0)
-                y_true_local = y_true[i, j, :, :].unsqueeze(0)
-                intersection = (y_pred_local & y_true_local).float().sum()
-                union = (y_pred_local | y_true_local).float().sum()
-                correct = (y_pred_local == y_true_local).int().sum()
+        """Updates stats on each batch"""
+        self.confusion_matrix.update((y_pred, y_true))
 
-                total = y_true_local.numel()
-                trues = y_pred_local.float().sum() + y_true_local.float().sum()
-
-                self.iou_per_class[j] += 1 if union == 0 else (intersection / union)
-                self.f1_score_per_class[j] += (
-                    1 if trues == 0 else (2 * intersection / trues)
-                )
-                self.pixel_accuracy_per_class[j] += correct / total
-
-    def reset(self):
-        """Reset the metrics"""
-        self.iou_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(
-            self.device
-        )
-        self.f1_score_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(
-            self.device
-        )
-        self.intersection_per_class = torch.zeros(
-            self.num_classes, dtype=torch.float64
-        ).to(self.device)
-        self.total_per_class = torch.zeros(self.num_classes, dtype=torch.float64).to(
-            self.device
-        )
-        self.pixel_accuracy_per_class = torch.zeros(
-            self.num_classes, dtype=torch.float64
-        ).to(self.device)
-        self.samples = 0
-
-    def accuracy(self):
-        self.pixel_accuracy_per_class = self.pixel_accuracy_per_class / self.samples
-        return {
-            "Accuracy Mean": float(self.pixel_accuracy_per_class.mean()),
-            "Accuracy per Class": self.pixel_accuracy_per_class.tolist(),
-        }
-
-    def f1_score(self):
-        self.f1_score_per_class = self.f1_score_per_class / self.samples
-        return {
-            "F1_score Mean": float(self.f1_score_per_class.mean()),
-            "F1_score per Class": self.f1_score_per_class.tolist(),
-        }
-
-    def iou(self):
-        self.iou_per_class = self.iou_per_class / self.samples
-        return {
-            "IOU Mean": float(self.iou_per_class.mean()),
-            "IOU per Class": self.iou_per_class.tolist(),
-        }

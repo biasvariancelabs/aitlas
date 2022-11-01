@@ -8,19 +8,20 @@ from ..base import BaseTransforms
 # for semantic segmentation tasks the shape of the input is (N, 3, H, W)
 # the shape of the output/mask is (N, num_classes, H, W), where N is the number of images
 
-class MinMaxNormTransponse(BaseTransforms):
+
+class MinMaxNormTranspose(BaseTransforms):
     def __call__(self, sample):
-        return sample.transpose(2, 0, 1).astype("float32") / 255
+        return torch.tensor(sample.transpose(2, 0, 1), dtype=torch.float32) / 255
 
 
-class Transponse(BaseTransforms):
+class Transpose(BaseTransforms):
     def __call__(self, sample):
-        return sample.transpose(2, 0, 1).astype("float32")
+        return torch.tensor(sample.transpose(2, 0, 1), dtype=torch.float32)
 
 
 class MinMaxNorm(BaseTransforms):
     def __call__(self, sample):
-        return sample.astype("float32") / 255
+        return torch.tensor(sample, dtype=torch.float32) / 255
 
 
 class ColorTransformations(BaseTransforms):

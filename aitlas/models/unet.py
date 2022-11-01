@@ -8,7 +8,7 @@ class Unet(BaseSegmentationClassifier):
         super().__init__(config)
 
         self.model = smp.Unet(
-            encoder_name="resnet34",
+            encoder_name="resnet50",
             encoder_weights="imagenet"
             if self.config.pretrained
             else None,  # set pretrained weights for encoder
