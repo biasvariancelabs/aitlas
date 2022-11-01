@@ -65,11 +65,21 @@ class BaseClassifierSchema(BaseModelSchema):
         missing=0.5, description="Prediction threshold if needed", example=0.5
     )
     freeze = fields.Bool(
-        missing=False, description="Whether to freeze all the layers except for the classifier layer(s)."
+        missing=False,
+        description="Whether to freeze all the layers except for the classifier layer(s).",
     )
 
 
 class BaseSegmentationClassifierSchema(BaseClassifierSchema):
+    metrics = fields.List(
+        fields.String,
+        missing=["iou", "f1_score", "accuracy"],
+        description="Classes of metrics you want to calculate",
+        example=["accuracy", "precision", "recall", "f1_score", "iou"],
+    )
+
+
+class BaseObjectDetectionSchema(BaseClassifierSchema):
     metrics = fields.List(
         fields.String,
         missing=["iou", "f1_score", "accuracy"],
