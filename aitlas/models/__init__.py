@@ -10,7 +10,7 @@ from .efficientnet import (
     EfficientNetB7,
     EfficientNetB7MultiLabel,
 )
-from .fastrcnn import FastRCNN
+from .fasterrcnn import FasterRCNN
 from .fcn import FCN
 from .hrnet import HRNet
 from .inceptiontime import InceptionTime

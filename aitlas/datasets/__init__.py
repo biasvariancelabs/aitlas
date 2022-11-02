@@ -37,3 +37,6 @@ from .dfc15_multilabel import DFC15MultiLabelDataset
 from .clrs import CLRSDataset
 from .aid import AIDDataset
 from .aid_multilabel import AIDMultiLabelDataset
+
+# Datasets for object detection
+from .object_detection import ObjectDetectionDataset

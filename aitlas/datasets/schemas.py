@@ -38,6 +38,12 @@ class SegmentationDatasetSchema(BaseDatasetSchema):
     )
 
 
+class ObjectDetectionDatasetSchema(BaseDatasetSchema):
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
+    )
+
+
 class BigEarthNetSchema(BaseDatasetSchema):
     csv_file = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv"

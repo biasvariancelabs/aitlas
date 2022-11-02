@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+import matplotlib.patches as patches
 
 from ..utils import current_ts, stringify, save_best_model
 from .config import Configurable
@@ -155,7 +156,12 @@ class BaseModel(nn.Module, Configurable):
                 self.writer,
                 epoch + 1,
             )
-            train_losses.append(train_loss)
+
+            # for object detection log the loss calculated during training, otherwise the loss calculated in eval mode
+            if train_loss:
+                train_losses.append(train_loss)
+            else:
+                train_losses.append(loss)
 
             # evaluate against a validation set if there is one
             if val_loader:
@@ -453,6 +459,54 @@ class BaseModel(nn.Module, Configurable):
 
         return fig
 
+    def detect_objects(
+        self,
+        image=None,
+        labels=None,
+        data_transforms=None,
+        description="running object detection for single image",
+    ):
+        """
+        Predicts using a model against for a specified image
+
+        :return: plot
+        """
+        # load the image and apply transformations
+        image = image / 255
+        self.model.eval()
+        if data_transforms:
+            image = data_transforms(image)
+            original_image = copy.deepcopy(image)
+            image = image.transpose(2, 0, 1)
+        # check if tensor and convert to batch of size 1, otherwise convert to tensor and then to batch of size 1
+        if torch.is_tensor(image):
+            inputs = image.unsqueeze(0).to(self.device)
+        else:
+            inputs = torch.from_numpy(image).type(torch.FloatTensor).unsqueeze(0).to(self.device)
+
+        print(inputs.shape)
+        outputs = self(inputs)
+
+        predicted = self.get_predicted(outputs)[0]
+        """Display image and plot object boundaries"""
+        fig, a = plt.subplots(1, 1)
+        fig.set_size_inches(5, 5)
+        a.imshow(original_image)
+        for box, label in zip(predicted['boxes'].cpu().detach().numpy(), predicted['labels'].cpu().detach().numpy()):
+            x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
+            rect = patches.Rectangle((x, y),
+                                     width, height,
+                                     linewidth=2,
+                                     edgecolor='r',
+                                     facecolor='none')
+
+            # Draw the bounding box on top of the image
+            a.add_patch(rect)
+            a.annotate(labels[label], (box[0], box[1]), color='black', weight='bold', fontsize=12, ha='center',
+                       va='center')
+        plt.show()
+        return fig
+
     def predict_output_per_batch(self, dataloader, description):
         """Run predictions on a dataloader and return inputs, outputs, labels per batch"""
 
@@ -511,7 +565,8 @@ class BaseModel(nn.Module, Configurable):
         :return:
         """
         self.model = self.model.to(self.device)
-        self.criterion = self.criterion.to(self.device)
+        if self.criterion:
+            self.criterion = self.criterion.to(self.device)
         if self.config.use_ddp:
             self.model = nn.parallel.DistributedDataParallel(
                 self.model, device_ids=[self.device]

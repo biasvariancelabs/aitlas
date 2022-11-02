@@ -1,7 +1,10 @@
-from ..base import BaseTransforms
-import albumentations as A
 import cv2
+import torch
 import numpy as np
+import albumentations as A
+
+from ..base import BaseTransforms
+from albumentations.pytorch.transforms import ToTensorV2
 
 
 class FlipHVRandomRotate(BaseTransforms):
@@ -19,3 +22,43 @@ class FlipHVRandomRotate(BaseTransforms):
         transformed = data_transforms(image=image, mask=mask)
 
         return transformed["image"], transformed["mask"]
+
+
+class FlipHVToTensorV2(BaseTransforms):
+    def __call__(self, sample):
+        image, target = sample
+        data_transforms = A.Compose([
+            A.HorizontalFlip(0.5),
+            A.VerticalFlip(0.5),
+            ToTensorV2(p=1.0)
+        ], bbox_params={'format': 'pascal_voc', 'label_fields': ['labels']})
+
+        transformed = data_transforms(image=image, bboxes=target['boxes'], labels=target["labels"])
+        target['boxes'] = torch.Tensor(transformed['bboxes'])
+
+        return transformed["image"], target
+
+
+class ResizeToTensorV2(BaseTransforms):
+    def __call__(self, sample):
+        image, target = sample
+        data_transforms = A.Compose([
+            A.Resize(480, 480),
+            ToTensorV2(p=1.0)
+        ], bbox_params={'format': 'pascal_voc', 'label_fields': ['labels']})
+
+        transformed = data_transforms(image=image, bboxes=target['boxes'], labels=target["labels"])
+        target['boxes'] = torch.Tensor(transformed['bboxes'])
+
+        return transformed["image"], target
+
+
+class Resize(BaseTransforms):
+    def __call__(self, sample):
+        data_transforms = A.Compose([
+            A.Resize(480, 480)
+        ])
+
+        transformed = data_transforms(image=sample)
+
+        return transformed["image"]
