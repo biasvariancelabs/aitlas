@@ -484,7 +484,6 @@ class BaseModel(nn.Module, Configurable):
         else:
             inputs = torch.from_numpy(image).type(torch.FloatTensor).unsqueeze(0).to(self.device)
 
-        print(inputs.shape)
         outputs = self(inputs)
 
         predicted = self.get_predicted(outputs)[0]
