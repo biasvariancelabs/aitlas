@@ -13,7 +13,7 @@ class FCN(BaseSegmentationClassifier):
         )
 
         # change last layer to work with different number of classes
-        self.model.classifier[4] = nn.Conv2d(256, self.config.num_classes, 1)
+        self.model.classifier[4] = nn.Conv2d(512, self.config.num_classes, 1)
 
     def forward(self, x):
         return self.model(x)
