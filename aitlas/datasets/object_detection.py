@@ -3,12 +3,16 @@ import json
 import os
 import random
 
+import albumentations as A
 import cv2
 import matplotlib.pyplot as plt
-import np
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import torch
+import torchvision.transforms as transforms
+from albumentations.pytorch.transforms import ToTensorV2
+from torchmetrics.detection import MeanAveragePrecision
 
 from ..base import BaseDataset
 from ..utils import image_loader
@@ -72,10 +76,10 @@ class ObjectDetectionCocoDataset(BaseDataset):
             if len(bbox) > 0:
                 # bounding box
                 xmin = bbox[0]
-                xmax = bbox[2]
+                xmax = bbox[0] + bbox[2]
 
                 ymin = bbox[1]
-                ymax = bbox[3]
+                ymax = bbox[1] + bbox[3]
 
                 xmin_corr = (xmin / wt) * self.width
                 xmax_corr = (xmax / wt) * self.width
@@ -102,6 +106,10 @@ class ObjectDetectionCocoDataset(BaseDataset):
         target["iscrowd"] = iscrowd
         target["image_id"] = img_data["id"]
 
+        self.transform = A.Compose(
+            [ToTensorV2(p=1.0)],
+            bbox_params={"format": "coco", "label_fields": ["labels"]},
+        )
         if self.transform:
             sample = self.transform(
                 image=img_res, bboxes=target["boxes"], labels=labels
@@ -109,11 +117,23 @@ class ObjectDetectionCocoDataset(BaseDataset):
 
             img_res = sample["image"]
             target["boxes"] = torch.Tensor(sample["bboxes"])
-
+        # transform = transforms.ToTensor()
+        # img_res = transform(img_res)
+        print(target["boxes"].shape)
         return img_res, target
 
     def __len__(self):
         return len(self.data)
+
+    def dataloader(self):
+        return torch.utils.data.DataLoader(
+            self,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            collate_fn=collate_fn,
+        )
 
     def get_labels(self):
         return self.labels
@@ -122,8 +142,8 @@ class ObjectDetectionCocoDataset(BaseDataset):
         df = pd.DataFrame([self.annotations])
         df_label = pd.DataFrame(self.labels)
         df_label.rename(columns={"0": "Label"})
-        df_count = df.groupby("Label").count()
-        df_count = df_count.join(df_label)["Label", "image_id"]
+        df_count = df.groupby("category_id").count()
+        df_count = df_count.join(df_label)["name", "id"]
         df_count.columns = ["Label", "Count"]
         return df_count
 
@@ -177,7 +197,9 @@ class ObjectDetectionCocoDataset(BaseDataset):
             coco = json.load(open(json_file, "r"))
 
             # read labels
-            labels = [y.name for y in sorted(coco["categories"], key=lambda x: x["id"])]
+            labels = [
+                y["name"] for y in sorted(coco["categories"], key=lambda x: x["id"])
+            ]
             # create data
             data = [
                 {
@@ -195,10 +217,14 @@ class ObjectDetectionCocoDataset(BaseDataset):
             # create index and annotations
             for annotation in annotations:
                 key = data_inverted[annotation["image_id"]]
-                data["annotations"].append(annotation)
+                data[key]["annotations"].append(annotation)
         else:
             raise ValueError(
                 "Please provide the `json_file` path to the Coco annotation format."
             )
 
         return labels, data, annotations
+
+
+def collate_fn(batch):
+    return tuple(zip(*batch))
