@@ -1,6 +1,7 @@
 from .alexnet import AlexNet, AlexNetMultiLabel
 from .cnn_rnn import CNNRNN
 from .deeplabv3 import DeepLabV3
+from .deeplabv3plus import DeepLabV3Plus
 from .densenet import DenseNet161, DenseNet161MultiLabel
 from .efficientnet import (
     EfficientNetB0,
