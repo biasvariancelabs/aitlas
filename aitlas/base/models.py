@@ -243,6 +243,7 @@ class BaseModel(nn.Module, Configurable):
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
         start = current_ts()
         running_loss = 0.0
+        running_items = 0
         total_loss = 0.0
 
         self.model.train()
@@ -278,15 +279,17 @@ class BaseModel(nn.Module, Configurable):
 
             # log statistics
             running_loss += loss.item() * inputs.size(0)
+            running_items += inputs.size(0)
             total_loss += loss.item() * inputs.size(0)
 
             if (
                 i % iterations_log == iterations_log - 1
             ):  # print every iterations_log mini-batches
                 logging.info(
-                    f"[{epoch + 1}, {i + 1}], loss: {running_loss / iterations_log : .5f}"
+                    f"[{epoch + 1}, {i + 1}], loss: {running_loss / running_items : .5f}"
                 )
                 running_loss = 0.0
+                running_items = 0
 
         total_loss = total_loss / len(dataloader.dataset)
         logging.info(

@@ -2,6 +2,7 @@ from .alexnet import AlexNet, AlexNetMultiLabel
 from .cnn_rnn import CNNRNN
 from .convnext import ConvNeXtTiny, ConvNeXtTinyMultiLabel
 from .deeplabv3 import DeepLabV3
+from .deeplabv3plus import DeepLabV3Plus
 from .densenet import DenseNet161, DenseNet161MultiLabel
 from .efficientnet import (
     EfficientNetB0,
@@ -11,6 +12,7 @@ from .efficientnet import (
     EfficientNetB7,
     EfficientNetB7MultiLabel,
 )
+from .swin_transformer import SwinTransformer, SwinTransformerMultilabel
 from .fasterrcnn import FasterRCNN
 from .fcn import FCN
 from .hrnet import HRNet

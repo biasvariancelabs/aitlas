@@ -77,7 +77,7 @@ class EfficientNetB4(BaseMulticlassClassifier):
         super().__init__(config)
 
         if self.config.pretrained:
-            self.model = models.efficientnet_b4(self.config.pretrained, False)
+            self.model = models.efficientnet_b4(weights=models.EfficientNet_B4_Weights.IMAGENET1K_V1, progress=False)
             num_ftrs = self.model.classifier[1].in_features
             self.model.classifier[1] = nn.Linear(num_ftrs, self.config.num_classes)
             if self.config.freeze:
@@ -110,7 +110,7 @@ class EfficientNetB4MultiLabel(BaseMultilabelClassifier):
         super().__init__(config)
 
         if self.config.pretrained:
-            self.model = models.efficientnet_b4(self.config.pretrained, False)
+            self.model = models.efficientnet_b4(weights=models.EfficientNet_B4_Weights.IMAGENET1K_V1, progress=False)
             num_ftrs = self.model.classifier[1].in_features
             self.model.classifier[1] = nn.Linear(num_ftrs, self.config.num_classes)
             if self.config.freeze:
