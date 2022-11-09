@@ -4,6 +4,8 @@ import torch
 from ignite.metrics import confusion_matrix
 from ignite.metrics.multilabel_confusion_matrix import MultiLabelConfusionMatrix
 from sklearn.metrics import average_precision_score
+from torchmetrics.detection.mean_ap import MeanAveragePrecision
+
 
 class BaseMetric:
     """Base class for implementing metrics """
@@ -282,4 +284,39 @@ class SegmentationRunningScore(MultiLabelRunningScore):
     def update(self, y_true, y_pred, y_prob=None):
         """Updates stats on each batch"""
         self.confusion_matrix.update((y_pred, y_true))
+
+
+class ObjectDetectionRunningScore(object):
+    """Calculates a metrics for object detection"""
+
+    def __init__(self, num_classes, device):
+        self.num_classes = num_classes
+        self.device = device
+        self.metric = MeanAveragePrecision(iou_type="bbox", class_metrics=True)
+
+    def update(self, preds, target):
+        """Updates stats on each batch"""
+        self.metric.update(preds, target)
+
+    def reset(self):
+        """Reset the confusion matrix"""
+        self.metric.reset()
+
+    def map(self):
+        """Returns the specified metrics"""
+        results = self.metric.compute()
+        dict_results = {}
+        for key, value in results.items():
+            if len(list(value.size())):
+                dict_results[key] = list(value)
+            else:
+                dict_results[key] = float(value)
+        return dict_results
+
+    def get_scores(self, metrics):
+        """Returns the specified metrics"""
+        result = []
+        for metric in metrics:
+            result.append(getattr(self, metric)())
+        return result
 

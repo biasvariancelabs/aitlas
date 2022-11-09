@@ -38,7 +38,18 @@ class SegmentationDatasetSchema(BaseDatasetSchema):
     )
 
 
-class ObjectDetectionDatasetSchema(BaseDatasetSchema):
+class ObjectDetectionPascalDatasetSchema(BaseDatasetSchema):
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/DIOR/"
+    )
+    json_file = fields.String(
+        missing=None,
+        description="JSON Coco file format on disk",
+        example="./data/train.json",
+    )
+
+
+class ObjectDetectionCocoDatasetSchema(BaseDatasetSchema):
     data_dir = fields.String(
         missing="/", description="Dataset path on disk", example="./data/DIOR/"
     )

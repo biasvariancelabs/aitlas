@@ -1,28 +1,176 @@
-import csv
 import json
 import os
 import random
+from xml.etree import ElementTree as et
 
-import albumentations as A
 import cv2
+import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import torch
-import torchvision.transforms as transforms
-from albumentations.pytorch.transforms import ToTensorV2
-from torchmetrics.detection import MeanAveragePrecision
 
 from ..base import BaseDataset
-from ..utils import image_loader
-from .schemas import ObjectDetectionDatasetSchema
+from ..utils import collate_fn, image_loader
+from .schemas import (
+    ObjectDetectionCocoDatasetSchema,
+    ObjectDetectionPascalDatasetSchema,
+)
 
 
-class ObjectDetectionCocoDataset(BaseDataset):
+class BaseObjectDetectionDataset(BaseDataset):
+    """Base object detection class"""
+
+    name = "Object Detection Dataset"
+
+    def dataloader(self):
+        return torch.utils.data.DataLoader(
+            self,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            collate_fn=collate_fn,
+        )
+
+    def __len__(self):
+        return len(self.data)
+
+    def apply_transformations(self, image, target):
+        if self.joint_transform:
+            image, target = self.joint_transform((image, target))
+        if self.transform:
+            image = self.transform(image)
+        if self.target_transform:
+            target = self.target_transform(target)
+        return image, target
+
+    def get_labels(self):
+        return self.labels
+
+    def show_image(self, index, show_title=False):
+        # plot the image and bboxes
+        # Bounding boxes are defined as follows: x-min y-min width height
+        img, target = self[index]
+        fig, a = plt.subplots(1, 1)
+        fig.set_size_inches(5, 5)
+        a.imshow(img)
+        for box, label in zip(target["boxes"], target["labels"]):
+            x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
+            rect = patches.Rectangle(
+                (x, y), width, height, linewidth=2, edgecolor="r", facecolor="none"
+            )
+
+            # Draw the bounding box on top of the image
+            a.add_patch(rect)
+            a.annotate(
+                self.labels[label],
+                (box[0], box[1]),
+                color="black",
+                weight="bold",
+                fontsize=12,
+                ha="center",
+                va="center",
+            )
+        plt.show()
+        return fig
+
+    def show_batch(self, size, show_title=True):
+        if size % 5:
+            raise ValueError("The provided size should be divided by 5!")
+        image_indices = random.sample(range(0, len(self)), size)
+        figure, ax = plt.subplots(
+            int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5))
+        )
+        if show_title:
+            figure.suptitle(
+                "Example images with labels from {}".format(self.get_name()),
+                fontsize=32,
+                y=1.006,
+            )
+        for axes, image_index in zip(ax.flatten(), image_indices):
+            img, target = self[image_index]
+            axes.imshow(img)
+            # label = ','.join(self.labels[target["labels"] + 1])
+            # axes.set_title(label, fontsize=18, pad=10)
+            axes.set_xticks([])
+            axes.set_yticks([])
+        figure.tight_layout()
+        return figure
+
+
+class ObjectDetectionPascalDataset(BaseObjectDetectionDataset):
+    schema = ObjectDetectionPascalDatasetSchema
+
+    # labels: 0 index is reserved for background
+    labels = [None, "apple", "banana", "orange"]
+
+    def __init__(self, config):
+        # now call the constructor to validate the schema and split the data
+        super().__init__(config)
+        self.data_dir = self.config.data_dir
+        self.data = self.load_dataset(self.data_dir)
+
+    def __getitem__(self, index):
+        img_name = self.data[index]
+        image = image_loader(os.path.join(self.data_dir, img_name)) / 255.0
+
+        # annotation file
+        annot_filename = img_name[:-4] + ".xml"
+        annot_file_path = os.path.join(self.data_dir, annot_filename)
+        boxes = []
+        labels = []
+        tree = et.parse(annot_file_path)
+        root = tree.getroot()
+
+        # box coordinates for xml files are extracted
+        for member in root.findall("object"):
+            labels.append(self.labels.index(member.find("name").text))
+
+            # bounding box
+            xmin = int(member.find("bndbox").find("xmin").text)
+            xmax = int(member.find("bndbox").find("xmax").text)
+
+            ymin = int(member.find("bndbox").find("ymin").text)
+            ymax = int(member.find("bndbox").find("ymax").text)
+
+            boxes.append([xmin, ymin, xmax, ymax])
+
+        # convert boxes into a torch.Tensor
+        boxes = torch.as_tensor(boxes, dtype=torch.float32)
+
+        # getting the areas of the boxes
+        area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
+
+        # suppose all instances are not crowd
+        iscrowd = torch.zeros((boxes.shape[0],), dtype=torch.int64)
+
+        labels = torch.as_tensor(labels, dtype=torch.int64)
+
+        target = {"boxes": boxes, "labels": labels, "area": area, "iscrowd": iscrowd}
+        # image_id
+        image_id = torch.tensor([index])
+        target["image_id"] = image_id
+
+        return self.apply_transformations(image, target)
+
+    def load_dataset(self, data_dir):
+        if not self.labels:
+            raise ValueError("You need to provide the list of labels for the dataset")
+        return [image for image in sorted(os.listdir(data_dir)) if image[-4:] == ".jpg"]
+
+    def data_distribution_table(self):
+        pass
+
+    def data_distribution_barchart(self, show_title=True):
+        pass
+
+
+class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
     """This is a skeleton object detection dataset following the Coco format"""
 
-    schema = ObjectDetectionDatasetSchema
+    schema = ObjectDetectionCocoDatasetSchema
 
     def __init__(self, config):
         # now call the constructor to validate the schema
@@ -31,10 +179,6 @@ class ObjectDetectionCocoDataset(BaseDataset):
         # load the config
         self.data_dir = self.config.data_dir
         self.json_file = self.config.json_file
-
-        # TODO: might wanna check this
-        self.width = 224
-        self.height = 224
 
         # load the data
         self.labels, self.data, self.annotations = self.load_dataset(
@@ -52,20 +196,12 @@ class ObjectDetectionCocoDataset(BaseDataset):
         img_data = self.data[index]
 
         # reading the images and converting them to correct size and color
-        img = cv2.imread(img_data["file_name"])
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32)
-        img_res = cv2.resize(img_rgb, (self.width, self.height), cv2.INTER_AREA)
-        # diving by 255
-        img_res /= 255.0
+        image = image_loader(img_data["file_name"]) / 255.0
 
         # annotation file
         annotations = img_data["annotations"]
         boxes = []
         labels = []
-
-        # cv2 image gives size as height x width
-        wt = img.shape[1]
-        ht = img.shape[0]
 
         # box coordinates for xml files are extracted and corrected for image size given
         for annotation in annotations:
@@ -81,10 +217,10 @@ class ObjectDetectionCocoDataset(BaseDataset):
                 ymin = bbox[1]
                 ymax = bbox[1] + bbox[3]
 
-                xmin_corr = (xmin / wt) * self.width
-                xmax_corr = (xmax / wt) * self.width
-                ymin_corr = (ymin / ht) * self.height
-                ymax_corr = (ymax / ht) * self.height
+                xmin_corr = xmin
+                xmax_corr = xmax
+                ymin_corr = ymin
+                ymax_corr = ymax
 
                 boxes.append([xmin_corr, ymin_corr, xmax_corr, ymax_corr])
 
@@ -104,39 +240,9 @@ class ObjectDetectionCocoDataset(BaseDataset):
         target["labels"] = labels
         target["area"] = area
         target["iscrowd"] = iscrowd
-        target["image_id"] = img_data["id"]
+        target["image_id"] = torch.tensor([img_data["id"]])
 
-        self.transform = A.Compose(
-            [ToTensorV2(p=1.0)],
-            bbox_params={"format": "coco", "label_fields": ["labels"]},
-        )
-        if self.transform:
-            sample = self.transform(
-                image=img_res, bboxes=target["boxes"], labels=labels
-            )
-
-            img_res = sample["image"]
-            target["boxes"] = torch.Tensor(sample["bboxes"])
-        # transform = transforms.ToTensor()
-        # img_res = transform(img_res)
-        print(target["boxes"].shape)
-        return img_res, target
-
-    def __len__(self):
-        return len(self.data)
-
-    def dataloader(self):
-        return torch.utils.data.DataLoader(
-            self,
-            batch_size=self.batch_size,
-            shuffle=self.shuffle,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            collate_fn=collate_fn,
-        )
-
-    def get_labels(self):
-        return self.labels
+        return self.apply_transformations(image, target)
 
     def data_distribution_table(self):
         df = pd.DataFrame([self.annotations])
@@ -171,33 +277,13 @@ class ObjectDetectionCocoDataset(BaseDataset):
         plt.imshow(self[index][0])
         return fig
 
-    def show_batch(self, size, show_title=True):
-        if size % 5:
-            raise ValueError("The provided size should be divided by 5!")
-        image_indices = random.sample(range(0, len(self.data)), size)
-        figure, ax = plt.subplots(
-            int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5))
-        )
-        if show_title:
-            figure.suptitle(
-                "Example images with labels from {}".format(self.get_name()),
-                fontsize=32,
-                y=1.006,
-            )
-        for axes, image_index in zip(ax.flatten(), image_indices):
-            axes.imshow(self[image_index][0])
-            axes.set_title(self.labels[self[image_index][1]], fontsize=18, pad=10)
-            axes.set_xticks([])
-            axes.set_yticks([])
-        figure.tight_layout()
-        return figure
-
     def load_dataset(self, data_dir=None, json_file=None):
         if json_file:
             coco = json.load(open(json_file, "r"))
 
             # read labels
-            labels = [
+            labels = [None]  # add none for background
+            labels += [
                 y["name"] for y in sorted(coco["categories"], key=lambda x: x["id"])
             ]
             # create data
@@ -216,6 +302,10 @@ class ObjectDetectionCocoDataset(BaseDataset):
 
             # create index and annotations
             for annotation in annotations:
+                bbox = []
+                for coor in annotation["bbox"]:
+                    bbox.append(max(coor, 0))
+                annotation["bbox"] = bbox
                 key = data_inverted[annotation["image_id"]]
                 data[key]["annotations"].append(annotation)
         else:
@@ -224,7 +314,3 @@ class ObjectDetectionCocoDataset(BaseDataset):
             )
 
         return labels, data, annotations
-
-
-def collate_fn(batch):
-    return tuple(zip(*batch))

@@ -24,8 +24,8 @@ from .multiclass_classification import MultiClassClassificationDataset
 # Multi class and multi label datasets for land use and land cover classification
 from .multilabel_classification import MultiLabelClassificationDataset
 
-# Dataset for object detection
-from .object_detection import ObjectDetectionCocoDataset
+# Datasets for object detection
+from .object_detection import ObjectDetectionCocoDataset, ObjectDetectionPascalDataset
 from .optimal_31 import Optimal31Dataset
 from .pattern_net import PatternNetDataset
 from .planet_uas import PlanetUASMultiLabelDataset

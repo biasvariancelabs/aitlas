@@ -82,7 +82,7 @@ class BaseSegmentationClassifierSchema(BaseClassifierSchema):
 class BaseObjectDetectionSchema(BaseClassifierSchema):
     metrics = fields.List(
         fields.String,
-        missing=["iou", "f1_score", "accuracy"],
+        missing=["map"],
         description="Classes of metrics you want to calculate",
         example=["accuracy", "precision", "recall", "f1_score", "iou"],
     )

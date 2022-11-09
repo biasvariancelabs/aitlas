@@ -14,4 +14,5 @@ from .utils import (
     tiff_loader,
     save_best_model,
     submit_inria_results,
+    collate_fn,
 )

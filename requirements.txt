@@ -27,6 +27,7 @@ pytorch-ignite>=0.4.6
 faiss-cpu>=1.7.1
 timm>=0.4.12
 segmentation-models-pytorch>=0.2.0
+torchmetrics>=0.10.2
 
 eo-learn-geometry>=0.10.0
 eo-learn-core>=0.10.0

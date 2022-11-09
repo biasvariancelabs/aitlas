@@ -241,3 +241,8 @@ def save_best_model(model, model_directory, epoch, optimizer, loss, start, run_i
         },
         checkpoint,
     )
+
+
+def collate_fn(batch):
+    return tuple(zip(*batch))
+

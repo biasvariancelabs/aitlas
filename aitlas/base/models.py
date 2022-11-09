@@ -4,6 +4,7 @@ import logging
 import os
 from shutil import copyfile
 
+import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -12,7 +13,7 @@ import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from ..utils import current_ts, stringify, save_best_model
+from ..utils import current_ts, save_best_model, stringify
 from .config import Configurable
 from .datasets import BaseDataset
 from .schemas import BaseModelSchema
@@ -26,6 +27,7 @@ class EarlyStopping:
     Early stopping to stop the training when the loss does not improve after
     certain epochs.
     """
+
     def __init__(self, patience=10, min_delta=0):
         """
         :param patience: how many epochs to wait before stopping when loss is
@@ -48,9 +50,11 @@ class EarlyStopping:
             self.counter = 0
         elif self.best_loss - val_loss < self.min_delta:
             self.counter += 1
-            logging.info(f"INFO: Early stopping counter {self.counter} of {self.patience}")
+            logging.info(
+                f"INFO: Early stopping counter {self.counter} of {self.patience}"
+            )
             if self.counter >= self.patience:
-                logging.info('INFO: Early stopping')
+                logging.info("INFO: Early stopping")
                 self.early_stop = True
 
 
@@ -58,6 +62,7 @@ class BaseModel(nn.Module, Configurable):
 
     schema = BaseModelSchema
     name = None
+    log_loss = True
 
     def __init__(self, config=None):
         Configurable.__init__(self, config)
@@ -73,7 +78,11 @@ class BaseModel(nn.Module, Configurable):
 
         self.metrics = self.config.metrics
         self.num_classes = self.config.num_classes
-        self.weights = torch.tensor(self.config.weights, dtype=torch.float32) if self.config.weights else None
+        self.weights = (
+            torch.tensor(self.config.weights, dtype=torch.float32)
+            if self.config.weights
+            else None
+        )
 
     def prepare(self):
         """Prepare the model before using it """
@@ -131,7 +140,7 @@ class BaseModel(nn.Module, Configurable):
             loss = self.train_epoch(
                 epoch, train_loader, self.optimizer, self.criterion, iterations_log
             )
-            train_time = (current_ts() - start)
+            train_time = current_ts() - start
             total_train_time += train_time
             train_time_epoch.append(train_time)
 
@@ -155,7 +164,12 @@ class BaseModel(nn.Module, Configurable):
                 self.writer,
                 epoch + 1,
             )
-            train_losses.append(train_loss)
+
+            # for object detection log the loss calculated during training, otherwise the loss calculated in eval mode
+            if train_loss:
+                train_losses.append(train_loss)
+            else:
+                train_losses.append(loss)
 
             # evaluate against a validation set if there is one
             if val_loader:
@@ -165,6 +179,7 @@ class BaseModel(nn.Module, Configurable):
                     criterion=self.criterion,
                     description="testing on validation set",
                 )
+
                 self.log_metrics(
                     self.running_metrics.get_scores(self.metrics),
                     dataset.get_labels(),
@@ -172,24 +187,34 @@ class BaseModel(nn.Module, Configurable):
                     self.writer,
                     epoch + 1,
                 )
-                val_losses.append(val_loss)
-                if not best_loss or val_loss < best_loss:
-                    best_loss = val_loss
-                    best_epoch = epoch
-                    best_model = copy.deepcopy(self.model)
 
-                # adjust learning rate if needed
-                if self.lr_scheduler:
-                    self.lr_scheduler.step(val_loss)
-                    # self.lr_scheduler.step()
+                if self.log_loss:
+                    if not best_loss or val_loss < best_loss:
+                        best_loss = val_loss
+                        best_epoch = epoch
+                        best_model = copy.deepcopy(self.model)
 
-                self.early_stopping(val_loss)
-                if self.early_stopping.early_stop:
-                    break
+                    # adjust learning rate if needed
+                    if self.lr_scheduler:
+                        if isinstance(
+                            self.lr_scheduler,
+                            torch.optim.lr_scheduler.ReduceLROnPlateau,
+                        ):
+                            self.lr_scheduler.step(val_loss)
+                        else:
+                            self.lr_scheduler.step()
 
-                self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
-                for param_group in self.optimizer.param_groups:
-                    print("\nLR", epoch, param_group['lr'])
+                    val_losses.append(val_loss)
+                    self.early_stopping(val_loss)
+                    if self.early_stopping.early_stop:
+                        break
+
+                    self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
+            else:
+                if self.lr_scheduler and not isinstance(
+                    self.lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
+                ):
+                    self.lr_scheduler.step()
 
         self.writer.close()
 
@@ -198,7 +223,15 @@ class BaseModel(nn.Module, Configurable):
 
         # save the model with lowest validation loss
         if best_model:
-            save_best_model(best_model, model_directory, best_epoch + 1, self.optimizer, best_loss, start, run_id)
+            save_best_model(
+                best_model,
+                model_directory,
+                best_epoch + 1,
+                self.optimizer,
+                best_loss,
+                start,
+                run_id,
+            )
 
         logging.info(f"Train loss: {train_losses}")
         logging.info(f"Validation loss: {val_losses}")
@@ -453,6 +486,66 @@ class BaseModel(nn.Module, Configurable):
 
         return fig
 
+    def detect_objects(
+        self,
+        image=None,
+        labels=None,
+        data_transforms=None,
+        description="running object detection for single image",
+    ):
+        """
+        Predicts using a model against for a specified image
+
+        :return: plot
+        """
+        # load the image and apply transformations
+        image = image / 255
+        self.model.eval()
+        if data_transforms:
+            image = data_transforms(image)
+            original_image = copy.deepcopy(image)
+            image = image.transpose(2, 0, 1)
+        # check if tensor and convert to batch of size 1, otherwise convert to tensor and then to batch of size 1
+        if torch.is_tensor(image):
+            inputs = image.unsqueeze(0).to(self.device)
+        else:
+            inputs = (
+                torch.from_numpy(image)
+                .type(torch.FloatTensor)
+                .unsqueeze(0)
+                .to(self.device)
+            )
+
+        outputs = self(inputs)
+
+        predicted = self.get_predicted(outputs)[0]
+        """Display image and plot object boundaries"""
+        fig, a = plt.subplots(1, 1)
+        fig.set_size_inches(5, 5)
+        a.imshow(original_image)
+        for box, label in zip(
+            predicted["boxes"].cpu().detach().numpy(),
+            predicted["labels"].cpu().detach().numpy(),
+        ):
+            x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
+            rect = patches.Rectangle(
+                (x, y), width, height, linewidth=2, edgecolor="r", facecolor="none"
+            )
+
+            # Draw the bounding box on top of the image
+            a.add_patch(rect)
+            a.annotate(
+                labels[label],
+                (box[0], box[1]),
+                color="black",
+                weight="bold",
+                fontsize=12,
+                ha="center",
+                va="center",
+            )
+        plt.show()
+        return fig
+
     def predict_output_per_batch(self, dataloader, description):
         """Run predictions on a dataloader and return inputs, outputs, labels per batch"""
 
@@ -511,7 +604,8 @@ class BaseModel(nn.Module, Configurable):
         :return:
         """
         self.model = self.model.to(self.device)
-        self.criterion = self.criterion.to(self.device)
+        if self.criterion:
+            self.criterion = self.criterion.to(self.device)
         if self.config.use_ddp:
             self.model = nn.parallel.DistributedDataParallel(
                 self.model, device_ids=[self.device]
