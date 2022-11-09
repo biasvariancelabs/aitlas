@@ -101,3 +101,13 @@ class BaseDataset(Dataset, Configurable):
     def load_transforms(self, class_names):
         """Loads transformation classes and make a composition of them"""
         return load_transforms(class_names, self.config)
+
+    def re_map_labels(self, labels_remapping):
+        # re mapp the labels
+        tmp_data = []
+        if self.data:
+            for i, (path, label) in enumerate(self.data):
+                if label in labels_remapping.keys():
+                    tmp_data.append((path, labels_remapping[label]))
+        self.data = tmp_data
+
