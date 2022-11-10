@@ -1,0 +1,44 @@
+{
+    "model": {
+        "classname": "aitlas.models.FasterRCNN",
+        "config": {
+            "num_classes": 14,
+            "learning_rate": 0.001,
+            "pretrained": true,
+            "metrics": ["map"]
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.TrainAndEvaluateTask",
+        "config": {
+            "epochs": 50,
+            "model_directory": "./experiments/hrrsd/",
+            "save_epochs": 5,
+            "id": "hrrsd",
+            "train_dataset_config":{
+                "classname": "aitlas.datasets.ObjectDetectionPascalDataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": true,
+                    "num_workers": 4,
+                    "image_dir": "./data/object_detection/JPEGImages/",
+                    "annotations_dir": "./aitlas/data/object_detection/TGRS-HRRSD-Dataset/OPT2017/Annotations/",
+                    "imageset_file": "./aitlas/data/object_detection/TGRS-HRRSD-Dataset/OPT2017/ImageSets/Main/train.txt",
+                    "joint_transforms": ["aitlas.transforms.ResizeToTensorV2"]
+                }
+            },
+            "val_dataset_config":{
+                  "classname": "aitlas.datasets.ObjectDetectionPascalDataset",
+                  "config": {
+                      "batch_size": 8,
+                      "shuffle": false,
+                      "num_workers": 4,
+                      "image_dir": "./data/object_detection/JPEGImages/",
+                      "annotations_dir": "./data/object_detection/TGRS-HRRSD-Dataset/OPT2017/Annotations/",
+                      "imageset_file": "./data/object_detection/TGRS-HRRSD-Dataset/OPT2017/ImageSets/Main/val.txt",
+                      "joint_transforms": ["aitlas.transforms.ResizeToTensorV2"]
+                  }
+            }
+        }
+    }
+}
