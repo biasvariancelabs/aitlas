@@ -39,13 +39,18 @@ class SegmentationDatasetSchema(BaseDatasetSchema):
 
 
 class ObjectDetectionPascalDatasetSchema(BaseDatasetSchema):
-    data_dir = fields.String(
-        missing="/", description="Dataset path on disk", example="./data/DIOR/"
+    imageset_file = fields.String(
+        missing="/",
+        description="File with the image ids in the set",
+        example="./data/DIOR/train.txt",
     )
-    json_file = fields.String(
-        missing=None,
-        description="JSON Coco file format on disk",
-        example="./data/train.json",
+    image_dir = fields.String(
+        missing="/", description="Folder to the images on disk", example="./data/DIOR/"
+    )
+    annotations_dir = fields.String(
+        missing="/",
+        description="Folder with the XML annotations in VOC format",
+        example="./data/DIOR/Annons/",
     )
 
 

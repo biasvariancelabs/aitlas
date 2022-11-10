@@ -104,21 +104,25 @@ class ObjectDetectionPascalDataset(BaseObjectDetectionDataset):
     schema = ObjectDetectionPascalDatasetSchema
 
     # labels: 0 index is reserved for background
-    labels = [None, "apple", "banana", "orange"]
+    labels = [None]
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
         super().__init__(config)
-        self.data_dir = self.config.data_dir
-        self.data = self.load_dataset(self.data_dir)
+        self.image_dir = self.config.image_dir
+        self.annotations_dir = self.config.annotations_dir
+        self.imageset_file = self.config.imageset_file
+
+        self.labels, self.data, self.annotations = self.load_dataset(
+            self.imageset_file, self.annotations_dir
+        )
 
     def __getitem__(self, index):
         img_name = self.data[index]
-        image = image_loader(os.path.join(self.data_dir, img_name)) / 255.0
+        image = image_loader(os.path.join(self.image_dir, f"{img_name}.jpg")) / 255.0
 
         # annotation file
-        annot_filename = img_name[:-4] + ".xml"
-        annot_file_path = os.path.join(self.data_dir, annot_filename)
+        annot_file_path = os.path.join(self.annotations_dir, f"{img_name}.xml")
         boxes = []
         labels = []
         tree = et.parse(annot_file_path)
@@ -155,10 +159,24 @@ class ObjectDetectionPascalDataset(BaseObjectDetectionDataset):
 
         return self.apply_transformations(image, target)
 
-    def load_dataset(self, data_dir):
-        if not self.labels:
-            raise ValueError("You need to provide the list of labels for the dataset")
-        return [image for image in sorted(os.listdir(data_dir)) if image[-4:] == ".jpg"]
+    def load_dataset(self, imageset_file, data_dir):
+        labels = []
+        annotations = []
+        data = [f.strip() for f in open(imageset_file, "r").readlines()]
+        for img in data:
+            annot_file_path = os.path.join(data_dir, f"{img}.xml")
+            tree = et.parse(annot_file_path)
+            root = tree.getroot()
+
+            # box coordinates for xml files are extracted
+            for member in root.findall("object"):
+                label = member.find("name").text.strip()
+                labels.append(label)
+
+                annotations.append({"image_id": img, "label": label})
+
+        labels = [None] + list(sorted(set(labels)))
+        return labels, data, annotations
 
     def data_distribution_table(self):
         pass
