@@ -320,6 +320,9 @@ class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
 
             # create index and annotations
             for annotation in annotations:
+                annotation["category_id"] = (
+                    annotation["category_id"] + 1
+                )  # increase the label number by 1 because of the hardcoded background
                 bbox = []
                 for coor in annotation["bbox"]:
                     bbox.append(max(coor, 0))
