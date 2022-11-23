@@ -148,3 +148,16 @@ class MultiLabelClassificationDataset(BaseDataset):
             f"Minimum number of labels: {min_number}, Maximum number of labels: {max_number}, "
             f"Average number of labels: {average_number/len(self.data)}"
         )
+
+    def re_map_labels(self, labels_remapping, map_size):
+        # re mapp the labels
+        tmp_data = []
+        if self.data:
+            for i, (path, one_hot_encoded_labels) in enumerate(self.data):
+                new_one_hot_encoded_labels = np.zeros(map_size, dtype=float)
+                for j, label in enumerate(one_hot_encoded_labels):
+                    if j in labels_remapping.keys() and label == 1:
+                        new_one_hot_encoded_labels[labels_remapping[j]] = 1
+
+                tmp_data.append((path, new_one_hot_encoded_labels))
+        self.data = tmp_data

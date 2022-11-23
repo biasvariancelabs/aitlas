@@ -119,3 +119,12 @@ class MultiClassClassificationDataset(BaseDataset):
                     )
                     data.append(item)
         return data
+
+    def re_map_labels(self, labels_remapping):
+        # re mapp the labels
+        tmp_data = []
+        if self.data:
+            for i, (path, label) in enumerate(self.data):
+                if label in labels_remapping.keys():
+                    tmp_data.append((path, labels_remapping[label]))
+        self.data = tmp_data
