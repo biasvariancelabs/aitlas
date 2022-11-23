@@ -193,13 +193,19 @@ class MultiLabelRunningScore(RunningScore):
         self.list_y_true.extend(y_true.tolist())
 
     def map(self):
-        return {"mAP": average_precision_score(np.array(self.list_y_true), np.array(self.list_y_prob))}
+        return {
+            "mAP": average_precision_score(
+                np.array(self.list_y_true), np.array(self.list_y_prob)
+            )
+        }
 
     def accuracy(self):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
 
-        accuracy = (tp_total + tn_total) / (tp_total + tn_total + fp_total + fn_total + 1e-15)
+        accuracy = (tp_total + tn_total) / (
+            tp_total + tn_total + fp_total + fn_total + 1e-15
+        )
         accuracy_per_class = (tp + tn) / (tp + tn + fp + fn + 1e-15)
 
         return {"Accuracy": accuracy, "Accuracy per Class": accuracy_per_class}
@@ -292,7 +298,9 @@ class ObjectDetectionRunningScore(object):
     def __init__(self, num_classes, device):
         self.num_classes = num_classes
         self.device = device
-        self.metric = MeanAveragePrecision(iou_type="bbox", class_metrics=True)
+        self.metric = MeanAveragePrecision(
+            iou_type="bbox", class_metrics=True, iou_thresholds=[0.5]
+        )
 
     def update(self, preds, target):
         """Updates stats on each batch"""
@@ -319,4 +327,3 @@ class ObjectDetectionRunningScore(object):
         for metric in metrics:
             result.append(getattr(self, metric)())
         return result
-

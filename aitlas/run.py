@@ -8,6 +8,9 @@ from .base import Config, RunConfig
 from .utils import get_class
 
 
+torch.manual_seed(1)
+
+
 def run(rank, config):
     # load model, if specified
     model = None

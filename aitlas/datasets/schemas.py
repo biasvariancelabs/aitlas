@@ -63,6 +63,9 @@ class ObjectDetectionCocoDatasetSchema(BaseDatasetSchema):
         description="JSON Coco file format on disk",
         example="./data/train.json",
     )
+    hardcode_background = fields.Bool(
+        missing=True, description="Do we need to hardcode the background as a class?"
+    )
 
 
 class BigEarthNetSchema(BaseDatasetSchema):

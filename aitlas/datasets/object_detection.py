@@ -130,8 +130,6 @@ class ObjectDetectionPascalDataset(BaseObjectDetectionDataset):
 
         # box coordinates for xml files are extracted
         for member in root.findall("object"):
-            labels.append(self.labels.index(member.find("name").text))
-
             # bounding box
             xmin = int(member.find("bndbox").find("xmin").text)
             xmax = int(member.find("bndbox").find("xmax").text)
@@ -139,7 +137,9 @@ class ObjectDetectionPascalDataset(BaseObjectDetectionDataset):
             ymin = int(member.find("bndbox").find("ymin").text)
             ymax = int(member.find("bndbox").find("ymax").text)
 
-            boxes.append([xmin, ymin, xmax, ymax])
+            if xmax > xmin and ymax > ymin:
+                labels.append(self.labels.index(member.find("name").text))
+                boxes.append([xmin, ymin, xmax, ymax])
 
         # convert boxes into a torch.Tensor
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
@@ -163,19 +163,36 @@ class ObjectDetectionPascalDataset(BaseObjectDetectionDataset):
         labels = []
         annotations = []
         data = [f.strip() for f in open(imageset_file, "r").readlines()]
+        to_remove = []
         for img in data:
             annot_file_path = os.path.join(data_dir, f"{img}.xml")
             tree = et.parse(annot_file_path)
             root = tree.getroot()
 
             # box coordinates for xml files are extracted
+            has_box = False
             for member in root.findall("object"):
                 label = member.find("name").text.strip()
                 labels.append(label)
 
-                annotations.append({"image_id": img, "label": label})
+                xmin = int(member.find("bndbox").find("xmin").text)
+                xmax = int(member.find("bndbox").find("xmax").text)
+
+                ymin = int(member.find("bndbox").find("ymin").text)
+                ymax = int(member.find("bndbox").find("ymax").text)
+
+                if xmax > xmin and ymax > ymin:
+                    has_box = True
+                    annotations.append({"image_id": img, "label": label})
+
+            if not has_box:
+                to_remove.append(img)
+
+        for img in to_remove:
+            data.remove(img)
 
         labels = [None] + list(sorted(set(labels)))
+
         return labels, data, annotations
 
     def data_distribution_table(self):
@@ -197,6 +214,7 @@ class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
         # load the config
         self.data_dir = self.config.data_dir
         self.json_file = self.config.json_file
+        self.add_for_background = self.config.hardcode_background
 
         # load the data
         self.labels, self.data, self.annotations = self.load_dataset(
@@ -320,9 +338,10 @@ class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
 
             # create index and annotations
             for annotation in annotations:
-                annotation["category_id"] = (
-                    annotation["category_id"] + 1
-                )  # increase the label number by 1 because of the hardcoded background
+                if self.add_for_background:
+                    annotation["category_id"] = (
+                        annotation["category_id"] + 1
+                    )  # increase the label number by 1 because of the hardcoded background
                 bbox = []
                 for coor in annotation["bbox"]:
                     bbox.append(max(coor, 0))

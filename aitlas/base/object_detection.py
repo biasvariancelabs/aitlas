@@ -1,8 +1,6 @@
 import logging
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as nnf
 import torch.optim as optim
 import torchvision
 from tqdm import tqdm
@@ -51,7 +49,7 @@ class BaseObjectDetection(BaseModel):
         return None
 
     def load_lr_scheduler(self, optimizer):
-        return None
+        return torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)
 
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
         start = current_ts()
