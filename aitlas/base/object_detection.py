@@ -25,6 +25,8 @@ class BaseObjectDetection(BaseModel):
         self.running_metrics = ObjectDetectionRunningScore(
             self.num_classes, self.device
         )
+        self.step_size = self.config.step_size
+        self.gamma = self.config.gamma
 
     def get_predicted(self, outputs, threshold=0.3):
         # apply nms and return the indices of the bboxes to keep
@@ -49,7 +51,9 @@ class BaseObjectDetection(BaseModel):
         return None
 
     def load_lr_scheduler(self, optimizer):
-        return torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)
+        return torch.optim.lr_scheduler.StepLR(
+            optimizer, step_size=self.step_size, gamma=self.gamma
+        )
 
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
         start = current_ts()

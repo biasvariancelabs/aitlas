@@ -2,7 +2,7 @@
     "model": {
         "classname": "aitlas.models.FasterRCNN",
         "config": {
-            "num_classes": 14,
+            "num_classes": 11,
             "learning_rate": 0.0001,
             "pretrained": true,
             "metrics": ["map"]
@@ -12,28 +12,30 @@
         "classname": "aitlas.tasks.TrainAndEvaluateTask",
         "config": {
             "epochs": 50,
-            "model_directory": "./experiments/hrrsd-coco/",
+            "model_directory": "./experiments/nwpu-vhr10/",
             "save_epochs": 5,
-            "id": "hrrsd-coco",
+            "id": "nwpu-vhr10",
             "train_dataset_config":{
                 "classname": "aitlas.datasets.ObjectDetectionCocoDataset",
                 "config": {
-                    "batch_size": 16,
+                    "batch_size": 8,
                     "shuffle": true,
                     "num_workers": 4,
-                    "data_dir": "./aitlas/data/object_detection/JPEGImages/",
-                    "json_file": "./aitlas/data/object_detection/TGRS-HRRSD-Dataset/COCOFormat/Anns/hrrsd_train_m-fld_4352_3084.json",
+                    "hardcode_background": false,
+                    "data_dir": "./data/object_detection/NWPU-VHR10/positive/",
+                    "json_file": "./data/object_detection/NWPU-VHR10/instances_train2017.json",
                     "joint_transforms": ["aitlas.transforms.ResizeToTensorV2"]
                 }
             },
             "val_dataset_config":{
                   "classname": "aitlas.datasets.ObjectDetectionCocoDataset",
                   "config": {
-                      "batch_size": 8,
+                      "batch_size": 4,
                       "shuffle": false,
                       "num_workers": 4,
-                      "data_dir": "./aitlas/data/object_detection/JPEGImages/",
-                      "json_file": "./aitlas/data/object_detection/TGRS-HRRSD-Dataset/COCOFormat/Anns/hrrsd_val_m-fld_4352_3084.json",
+                      "hardcode_background": false,
+                      "data_dir": "./data/object_detection/NWPU-VHR10/positive/",
+                      "json_file": "./data/object_detection/NWPU-VHR10/instances_val2017.json",
                       "joint_transforms": ["aitlas.transforms.ResizeToTensorV2"]
                   }
             }

@@ -86,6 +86,10 @@ class BaseObjectDetectionSchema(BaseClassifierSchema):
         description="Classes of metrics you want to calculate",
         example=["accuracy", "precision", "recall", "f1_score", "iou"],
     )
+    step_size = fields.Integer(missing=15, description="Step size for LR scheduler.",)
+    gamma = fields.Float(
+        missing=0.01, description="Gamma (multiplier) for LR scheduler.",
+    )
 
 
 class BaseTransformsSchema(Schema):

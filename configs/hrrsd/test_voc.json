@@ -1,0 +1,30 @@
+{
+    "model": {
+        "classname": "aitlas.models.FasterRCNN",
+        "config": {
+            "num_classes": 14,
+            "learning_rate": 0.0001,
+            "pretrained": true,
+            "metrics": ["map"]
+        }
+    },
+    "task": {
+        "classname": "aitlas.tasks.EvaluateTask",
+        "config": {
+            "model_path": "./aitlas/experiments/hrrsd/checkpoint.pth.tar",
+            "id": "hrrsd_fasterrcnn_pretrained",
+            "dataset_config":{
+                "classname": "aitlas.datasets.ObjectDetectionPascalDataset",
+                "config": {
+                    "batch_size": 16,
+                    "shuffle": false,
+                    "num_workers": 4,
+                    "image_dir": "./aitlas/data/object_detection/JPEGImages/",
+                    "annotations_dir": "./aitlas/data/object_detection/TGRS-HRRSD-Dataset/OPT2017/Annotations/",
+                    "imageset_file": "./aitlas/data/object_detection/TGRS-HRRSD-Dataset/OPT2017/ImageSets/Main/test.txt",
+                    "joint_transforms": ["aitlas.transforms.ResizeToTensorV2"]
+                }
+            }
+        }
+    }
+}
