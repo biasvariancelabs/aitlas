@@ -39,7 +39,7 @@ class BaseMulticlassClassifier(BaseModel):
 
         # plot confusion matrix for model evaluation
         plot_multiclass_confusion_matrix(
-            np.array(cm), labels, dataset_name, f"{dataset_name}_{self.name}_{run_id}_cm.png"
+            np.array(cm), labels, dataset_name, f"{dataset_name}_{self.name}_{run_id}_cm.pdf"
         )
 
     def load_optimizer(self):
@@ -107,5 +107,5 @@ class BaseMultilabelClassifier(BaseModel):
 
         # plot confusion matrix for model evaluation
         plot_multilabel_confusion_matrix(
-            np.array(cm_array), labels, dataset_name, f"{dataset_name}_{self.name}_{run_id}_cm.png"
+            np.array(cm_array), labels, dataset_name, f"{dataset_name}_{self.name}_{run_id}_cm.pdf"
         )
