@@ -42,7 +42,8 @@ def plot_multilabel_confusion_matrix(cm_array, labels, dataset_name, output_file
     for i in range(num_ax_remove):
         ax[-1, columns - 1 - i].axis('off')
     figure.tight_layout()
-    figure.savefig(output_file, format="png")
+    # figure.savefig(output_file, format="png")
+    figure.savefig(output_file, format="pdf", bbox_inches="tight")
 
     return figure
 
@@ -67,7 +68,8 @@ def plot_multiclass_confusion_matrix(cm_array, labels, dataset_name, output_file
     plt.yticks(rotation=0)
     figure.tight_layout()
 
-    figure.savefig(output_file, format="png")
+    # figure.savefig(output_file, format="png")
+    figure.savefig(output_file, format="pdf", bbox_inches="tight")
 
     return figure
 
