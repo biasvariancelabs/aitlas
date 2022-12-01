@@ -53,47 +53,60 @@ class BaseObjectDetectionDataset(BaseDataset):
         # plot the image and bboxes
         # Bounding boxes are defined as follows: x-min y-min width height
         img, target = self[index]
-        fig, a = plt.subplots(1, 1)
-        fig.set_size_inches(5, 5)
-        a.imshow(img)
+        fig = plt.figure(figsize=(10, 8))
+        plt.subplot(1, 2, 1)
+        plt.imshow(img)
+        plt.axis("off")
+
+        ax = plt.subplot(1, 2, 2)
+        plt.imshow(img)
+        plt.axis("off")
         for box, label in zip(target["boxes"], target["labels"]):
             x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
             rect = patches.Rectangle(
-                (x, y), width, height, linewidth=2, edgecolor="r", facecolor="none"
+                (x, y), width, height, linewidth=2, edgecolor="violet", facecolor="none"
             )
-
             # Draw the bounding box on top of the image
-            a.add_patch(rect)
-            a.annotate(
+            ax.add_patch(rect)
+            ax.annotate(
                 self.labels[label],
-                (box[0], box[1]),
-                color="black",
-                weight="bold",
+                (box[0]+15, box[1]-20),
+                color="violet",
                 fontsize=12,
                 ha="center",
                 va="center",
             )
+        plt.tight_layout()
         plt.show()
         return fig
 
-    def show_batch(self, size, show_title=True):
+    def show_batch(self, size, show_labels=False):
         if size % 5:
             raise ValueError("The provided size should be divided by 5!")
         image_indices = random.sample(range(0, len(self)), size)
         figure, ax = plt.subplots(
             int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5))
         )
-        if show_title:
-            figure.suptitle(
-                "Example images with labels from {}".format(self.get_name()),
-                fontsize=32,
-                y=1.006,
-            )
+
         for axes, image_index in zip(ax.flatten(), image_indices):
             img, target = self[image_index]
             axes.imshow(img)
-            # label = ','.join(self.labels[target["labels"] + 1])
-            # axes.set_title(label, fontsize=18, pad=10)
+            for box, label in zip(target["boxes"], target["labels"]):
+                x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
+                rect = patches.Rectangle(
+                    (x, y), width, height, linewidth=2, edgecolor="violet", facecolor="none"
+                )
+                # Draw the bounding box on top of the image
+                axes.add_patch(rect)
+                if show_labels:
+                    axes.annotate(
+                        self.labels[label],
+                        (box[0] + 15, box[1] - 20),
+                        color="violet",
+                        fontsize=12,
+                        ha="center",
+                        va="center",
+                    )
             axes.set_xticks([])
             axes.set_yticks([])
         figure.tight_layout()
@@ -301,17 +314,6 @@ class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
     def show_samples(self):
         df = pd.DataFrame(self.annotations)
         return df.head(20)
-
-    def show_image(self, index):
-        label = self.labels[self[index][1]]
-        fig = plt.figure(figsize=(8, 6))
-        plt.title(
-            f"Image with index {index} from the dataset {self.get_name()}, with label {label}\n",
-            fontsize=14,
-        )
-        plt.axis("off")
-        plt.imshow(self[index][0])
-        return fig
 
     def load_dataset(self, data_dir=None, json_file=None):
         if json_file:
