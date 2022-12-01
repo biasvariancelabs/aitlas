@@ -157,3 +157,12 @@ class SAT6Dataset(BaseDataset):
             data = list(zip(images[:, :, :, 0:3], np.where(img_labels == 1)[1]))
 
         return data
+
+    def re_map_labels(self, labels_remapping):
+        # re mapp the labels
+        tmp_data = []
+        if self.data:
+            for i, (img, label) in enumerate(self.data):
+                if label in labels_remapping.keys():
+                    tmp_data.append((img, labels_remapping[label]))
+        self.data = tmp_data
