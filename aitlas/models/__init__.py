@@ -12,6 +12,7 @@ from .efficientnet import (
     EfficientNetB7,
     EfficientNetB7MultiLabel,
 )
+from .efficientnet_v2 import EfficientNetV2
 from .swin_transformer import SwinTransformer, SwinTransformerMultilabel
 from .fasterrcnn import FasterRCNN
 from .fcn import FCN
