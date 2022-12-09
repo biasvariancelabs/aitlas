@@ -88,7 +88,7 @@ class BaseObjectDetectionSchema(BaseClassifierSchema):
     )
     step_size = fields.Integer(missing=15, description="Step size for LR scheduler.",)
     gamma = fields.Float(
-        missing=0.01, description="Gamma (multiplier) for LR scheduler.",
+        missing=0.1, description="Gamma (multiplier) for LR scheduler.",
     )
 
 
