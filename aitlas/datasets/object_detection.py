@@ -209,10 +209,19 @@ class ObjectDetectionPascalDataset(BaseObjectDetectionDataset):
         return labels, data, annotations
 
     def data_distribution_table(self):
-        pass
+        df = pd.DataFrame(self.annotations)
+        df_count = df.groupby("label").count().reset_index()
+        df_count.columns = ["Label", "Count"]
+        return df_count
 
     def data_distribution_barchart(self, show_title=True):
-        pass
+        objects_count = self.data_distribution_table()
+        fig, ax = plt.subplots(figsize=(12, 10))
+        sns.barplot(y="Label", x="Count", data=objects_count, ax=ax)
+        ax.set_title(
+            "Number of instances for {}".format(self.get_name()), pad=20, fontsize=18
+        )
+        return fig
 
 
 class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):

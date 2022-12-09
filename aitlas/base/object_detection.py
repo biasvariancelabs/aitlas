@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 class BaseObjectDetection(BaseModel):
 
     schema = BaseObjectDetectionSchema
-    log_loss = False
+    log_loss = True
 
     def __init__(self, config):
         super().__init__(config)
@@ -51,9 +51,10 @@ class BaseObjectDetection(BaseModel):
         return None
 
     def load_lr_scheduler(self, optimizer):
-        return torch.optim.lr_scheduler.StepLR(
-            optimizer, step_size=self.step_size, gamma=self.gamma
-        )
+        #return torch.optim.lr_scheduler.StepLR(
+        #    optimizer, step_size=self.step_size, gamma=self.gamma
+        #)
+        return torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)
 
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
         start = current_ts()
@@ -140,4 +141,4 @@ class BaseObjectDetection(BaseModel):
             predicted = self.get_predicted(outputs)
             self.running_metrics.update(predicted, targets)
 
-        return None
+        return 1 - self.running_metrics.get_scores(self.metrics)[0]['map']
