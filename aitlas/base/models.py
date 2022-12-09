@@ -532,7 +532,7 @@ class BaseModel(nn.Module, Configurable):
         ):
             x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
             rect = patches.Rectangle(
-                (x, y), width, height, linewidth=2, edgecolor="r", facecolor="none"
+                (x, y), width, height, linewidth=2, edgecolor="violet", facecolor="none"
             )
 
             # Draw the bounding box on top of the image
@@ -540,12 +540,14 @@ class BaseModel(nn.Module, Configurable):
             a.annotate(
                 labels[label],
                 (box[0], box[1]),
-                color="black",
-                weight="bold",
+                color="violet",
                 fontsize=12,
                 ha="center",
                 va="center",
             )
+            a.set_xticks([])
+            a.set_yticks([])
+        fig.tight_layout()
         plt.show()
         return fig
 
