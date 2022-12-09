@@ -21,6 +21,7 @@ image_path2,label2
 
 class MultiClassClassificationDataset(BaseDataset):
     schema = ClassificationDatasetSchema
+    labels = None
 
     def __init__(self, config):
         # now call the constructor to validate the schema
@@ -105,19 +106,30 @@ class MultiClassClassificationDataset(BaseDataset):
         return figure
 
     def load_dataset(self):
-        if not self.labels:
-            raise ValueError("You need to provide the list of labels for the dataset")
         data = []
         if self.csv_file:
             with open(self.csv_file, "r") as f:
                 csv_reader = csv.reader(f)
-                for index, row in enumerate(csv_reader):
+                raw_data = list(csv_reader)
+
+                # If not provided initialize the labels from the csv file
+                if not self.labels:
+                    self.labels = []
+                    for index, row in enumerate(raw_data):
+                        self.labels.append(row[1])
+                    self.labels = list(sorted(set(self.labels)))
+
+                for index, row in enumerate(raw_data):
                     file_name = row[0]
                     item = (
                         os.path.join(self.data_dir, file_name),
                         self.labels.index(row[1]),
                     )
                     data.append(item)
+
+        if not self.labels:
+            raise ValueError("You need to provide the list of labels for the dataset")
+
         return data
 
     def re_map_labels(self, labels_remapping):
