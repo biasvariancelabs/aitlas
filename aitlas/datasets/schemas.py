@@ -20,6 +20,23 @@ class MatDatasetSchema(BaseDatasetSchema):
     )
 
 
+class NPZDatasetSchema(BaseDatasetSchema):
+    npz_file = fields.String(
+        missing=None, description="npz file on disk", example="./data/dataset.npz",
+    )
+    mode = fields.String(
+        missing="train",
+        description="Which split to use, train or test.",
+        example="train",
+    )
+    labels = fields.List(
+        fields.String,
+        missing=None,
+        required=False,
+        description="List of labels",
+    )
+
+
 class ClassificationDatasetSchema(BaseDatasetSchema):
     data_dir = fields.String(
         missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"

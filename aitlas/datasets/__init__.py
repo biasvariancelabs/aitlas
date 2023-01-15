@@ -40,3 +40,4 @@ from .so2sat import So2SatDataset
 from .uc_merced import UcMercedDataset
 from .uc_merced_multilabel import UcMercedMultiLabelDataset
 from .whu_rs19 import WHURS19Dataset
+from .npz import NpzDataset
