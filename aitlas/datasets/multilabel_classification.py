@@ -46,7 +46,7 @@ class MultiLabelClassificationDataset(BaseDataset):
             img = self.transform(img)
         target = self.data[index][1]
         if self.target_transform:
-            target = self.target_transform(self.data[index][1])
+            target = self.target_transform(target)
         return img, target
 
     def __len__(self):
@@ -129,6 +129,11 @@ class MultiLabelClassificationDataset(BaseDataset):
         return figure
 
     def load_dataset(self, data_dir, csv_file):
+        # If not provided initialize the labels from the csv file
+        if not self.labels:
+            with open(csv_file, "rb") as f:
+                header = f.readline().decode("utf-8")
+                self.labels = header[header.find("\t") + 1:-1].split("\t")
         return load_voc_format_dataset(data_dir, csv_file)
 
     def labels_stats(self):

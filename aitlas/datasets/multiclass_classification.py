@@ -21,7 +21,6 @@ image_path2,label2
 
 class MultiClassClassificationDataset(BaseDataset):
     schema = ClassificationDatasetSchema
-    labels = None
 
     def __init__(self, config):
         # now call the constructor to validate the schema
@@ -47,7 +46,7 @@ class MultiClassClassificationDataset(BaseDataset):
             img = self.transform(img)
         target = self.data[index][1]
         if self.target_transform:
-            target = self.target_transform(self.data[index][1])
+            target = self.target_transform(target)
         return img, target
 
     def __len__(self):
