@@ -39,12 +39,12 @@ def tiff_loader(file):
 
 def image_loader(file_path, convert_to_grayscale=False):
     filename, file_extension = os.path.splitext(file_path)
-    if file_extension in [".jpg", ".png", ".bmp"]:
+    if file_extension in [".jpg", ".png", ".bmp", ".jpeg"]:
         return pil_loader(file_path, convert_to_grayscale)
     elif file_extension in [".tif", ".tiff"]:
         return tiff_loader(file_path)
     else:
-        raise ValueError("Invalid image. It should be `.jpg, .png, .bmp, .tif, .tiff`")
+        raise ValueError("Invalid image. It should be `.jpg, .png, .bmp, .tif, .tiff, .jpeg`")
 
 
 def image_invert(file_path, convert_to_grayscale=False):
