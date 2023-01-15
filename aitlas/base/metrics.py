@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from ignite.metrics import confusion_matrix
 from ignite.metrics.multilabel_confusion_matrix import MultiLabelConfusionMatrix
-from sklearn.metrics import average_precision_score
+from sklearn.metrics import average_precision_score, roc_auc_score
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
 
@@ -199,6 +199,13 @@ class MultiLabelRunningScore(RunningScore):
             )
         }
 
+    def roc_auc_score(self):
+        return {
+            "roc_auc_score": roc_auc_score(
+                np.array(self.list_y_true), np.array(self.list_y_prob), average=None
+            )
+        }
+
     def accuracy(self):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
@@ -299,7 +306,7 @@ class ObjectDetectionRunningScore(object):
         self.num_classes = num_classes
         self.device = device
         self.metric = MeanAveragePrecision(
-            iou_type="bbox", class_metrics=True, iou_thresholds=[0.5]
+            iou_type="bbox", class_metrics=True
         )
 
     def update(self, preds, target):
@@ -310,8 +317,7 @@ class ObjectDetectionRunningScore(object):
         """Reset the confusion matrix"""
         self.metric.reset()
 
-    def map(self):
-        """Returns the specified metrics"""
+    def compute(self):
         results = self.metric.compute()
         dict_results = {}
         for key, value in results.items():
@@ -320,6 +326,15 @@ class ObjectDetectionRunningScore(object):
             else:
                 dict_results[key] = float(value)
         return dict_results
+
+    def map(self):
+        """Returns the specified metrics"""
+        return self.compute()
+
+    def map_50(self):
+        """Returns the specified metrics"""
+        self.metric.iou_thresholds = [0.5]
+        return self.compute()
 
     def get_scores(self, metrics):
         """Returns the specified metrics"""
