@@ -1,8 +1,11 @@
 import torch
 import timm
 import torch.nn as nn
+import logging
 
 from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 class VisionTransformer(BaseMulticlassClassifier):
@@ -13,8 +16,13 @@ class VisionTransformer(BaseMulticlassClassifier):
 
         if self.config.pretrained and self.config.local_model_path:
             checkpoint = torch.load(self.config.local_model_path)
-            last_layer_key = next(reversed(checkpoint["state_dict"]))
-            last_layer = checkpoint["state_dict"][last_layer_key]
+            if "state_dict" in checkpoint:
+                checkpoint = checkpoint["state_dict"]
+            if "student" in checkpoint:
+                checkpoint = checkpoint["student"]
+
+            last_layer_key = next(reversed(checkpoint))
+            last_layer = checkpoint[last_layer_key]
             num_classes = len(last_layer)
             self.model = timm.create_model(
                 "vit_base_patch16_224", pretrained=False
@@ -22,7 +30,16 @@ class VisionTransformer(BaseMulticlassClassifier):
             self.model.head = nn.Linear(
                 in_features=768, out_features=num_classes, bias=True
             )
-            self.model.load_state_dict(checkpoint["state_dict"], strict=False)
+            # remove prefix "module."
+            checkpoint = {k.replace("module.backbone.", ""): v for k, v in checkpoint.items()}
+            checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
+            for k, v in self.model.state_dict().items():
+                if k not in list(checkpoint):
+                    logging.info('key "{}" could not be found in provided state dict'.format(k))
+                elif checkpoint[k].shape != v.shape:
+                    logging.info('key "{}" is of different shape in model and provided state dict'.format(k))
+                    checkpoint[k] = v
+            self.model.load_state_dict(checkpoint, strict=False)
             self.model.head = nn.Linear(
                 in_features=768, out_features=self.config.num_classes, bias=True
             )
@@ -46,8 +63,13 @@ class VisionTransformerMultilabel(BaseMultilabelClassifier):
 
         if self.config.pretrained and self.config.local_model_path:
             checkpoint = torch.load(self.config.local_model_path)
-            last_layer_key = next(reversed(checkpoint["state_dict"]))
-            last_layer = checkpoint["state_dict"][last_layer_key]
+            if "state_dict" in checkpoint:
+                checkpoint = checkpoint["state_dict"]
+            if "student" in checkpoint:
+                checkpoint = checkpoint["student"]
+
+            last_layer_key = next(reversed(checkpoint))
+            last_layer = checkpoint[last_layer_key]
             num_classes = len(last_layer)
             self.model = timm.create_model(
                 "vit_base_patch16_224", pretrained=False
@@ -55,7 +77,16 @@ class VisionTransformerMultilabel(BaseMultilabelClassifier):
             self.model.head = nn.Linear(
                 in_features=768, out_features=num_classes, bias=True
             )
-            self.model.load_state_dict(checkpoint["state_dict"], strict=False)
+            # remove prefix "module."
+            checkpoint = {k.replace("module.backbone.", ""): v for k, v in checkpoint.items()}
+            checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
+            for k, v in self.model.state_dict().items():
+                if k not in list(checkpoint):
+                    logging.info('key "{}" could not be found in provided state dict'.format(k))
+                elif checkpoint[k].shape != v.shape:
+                    logging.info('key "{}" is of different shape in model and provided state dict'.format(k))
+                    checkpoint[k] = v
+            self.model.load_state_dict(checkpoint, strict=False)
             self.model.head = nn.Linear(
                 in_features=768, out_features=self.config.num_classes, bias=True
             )
