@@ -70,7 +70,7 @@ class BaseObjectDetectionDataset(BaseDataset):
             ax.add_patch(rect)
             ax.annotate(
                 self.labels[label],
-                (box[0]+15, box[1]-20),
+                (box[0] + 15, box[1] - 20),
                 color="violet",
                 fontsize=12,
                 ha="center",
@@ -94,7 +94,12 @@ class BaseObjectDetectionDataset(BaseDataset):
             for box, label in zip(target["boxes"], target["labels"]):
                 x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
                 rect = patches.Rectangle(
-                    (x, y), width, height, linewidth=2, edgecolor="violet", facecolor="none"
+                    (x, y),
+                    width,
+                    height,
+                    linewidth=2,
+                    edgecolor="violet",
+                    facecolor="none",
                 )
                 # Draw the bounding box on top of the image
                 axes.add_patch(rect)
@@ -363,5 +368,14 @@ class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
             raise ValueError(
                 "Please provide the `json_file` path to the Coco annotation format."
             )
+
+        # eliminate empty annotations
+        to_delete = []
+        for key, d in enumerate(data):
+            if len(data[key]["annotations"]) == 0:
+                to_delete.append(key)
+
+        for key in sorted(to_delete, reverse=True):
+            del data[key]
 
         return labels, data, annotations
