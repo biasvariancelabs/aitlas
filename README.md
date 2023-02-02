@@ -76,7 +76,8 @@ An open-source benchmark framework for evaluating state-of-the-art deep learning
 
 **repo**: [https://github.com/biasvariancelabs/aitlas-arena](https://github.com/biasvariancelabs/aitlas-arena)
 
-**paper**: [Current Trends in Deep Learning for Earth Observation: An Open-source Benchmark Arena for Image Classification](https://arxiv.org/abs/2207.07189)
+**paper**: [Current Trends in Deep Learning for Earth Observation: An Open-source Benchmark Arena for Image Classification](https://www.sciencedirect.com/science/article/pii/S0924271623000205) , ISPRS Journal of Photogrammetry and Remote Sensing
+Volume 197, pp 18-35
 
 
 ## AiTLAS Semantic Data Catalog of Earth Observation (EO) datasets (beta)
