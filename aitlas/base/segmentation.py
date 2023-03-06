@@ -1,12 +1,11 @@
 import logging
-import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as nnf
 import torch
 
 from .models import BaseModel
 from .schemas import BaseSegmentationClassifierSchema
 from .metrics import SegmentationRunningScore
+from ..utils import DiceLoss
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -25,8 +24,6 @@ class BaseSegmentationClassifier(BaseModel):
         predicted = (predicted_probs >= (
             threshold if threshold else self.config.threshold
         )).long()
-        #predicted_probs = nnf.softmax(outputs, dim=1)
-        #predicted = (outputs >= predicted_probs).long()
         return predicted_probs, predicted
 
     def load_optimizer(self):
@@ -35,8 +32,7 @@ class BaseSegmentationClassifier(BaseModel):
 
     def load_criterion(self):
         """Load the loss function"""
-        return nn.BCEWithLogitsLoss()
-        #return nn.CrossEntropyLoss()
+        return DiceLoss()
 
     def load_lr_scheduler(self, optimizer):
         return torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)

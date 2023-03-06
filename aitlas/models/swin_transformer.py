@@ -18,6 +18,15 @@ class SwinTransformer(BaseMulticlassClassifier):
             in_features=768, out_features=self.config.num_classes, bias=True
         )
 
+        if self.config.freeze:
+            self.freeze()
+
+    def freeze(self):
+        for param in self.model.parameters():
+            param.requires_grad = False
+        for param in self.model.head.parameters():
+            param.requires_grad = True
+
     def forward(self, x):
         return self.model(x)
 
@@ -35,6 +44,15 @@ class SwinTransformerMultilabel(BaseMultilabelClassifier):
         self.model.head = nn.Linear(
             in_features=768, out_features=self.config.num_classes, bias=True
         )
+
+        if self.config.freeze:
+            self.freeze()
+
+    def freeze(self):
+        for param in self.model.parameters():
+            param.requires_grad = False
+        for param in self.model.head.parameters():
+            param.requires_grad = True
 
     def forward(self, x):
         return self.model(x)

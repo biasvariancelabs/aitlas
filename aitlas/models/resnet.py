@@ -30,7 +30,7 @@ class ResNet50(BaseMulticlassClassifier):
                     weights=None, progress=False, num_classes=num_classes
                 )
                 # remove prefix "module."
-                checkpoint = {k.replace("module.backbone.", ""): v for k, v in checkpoint.items()}
+                checkpoint = {k.replace("backbone.", ""): v for k, v in checkpoint.items()}
                 checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
                 for k, v in self.model.state_dict().items():
                     if k not in list(checkpoint):
@@ -56,9 +56,9 @@ class ResNet50(BaseMulticlassClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.fc.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
     def extract_features(self):
         """ Remove final layers if we only need to extract features """
@@ -95,9 +95,9 @@ class ResNet152(BaseMulticlassClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.fc.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
 
 class ResNet50MultiLabel(BaseMultilabelClassifier):
@@ -139,9 +139,9 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.fc.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
 
 class ResNet152MultiLabel(BaseMultilabelClassifier):
@@ -172,6 +172,6 @@ class ResNet152MultiLabel(BaseMultilabelClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.fc.parameters():
-            param.require_grad = True
+            param.requires_grad = True

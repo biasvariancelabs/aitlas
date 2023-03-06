@@ -34,9 +34,9 @@ class AlexNet(BaseMulticlassClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.classifier.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
 
 class AlexNetMultiLabel(BaseMultilabelClassifier):
@@ -70,6 +70,6 @@ class AlexNetMultiLabel(BaseMultilabelClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.classifier.parameters():
-            param.require_grad = True
+            param.requires_grad = True

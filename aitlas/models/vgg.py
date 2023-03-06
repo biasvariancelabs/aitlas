@@ -29,9 +29,9 @@ class VGG16(BaseMulticlassClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.classifier.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
     def extract_features(self):
         """ Remove final layers if we only need to extract features """
@@ -70,9 +70,9 @@ class VGG19(BaseMulticlassClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.classifier.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
 
 class VGG16MultiLabel(BaseMultilabelClassifier):
@@ -105,9 +105,9 @@ class VGG16MultiLabel(BaseMultilabelClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.classifier.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
 
 class VGG19MultiLabel(BaseMultilabelClassifier):
@@ -134,9 +134,9 @@ class VGG19MultiLabel(BaseMultilabelClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.classifier.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
     def extract_features(self):
         """ Remove final layers if we only need to extract features """

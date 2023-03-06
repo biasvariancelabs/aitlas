@@ -24,6 +24,18 @@ class MinMaxNorm(BaseTransforms):
         return torch.tensor(sample, dtype=torch.float32) / 255
 
 
+class Pad(BaseTransforms):
+    def __call__(self, sample):
+        data_transforms = transforms.Compose(
+            [
+                transforms.ToPILImage(),
+                transforms.Pad(4),
+                transforms.ToTensor()
+            ]
+        )
+        return data_transforms(sample)
+
+
 class ColorTransformations(BaseTransforms):
     def __call__(self, sample):
         sample = np.asarray(sample)

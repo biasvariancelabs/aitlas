@@ -26,9 +26,9 @@ class EfficientNetB0(BaseMulticlassClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.classifier.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
     """ Remove final layers if we only need to extract features """
     def extract_features(self):
@@ -65,9 +65,9 @@ class EfficientNetB0MultiLabel(BaseMultilabelClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.classifier.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
 
 class EfficientNetB4(BaseMulticlassClassifier):
@@ -92,9 +92,9 @@ class EfficientNetB4(BaseMulticlassClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.classifier.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
     """ Remove final layers if we only need to extract features """
     def extract_features(self):
@@ -131,9 +131,9 @@ class EfficientNetB4MultiLabel(BaseMultilabelClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.classifier.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
 
 class EfficientNetB7(BaseMulticlassClassifier):
@@ -158,9 +158,9 @@ class EfficientNetB7(BaseMulticlassClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.fc.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
     """ Remove final layers if we only need to extract features """
     def extract_features(self):
@@ -197,9 +197,9 @@ class EfficientNetB7MultiLabel(BaseMultilabelClassifier):
 
     def freeze(self):
         for param in self.model.parameters():
-            param.require_grad = False
+            param.requires_grad = False
         for param in self.model.classifier.parameters():
-            param.require_grad = True
+            param.requires_grad = True
 
 
 

@@ -31,7 +31,7 @@ class VisionTransformer(BaseMulticlassClassifier):
                 in_features=768, out_features=num_classes, bias=True
             )
             # remove prefix "module."
-            checkpoint = {k.replace("module.backbone.", ""): v for k, v in checkpoint.items()}
+            checkpoint = {k.replace("backbone.", ""): v for k, v in checkpoint.items()}
             checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
             for k, v in self.model.state_dict().items():
                 if k not in list(checkpoint):
@@ -50,6 +50,15 @@ class VisionTransformer(BaseMulticlassClassifier):
             self.model.head = nn.Linear(
                 in_features=768, out_features=self.config.num_classes, bias=True
             )
+
+        if self.config.freeze:
+            self.freeze()
+
+    def freeze(self):
+        for param in self.model.parameters():
+            param.requires_grad = False
+        for param in self.model.head.parameters():
+            param.requires_grad = True
 
     def forward(self, x):
         return self.model(x)
@@ -78,7 +87,7 @@ class VisionTransformerMultilabel(BaseMultilabelClassifier):
                 in_features=768, out_features=num_classes, bias=True
             )
             # remove prefix "module."
-            checkpoint = {k.replace("module.backbone.", ""): v for k, v in checkpoint.items()}
+            checkpoint = {k.replace("backbone.", ""): v for k, v in checkpoint.items()}
             checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
             for k, v in self.model.state_dict().items():
                 if k not in list(checkpoint):
@@ -97,6 +106,15 @@ class VisionTransformerMultilabel(BaseMultilabelClassifier):
             self.model.head = nn.Linear(
                 in_features=768, out_features=self.config.num_classes, bias=True
             )
+
+        if self.config.freeze:
+            self.freeze()
+
+    def freeze(self):
+        for param in self.model.parameters():
+            param.requires_grad = False
+        for param in self.model.head.parameters():
+            param.requires_grad = True
 
     def forward(self, x):
         return self.model(x)
