@@ -58,13 +58,19 @@ in the folder where you cloned the repo.
 
 ---
 # Citation
-For attribution in academic contexts, please cite this [work](https://arxiv.org/abs/2201.08789) as
+For attribution in academic contexts, please cite our work **'AiTLAS: Artificial Intelligence Toolbox for Earth Observation'** published in Remote Sensing (2023) [link](https://www.mdpi.com/2072-4292/15/9/2343) as
+
 ```
-@article{dimitrovski2022aitlas,
-      title={AiTLAS: Artificial Intelligence Toolbox for Earth Observation}, 
-      author={Ivica Dimitrovski and Ivan Kitanovski and Panče Panov and Nikola Simidjievski and Dragi Kocev},
-      year={2022},
-      journal={arXiv preprint arXiv:2201.08789},
+@article{aitlas2023,
+AUTHOR = {Dimitrovski, Ivica and Kitanovski, Ivan and Panov, Panče and Kostovska, Ana and Simidjievski, Nikola and Kocev, Dragi},
+TITLE = {AiTLAS: Artificial Intelligence Toolbox for Earth Observation},
+JOURNAL = {Remote Sensing},
+VOLUME = {15},
+YEAR = {2023},
+NUMBER = {9},
+ARTICLE-NUMBER = {2343},
+ISSN = {2072-4292},
+DOI = {10.3390/rs15092343}
 }
 ```
 # The AiTLAS Ecosystem
