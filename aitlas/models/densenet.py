@@ -6,6 +6,21 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class DenseNet161(BaseMulticlassClassifier):
+    
+    """ 
+    Densenet161 model from torchvision.models.
+    
+    Returns:
+        :return: torch.nn.Module: DenseNet161 model
+        
+    Example::
+
+        >>> from aitlas.models import DenseNet161
+        >>> model = DenseNet161(config)
+            
+       
+    """
+    
     name = "DenseNet161"
 
     def __init__(self, config):

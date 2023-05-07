@@ -33,6 +33,22 @@ class F1ScoreSample(BaseMetric):
 
 
 class IoU(BaseMetric):
+    """
+    Calculates the Intersection over Union (IoU) metric for binary segmentation tasks.
+
+    Args:
+        BaseMetric: The base metric class to inherit from.
+    
+    Attributes:
+        name (str): The name of the metric ("IoU").
+        key (str): The key for the metric ("iou").
+        method (None): The method for calculating the metric (None).
+    
+    Methods:
+        calculate: Calculates the IoU metric for a batch of binary segmentation predictions.
+    
+    """
+
     name = "IoU"
     key = "iou"
 
@@ -57,6 +73,24 @@ class IoU(BaseMetric):
 
 
 class Accuracy(BaseMetric):
+    """
+    Calculates the accuracy metric for classification tasks.
+
+    The accuracy metric is defined as the ratio of the number of correctly predicted labels
+    to the total number of labels.
+
+    Args:
+        **kwargs: Additional keyword arguments passed to the `BaseMetric` constructor.
+
+    Attributes:
+        name (str): The name of the metric.
+        key (str): The key used to identify the metric.
+        method (None): Placeholder for method-specific settings.
+
+    Methods:
+        calculate(y_true, y_pred): Calculates the accuracy metric for the given true and predicted labels.
+
+    """
     name = "Accuracy"
     key = "accuracy"
 
@@ -65,6 +99,17 @@ class Accuracy(BaseMetric):
         self.method = None
 
     def calculate(self, y_true, y_pred):
+        """
+        Calculates the accuracy metric for the given true and predicted labels.
+
+        Args:
+            :parm y_true (list): A list of true labels.
+            :parm y_pred (list): A list of predicted labels.
+
+        Returns:
+            :return: (float) The accuracy score for the given labels.
+
+        """
         total_score = 0.0
         for i, item in enumerate(y_true):
             predictions = torch.from_numpy(np.array(y_pred[i]))

@@ -15,7 +15,22 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class BaseMulticlassClassifier(BaseModel):
-    """Base class for a multiclass classifier"""
+    """
+    Base class for a multiclass classifier.
+
+    Inherits from BaseModel.
+
+    Attributes:
+        schema (BaseClassifierSchema): The schema for the classifier.
+
+    Methods:
+        get_predicted(outputs, threshold=None): Get predicted classes from the model outputs.
+        report(labels, dataset_name, running_metrics, **kwargs): Generate a report for multiclass classification.
+        load_optimizer(): Load the optimizer for the classifier.
+        load_criterion(): Load the loss function for the classifier.
+        load_lr_scheduler(optimizer): Load the learning rate scheduler for the classifier.
+    """
+
 
     schema = BaseClassifierSchema
 
@@ -25,12 +40,34 @@ class BaseMulticlassClassifier(BaseModel):
         self.running_metrics = MultiClassRunningScore(self.num_classes, self.device)
 
     def get_predicted(self, outputs, threshold=None):
+        """
+        Get predicted classes from the model outputs.
+
+        Args:
+            outputs (torch.Tensor): Model outputs with shape (batch_size, num_classes).
+            threshold (float, optional): Threshold for classification. Defaults to None.
+
+        Returns:
+            tuple: Tuple containing the probabilities and predicted classes.
+        """
+
         probs = nnf.softmax(outputs.data, dim=1)
         predicted_probs, predicted = probs.topk(1, dim=1)
         return probs, predicted
 
     def report(self, labels, dataset_name, running_metrics, **kwargs):
-        """Report for multiclass classification"""
+        """
+        Generate a report for multiclass classification.
+
+        Args:
+            labels (list): List of class labels.
+            dataset_name (str): Name of the dataset.
+            running_metrics (RunningScore): A running score object for multiclass classification.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            None
+        """
         run_id = kwargs.get("id", "experiment")
         from ..visualizations import plot_multiclass_confusion_matrix
 
@@ -59,7 +96,21 @@ class BaseMulticlassClassifier(BaseModel):
 
 
 class BaseMultilabelClassifier(BaseModel):
-    """Base class for a multilabel classifier"""
+    """
+    Base class for a multilabel classifier.
+
+    Inherits from BaseModel.
+
+    Attributes:
+        schema (BaseClassifierSchema): The schema for the classifier.
+
+    Methods:
+        get_predicted(outputs, threshold=None): Get predicted classes from the model outputs.
+        report(labels, dataset_name, running_metrics, **kwargs): Generate a report for multilabel classification.
+        load_optimizer(): Load the optimizer for the classifier.
+        load_criterion(): Load the loss function for the classifier.
+        load_lr_scheduler(optimizer): Load the learning rate scheduler for the classifier.
+    """
 
     schema = BaseClassifierSchema
 
@@ -84,6 +135,16 @@ class BaseMultilabelClassifier(BaseModel):
         return torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)
 
     def get_predicted(self, outputs, threshold=None):
+        """
+        Get predicted classes from the model outputs.
+
+        Args:
+            outputs (torch.Tensor): Model outputs with shape (batch_size, num_classes).
+            threshold (float, optional): Threshold for classification. Defaults to None.
+
+        Returns:
+            tuple: Tuple containing the probabilities and predicted classes.
+        """
         predicted_probs = torch.sigmoid(outputs)
         predicted = predicted_probs >= (
             threshold if threshold else self.config.threshold
@@ -91,7 +152,12 @@ class BaseMultilabelClassifier(BaseModel):
         return predicted_probs, predicted
 
     def report(self, labels, dataset_name, running_metrics, **kwargs):
-        """Report for multilabel classification"""
+        """ Generate a report for multilabel classification.
+      
+        :param labels: List of class labels
+        :param dataset_name: Name of the dataset
+        :param running_metrics: type of metrics to be reported. Currently only confusion matrix is supported"""
+        
         run_id = kwargs.get("id", "experiment")
         cm_array = []
         if running_metrics.confusion_matrix:

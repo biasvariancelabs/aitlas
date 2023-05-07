@@ -5,9 +5,34 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class SwinTransformer(BaseMulticlassClassifier):
+  
+    """
+    A Swin Transformer V2 implementation for multi-class classification tasks.
+
+    Inherits from BaseMulticlassClassifier.
+
+    Attributes:
+        name (str): The name of the model, "SwinTransformerV2".
+
+    Args:
+        config (Config): A configuration object containing model-related settings.
+
+    Methods:
+        freeze(): Freeze all the layers in the model except for the head.
+        forward(x): Perform a forward pass through the model.
+    """
+
+    
     name = "SwinTransformerV2"
 
     def __init__(self, config):
+
+        """
+        Initialize a SwinTransformer object with the given configuration.
+
+        Args:
+            config (Config): A configuration object containing model-related settings.
+        """
         super().__init__(config)
 
         self.model = models.swin_v2_s(weights=
@@ -22,19 +47,53 @@ class SwinTransformer(BaseMulticlassClassifier):
             self.freeze()
 
     def freeze(self):
+        """
+        Freeze all the layers in the model except for the head.
+        This prevents the gradient computation for the frozen layers during backpropagation.
+        """
         for param in self.model.parameters():
             param.requires_grad = False
         for param in self.model.head.parameters():
             param.requires_grad = True
 
     def forward(self, x):
+        """
+        Perform a forward pass through the model.
+
+        Args:
+            x (torch.Tensor): Input tensor with shape (batch_size, channels, height, width).
+
+        Returns:
+            torch.Tensor: Output tensor with shape (batch_size, num_classes).
+        """
         return self.model(x)
 
 
 class SwinTransformerMultilabel(BaseMultilabelClassifier):
+    """
+    A Swin Transformer V2 implementation for multi-label classification tasks.
+
+    Inherits from BaseMultilabelClassifier.
+
+    Attributes:
+        name (str): The name of the model, "SwinTransformerV2".
+
+    Args:
+        config (Config): A configuration object containing model-related settings.
+
+    Methods:
+        freeze(): Freeze all the layers in the model except for the head.
+        forward(x): Perform a forward pass through the model.
+    """
     name = "SwinTransformerV2"
 
     def __init__(self, config):
+        """
+        Initialize a SwinTransformerMultilabel object with the given configuration.
+
+        Args:
+            config (Config): A configuration object containing model-related settings.
+        """
         super().__init__(config)
 
         self.model = models.swin_v2_s(weights=
@@ -49,10 +108,23 @@ class SwinTransformerMultilabel(BaseMultilabelClassifier):
             self.freeze()
 
     def freeze(self):
+        """
+        Freeze all the layers in the model except for the head.
+        This prevents the gradient computation for the frozen layers during backpropagation.
+        """
         for param in self.model.parameters():
             param.requires_grad = False
         for param in self.model.head.parameters():
             param.requires_grad = True
 
     def forward(self, x):
+        """
+        Perform a forward pass through the model.
+
+        Args:
+            x (torch.Tensor): Input tensor with shape (batch_size, channels, height, width).
+
+        Returns:
+            torch.Tensor: Output tensor with shape (batch_size, num_classes).
+        """
         return self.model(x)

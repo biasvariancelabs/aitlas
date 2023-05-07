@@ -16,6 +16,35 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 class BaseObjectDetection(BaseModel):
 
+    """
+    BaseObjectDetection
+
+    This class extends the functionality of the BaseModel class by adding object detection specific functionality.
+    It implements several functions required for training an object detection model, such as:
+
+        Running object detection metrics during training.
+        Non-Maximum Suppression (NMS) to get the final predictions.
+        Loading an optimizer, loss function, and learning rate scheduler.
+        Training a single epoch.
+
+    Attributes:
+
+        schema (BaseObjectDetectionSchema): Schema class to validate the configuration.
+        log_loss (bool): Flag to log the loss during training.
+        running_metrics (ObjectDetectionRunningScore): Running object detection metrics.
+        step_size (int): Step size for the learning rate scheduler.
+        gamma (float): Gamma for the learning rate scheduler.
+
+    Methods:
+
+        get_predicted(outputs, threshold=0.3): Apply NMS to get the final predictions from the model outputs.
+        load_optimizer(): Load an optimizer.
+        load_criterion(): Load a loss function.
+        load_lr_scheduler(optimizer): Load a learning rate scheduler.
+        train_epoch(epoch, dataloader, optimizer, criterion, iterations_log): Train the model for a single epoch.
+
+    """
+
     schema = BaseObjectDetectionSchema
     log_loss = True
 
@@ -57,6 +86,23 @@ class BaseObjectDetection(BaseModel):
         return torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)
 
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
+        """Train the model for a single epoch.
+
+        Parameters:
+        :param epoch: The current epoch number.
+        :type epoch: int
+        :param dataloader: The data loader for the training set.
+        :type dataloader: torch.utils.data.DataLoader
+        :param optimizer: The optimizer.
+        :type optimizer: torch.optim.Adam
+        :param criterion: The loss function.
+        :type criterion: callable
+        :param iterations_log: The number of iterations after which to log the loss.
+
+        Returns:
+        float: The average loss over the entire epoch.
+
+        """
         start = current_ts()
         running_loss = 0.0
         total_loss = 0.0
