@@ -1,8 +1,10 @@
 # Configuration file for the Sphinx documentation builder.
 #
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
+# For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
+
+# -- Project information -----------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 # -- Path setup --------------------------------------------------------------
 
@@ -10,20 +12,16 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('..'))
 
-
-# -- Project information -----------------------------------------------------
-
-project = "AiTLAS"
-copyright = "2023, Bias Variance Labs"
-author = "Bias Variance Labs, Slovenia"
-
+project = 'AiTLAS'
+copyright = '2023, simidjievskin'
+author = 'simidjievskin'
 
 # -- General configuration ---------------------------------------------------
-# -- General configuration
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
     "sphinx.ext.duration",
@@ -31,16 +29,18 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.viewcode",
 ]
 
-intersphinx_mapping = {
-    "rtd": ("https://docs.readthedocs.io/en/stable/", None),
-    "python": ("https://docs.python.org/3/", None),
-    "sphinx": ("https://www.sphinx-doc.org/en/master/", None),
-}
-intersphinx_disabled_domains = ["std"]
+source_suffix = ".rst"
+master_doc = "index"
+autoclass_content = "both"
+add_module_names = False
 
-templates_path = ["_templates"]
+templates_path = ['_templates']
+exclude_patterns = []
 
 # -- Options for EPUB output
 epub_show_urls = "footnote"
@@ -51,13 +51,7 @@ epub_show_urls = "footnote"
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # -- Options for HTML output -------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = "sphinx_rtd_theme"
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+html_theme = 'sphinx_rtd_theme'
+html_static_path = ['_static']
