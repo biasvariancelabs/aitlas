@@ -94,15 +94,12 @@ class ReassignedDataset(data.Dataset):
 
 
 def cluster_assign(images_lists, dataset):
-    """Creates a dataset from clustering, with clusters as labels.
-    Args:
-        images_lists (list of list): for each cluster, the list of image indexes
-                                    belonging to this cluster
-        dataset (list): initial dataset
-    Returns:
-        ReassignedDataset(torch.utils.data.Dataset): a dataset with clusters as
-                                                     labels
-    """
+    """ Creates a dataset from clustering, with clusters as labels.
+        Args:
+            images_lists (list of list): for each cluster, the list of image indexes belonging to this cluster
+            dataset (list): initial dataset
+        Returns:
+            ReassignedDataset(torch.utils.data.Dataset): a dataset with clusters as labels """
     assert images_lists is not None
     pseudolabels = []
     image_indexes = []

@@ -11,12 +11,12 @@ from ..utils import image_loader
 from .schemas import ClassificationDatasetSchema
 
 
-"""
+'''
 The format of the multiclass classification dataset is:
 image_path1,label1
 image_path2,label2
 ...
-"""
+'''
 
 
 class MultiClassClassificationDataset(BaseDataset):
@@ -32,13 +32,13 @@ class MultiClassClassificationDataset(BaseDataset):
         self.data = self.load_dataset()
 
     def __getitem__(self, index):
-        """
+        '''
         Args:
             index (int): Index
 
         Returns:
             tuple: (image, target) where target is index of the target class.
-        """
+        '''
         # load image
         img = image_loader(self.data[index][0])
         # apply transformations

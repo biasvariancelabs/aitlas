@@ -58,6 +58,7 @@ class BaseObjectDetection(BaseModel):
         self.gamma = self.config.gamma
 
     def get_predicted(self, outputs, threshold=0.3):
+
         # apply nms and return the indices of the bboxes to keep
         final_predictions = []
         for output in outputs:
@@ -88,18 +89,14 @@ class BaseObjectDetection(BaseModel):
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
         """Train the model for a single epoch.
 
-        Parameters:
         :param epoch: The current epoch number.
-        :type epoch: int
         :param dataloader: The data loader for the training set.
-        :type dataloader: torch.utils.data.DataLoader
         :param optimizer: The optimizer.
-        :type optimizer: torch.optim.Adam
         :param criterion: The loss function.
-        :type criterion: callable
         :param iterations_log: The number of iterations after which to log the loss.
 
         Returns:
+
         float: The average loss over the entire epoch.
 
         """
@@ -155,7 +152,11 @@ class BaseObjectDetection(BaseModel):
 
     def predict_output_per_batch(self, dataloader, description):
         """Run predictions on a dataloader and return inputs, outputs, targets per batch"""
+        """_summary_
 
+        :yield: _description_
+        :rtype: _type_
+        """
         # turn on eval mode
         self.model.eval()
 

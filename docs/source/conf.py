@@ -15,10 +15,14 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
+import numpy as np
 
 project = 'AiTLAS'
 copyright = '2023, simidjievskin'
 author = 'simidjievskin'
+license = 'Apache 2.0'
+import time
+copyright = u'2021-{}, Bias Variance Labs, Ljubljana, Slovenia'.format(time.strftime("%Y"))
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -28,7 +32,6 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
@@ -38,6 +41,10 @@ source_suffix = ".rst"
 master_doc = "index"
 autoclass_content = "both"
 add_module_names = False
+
+napoleon_google_docstring = False
+napoleon_use_param = False
+napoleon_use_ivar = True
 
 templates_path = ['_templates']
 exclude_patterns = []

@@ -21,7 +21,7 @@ class BaseMulticlassClassifier(BaseModel):
     Inherits from BaseModel.
 
     Attributes:
-        schema (BaseClassifierSchema): The schema for the classifier.
+        schema (BaseClassifierSchema): The schema defines the classifier. See schema doc
 
     Methods:
         get_predicted(outputs, threshold=None): Get predicted classes from the model outputs.
@@ -60,7 +60,8 @@ class BaseMulticlassClassifier(BaseModel):
         Generate a report for multiclass classification.
 
         Args:
-            labels (list): List of class labels.
+
+            :param labels (list): List of class labels.
             dataset_name (str): Name of the dataset.
             running_metrics (RunningScore): A running score object for multiclass classification.
             **kwargs: Additional keyword arguments.
@@ -143,6 +144,7 @@ class BaseMultilabelClassifier(BaseModel):
             threshold (float, optional): Threshold for classification. Defaults to None.
 
         Returns:
+        
             tuple: Tuple containing the probabilities and predicted classes.
         """
         predicted_probs = torch.sigmoid(outputs)
