@@ -89,9 +89,9 @@ class ColorTransformations(BaseTransforms):
     def __call__(self, sample):
         """
         Applies color transformations to the given sample with a probability of 0.3. These include:
-        - HueSaturationValue (randomly changes hue, saturation and value of the input image)
-        - CLAHE (applies Contrast Limited Adaptive Histogram Equalization)
-        - RandomBrightnessContrast (randomly changes brightness and contrast of the input image)
+        * HueSaturationValue (randomly changes hue, saturation and value of the input image)
+        * CLAHE (applies Contrast Limited Adaptive Histogram Equalization)
+        * RandomBrightnessContrast (randomly changes brightness and contrast of the input image)
 
         :param sample: input sample
         :type sample: tensor

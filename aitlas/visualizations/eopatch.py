@@ -1,3 +1,5 @@
+"""Method for visualising predictions in EOpatch format for multi-temporal data. Useful for croptype classification tasks."""
+
 import os
 from textwrap import wrap
 
@@ -14,6 +16,25 @@ from matplotlib.colors import LinearSegmentedColormap, Normalize
 def display_eopatch_predictions(
     eopatches_path, patch, y_pred, test_index, y_true, classmapping
 ):
+    """
+    Displays the predictions of an EOPatch.
+
+    :param eopatches_path: The path to the directory containing EOPatches.
+    :type eopatches_path: str
+    :param patch: The specific patch to be displayed.
+    :type patch: str
+    :param y_pred: The predicted labels, as returned by a classifier.
+    :type y_pred: array-like of shape (n_samples,)
+    :param test_index: The indices of the test set.
+    :type test_index: pandas.DataFrame
+    :param y_true: Ground truth (correct) labels.
+    :type y_true: array-like of shape (n_samples,)
+    :param classmapping: A mapping from class labels to class names.
+    :type classmapping: pandas.DataFrame
+
+    :return: matplotlib.figure.Figure object with the plot
+    :rtype: matplotlib.figure.Figure
+    """
     eop = EOPatch.load(eopatches_path + os.sep + patch)
     polygons = eop.vector_timeless["CROP_TYPE_GDF"]
     predictions_list = []
