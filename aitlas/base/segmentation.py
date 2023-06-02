@@ -1,16 +1,20 @@
 import logging
-import torch.optim as optim
-import torch
 
+import torch
+import torch.optim as optim
+
+from ..utils import DiceLoss
+from .metrics import SegmentationRunningScore
 from .models import BaseModel
 from .schemas import BaseSegmentationClassifierSchema
-from .metrics import SegmentationRunningScore
-from ..utils import DiceLoss
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 class BaseSegmentationClassifier(BaseModel):
+    """Base class for a segmentation classifier.
+    """
 
     schema = BaseSegmentationClassifierSchema
 
@@ -20,10 +24,19 @@ class BaseSegmentationClassifier(BaseModel):
         self.running_metrics = SegmentationRunningScore(self.num_classes, self.device)
 
     def get_predicted(self, outputs, threshold=None):
+        """Get predicted classes from the model outputs.
+
+        :param outputs: Model outputs with shape (batch_size, num_classes).
+        :type outputs: torch.Tensor
+        :param threshold: The threshold for classification, defaults to None.
+        :type threshold: float, optional
+        :return: tuple containing the probabilities and predicted classes
+        :rtype: tuple
+        """
         predicted_probs = torch.sigmoid(outputs)
-        predicted = (predicted_probs >= (
-            threshold if threshold else self.config.threshold
-        )).long()
+        predicted = (
+            predicted_probs >= (threshold if threshold else self.config.threshold)
+        ).long()
         return predicted_probs, predicted
 
     def load_optimizer(self):
@@ -35,5 +48,7 @@ class BaseSegmentationClassifier(BaseModel):
         return DiceLoss()
 
     def load_lr_scheduler(self, optimizer):
-        return torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)
-
+        """Load the learning rate scheduler"""
+        return torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, "min", patience=5, factor=0.1, min_lr=1e-6
+        )

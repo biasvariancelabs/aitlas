@@ -29,7 +29,8 @@ class EarlyStopping:
     """
 
     def __init__(self, patience=10, min_delta=0):
-        """
+        """BaseModel constructor
+
         :param patience: how many epochs to wait before stopping when loss is
                not improving
         :param min_delta: minimum difference between new loss and old loss for
@@ -59,12 +60,20 @@ class EarlyStopping:
 
 
 class BaseModel(nn.Module, Configurable):
+    """Basic class abstracting a model. Contains methods for training, 
+    evaluation and also utility methods for loading, saving a model to storage.
+    """
 
     schema = BaseModelSchema
     name = None
     log_loss = True
 
     def __init__(self, config=None):
+        """BaseModel constructor
+
+        :param config: Configuration object which specifies the details of the model, defaults to None.
+        :type config: Config, optional
+        """
         Configurable.__init__(self, config)
         super(BaseModel, self).__init__()
 
@@ -85,7 +94,7 @@ class BaseModel(nn.Module, Configurable):
         )
 
     def prepare(self):
-        """Prepare the model before using it """
+        """Prepare the model before using it. Loans loss criteria, optimizer, lr scheduler and early stopping. """
 
         # load loss, optimizer and lr scheduler
         self.criterion = self.load_criterion()
@@ -105,6 +114,27 @@ class BaseModel(nn.Module, Configurable):
         run_id: str = None,
         **kwargs,
     ):
+        """Main method to train the model. It trains the model for the specified number of epochs and saves the model after every save_epochs. It also logs the loss after every iterations_log.
+
+        :param dataset: Dataset object which contains the training data.
+        :type dataset: aitlas.base.BaseDataset
+        :param epochs: Number of epochs to train the model, defaults to 100
+        :type epochs: int, optional
+        :param model_directory: Location where the model checkpoints will be stored or should be loaded from, defaults to None
+        :type model_directory: str, optional
+        :param save_epochs: Number of epoch after a checkpoint is saved, defaults to 10
+        :type save_epochs: int, optional
+        :param iterations_log: Number of iteration after which the training status will be logged, defaults to 100
+        :type iterations_log: int, optional
+        :param resume_model: Whether or not to resume training a saved model, defaults to None
+        :type resume_model: str, optional
+        :param val_dataset: Dataset object which contains the validation data., defaults to None
+        :type val_dataset: aitlas.base.BaseDataset, optional
+        :param run_id: Optional id to idenfity the experiment, defaults to None
+        :type run_id: str, optional
+        :return: Returns the loss at the end of training.
+        :rtype: float
+        """
         logging.info("Starting training.")
 
         start_epoch = 0
@@ -323,7 +353,7 @@ class BaseModel(nn.Module, Configurable):
     ):
         """
         Evaluates the current model against the specified dataloader for the specified metrics
-        :param dataloader:
+        :param dataloader: The dataloader to evaluate against
         :param metrics: list of metric keys to calculate
         :criterion: Criterion to calculate loss
         :description: What to show in the progress bar
@@ -368,6 +398,7 @@ class BaseModel(nn.Module, Configurable):
         Predicts using a model against for a specified dataset
 
         :return: tuple of (y_true, y_pred, y_pred_probs)
+        :rtype: tuple
         """
         # initialize counters
         y_true = []
@@ -395,7 +426,8 @@ class BaseModel(nn.Module, Configurable):
         """
         Predicts using a model against for a specified image
 
-        :return: plot
+        :return: Plot containing the image and the predictions.
+        :rtype: matplotlib.figure.Figure
         """
         # load the image and apply transformations
         original_image = copy.deepcopy(image)
@@ -445,7 +477,8 @@ class BaseModel(nn.Module, Configurable):
         """
         Predicts using a model against for a specified image
 
-        :return: plot
+        :return: Plot of the predicted masks
+        :rtype: matplotlib.figure.Figure
         """
         # load the image and apply transformations
         original_image = copy.deepcopy(image)
@@ -499,7 +532,8 @@ class BaseModel(nn.Module, Configurable):
         """
         Predicts using a model against for a specified image
 
-        :return: plot
+        :return: Plots the image with the object boundaries.
+        :rtype: matplotlib.figure.Figure
         """
         # load the image and apply transformations
         image = image / 255
@@ -575,13 +609,15 @@ class BaseModel(nn.Module, Configurable):
     def forward(self, *input, **kwargs):
         """
         Abstract method implementing the model. Extending classes should override this method.
-        :return:  instance extending `nn.Module`
+        :return: Instance extending `nn.Module`
+        :rtype: nn.Module
         """
         raise NotImplementedError
 
     def get_predicted(self, outputs, threshold=None):
         """Gets the output from the model and return the predictions
-        :return: tuple in the format (probabilities, predicted classes/labels)
+        :return: Tuple in the format (probabilities, predicted classes/labels)
+        :rtype: tuple
         """
         raise NotImplementedError("Please implement `get_predicted` for your model. ")
 
@@ -606,7 +642,8 @@ class BaseModel(nn.Module, Configurable):
     def allocate_device(self, opts=None):
         """
         Put the model on CPU or GPU
-        :return:
+        :return: Return the model on CPU or GPU.
+        :rtype: nn.Module
         """
         self.model = self.model.to(self.device)
         if self.criterion:
@@ -620,8 +657,12 @@ class BaseModel(nn.Module, Configurable):
     def save_model(self, model_directory, epoch, optimizer, loss, start, run_id):
         """
         Saves the model on disk
-        :param model_directory:
-        :return:
+        :param model_directory: directory to save the model
+        :epoch: Epoch number of checkpoint
+        :optimizer: Optimizer used
+        :loss: Criterion used
+        :start: Start time of training
+        :run_id: Run id of the model
         """
         if not os.path.isdir(model_directory):
             os.makedirs(model_directory)
@@ -653,6 +694,9 @@ class BaseModel(nn.Module, Configurable):
     def extract_features(self, *input, **kwargs):
         """
         Abstract for trim the model to extract feature. Extending classes should override this method.
+
+        :return: Instance of the model architecture
+        :rtype: nn.Module
         """
         return self.model
 
@@ -712,6 +756,26 @@ class BaseModel(nn.Module, Configurable):
         run_id: str = None,
         **kwargs,
     ):
+        """Main method that trains the model.
+
+        :param train_dataset: Dataset to train the model
+        :type train_dataset: BaseDataset
+        :param epochs: Number of epochs for training, defaults to 100
+        :type epochs: int, optional
+        :param model_directory: Directory where the model checkpoints will be saved, defaults to None
+        :type model_directory: str, optional
+        :param save_epochs: Number of epochs to save a checkpoint of the model, defaults to 10
+        :type save_epochs: int, optional
+        :param iterations_log: The number of iterations to pass before logging the system state, defaults to 100
+        :type iterations_log: int, optional
+        :param resume_model: Boolean indicating whether to resume an already traind model or not, defaults to None
+        :type resume_model: str, optional
+        :param val_dataset: Dataset used for validation, defaults to None
+        :type val_dataset: BaseDataset, optional
+        :param run_id: Optional run id to identify the experiment, defaults to None
+        :type run_id: str, optional
+        :return: Return the loss of the model
+        """
         return self.fit(
             dataset=train_dataset,
             epochs=epochs,
@@ -735,6 +799,26 @@ class BaseModel(nn.Module, Configurable):
         run_id: str = None,
         **kwargs,
     ):
+        """Method that trains and evaluates the model.
+
+        :param train_dataset: Dataset to train the model
+        :type train_dataset: BaseDataset
+        :param epochs: Number of epochs for training, defaults to 100
+        :type epochs: int, optional
+        :param model_directory: Model directory where the model checkpoints will be saved, defaults to None
+        :type model_directory: str, optional
+        :param save_epochs: Number of epochs to save a checkpoint of the model, defaults to 10
+        :type save_epochs: int, optional
+        :param iterations_log: Number of iterations to pass before logging the system state, defaults to 100
+        :type iterations_log: int, optional
+        :param resume_model: Boolean indicating whether to resume an already traind model or not, defaults to None
+        :type resume_model: str, optional
+        :param val_dataset: Dataset used for validation, defaults to None
+        :type val_dataset: BaseDataset, optional
+        :param run_id: Run id to identify the experiment, defaults to None
+        :type run_id: str, optional
+        :return: Loss of the model
+        """
         return self.fit(
             dataset=train_dataset,
             epochs=epochs,
