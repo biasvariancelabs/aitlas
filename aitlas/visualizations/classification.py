@@ -1,3 +1,5 @@
+"""Classes and methods for visualizations for classification tasks."""
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -8,24 +10,59 @@ from ..base import BaseDetailedVisualization, BaseVisualization
 from ..utils import pil_loader
 
 
-def plot_confusion_matrix(confusion_matrix, axes, class_label, class_names, fontsize=14):
+def plot_confusion_matrix(
+    confusion_matrix, axes, class_label, class_names, fontsize=14
+):
+    """
+    Plots a confusion matrix.
+
+    :param confusion_matrix: The confusion matrix to plot.
+    :type confusion_matrix: array-like of shape (n_classes, n_classes)
+    :param axes: The matplotlib axes object to plot on.
+    :type axes: matplotlib.axes.Axes
+    :param class_label: The label of the class for the confusion matrix.
+    :type class_label: str
+    :param class_names: The names of the classes.
+    :type class_names: list of str
+    :param fontsize: The fontsize for the plot, defaults to 14.
+    :type fontsize: int, optional
+    """
     df_cm = pd.DataFrame(
-        confusion_matrix, index=class_names, columns=class_names,
+        confusion_matrix,
+        index=class_names,
+        columns=class_names,
     )
     try:
         heatmap = sns.heatmap(df_cm, annot=True, fmt="d", cbar=False, ax=axes)
     except ValueError:
         raise ValueError("Confusion matrix values must be integers.")
-    heatmap.yaxis.set_ticklabels(heatmap.yaxis.get_ticklabels(), rotation=0, ha='right', fontsize=fontsize)
-    heatmap.xaxis.set_ticklabels(heatmap.xaxis.get_ticklabels(), rotation=45, ha='right', fontsize=fontsize)
-    axes.set_ylabel('True label')
-    axes.set_xlabel('Predicted label')
+    heatmap.yaxis.set_ticklabels(
+        heatmap.yaxis.get_ticklabels(), rotation=0, ha="right", fontsize=fontsize
+    )
+    heatmap.xaxis.set_ticklabels(
+        heatmap.xaxis.get_ticklabels(), rotation=45, ha="right", fontsize=fontsize
+    )
+    axes.set_ylabel("True label")
+    axes.set_xlabel("Predicted label")
     if len(class_label) >= 20:
         class_label = class_label[0:20] + "..."
     axes.set_title(class_label)
 
 
 def plot_multilabel_confusion_matrix(cm_array, labels, dataset_name, output_file):
+    """
+    Plots multiple confusion matrices in a .pdf format for multilabel tasks.
+
+    :param cm_array: The array of confusion matrices.
+    :type cm_array: list of array-like of shape (n_classes, n_classes)
+    :param labels: The labels for the classes.
+    :type labels: list of str
+    :param dataset_name: The name of the dataset.
+    :type dataset_name: str
+    :param output_file: The file path to save the plot.
+    :type output_file: str
+    """
+
     rows = math.ceil(math.sqrt(len(labels)))
     columns = rows
     if (rows * columns - len(labels)) >= rows:
@@ -40,7 +77,7 @@ def plot_multilabel_confusion_matrix(cm_array, labels, dataset_name, output_file
         plot_confusion_matrix(cfs_matrix, axes, label, ["N", "P"])
     num_ax_remove = rows * columns - len(labels)
     for i in range(num_ax_remove):
-        ax[-1, columns - 1 - i].axis('off')
+        ax[-1, columns - 1 - i].axis("off")
     figure.tight_layout()
     # figure.savefig(output_file, format="png")
     figure.savefig(output_file, format="pdf", bbox_inches="tight")
@@ -50,6 +87,18 @@ def plot_multilabel_confusion_matrix(cm_array, labels, dataset_name, output_file
 
 def plot_multiclass_confusion_matrix(cm_array, labels, dataset_name, output_file):
     # get the confusion matrix
+    """
+    Plots multiple confusion matrices .pdf format useful for multiclass tasks.
+
+    :param cm_array: The array of confusion matrices.
+    :type cm_array: list of array-like of shape (n_classes, n_classes)
+    :param labels: The labels for the classes.
+    :type labels: list of str
+    :param dataset_name: The name of the dataset.
+    :type dataset_name: str
+    :param output_file: The file path to save the plot.
+    :type output_file: str
+    """
     df_cm = pd.DataFrame(cm_array, index=labels, columns=labels)
 
     # plot confusion matrix, different dimensions for different number of labels
@@ -64,7 +113,7 @@ def plot_multiclass_confusion_matrix(cm_array, labels, dataset_name, output_file
     ax = plt.axes()
     # ax.set_title("Confusion matrix of predictions for {}".format(dataset_name))
     sns.set(font_scale=1)
-    sns.heatmap(df_cm, cmap="YlGnBu", ax=ax, annot=True, fmt='g')
+    sns.heatmap(df_cm, cmap="YlGnBu", ax=ax, annot=True, fmt="g")
     plt.yticks(rotation=0)
     figure.tight_layout()
 
@@ -76,7 +125,12 @@ def plot_multiclass_confusion_matrix(cm_array, labels, dataset_name, output_file
 
 class PrecisionRecallCurve(BaseDetailedVisualization):
     def plot(self):
-        """Generate plot"""
+        """
+        Generates and plots the precision recall curve.
+
+        :return: matplotlib.figure.Figure object with the plot
+        :rtype: matplotlib.figure.Figure
+        """
         figure = plt.figure()
 
         # plot pr curve for each class
@@ -99,17 +153,52 @@ class PrecisionRecallCurve(BaseDetailedVisualization):
 
 
 class ImageLabelsVisualization(BaseDetailedVisualization):
+    """
+    Class for visualising predictions for an image.
+    """
+
     def __init__(self, y_true, y_pred, y_prob, labels, file, **kwargs):
+        """
+        Initialize the ImageLabelsVisualization class.
+
+        :param y_true: Ground truth (correct) labels.
+        :type y_true: array-like of shape (n_samples,)
+        :param y_pred: Predicted labels, as returned by a classifier.
+        :type y_pred: array-like of shape (n_samples,)
+        :param y_prob: The predicted probabilities.
+        :type y_prob: list of float
+        :param labels: The labels for the classes.
+        :type labels: list of str
+        :param file: The file path to save the plot.
+        :type file: str
+        :param kwargs: Additional keyword arguments.
+        """
         super().__init__(y_true, y_pred, y_prob, labels, file, **kwargs)
         self.image = kwargs.get("image")
 
     def plot(self):
+        """
+        Plots the image with the predictions.
+
+        :return: matplotlib.figure.Figure object with the plot
+        :rtype: matplotlib.figure.Figure
+        """
         image = pil_loader(self.image)
         fig = self.plot_prediction(image, self.y_prob, self.labels)
         fig.savefig(self.output_file, format="png")
 
     def plot_prediction(self, img, probs, classes):
-        """Display image and predictions from model"""
+        """Display image and predictions from model
+
+        :param img: Image to plot.
+        :type img: array-like or PIL image
+        :param prob: The predicted probabilities.
+        :type prob: list of float
+        :param classes: The labels for the classes.
+        :type classes: list of str
+        :return: matplotlib.figure.Figure object with the plot
+        :rtype: matplotlib.figure.Figure
+        """
 
         # Convert results to dataframe for plotting
         result = pd.DataFrame({"p": probs}, index=classes)

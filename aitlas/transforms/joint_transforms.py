@@ -1,3 +1,4 @@
+"""Contains joint transforms for images and label masks."""
 import albumentations as A
 import cv2
 import numpy as np
@@ -8,7 +9,19 @@ from ..base import BaseTransforms
 
 
 class FlipHVRandomRotate(BaseTransforms):
+    """
+    A class that applies flipping, random rotation, and shift-scale-rotation transformations to image and mask pairs.
+  
+    """
     def __call__(self, sample):
+        """
+        Apply the transformation to the input sample.
+
+        :param sample: Tuple of input image and mask
+        :type sample: tuple
+        :return: Transformed image and mask
+        :rtype: tuple
+        """
         image, mask = sample
         image = np.asarray(image)
         mask = np.asarray(mask)
@@ -32,7 +45,20 @@ class FlipHVRandomRotate(BaseTransforms):
 
 
 class FlipHVToTensorV2(BaseTransforms):
+    """
+    A class that applies resizing, flipping, and tensor conversion to images with bounding boxes and labels.
+    
+    """
+
     def __call__(self, sample):
+        """
+        Apply the transformation to the input sample.
+
+        :param sample: Tuple of input image and target (bounding boxes and labels)
+        :type sample: tuple
+        :return: Transformed image and target
+        :rtype: tuple
+        """
         image, target = sample
         data_transforms = A.Compose(
             [
@@ -53,7 +79,19 @@ class FlipHVToTensorV2(BaseTransforms):
 
 
 class ResizeToTensorV2(BaseTransforms):
+    """
+    A class that applies resizing and tensor conversion to images with bounding boxes and labels.
+    
+    """
     def __call__(self, sample):
+        """
+        Apply the transformation to the input sample.
+
+        :param sample: Tuple of input image and target (bounding boxes and labels)
+        :type sample: tuple
+        :return: Transformed image and target
+        :rtype: tuple
+        """
         image, target = sample
         data_transforms = A.Compose(
             [A.Resize(480, 480), ToTensorV2(p=1.0)],
@@ -69,7 +107,18 @@ class ResizeToTensorV2(BaseTransforms):
 
 
 class Resize(BaseTransforms):
+    """
+    A class that applies resizing to images.
+    """
     def __call__(self, sample):
+        """
+        Apply the transformation to the input sample.
+
+        :param sample: Input image
+        :type sample: numpy.ndarray
+        :return: Transformed image
+        :rtype: numpy.ndarray
+        """
         data_transforms = A.Compose([A.Resize(480, 480)])
 
         transformed = data_transforms(image=sample)
