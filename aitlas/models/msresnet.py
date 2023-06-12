@@ -138,6 +138,8 @@ class BasicBlock7x7(nn.Module):
 
 
 class MSResNet(BaseMulticlassClassifier):
+    """MSResNet model implementation based on <https://github.com/dl4sits/BreizhCrops>
+    """
 
     schema = MSResNetSchema
 

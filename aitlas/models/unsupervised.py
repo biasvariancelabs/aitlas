@@ -11,6 +11,7 @@ from .schemas import UnsupervisedDeepMulticlassClassifierSchema
 
 
 class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
+    """Unsupervised Deep Learning model implementation based on Deep Clustering: <https://github.com/facebookresearch/deepcluster>"""
 
     schema = UnsupervisedDeepMulticlassClassifierSchema
 
@@ -31,7 +32,7 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
         self.reassign = 1
 
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
-        '''Overriding train epoch to implement the custom logic for the unsupervised classifier'''
+        """Overriding train epoch to implement the custom logic for the unsupervised classifier"""
         self.model.top_layer = None
         self.model.classifier = nn.Sequential(
             *list(self.model.classifier.children())[:-1]
@@ -99,7 +100,7 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
 
 
 def compute_features(dataloader, model, N, batch, device):
-    '''Compute features for images'''
+    """Compute features for images"""
     model.eval()
 
     # discard the label information in the dataloader
@@ -219,11 +220,12 @@ def vgg16(sobel=False, bn=True, out=1000):
 
 
 class UnifLabelSampler(Sampler):
-    ''' Samples elements uniformely accross pseudolabels.
+    """ Samples elements uniformely accross pseudolabels.
         Args:
-            N (int): size of returned iterator. 
+            N (int): size of returned iterator.
             images_lists: dict of key (target), value (list of data with this target)
-    '''
+    """
+
     def __init__(self, N, images_lists):
         self.N = N
         self.images_lists = images_lists

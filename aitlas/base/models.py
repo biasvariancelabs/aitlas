@@ -60,7 +60,7 @@ class EarlyStopping:
 
 
 class BaseModel(nn.Module, Configurable):
-    """Basic class abstracting a model. Contains methods for training, 
+    """Basic class abstracting a model. Contains methods for training,
     evaluation and also utility methods for loading, saving a model to storage.
     """
 

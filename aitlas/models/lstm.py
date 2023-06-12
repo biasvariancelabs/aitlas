@@ -17,7 +17,8 @@ from .schemas import LSTMSchema
 
 
 class LSTM(BaseMulticlassClassifier):
-    """LSTM Model for Multi-Class Classification"""
+    """LSTM model implementation based on <https://github.com/dl4sits/BreizhCrops>
+    """
 
     schema = LSTMSchema
 

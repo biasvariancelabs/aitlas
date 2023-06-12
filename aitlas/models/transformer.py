@@ -19,7 +19,8 @@ from .schemas import TransformerModelSchema
 
 
 class TransformerModel(BaseMulticlassClassifier):
-    """Transformer Model for Multi-Class Classification"""
+    """Transformer model for multi-class classification model implementation based on <https://github.com/dl4sits/BreizhCrops>
+    """
 
     schema = TransformerModelSchema
 

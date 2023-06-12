@@ -5,6 +5,9 @@ from ..base import BaseSegmentationClassifier
 
 
 class DeepLabV3(BaseSegmentationClassifier):
+    """DeepLabV3 model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.segmentation.deeplabv3_resnet101.html#torchvision.models.segmentation.deeplabv3_resnet101>
+    """
+
     def __init__(self, config):
         super().__init__(config)
 

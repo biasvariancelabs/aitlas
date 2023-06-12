@@ -25,6 +25,8 @@ from .schemas import StarRNNSchema
 
 
 class StarRNN(BaseMulticlassClassifier):
+    """StarRNN model implementation based on < https://github.com/dl4sits/BreizhCrops>
+    """
 
     schema = StarRNNSchema
 

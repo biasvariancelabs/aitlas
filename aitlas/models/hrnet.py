@@ -11,6 +11,9 @@ NLOW = 60
 
 
 class HRNetModule(nn.Module):
+    """HRNet model implementation based on <https://github.com/huggingface/pytorch-image-models/tree/main/timm>
+    """
+
     def __init__(
         self, head: nn.Module, pretrained: bool = True, higher_res: bool = False
     ):
