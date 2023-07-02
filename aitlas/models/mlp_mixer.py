@@ -7,10 +7,9 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class MLPMixer(BaseMulticlassClassifier):
-    """MLP mixer b16_224
-    It creates an instance of the MLP mixer model version 'b16_224' from timm library (huggingface/pytorch-image-models).
-    https://github.com/huggingface/pytorch-image-models for more details. """
-    
+    """MLP mixer multi-class b16_224 model implementation based on <https://github.com/huggingface/pytorch-image-models>
+    """
+
     name = "MLP mixer b16_224"
 
     def __init__(self, config):
@@ -28,6 +27,9 @@ class MLPMixer(BaseMulticlassClassifier):
 
 
 class MLPMixerMultilabel(BaseMultilabelClassifier):
+    """MLP mixer multi-label b16_224 model implementation based on <https://github.com/huggingface/pytorch-image-models>
+    """
+
     name = "MLP mixer b16_224"
 
     def __init__(self, config):

@@ -6,21 +6,9 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class DenseNet161(BaseMulticlassClassifier):
-    
-    """ 
-    Densenet161 model from torchvision.models.
-    
-    Returns:
-        :return: torch.nn.Module: DenseNet161 model
-        
-    Example::
-
-        >>> from aitlas.models import DenseNet161
-        >>> model = DenseNet161(config)
-            
-       
+    """DenseNet161 model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.densenet161.html#torchvision.models.densenet161>
     """
-    
+
     name = "DenseNet161"
 
     def __init__(self, config):
@@ -32,9 +20,7 @@ class DenseNet161(BaseMulticlassClassifier):
                 last_layer_key = next(reversed(checkpoint["state_dict"]))
                 last_layer = checkpoint["state_dict"][last_layer_key]
                 num_classes = len(last_layer)
-                self.model = models.densenet161(
-                    False, False, num_classes=num_classes
-                )
+                self.model = models.densenet161(False, False, num_classes=num_classes)
                 self.model.load_state_dict(checkpoint["state_dict"], strict=False)
             else:
                 self.model = models.densenet161(self.config.pretrained, False)
@@ -76,9 +62,7 @@ class DenseNet161MultiLabel(BaseMultilabelClassifier):
                 last_layer_key = next(reversed(checkpoint["state_dict"]))
                 last_layer = checkpoint["state_dict"][last_layer_key]
                 num_classes = len(last_layer)
-                self.model = models.densenet161(
-                    False, False, num_classes=num_classes
-                )
+                self.model = models.densenet161(False, False, num_classes=num_classes)
                 self.model.load_state_dict(checkpoint["state_dict"], strict=False)
             else:
                 self.model = models.densenet161(self.config.pretrained, False)

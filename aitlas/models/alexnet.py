@@ -5,6 +5,9 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class AlexNet(BaseMulticlassClassifier):
+    """AlexNet model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.alexnet.html#torchvision.models.alexnet>
+    """
+
     name = "AlexNet"
 
     def __init__(self, config):

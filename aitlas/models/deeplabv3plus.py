@@ -4,6 +4,9 @@ from ..base import BaseSegmentationClassifier
 
 
 class DeepLabV3Plus(BaseSegmentationClassifier):
+    """DeepLabV3Plus model implementation based on <https://github.com/qubvel/segmentation_models.pytorch>
+    """
+
     def __init__(self, config):
         super().__init__(config)
 

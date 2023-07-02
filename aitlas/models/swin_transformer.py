@@ -1,28 +1,14 @@
-import torchvision.models as models
 import torch.nn as nn
+import torchvision.models as models
 
 from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class SwinTransformer(BaseMulticlassClassifier):
-  
     """
-    A Swin Transformer V2 implementation for multi-class classification tasks.
-
-    Inherits from BaseMulticlassClassifier.
-
-    Attributes:
-        name (str): The name of the model, "SwinTransformerV2".
-
-    Args:
-        config (Config): A configuration object containing model-related settings.
-
-    Methods:
-        freeze(): Freeze all the layers in the model except for the head.
-        forward(x): Perform a forward pass through the model.
+    A Swin Transformer V2 implementation for multi-class classification tasks. Based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.swin_v2_s.html#torchvision.models.swin_v2_s>
     """
 
-    
     name = "SwinTransformerV2"
 
     def __init__(self, config):
@@ -35,10 +21,12 @@ class SwinTransformer(BaseMulticlassClassifier):
         """
         super().__init__(config)
 
-        self.model = models.swin_v2_s(weights=
-                                      models.Swin_V2_S_Weights.IMAGENET1K_V1
-                                      if self.config.pretrained else None,
-                                      progress=False)
+        self.model = models.swin_v2_s(
+            weights=models.Swin_V2_S_Weights.IMAGENET1K_V1
+            if self.config.pretrained
+            else None,
+            progress=False,
+        )
         self.model.head = nn.Linear(
             in_features=768, out_features=self.config.num_classes, bias=True
         )
@@ -71,20 +59,9 @@ class SwinTransformer(BaseMulticlassClassifier):
 
 class SwinTransformerMultilabel(BaseMultilabelClassifier):
     """
-    A Swin Transformer V2 implementation for multi-label classification tasks.
-
-    Inherits from BaseMultilabelClassifier.
-
-    Attributes:
-        name (str): The name of the model, "SwinTransformerV2".
-
-    Args:
-        config (Config): A configuration object containing model-related settings.
-
-    Methods:
-        freeze(): Freeze all the layers in the model except for the head.
-        forward(x): Perform a forward pass through the model.
+    A Swin Transformer V2 implementation for multi-label classification tasks. Based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.swin_v2_s.html#torchvision.models.swin_v2_s>
     """
+
     name = "SwinTransformerV2"
 
     def __init__(self, config):
@@ -96,10 +73,12 @@ class SwinTransformerMultilabel(BaseMultilabelClassifier):
         """
         super().__init__(config)
 
-        self.model = models.swin_v2_s(weights=
-                                      models.Swin_V2_S_Weights.IMAGENET1K_V1
-                                      if self.config.pretrained else None,
-                                      progress=False)
+        self.model = models.swin_v2_s(
+            weights=models.Swin_V2_S_Weights.IMAGENET1K_V1
+            if self.config.pretrained
+            else None,
+            progress=False,
+        )
         self.model.head = nn.Linear(
             in_features=768, out_features=self.config.num_classes, bias=True
         )

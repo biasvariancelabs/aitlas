@@ -1,14 +1,18 @@
-import torch
-import timm
-import torch.nn as nn
 import logging
 
+import timm
+import torch
+import torch.nn as nn
+
 from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 class VisionTransformer(BaseMulticlassClassifier):
+    """VisionTransformer model implementation based on: <https://github.com/huggingface/pytorch-image-models/tree/main/timm>"""
+
     name = "ViT base_patch16_224"
 
     def __init__(self, config):
@@ -24,9 +28,7 @@ class VisionTransformer(BaseMulticlassClassifier):
             last_layer_key = next(reversed(checkpoint))
             last_layer = checkpoint[last_layer_key]
             num_classes = len(last_layer)
-            self.model = timm.create_model(
-                "vit_base_patch16_224", pretrained=False
-            )
+            self.model = timm.create_model("vit_base_patch16_224", pretrained=False)
             self.model.head = nn.Linear(
                 in_features=768, out_features=num_classes, bias=True
             )
@@ -35,9 +37,15 @@ class VisionTransformer(BaseMulticlassClassifier):
             checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
             for k, v in self.model.state_dict().items():
                 if k not in list(checkpoint):
-                    logging.info('key "{}" could not be found in provided state dict'.format(k))
+                    logging.info(
+                        'key "{}" could not be found in provided state dict'.format(k)
+                    )
                 elif checkpoint[k].shape != v.shape:
-                    logging.info('key "{}" is of different shape in model and provided state dict'.format(k))
+                    logging.info(
+                        'key "{}" is of different shape in model and provided state dict'.format(
+                            k
+                        )
+                    )
                     checkpoint[k] = v
             self.model.load_state_dict(checkpoint, strict=False)
             self.model.head = nn.Linear(
@@ -80,9 +88,7 @@ class VisionTransformerMultilabel(BaseMultilabelClassifier):
             last_layer_key = next(reversed(checkpoint))
             last_layer = checkpoint[last_layer_key]
             num_classes = len(last_layer)
-            self.model = timm.create_model(
-                "vit_base_patch16_224", pretrained=False
-            )
+            self.model = timm.create_model("vit_base_patch16_224", pretrained=False)
             self.model.head = nn.Linear(
                 in_features=768, out_features=num_classes, bias=True
             )
@@ -91,9 +97,15 @@ class VisionTransformerMultilabel(BaseMultilabelClassifier):
             checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
             for k, v in self.model.state_dict().items():
                 if k not in list(checkpoint):
-                    logging.info('key "{}" could not be found in provided state dict'.format(k))
+                    logging.info(
+                        'key "{}" could not be found in provided state dict'.format(k)
+                    )
                 elif checkpoint[k].shape != v.shape:
-                    logging.info('key "{}" is of different shape in model and provided state dict'.format(k))
+                    logging.info(
+                        'key "{}" is of different shape in model and provided state dict'.format(
+                            k
+                        )
+                    )
                     checkpoint[k] = v
             self.model.load_state_dict(checkpoint, strict=False)
             self.model.head = nn.Linear(

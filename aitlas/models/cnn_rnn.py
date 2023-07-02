@@ -35,7 +35,8 @@ class DecoderRNN(nn.Module):
 
 
 class CNNRNN(BaseMultilabelClassifier):
-    """Inspired by https://github.com/Lin-Zhipeng/CNN-RNN-A-Unified-Framework-for-Multi-label-Image-Classification"""
+    """CNNRNN model implementation based on <https://github.com/Lin-Zhipeng/CNN-RNN-A-Unified-Framework-for-Multi-label-Image-Classification>
+    """
 
     schema = CNNRNNModelSchema
 

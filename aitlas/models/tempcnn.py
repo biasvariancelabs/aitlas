@@ -17,6 +17,8 @@ from .schemas import TempCNNSchema
 
 
 class TempCNN(BaseMulticlassClassifier):
+    """TempCNN model implementation based on <https://github.com/dl4sits/BreizhCrops>
+    """
 
     schema = TempCNNSchema
 

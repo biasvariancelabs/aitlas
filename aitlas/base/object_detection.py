@@ -15,34 +15,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class BaseObjectDetection(BaseModel):
-
     """
-    BaseObjectDetection
-
     This class extends the functionality of the BaseModel class by adding object detection specific functionality.
-    It implements several functions required for training an object detection model, such as:
-
-        Running object detection metrics during training.
-        Non-Maximum Suppression (NMS) to get the final predictions.
-        Loading an optimizer, loss function, and learning rate scheduler.
-        Training a single epoch.
-
-    Attributes:
-
-        schema (BaseObjectDetectionSchema): Schema class to validate the configuration.
-        log_loss (bool): Flag to log the loss during training.
-        running_metrics (ObjectDetectionRunningScore): Running object detection metrics.
-        step_size (int): Step size for the learning rate scheduler.
-        gamma (float): Gamma for the learning rate scheduler.
-
-    Methods:
-
-        get_predicted(outputs, threshold=0.3): Apply NMS to get the final predictions from the model outputs.
-        load_optimizer(): Load an optimizer.
-        load_criterion(): Load a loss function.
-        load_lr_scheduler(optimizer): Load a learning rate scheduler.
-        train_epoch(epoch, dataloader, optimizer, criterion, iterations_log): Train the model for a single epoch.
-
     """
 
     schema = BaseObjectDetectionSchema
@@ -58,6 +32,15 @@ class BaseObjectDetection(BaseModel):
         self.gamma = self.config.gamma
 
     def get_predicted(self, outputs, threshold=0.3):
+        """Get predicted objects from the model outputs.
+
+        :param outputs: Model outputs with shape (batch_size, num_classes).
+        :type outputs: torch.Tensor
+        :param threshold: The threshold for classification, defaults to None.
+        :type threshold: float, optional
+        :return: List of dictionaries containing the predicted bounding boxes, scores and labels.
+        :rtype: list
+        """
 
         # apply nms and return the indices of the bboxes to keep
         final_predictions = []
@@ -81,10 +64,10 @@ class BaseObjectDetection(BaseModel):
         return None
 
     def load_lr_scheduler(self, optimizer):
-        #return torch.optim.lr_scheduler.StepLR(
-        #    optimizer, step_size=self.step_size, gamma=self.gamma
-        #)
-        return torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.1, min_lr=1e-6)
+        """Load the learning rate scheduler"""
+        return torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, "min", patience=5, factor=0.1, min_lr=1e-6
+        )
 
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
         """Train the model for a single epoch.
@@ -94,10 +77,8 @@ class BaseObjectDetection(BaseModel):
         :param optimizer: The optimizer.
         :param criterion: The loss function.
         :param iterations_log: The number of iterations after which to log the loss.
-
-        Returns:
-
-        float: The average loss over the entire epoch.
+        :return: The average loss over the entire epoch.
+        :rtype: float
 
         """
         start = current_ts()
@@ -151,11 +132,14 @@ class BaseObjectDetection(BaseModel):
         return total_loss
 
     def predict_output_per_batch(self, dataloader, description):
-        """Run predictions on a dataloader and return inputs, outputs, targets per batch"""
-        """_summary_
+        """Run predictions on a dataloader and return inputs, outputs, targets per batch
 
-        :yield: _description_
-        :rtype: _type_
+        :param dataloader: Data loader for the prediction set.
+        :type dataloader: aitlas.base.BaseDataLoader
+        :param description: Description of the task for logging purposes.
+        :type description: str
+        :yield: Yields a tuple of (inputs, outputs, targets)
+        :rtype: tuple
         """
         # turn on eval mode
         self.model.eval()
@@ -178,6 +162,17 @@ class BaseObjectDetection(BaseModel):
     def evaluate_model(
         self, dataloader, criterion=None, description="testing on validation set",
     ):
+        """Method used to evaluate the model on a validation set.
+
+        :param dataloader: Data loader for the validation set.
+        :type dataloader: aitlas.base.BaseDataLoader
+        :param criterion: The loss function, defaults to None.
+        :type criterion: _type_, optional
+        :param description: Description of the task for logging purposes, defaults to "testing on validation set"
+        :type description: str, optional
+        :return: Returns a MAP score of the evaluation on the model.
+        :rtype: float
+        """
 
         self.model.eval()
 
@@ -188,4 +183,4 @@ class BaseObjectDetection(BaseModel):
             predicted = self.get_predicted(outputs)
             self.running_metrics.update(predicted, targets)
 
-        return 1 - self.running_metrics.get_scores(self.metrics)[0]['map']
+        return 1 - self.running_metrics.get_scores(self.metrics)[0]["map"]

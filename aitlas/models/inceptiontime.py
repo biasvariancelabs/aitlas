@@ -19,6 +19,8 @@ from .schemas import InceptionTimeSchema
 
 
 class InceptionTime(BaseMulticlassClassifier):
+    """InceptionTime model implementation based on <https://github.com/dl4sits/BreizhCrops>
+    """
 
     schema = InceptionTimeSchema
 

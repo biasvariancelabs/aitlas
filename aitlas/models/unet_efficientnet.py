@@ -1,9 +1,3 @@
-'''
-Notes
------
-    Based on the implementation at:
-        https://github.com/SpaceNetChallenge/SpaceNet_SAR_Buildings_Solutions/blob/master/1-zbigniewwojna/main.py#L178
-'''
 import copy
 import glob
 import os
@@ -13,12 +7,6 @@ from math import ceil
 from multiprocessing import Pool, Queue
 
 import cv2
-
-# try:
-#     import gdal
-# except ModuleNotFoundError as err:
-from osgeo import gdal
-
 import numpy as np
 import pandas as pd
 import torch
@@ -34,6 +22,11 @@ from geffnet.efficientnet_builder import (
     resolve_bn_args,
     round_channels,
 )
+
+# try:
+#     import gdal
+# except ModuleNotFoundError as err:
+from osgeo import gdal
 from rasterio import features
 from shapely.geometry import shape
 from shapely.wkt import dumps
@@ -233,15 +226,17 @@ class GenEfficientNet(nn.Module):
 
 
 class UNetEfficientNet(BaseSegmentationClassifier):
+    """Unet EfficientNet model implementation based on <https://github.com/SpaceNetChallenge/SpaceNet_SAR_Buildings_Solutions/blob/master/1-zbigniewwojna/main.py#L178>"""
+
     schema = UNetEfficientNetModelSchema
 
     def __init__(self, config):
-        '''
+        """
         Parameters
         ----------
             config : Config
                 the configuration for this model
-        '''
+        """
         super().__init__(config)
         dec_ch = [32, 64, 128, 256, 1024]
         # Placeholder variables to avoid "might be referenced before assignment" warnings
@@ -394,7 +389,7 @@ class UNetEfficientNet(BaseSegmentationClassifier):
         run_id: str = None,
         **kwargs,
     ):
-        '''Overridden method for training on the SpaceNet6 data set.'''
+        """Overridden method for training on the SpaceNet6 data set."""
         contact_weight = train_dataset.config.contact_weight
         edge_weight = train_dataset.config.edge_weight
         fold = 0

@@ -1,14 +1,19 @@
+import logging
+
 import torch
 import torch.nn as nn
 import torchvision.models as models
-import logging
 
 from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
 class ResNet50(BaseMulticlassClassifier):
+    """ResNet50 multi-class model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet50.html#torchvision.models.resnet50>
+    """
+
     name = "ResNet50"
 
     def __init__(self, config):
@@ -30,17 +35,31 @@ class ResNet50(BaseMulticlassClassifier):
                     weights=None, progress=False, num_classes=num_classes
                 )
                 # remove prefix "module."
-                checkpoint = {k.replace("backbone.", ""): v for k, v in checkpoint.items()}
-                checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
+                checkpoint = {
+                    k.replace("backbone.", ""): v for k, v in checkpoint.items()
+                }
+                checkpoint = {
+                    k.replace("module.", ""): v for k, v in checkpoint.items()
+                }
                 for k, v in self.model.state_dict().items():
                     if k not in list(checkpoint):
-                        logging.info('key "{}" could not be found in provided state dict'.format(k))
+                        logging.info(
+                            'key "{}" could not be found in provided state dict'.format(
+                                k
+                            )
+                        )
                     elif checkpoint[k].shape != v.shape:
-                        logging.info('key "{}" is of different shape in model and provided state dict'.format(k))
+                        logging.info(
+                            'key "{}" is of different shape in model and provided state dict'.format(
+                                k
+                            )
+                        )
                         checkpoint[k] = v
                 self.model.load_state_dict(checkpoint, strict=False)
             else:
-                self.model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1, progress=False)
+                self.model = models.resnet50(
+                    weights=models.ResNet50_Weights.IMAGENET1K_V1, progress=False
+                )
 
             num_ftrs = self.model.fc.in_features
             self.model.fc = nn.Linear(num_ftrs, self.config.num_classes)
@@ -68,6 +87,9 @@ class ResNet50(BaseMulticlassClassifier):
 
 
 class ResNet152(BaseMulticlassClassifier):
+    """ResNet50 multi-label model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet50.html#torchvision.models.resnet50>
+    """
+
     name = "ResNet152"
 
     def __init__(self, config):
@@ -117,7 +139,9 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
                 )
                 self.model.load_state_dict(checkpoint["state_dict"], strict=False)
             else:
-                self.model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1, progress=False)
+                self.model = models.resnet50(
+                    weights=models.ResNet50_Weights.IMAGENET1K_V1, progress=False
+                )
 
             num_ftrs = self.model.fc.in_features
             self.model.fc = nn.Linear(num_ftrs, self.config.num_classes)

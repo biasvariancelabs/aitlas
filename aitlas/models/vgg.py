@@ -6,6 +6,8 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class VGG16(BaseMulticlassClassifier):
+    """VGG16 model implementation based on: <https://pytorch.org/vision/stable/models/generated/torchvision.models.vgg16.html#torchvision.models.vgg16>"""
+
     name = "VGG16"
 
     def __init__(self, config):

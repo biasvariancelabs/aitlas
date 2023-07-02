@@ -5,6 +5,9 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class ConvNeXtTiny(BaseMulticlassClassifier):
+    """ConvNeXtTiny model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.convnext_tiny.html#torchvision.models.convnext_tiny>
+    """
+
     name = "ConvNeXt tiny"
 
     def __init__(self, config):
@@ -20,7 +23,9 @@ class ConvNeXtTiny(BaseMulticlassClassifier):
                 self.freeze()
         else:
             self.model = models.convnext_tiny(
-                pretrained=self.config.pretrained, progress=True, num_classes=self.config.num_classes
+                pretrained=self.config.pretrained,
+                progress=True,
+                num_classes=self.config.num_classes,
             )
 
     def forward(self, x):
@@ -55,7 +60,9 @@ class ConvNeXtTinyMultiLabel(BaseMultilabelClassifier):
                 self.freeze()
         else:
             self.model = models.convnext_tiny(
-                pretrained=self.config.pretrained, progress=True, num_classes=self.config.num_classes
+                pretrained=self.config.pretrained,
+                progress=True,
+                num_classes=self.config.num_classes,
             )
 
     def forward(self, x):

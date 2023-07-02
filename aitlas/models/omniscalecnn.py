@@ -68,7 +68,8 @@ class build_layer_with_layer_parameter(nn.Module):
 
 
 class OmniScaleCNN(BaseMulticlassClassifier):
-    """OmniScaleCNN Model for Multi-Class Classification"""
+    """OmniScaleCNN model implementation based on <https://github.com/dl4sits/BreizhCrops>
+    """
 
     schema = OmniScaleCNNSchema
 

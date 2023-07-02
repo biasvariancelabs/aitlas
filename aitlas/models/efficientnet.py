@@ -5,6 +5,9 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class EfficientNetB0(BaseMulticlassClassifier):
+    """EfficientNetB0 model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.efficientnet_b0.html#torchvision.models.efficientnet_b0>
+    """
+
     name = "EfficientNetB0"
 
     def __init__(self, config):
@@ -31,6 +34,7 @@ class EfficientNetB0(BaseMulticlassClassifier):
             param.requires_grad = True
 
     """ Remove final layers if we only need to extract features """
+
     def extract_features(self):
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
@@ -77,7 +81,9 @@ class EfficientNetB4(BaseMulticlassClassifier):
         super().__init__(config)
 
         if self.config.pretrained:
-            self.model = models.efficientnet_b4(weights=models.EfficientNet_B4_Weights.IMAGENET1K_V1, progress=False)
+            self.model = models.efficientnet_b4(
+                weights=models.EfficientNet_B4_Weights.IMAGENET1K_V1, progress=False
+            )
             num_ftrs = self.model.classifier[1].in_features
             self.model.classifier[1] = nn.Linear(num_ftrs, self.config.num_classes)
             if self.config.freeze:
@@ -97,6 +103,7 @@ class EfficientNetB4(BaseMulticlassClassifier):
             param.requires_grad = True
 
     """ Remove final layers if we only need to extract features """
+
     def extract_features(self):
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
@@ -110,7 +117,9 @@ class EfficientNetB4MultiLabel(BaseMultilabelClassifier):
         super().__init__(config)
 
         if self.config.pretrained:
-            self.model = models.efficientnet_b4(weights=models.EfficientNet_B4_Weights.IMAGENET1K_V1, progress=False)
+            self.model = models.efficientnet_b4(
+                weights=models.EfficientNet_B4_Weights.IMAGENET1K_V1, progress=False
+            )
             num_ftrs = self.model.classifier[1].in_features
             self.model.classifier[1] = nn.Linear(num_ftrs, self.config.num_classes)
             if self.config.freeze:
@@ -163,6 +172,7 @@ class EfficientNetB7(BaseMulticlassClassifier):
             param.requires_grad = True
 
     """ Remove final layers if we only need to extract features """
+
     def extract_features(self):
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
@@ -200,6 +210,3 @@ class EfficientNetB7MultiLabel(BaseMultilabelClassifier):
             param.requires_grad = False
         for param in self.model.classifier.parameters():
             param.requires_grad = True
-
-
-
