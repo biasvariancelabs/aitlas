@@ -235,7 +235,8 @@ class BigEarthNetDataset(BaseDataset):
                 multihots = multihots_43.astype(np.float32)
 
             if self.selection == 'rgb':
-                bands10 = bands10.astype(np.float32)[:, :, [2, 1, 0]]
+                #bands10 = bands10.astype(np.float32)[:, :, [2, 1, 0]]
+                bands10 = bands10[:, :, [2, 1, 0]]
                 if self.transform:
                     bands10 = self.transform(bands10)
                 if self.target_transform:
