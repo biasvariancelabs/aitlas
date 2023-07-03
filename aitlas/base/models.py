@@ -458,7 +458,8 @@ class BaseModel(nn.Module, Configurable):
         # Convert results to dataframe for plotting
         result = pd.DataFrame({"p": y_pred_probs[0]}, index=labels)
         # Show the image
-        fig = plt.figure(figsize=(16, 5))
+        plt.rcParams.update({'font.size': 16})
+        fig = plt.figure(figsize=(16, 7))
         ax = plt.subplot(1, 2, 1)
         ax.axis("off")
         ax.imshow(original_image)
