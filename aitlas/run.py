@@ -1,3 +1,5 @@
+"""Run an AiTALS workflow with a configuration file."""
+
 import argparse
 import json
 

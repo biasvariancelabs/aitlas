@@ -1,3 +1,5 @@
+"""Base class for implementing configurable transformations"""
+
 from torchvision import transforms
 
 from ..utils import get_class

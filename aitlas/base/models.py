@@ -94,7 +94,7 @@ class BaseModel(nn.Module, Configurable):
         )
 
     def prepare(self):
-        """Prepare the model before using it. Loans loss criteria, optimizer, lr scheduler and early stopping. """
+        """Prepare the model before using it. Loans loss criteria, optimizer, lr scheduler and early stopping."""
 
         # load loss, optimizer and lr scheduler
         self.criterion = self.load_criterion()
@@ -328,7 +328,9 @@ class BaseModel(nn.Module, Configurable):
         return total_loss
 
     def evaluate(
-        self, dataset: BaseDataset = None, model_path: str = None,
+        self,
+        dataset: BaseDataset = None,
+        model_path: str = None,
     ):
         """
         Evaluate a model stored in a specified path against a given dataset
@@ -349,7 +351,10 @@ class BaseModel(nn.Module, Configurable):
         return result
 
     def evaluate_model(
-        self, dataloader, criterion=None, description="testing on validation set",
+        self,
+        dataloader,
+        criterion=None,
+        description="testing on validation set",
     ):
         """
         Evaluates the current model against the specified dataloader for the specified metrics
@@ -392,7 +397,9 @@ class BaseModel(nn.Module, Configurable):
         return total_loss
 
     def predict(
-        self, dataset: BaseDataset = None, description="running prediction",
+        self,
+        dataset: BaseDataset = None,
+        description="running prediction",
     ):
         """
         Predicts using a model against for a specified dataset
@@ -642,6 +649,7 @@ class BaseModel(nn.Module, Configurable):
     def allocate_device(self, opts=None):
         """
         Put the model on CPU or GPU
+
         :return: Return the model on CPU or GPU.
         :rtype: nn.Module
         """
@@ -658,11 +666,11 @@ class BaseModel(nn.Module, Configurable):
         """
         Saves the model on disk
         :param model_directory: directory to save the model
-        :epoch: Epoch number of checkpoint
-        :optimizer: Optimizer used
-        :loss: Criterion used
-        :start: Start time of training
-        :run_id: Run id of the model
+        :param epoch: Epoch number of checkpoint
+        :param optimizer: Optimizer used
+        :param loss: Criterion used
+        :param start: Start time of training
+        :param run_id: Run id of the model
         """
         if not os.path.isdir(model_directory):
             os.makedirs(model_directory)

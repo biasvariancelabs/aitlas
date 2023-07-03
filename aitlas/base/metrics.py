@@ -8,7 +8,7 @@ from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
 
 class BaseMetric:
-    """Base class for implementing metrics """
+    """Base class for metrics"""
 
     def __init__(self, device="cpu", **kwargs):
         self.device = device
@@ -18,6 +18,7 @@ class BaseMetric:
 
 
 class RunningScore(object):
+
     def __init__(self, num_classes, device):
         self.num_classes = num_classes
         self.device = device
@@ -35,6 +36,7 @@ class RunningScore(object):
 
     def update(self, y_true, y_pred, y_prob=None):
         """Updates stats on each batch"""
+
         self.confusion_matrix.update((y_pred, y_true))
 
     def reset(self):

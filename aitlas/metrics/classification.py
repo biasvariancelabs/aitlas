@@ -25,9 +25,9 @@ class AccuracyScore(BaseMetric):
         accuracy score as the number of correct predictionsdivided
         by the total number of predictions.
 
-        :parm y_true: The ground truth values for the target variable.
+        :param y_true: The ground truth values for the target variable.
         :type y_true: array-like of arbitrary size
-        :parm y_pred: The prediction values for the target variable.
+        :param y_pred: The prediction values for the target variable.
         :type y_pred: array-like of identical size as y_true
         :return: A number in [0, 1] where, 1 is a perfect classification.
         :rtype: float

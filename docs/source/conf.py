@@ -15,14 +15,10 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
-import numpy as np
 
 project = 'AiTLAS'
 copyright = '2023, simidjievskin'
 author = 'simidjievskin'
-license = 'Apache 2.0'
-import time
-copyright = u'2021-{}, Bias Variance Labs, Ljubljana, Slovenia'.format(time.strftime("%Y"))
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
