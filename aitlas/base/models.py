@@ -1,3 +1,8 @@
+"""Models base class.
+
+This is the base class for all models. All models should subclass it. 
+
+"""
 import collections
 import copy
 import logging
@@ -458,7 +463,7 @@ class BaseModel(nn.Module, Configurable):
         # Convert results to dataframe for plotting
         result = pd.DataFrame({"p": y_pred_probs[0]}, index=labels)
         # Show the image
-        plt.rcParams.update({'font.size': 16})
+        plt.rcParams.update({"font.size": 16})
         fig = plt.figure(figsize=(16, 7))
         ax = plt.subplot(1, 2, 1)
         ax.axis("off")

@@ -1,3 +1,8 @@
+"""Dataset base class.
+
+This is the base class for all datasets. All datasets should subclass it. 
+"""
+
 import torch
 from torch.utils.data import Dataset
 
@@ -7,6 +12,15 @@ from .transforms import load_transforms
 
 
 class BaseDataset(Dataset, Configurable):
+    """This class represents a basic dataset for machine learning tasks. It is a
+    subclass of both :class:Dataset and :class:Configurable.
+    You can use it as a base class to define your own custom datasets.
+
+    :param Dataset: _description_
+    :type Dataset: _type_
+    :param Configurable: _description_
+    :type Configurable: _type_
+    """
 
     schema = BaseDatasetSchema
     labels = None  # need to put the labels here
@@ -38,7 +52,7 @@ class BaseDataset(Dataset, Configurable):
         self.joint_transform = self.load_transforms(self.config.joint_transforms)
 
     def __getitem__(self, index):
-        """ Implement here what you want to return"""
+        """Implement here what you want to return"""
         raise NotImplementedError(
             "Please implement the `__getittem__` method for your dataset"
         )
@@ -108,4 +122,3 @@ class BaseDataset(Dataset, Configurable):
     def load_transforms(self, class_names):
         """Loads transformation classes and make a composition of them"""
         return load_transforms(class_names, self.config)
-
