@@ -4,6 +4,15 @@ from ..base import ObjectConfig
 
 
 class BaseTaskShema(Schema):
+    """
+    Schema for configuring a base task.
+
+    :param log: Flag indicating whether to turn on logging. Default is True.
+    :type log: bool, optional
+
+    :param id: Run name/ID for the task. Default is None.
+    :type id: str, optional
+    """
     log = fields.Boolean(required=False, missing=True, description="Turn on logging")
     id = fields.String(
         required=False,
@@ -14,6 +23,15 @@ class BaseTaskShema(Schema):
 
 
 class SplitSetObjectSchema(Schema):
+    """
+    Schema for configuring a split dataset object.
+
+    :param ratio: Ratio of the dataset to include in the split. This is required.
+    :type ratio: int
+
+    :param file: File containing the indices for the split. This is required.
+    :type file: str
+    """
     ratio = fields.Int(required=True, description="Ratio of dataset", example=60)
     file = fields.String(
         required=True, description="File indices", example="./data/indices.csv"
@@ -27,6 +45,18 @@ class SplitObjectSchema(Schema):
 
 
 class SplitTaskSchema(BaseTaskShema):
+    """
+    Schema for configuring a split task.
+
+    :param data_dir: Path to the dataset on disk. This is required.
+    :type data_dir: str
+
+    :param csv_file: CSV file on disk containing dataset information. Default is None.
+    :type csv_file: str, optional
+
+    :param split: Configuration on how to split the dataset. Default is None.
+    :type split: SplitObjectSchema, optional
+    """
     data_dir = fields.String(
         required=True,
         description="Dataset path on disk",
@@ -43,6 +73,27 @@ class SplitTaskSchema(BaseTaskShema):
 
 
 class TrainTaskSchema(BaseTaskShema):
+    """
+    Schema for configuring a training task.
+
+    :param dataset_config: Train dataset type and configuration. This is required.
+    :type dataset_config: ObjectConfig
+
+    :param epochs: Number of epochs used in training. This is required.
+    :type epochs: int
+
+    :param model_directory: Directory of the model output. This is required.
+    :type model_directory: str
+
+    :param save_epochs: Number of training steps between model checkpoints. Default is 100.
+    :type save_epochs: int, optional
+
+    :param iterations_log: After how many mini-batches do we want to show something in the log. Default is 200.
+    :type iterations_log: int, optional
+
+    :param resume_model: File path to the model to be resumed. Default is None.
+    :type resume_model: str, optional
+    """
     dataset_config = fields.Nested(
         nested=ObjectConfig,
         required=True,
@@ -71,6 +122,30 @@ class TrainTaskSchema(BaseTaskShema):
 
 
 class TrainAndEvaluateTaskSchema(BaseTaskShema):
+    """
+    Schema for configuring a task that involves training and evaluation.
+
+    :param epochs: Number of epochs used in training. This is required.
+    :type epochs: int
+
+    :param model_directory: Directory of the model output. This is required.
+    :type model_directory: str
+
+    :param save_epochs: Number of training steps between model checkpoints. Default is 100.
+    :type save_epochs: int, optional
+
+    :param iterations_log: After how many mini-batches do we want to show something in the log. Default is 200.
+    :type iterations_log: int, optional
+
+    :param resume_model: File path to the model to be resumed. Default is None.
+    :type resume_model: str, optional
+
+    :param train_dataset_config: Train dataset type and configuration. This is required.
+    :type train_dataset_config: ObjectConfig
+
+    :param val_dataset_config: Validation dataset type and configuration. This is required.
+    :type val_dataset_config: ObjectConfig
+    """
     epochs = fields.Int(
         required=True, description="Number of epochs used in training", example=50
     )
@@ -113,6 +188,9 @@ class ParameterSchema(Schema):
 
 
 class OptimizeTaskSchema(BaseTaskShema):
+    """
+        Schema for configuring an optimization task.
+    """
     epochs = fields.Int(
         required=True, description="Number of epochs used in training", example=50
     )
@@ -146,6 +224,21 @@ class OptimizeTaskSchema(BaseTaskShema):
 
 
 class EvaluateTaskSchema(BaseTaskShema):
+    """
+    Schema for configuring an evaluation task.
+
+    :param dataset_config: Dataset type and configuration. This is required.
+    :type dataset_config: ObjectConfig
+
+    :param model_path: Path to the model. This is required.
+    :type model_path: str
+
+    :param metrics: Metric classes you want to calculate. Default is an empty list.
+    :type metrics: List[str], optional
+
+    :param visualizations: Visualization classes you want to show. Default is an empty list.
+    :type visualizations: List[str], optional
+    """
     dataset_config = fields.Nested(
         nested=ObjectConfig,
         required=True,
@@ -171,6 +264,37 @@ class EvaluateTaskSchema(BaseTaskShema):
 
 
 class PredictTaskSchema(BaseTaskShema):
+    """
+    Schema for configuring a prediction task.
+
+    :param data_dir: Directory with the image to perform prediction on. This is required.
+    :type data_dir: str
+
+    :param model_path: Path to the model. This is required.
+    :type model_path: str
+
+    :param output_dir: Folder path where the plot images with predictions will be stored. Default is '/predictions'.
+    :type output_dir: str, optional
+
+    :param output_file: CSV file path where the predictions will be stored. Default is 'predictions.csv'.
+    :type output_file: str, optional
+
+    :param dataset_config: Dataset type and configuration. Default is None.
+    :type dataset_config: ObjectConfig, optional
+
+    :param batch_size: Batch size. Default is 64.
+    :type batch_size: int, optional
+
+    :param labels: Labels needed to tag the predictions. Default is None.
+    :type labels: List[str], optional
+
+    :param transforms: Classes to run transformations. Default is a list of common torchvision transformations.
+    :type transforms: List[str], optional
+
+    :param output_format: Whether to output the predictions to CSV or plots. Default is 'plot'.
+                          Must be one of ['plot', 'csv', 'image'].
+    :type output_format: str, optional
+    """
     data_dir = fields.String(
         required=True,
         description="Directory with the image to perform prediction on",
@@ -226,6 +350,9 @@ class PrepareTaskSchema(BaseTaskShema):
 
 
 class ExtractFeaturesTaskSchema(BaseTaskShema):
+    """
+    Schema for configuring a task to extract features from images.
+    """
     data_dir = fields.String(
         required=True,
         description="Directory with images to extract features from",

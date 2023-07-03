@@ -6,6 +6,9 @@ from ..base.schemas import BaseSegmentationClassifierSchema
 
 
 class TransformerModelSchema(BaseClassifierSchema):
+    """
+    Schema for configuring a transformer model.
+    """
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -34,6 +37,9 @@ class TransformerModelSchema(BaseClassifierSchema):
 
 
 class InceptionTimeSchema(BaseClassifierSchema):
+    """
+    Schema for configuring a InceptionTime model.
+    """
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -54,6 +60,9 @@ class InceptionTimeSchema(BaseClassifierSchema):
 
 
 class LSTMSchema(BaseClassifierSchema):
+    """
+    Schema for configuring a LSTM model.
+    """
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -80,6 +89,9 @@ class LSTMSchema(BaseClassifierSchema):
 
 
 class MSResNetSchema(BaseClassifierSchema):
+    """
+    Schema for configuring a MSResNet model.
+    """
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -100,6 +112,9 @@ class MSResNetSchema(BaseClassifierSchema):
 
 
 class TempCNNSchema(BaseClassifierSchema):
+    """
+    Schema for configuring a TempCNN model.
+    """
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -124,6 +139,9 @@ class TempCNNSchema(BaseClassifierSchema):
 
 
 class StarRNNSchema(BaseClassifierSchema):
+    """
+    Schema for configuring a StarRNN model.
+    """
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -150,6 +168,9 @@ class StarRNNSchema(BaseClassifierSchema):
 
 
 class OmniScaleCNNSchema(BaseClassifierSchema):
+    """
+    Schema for configuring a OmniScaleCNN model.
+    """
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",

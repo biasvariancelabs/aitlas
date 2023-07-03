@@ -13,6 +13,12 @@ class BaseDataset(Dataset, Configurable):
     name = None
 
     def __init__(self, config):
+        """BaseDataset constructor
+        :param config: Configuration object which specifies the details of the dataset.
+        :type config: Config, contains information for the batch size, number of workers, list of labels,
+        list of transformations
+        """
+
         Dataset.__init__(self)
         Configurable.__init__(self, config)
 
@@ -53,6 +59,7 @@ class BaseDataset(Dataset, Configurable):
         return True
 
     def dataloader(self):
+        """Create and return a dataloader for the dataset"""
         return torch.utils.data.DataLoader(
             self,
             batch_size=self.batch_size,
@@ -69,31 +76,31 @@ class BaseDataset(Dataset, Configurable):
         )
 
     def show_batch(self, size):
-        """Implement this if you want to return the complete set of labels of the dataset"""
+        """Implement this if you want to return a random batch of images from the dataset"""
         raise NotImplementedError(
             "Please implement the `show_batch` method for your dataset"
         )
 
     def show_samples(self):
-        """Implement this if you want to return the complete set of labels of the dataset"""
+        """Implement this if you want to return a random samples from the dataset"""
         raise NotImplementedError(
             "Please implement the `show_samples` method for your dataset"
         )
 
     def show_image(self, index):
-        """Implement this if you want to return the complete set of labels of the dataset"""
+        """Implement this if you want to return an image with a given index from the dataset"""
         raise NotImplementedError(
             "Please implement the `show_image` method for your dataset"
         )
 
     def data_distribution_table(self):
-        """Implement this if you want to return the complete set of labels of the dataset"""
+        """Implement this if you want to return the label distribution of the dataset"""
         raise NotImplementedError(
             "Please implement the `data_distribution_table` method for your dataset"
         )
 
     def data_distribution_barchart(self):
-        """Implement this if you want to return the complete set of labels of the dataset"""
+        """Implement this if you want to return the label distribution of the dataset as a barchart"""
         raise NotImplementedError(
             "Please implement the `data_distribution_barchart` method for your dataset"
         )
