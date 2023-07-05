@@ -142,3 +142,6 @@ experiments/
 
 # ignore vscode
 .vscode
+
+# ignore docs build
+docs/build/
