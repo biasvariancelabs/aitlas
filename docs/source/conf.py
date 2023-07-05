@@ -105,10 +105,10 @@ html_static_path = ["_static", "_media"]
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
-    # 'papersize': 'letterpaper',
+    'papersize': 'a4paper',
     # The font size ('10pt', '11pt' or '12pt').
     #
-    # 'pointsize': '10pt',
+    'pointsize': '10pt',
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
@@ -121,5 +121,5 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "aitlas.tex", doc_title, 'author', "manual"),
+    (master_doc, "aitlas.tex", doc_title, author, "manual"),
 ]
