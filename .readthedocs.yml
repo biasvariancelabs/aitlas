@@ -19,15 +19,13 @@ sphinx:
 
 # We recommend specifying your dependencies to enable reproducible builds:
 # https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
-requirements_file: requirements.txt
 
 python:
   # Install our python package before building the docs
   install:
+    - requirements: requirements.txt
     - method: pip
       path: .
-
-
 
 conda:
   environment: docs/environment.yml
