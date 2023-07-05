@@ -8,3 +8,4 @@ dependencies:
   - pip:
     - nbsphinx
     - sphinx-book-theme
+    - sphinx_mdinclude
