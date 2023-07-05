@@ -22,6 +22,7 @@ project = "AiTLAS"
 copyright = "2023, Bias Variance Labs"
 author = "Bias Variance Labs"
 release = "1.0.0"
+doc_title="AiTLAS documentation"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -98,3 +99,27 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_logo = "_media/AiTALS_vertical_gradient.png"
 html_theme = "sphinx_book_theme"
 html_static_path = ["_static", "_media"]
+
+# -- Options for LaTeX output ------------------------------------------------
+
+latex_elements = {
+    # The paper size ('letterpaper' or 'a4paper').
+    #
+    # 'papersize': 'letterpaper',
+    # The font size ('10pt', '11pt' or '12pt').
+    #
+    # 'pointsize': '10pt',
+    # Additional stuff for the LaTeX preamble.
+    #
+    # 'preamble': '',
+    # Latex figure (float) alignment
+    #
+    # 'figure_align': 'htbp',
+}
+
+# Grouping the document tree into LaTeX files. List of tuples
+# (source start file, target name, title,
+#  author, documentclass [howto, manual, or own class]).
+latex_documents = [
+    (master_doc, "aitlas.tex", doc_title, 'author', "manual"),
+]
