@@ -14,7 +14,6 @@ from collections import defaultdict
 from typing import Any, Dict, Optional
 
 import sphinx.ext.autodoc
-from aitlas import datasets, models
 
 sys.path.insert(0, os.path.abspath("../../aitlas"))
 print(sys.executable)
