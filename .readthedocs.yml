@@ -28,5 +28,4 @@ python:
       path: .
 
 formats:
-  - html
   - pdf
