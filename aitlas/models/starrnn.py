@@ -1,13 +1,9 @@
 """
-
-    Adapted from:
-        https://github.com/dl4sits/BreizhCrops
-
-    Original implementation of StarRNN model:
-        https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/StarRNN.py
-
-    Author:
-        Türkoglu Mehmet Özgür <ozgur.turkoglu@geod.baug.ethz.ch>
+    StarRNN model for multiclass classification
+    
+    .. note:: Adapted from https://github.com/dl4sits/BreizhCrops
+    Original implementation of StarRNN model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/StarRNN.py 
+    Author: Türkoglu Mehmet Özgür <ozgur.turkoglu@geod.baug.ethz.ch>
 """
 
 import math
@@ -25,7 +21,10 @@ from .schemas import StarRNNSchema
 
 
 class StarRNN(BaseMulticlassClassifier):
-    """StarRNN model implementation based on < https://github.com/dl4sits/BreizhCrops>
+    """StarRNN model implementation
+
+    .. note: Based on < https://github.com/dl4sits/BreizhCrops>
+
     """
 
     schema = StarRNNSchema

@@ -110,8 +110,7 @@ LABELS = {
 }
 
 DISPLAY_NAMES = {
-    "Land principally occupied by agriculture, with significant areas of natural vegetation":
-        "Agriculture and vegetation",
+    "Land principally occupied by agriculture, with significant areas of natural vegetation": "Agriculture and vegetation",
     "Annual crops associated with permanent crops": "Crops",
     "Natural grassland and sparsely vegetated areas": "Grassland",
     "Moors, heathland and sclerophyllous vegetation": "Moors and heathland",
@@ -134,8 +133,11 @@ def interp_band(bands, img10_shape=[120, 120]):
 def parse_json_labels(f_j_path):
     """
     parse meta-data json file for big earth to get image labels
+
     :param f_j_path: json file path
-    :return:
+    :type f_j_path: str
+    :return: list of labels
+    :rtype: list
     """
     with open(f_j_path, "r") as f_j:
         j_f_c = json.load(f_j)
@@ -154,8 +156,9 @@ def update_json_labels(f_j_path, BigEarthNet_19_labels):
 
 def loads_pickle(buf):
     """
-    Args:
-        buf: the output of `dumps`.
+    :param buf: the output of `dumps`
+    :type buf: bytes-like object
+    :return: object
     """
     return pickle.loads(buf)
 
@@ -163,8 +166,10 @@ def loads_pickle(buf):
 def dumps_pickle(obj):
     """
     Serialize an object.
-    Returns:
-        Implementation-dependent bytes-like object
+    :param obj: object to be serialized
+    :type obj: bytes-like object
+    :return: Implementation-dependent bytes-like object
+
     """
     return pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -184,7 +189,7 @@ def cls2multihot(cls_vec, label_indices):
 
     for i in range(len(label_conversion)):
         bigearthnet_19_labels_multihot[i] = (
-                np.sum(original_labels_multihot[label_conversion[i]]) > 0
+            np.sum(original_labels_multihot[label_conversion[i]]) > 0
         ).astype(int)
 
     bigearthnet_19_labels = []
@@ -210,17 +215,22 @@ class BigEarthNetDataset(BaseDataset):
         self.selection = self.config.selection
 
         if self.lmdb_path and not self.config.import_to_lmdb:
-            self.db = lmdb.open(self.lmdb_path, readonly=True, lock=False, readahead=False, meminit=False)
+            self.db = lmdb.open(
+                self.lmdb_path,
+                readonly=True,
+                lock=False,
+                readahead=False,
+                meminit=False,
+            )
 
-        if self.version == '19 labels':
-            self.labels = LABELS['BigEarthNet-19_labels']
+        if self.version == "19 labels":
+            self.labels = LABELS["BigEarthNet-19_labels"]
         else:
-            self.labels = LABELS['original_labels']
+            self.labels = LABELS["original_labels"]
 
         self.patches = self.load_patches()
 
     def __getitem__(self, index):
-
         patch_name = self.patches[index]
 
         with self.db.begin(write=False) as txn:
@@ -229,13 +239,13 @@ class BigEarthNetDataset(BaseDataset):
             bands10 = bands10 / 2000 * 255.0
             bands10 = np.clip(bands10, 0, 255).astype(np.uint8)
 
-            if self.version == '19 labels':
+            if self.version == "19 labels":
                 multihots = multihots_19.astype(np.float32)
             else:
                 multihots = multihots_43.astype(np.float32)
 
-            if self.selection == 'rgb':
-                #bands10 = bands10.astype(np.float32)[:, :, [2, 1, 0]]
+            if self.selection == "rgb":
+                # bands10 = bands10.astype(np.float32)[:, :, [2, 1, 0]]
                 bands10 = bands10[:, :, [2, 1, 0]]
                 if self.transform:
                     bands10 = self.transform(bands10)
@@ -244,7 +254,7 @@ class BigEarthNetDataset(BaseDataset):
 
                 return bands10, multihots
 
-            elif self.selection == 'all':
+            elif self.selection == "all":
                 # TODO interpolate/merge bands10 and bands20
                 bands20 = interp_band(bands20)
                 bands10 = bands10.astype(np.float32)
@@ -293,7 +303,7 @@ class BigEarthNetDataset(BaseDataset):
     def save_image(self, index):
         labels_list = list(compress(self.labels.keys(), self[index][1]))
         text_file = open("annotations_{index}.txt".format(index=index), "w")
-        text_file.write(str(labels_list).strip('[]'))
+        text_file.write(str(labels_list).strip("[]"))
         text_file.close()
         img = Image.fromarray(self[index][0].astype(np.uint8))
         img.save("image_{index}.jpg".format(index=index))
@@ -302,7 +312,9 @@ class BigEarthNetDataset(BaseDataset):
         if size % 3:
             raise ValueError("The provided size should be divided by 3!")
         image_indices = random.sample(range(0, len(self.patches)), size)
-        figure, ax = plt.subplots(int(size / 3), 3, figsize=(13.75, 2.0 * int(size / 3)))
+        figure, ax = plt.subplots(
+            int(size / 3), 3, figsize=(13.75, 2.0 * int(size / 3))
+        )
         if show_title:
             figure.suptitle(
                 "Example images with labels from {}".format(self.get_name()),
@@ -312,32 +324,37 @@ class BigEarthNetDataset(BaseDataset):
         for axes, image_index in zip(ax.flatten(), image_indices):
             labels_list = list(compress(self.labels.keys(), self[image_index][1]))
             height, width, depth = self[image_index][0].shape
-            white_image = np.zeros([height, 2*width, 3], dtype=np.uint8)
+            white_image = np.zeros([height, 2 * width, 3], dtype=np.uint8)
             white_image.fill(255)
-            text = '\n'.join(labels_list)
+            text = "\n".join(labels_list)
 
             font = cv2.FONT_HERSHEY_SIMPLEX
             font_size = 0.5
             font_thickness = 1
             x = 10
 
-            for i, line in enumerate(text.split('\n')):
+            for i, line in enumerate(text.split("\n")):
                 if line in DISPLAY_NAMES.keys():
                     line = DISPLAY_NAMES[line]
                 textsize = cv2.getTextSize(line, font, font_size, font_thickness)[0]
                 gap = textsize[1] + 5
                 y = textsize[1] + i * gap
-                cv2.putText(white_image, line, (x, y), font,
-                            font_size,
-                            (0, 0, 0),
-                            font_thickness,
-                            lineType=cv2.LINE_AA)
+                cv2.putText(
+                    white_image,
+                    line,
+                    (x, y),
+                    font,
+                    font_size,
+                    (0, 0, 0),
+                    font_thickness,
+                    lineType=cv2.LINE_AA,
+                )
 
             display_image = np.hstack((self[image_index][0], white_image))
             axes.imshow(display_image)
             axes.set_xticks([])
             axes.set_yticks([])
-            axes.axis('off')
+            axes.axis("off")
         figure.tight_layout()
         return figure
 
@@ -367,12 +384,14 @@ class BigEarthNetDataset(BaseDataset):
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
-        ax.set_title("Image distribution for {}".format(self.get_name()), pad=20, fontsize=18)
+        ax.set_title(
+            "Image distribution for {}".format(self.get_name()), pad=20, fontsize=18
+        )
         return fig
 
     def labels_stats(self):
-        min_number = float('inf')
-        max_number = float('-inf')
+        min_number = float("inf")
+        max_number = float("-inf")
         average_number = 0
         for patch_index, patch_name in enumerate(self.patches):
             if patch_index and patch_index % 100000 == 0:
@@ -388,8 +407,10 @@ class BigEarthNetDataset(BaseDataset):
 
             average_number += sum(multihots)
 
-        return f"Minimum number of labels: {min_number}, Maximum number of labels: {max_number}, " \
-               f"Average number of labels: {average_number / len(self.patches)}"
+        return (
+            f"Minimum number of labels: {min_number}, Maximum number of labels: {max_number}, "
+            f"Average number of labels: {average_number / len(self.patches)}"
+        )
 
     def prepare(self):
         super().prepare()
@@ -407,21 +428,23 @@ class BigEarthNetDataset(BaseDataset):
         dataloader = DataLoader(datagen, batch_size=1, num_workers=self.num_workers)
 
         patch_names = []
-        self.db = lmdb.open(self.lmdb_path, map_size=1e12, readonly=False, meminit=False, map_async=True)
+        self.db = lmdb.open(
+            self.lmdb_path, map_size=1e12, readonly=False, meminit=False, map_async=True
+        )
         txn = self.db.begin(write=True)
         for idx, data in enumerate(dataloader):
             print(f"Processed {idx} of {len(dataloader)}")
             bands10, bands20, bands60, patch_name, multihots_19, multihots_43 = data
             patch_name = patch_name[0]
             txn.put(
-                u"{}".format(patch_name).encode("ascii"),
+                "{}".format(patch_name).encode("ascii"),
                 dumps_pickle(
                     (
                         bands10[0].numpy(),
                         bands20[0].numpy(),
                         bands60[0].numpy(),
                         multihots_19[0].numpy(),
-                        multihots_43[0].numpy()
+                        multihots_43[0].numpy(),
                     )
                 ),
             )
@@ -432,7 +455,7 @@ class BigEarthNetDataset(BaseDataset):
                 txn = self.db.begin(write=True)
 
         txn.commit()
-        keys = [u"{}".format(patch_name).encode("ascii") for patch_name in patch_names]
+        keys = ["{}".format(patch_name).encode("ascii") for patch_name in patch_names]
 
         with self.db.begin(write=True) as txn:
             txn.put(b"__keys__", dumps_pickle(keys))
@@ -464,22 +487,36 @@ class PrepBigEarthNetDataset(Dataset):
         bands60_array = []
 
         for band in self.bands10:
-            bands10_array.append(tiff_loader(
-                os.path.join(self.data_dir, patch_name, patch_name + "_B" + band + ".tif")).astype(np.float32)
-                                 )
+            bands10_array.append(
+                tiff_loader(
+                    os.path.join(
+                        self.data_dir, patch_name, patch_name + "_B" + band + ".tif"
+                    )
+                ).astype(np.float32)
+            )
 
         for band in self.bands20:
-            bands20_array.append(tiff_loader(
-                os.path.join(self.data_dir, patch_name, patch_name + "_B" + band + ".tif")).astype(np.float32)
-                                 )
+            bands20_array.append(
+                tiff_loader(
+                    os.path.join(
+                        self.data_dir, patch_name, patch_name + "_B" + band + ".tif"
+                    )
+                ).astype(np.float32)
+            )
 
         for band in self.bands60:
-            bands60_array.append(tiff_loader(
-                os.path.join(self.data_dir, patch_name, patch_name + "_B" + band + ".tif")).astype(np.float32)
-                                 )
+            bands60_array.append(
+                tiff_loader(
+                    os.path.join(
+                        self.data_dir, patch_name, patch_name + "_B" + band + ".tif"
+                    )
+                ).astype(np.float32)
+            )
 
         labels = parse_json_labels(
-            os.path.join(self.data_dir, patch_name, patch_name + "_labels_metadata.json")
+            os.path.join(
+                self.data_dir, patch_name, patch_name + "_labels_metadata.json"
+            )
         )
 
         labels_multihot_19, labels_multihot_43 = cls2multihot(
@@ -492,5 +529,5 @@ class PrepBigEarthNetDataset(Dataset):
             np.array(bands60_array).transpose(1, 2, 0),
             patch_name,
             np.array(labels_multihot_19),
-            np.array(labels_multihot_43)
+            np.array(labels_multihot_43),
         )

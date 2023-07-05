@@ -1,10 +1,8 @@
 """
-
-    Adapted from:
-        https://github.com/dl4sits/BreizhCrops
-
-    Original implementation of OmniScaleCNN model:
-        https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/OmniScaleCNN.py
+    OmniScaleCNN model implementation 
+    
+    .. note:: Adapted from https://github.com/dl4sits/BreizhCrops
+    Original implementation of OmniScaleCNN model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/OmniScaleCNN.py
 
 """
 
@@ -42,11 +40,11 @@ class build_layer_with_layer_parameter(nn.Module):
 
     def __init__(self, layer_parameters):
         """
-        layer_parameters format
-            [in_channels, out_channels, kernel_size,
-            in_channels, out_channels, kernel_size,
-            ..., nlayers
-            ]
+        .. note::  layer_parameters format :
+              [in_channels, out_channels, kernel_size,
+              in_channels, out_channels, kernel_size,
+              ..., nlayers
+              ]
         """
         super(build_layer_with_layer_parameter, self).__init__()
         self.conv_list = nn.ModuleList()
@@ -57,7 +55,6 @@ class build_layer_with_layer_parameter(nn.Module):
             self.conv_list.append(conv)
 
     def forward(self, X):
-
         conv_result_list = []
         for conv in self.conv_list:
             conv_result = conv(X)
@@ -68,8 +65,9 @@ class build_layer_with_layer_parameter(nn.Module):
 
 
 class OmniScaleCNN(BaseMulticlassClassifier):
-    """OmniScaleCNN model implementation based on <https://github.com/dl4sits/BreizhCrops>
-    """
+    """OmniScaleCNN model implementation
+
+    .. note:: Based on <https://github.com/dl4sits/BreizhCrops>"""
 
     schema = OmniScaleCNNSchema
 

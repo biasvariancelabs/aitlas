@@ -1,10 +1,7 @@
 """
+LSTM model
 
-    Adapted from:
-        https://github.com/dl4sits/BreizhCrops
-
-    Original implementation of LSTM model:
-        https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/LongShortTermMemory.py
+.. note:: Original implementation of LSTM model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/LongShortTermMemory.py
 
 """
 
@@ -17,7 +14,10 @@ from .schemas import LSTMSchema
 
 
 class LSTM(BaseMulticlassClassifier):
-    """LSTM model implementation based on <https://github.com/dl4sits/BreizhCrops>
+    """LSTM model implementation
+
+    .. note:: Based on <https://github.com/dl4sits/BreizhCrops>
+
     """
 
     schema = LSTMSchema

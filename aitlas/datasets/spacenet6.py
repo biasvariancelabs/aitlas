@@ -1,8 +1,5 @@
 """
-Notes
------
-    Based on the implementation at:
-        https://github.com/SpaceNetChallenge/SpaceNet_SAR_Buildings_Solutions/blob/master/1-zbigniewwojna/main.py#L412
+.. notes:: Based on the implementation at: https://github.com/SpaceNetChallenge/SpaceNet_SAR_Buildings_Solutions/blob/master/1-zbigniewwojna/main.py#L412
 """
 import glob
 import math
@@ -13,10 +10,10 @@ from multiprocessing import Pool
 
 import cv2
 
-try:
-    import gdal
-except ModuleNotFoundError as err:
-    from osgeo import gdal
+# try:
+#     import gdal
+# except ModuleNotFoundError as err:
+from osgeo import gdal
 
 import numpy as np
 import pandas as pd
@@ -55,18 +52,17 @@ def process_image(
     """
     Creates and saves the target (ground-truth) segmentation mask for the input image.
 
-    Parameters
-    ----------
-        image_path : str
-            path to the source image
-        segmentation_directory : str
-            path to the destination directory for the segmentation masks
-        edge_width : int
-            the width of the edge
-        contact_width : int
-            the width of the contact
-        gt_buildings_csv : str
-            path to the source ground-truth-buildings csv
+    :param image_path: path to the source image
+    :type image_path: str
+    :param segmentation_directory: path to the destination directory for the segmentation masks
+    :type segmentation_directory: str
+    :param edge_width: the width of the edge
+    :type edge_width: int
+    :param contact_width: the width of the contact
+    :type contact_width: int
+    :param gt_buildings_csv: path to the source ground-truth-buildings csv
+    :type gt_buildings_csv: str
+
     """
     gt_buildings = pd.read_csv(gt_buildings_csv)
     image_name = os.path.basename(image_path)
@@ -140,10 +136,8 @@ class SpaceNet6Dataset(BaseDataset):
         Loads the dataset item at the specified index.
         Applies the transformations to the item before returning it.
 
-        Parameters
-        ----------
-            index : int
-                Specifying which item to return.
+        :param index : index
+        :type index: int
         """
         # Get image paths
         image_path = self.image_paths[index]

@@ -1,3 +1,4 @@
+"""ResNet50 and ResNet152 models for multi-class and multi-label classification"""
 import logging
 
 import torch
@@ -11,7 +12,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class ResNet50(BaseMulticlassClassifier):
-    """ResNet50 multi-class model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet50.html#torchvision.models.resnet50>
+    """ResNet50 multi-class model implementation.
+
+    .. note:: Based on https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet50.html#torchvision.models.resnet50
+
     """
 
     name = "ResNet50"
@@ -80,14 +84,17 @@ class ResNet50(BaseMulticlassClassifier):
             param.requires_grad = True
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model
 
 
 class ResNet152(BaseMulticlassClassifier):
-    """ResNet50 multi-label model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet50.html#torchvision.models.resnet50>
+    """ResNet50 multi-label model implementation
+
+    .. note:: Based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.resnet50.html#torchvision.models.resnet50>
+
     """
 
     name = "ResNet152"
@@ -110,7 +117,7 @@ class ResNet152(BaseMulticlassClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model
@@ -156,7 +163,7 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model
@@ -189,7 +196,7 @@ class ResNet152MultiLabel(BaseMultilabelClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model

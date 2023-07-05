@@ -1,3 +1,4 @@
+"""ConvNeXt tiny model"""
 import torch.nn as nn
 import torchvision.models as models
 
@@ -5,7 +6,10 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class ConvNeXtTiny(BaseMulticlassClassifier):
-    """ConvNeXtTiny model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.convnext_tiny.html#torchvision.models.convnext_tiny>
+    """ConvNeXtTiny model implementation
+
+    .. note:: Based on https://pytorch.org/vision/stable/models/generated/torchvision.models.convnext_tiny.html#torchvision.models.convnext_tiny
+
     """
 
     name = "ConvNeXt tiny"
@@ -38,7 +42,7 @@ class ConvNeXtTiny(BaseMulticlassClassifier):
             param.requires_grad = True
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model.classifier = self.model.classifier[:-1]
 
         return self.model
@@ -69,7 +73,7 @@ class ConvNeXtTinyMultiLabel(BaseMultilabelClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model.classifier = self.model.classifier[:-1]
 
         return self.model

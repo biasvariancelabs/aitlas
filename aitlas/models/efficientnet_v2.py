@@ -1,3 +1,4 @@
+"""EfficientNetV2 model"""
 import torch.nn as nn
 import torchvision.models as models
 
@@ -5,7 +6,10 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class EfficientNetV2(BaseMulticlassClassifier):
-    """EfficientNetV2 model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.efficientnet_v2_m.html#torchvision.models.efficientnet_v2_m>
+    """EfficientNetV2 model implementation
+
+    .. note:: Based on https://pytorch.org/vision/stable/models/generated/torchvision.models.efficientnet_v2_m.html#torchvision.models.efficientnet_v2_m
+
     """
 
     name = "EfficientNetV2"

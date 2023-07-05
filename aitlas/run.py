@@ -14,7 +14,10 @@ torch.manual_seed(1)
 
 
 def run(rank, config):
-    # load model, if specified
+    """Load model, if specified in the configuration file, and run the task.
+    It initializes the model and the task, and then runs the task.
+    """
+
     model = None
     if config.model:
         # pass additional parameters to the model
@@ -33,7 +36,9 @@ def run(rank, config):
 
 
 def main(config_file):
-    """Main entry function to the toolbox"""
+    """This is the main entry function for the toolbox
+    It specifies the configuration file, loads the configuration, and runs the task.
+    """
 
     with open(config_file) as file:
         config = json.load(file)

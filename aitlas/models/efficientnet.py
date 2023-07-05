@@ -1,3 +1,4 @@
+"""EfficientNetB0 (V1) for image classification"""
 import torch.nn as nn
 import torchvision.models as models
 
@@ -5,7 +6,10 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class EfficientNetB0(BaseMulticlassClassifier):
-    """EfficientNetB0 model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.efficientnet_b0.html#torchvision.models.efficientnet_b0>
+    """EfficientNetB0 model implementation
+
+    .. note:: Based on https://pytorch.org/vision/stable/models/generated/torchvision.models.efficientnet_b0.html#torchvision.models.efficientnet_b0
+
     """
 
     name = "EfficientNetB0"
@@ -62,7 +66,7 @@ class EfficientNetB0MultiLabel(BaseMultilabelClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model
@@ -133,7 +137,7 @@ class EfficientNetB4MultiLabel(BaseMultilabelClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model
@@ -200,7 +204,7 @@ class EfficientNetB7MultiLabel(BaseMultilabelClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model

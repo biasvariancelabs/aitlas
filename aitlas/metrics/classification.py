@@ -9,6 +9,7 @@ from ..base import BaseMetric
 class AccuracyScore(BaseMetric):
     """
     Accuracy score class, inherits from BaseMetric.
+
     """
 
     name = "accuracy"
@@ -38,6 +39,7 @@ class AccuracyScore(BaseMetric):
 class AveragedScore(BaseMetric):
     """
     Average score class. Inherits from BaseMetric.
+
     """
 
     def __init__(self, **kwargs):
@@ -45,9 +47,10 @@ class AveragedScore(BaseMetric):
         self.method = None
 
     def calculate(self, y_true, y_pred):
-        """ "
+        """
         It calculates the score for each class and then averages the results.
         The type of average is {'micro', 'macro', 'weighted'}:
+
         *'micro': Calculate metrics globally by counting the total true positives,
             false negatives and false positives.
         *'macro': Calculate metrics for each label, and find their unweighted

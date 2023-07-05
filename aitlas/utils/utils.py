@@ -13,19 +13,19 @@ from PIL import Image, ImageOps
 
 
 def get_class(class_name):
-    """returns the class type for a given class name. Expects a string of type `module.submodule.Class`"""
+    """Returns the class type for a given class name. Expects a string of type `module.submodule.Class`"""
     module = class_name[: class_name.rindex(".")]
-    cls = class_name[class_name.rindex(".") + 1:]
+    cls = class_name[class_name.rindex(".") + 1 :]
     return getattr(importlib.import_module(module), cls)
 
 
 def current_ts():
-    """returns current timestamp in secs"""
+    """Returns current timestamp in secs"""
     return int(time())
 
 
 def pil_loader(file, convert_to_grayscale=False):
-    """open an image from disk"""
+    """Opens an image from disk"""
     with open(file, "rb") as f:
         if convert_to_grayscale:
             return np.asarray(Image.open(f).convert("L"))
@@ -33,21 +33,39 @@ def pil_loader(file, convert_to_grayscale=False):
 
 
 def tiff_loader(file):
-    """opens a tiff image from disk"""
+    """Opens a tiff image from disk"""
     return tifffile.imread(file)
 
 
 def image_loader(file_path, convert_to_grayscale=False):
+    """
+    Opens an image from disk
+
+    :param file_path: path to the image
+    :type file_path: str
+    :param convert_to_grayscale: whether to convert the image to grayscale
+    :type convert_to_grayscale: bool
+
+    """
     filename, file_extension = os.path.splitext(file_path)
     if file_extension in [".jpg", ".png", ".bmp", ".jpeg"]:
         return pil_loader(file_path, convert_to_grayscale)
     elif file_extension in [".tif", ".tiff"]:
         return tiff_loader(file_path)
     else:
-        raise ValueError("Invalid image. It should be `.jpg, .png, .bmp, .tif, .tiff, .jpeg`")
+        raise ValueError(
+            "Invalid image. It should be `.jpg, .png, .bmp, .tif, .tiff, .jpeg`"
+        )
 
 
 def image_invert(file_path, convert_to_grayscale=False):
+    """Inverts an image from disk
+
+    :param file_path: path to the image
+    :type file_path: str
+    :param convert_to_grayscale: whether to convert the image to grayscale
+    :type convert_to_grayscale: bool
+    """
     img = Image.open(file_path).convert("L")
     if convert_to_grayscale:
         img = ImageOps.invert(img)
@@ -55,7 +73,7 @@ def image_invert(file_path, convert_to_grayscale=False):
 
 
 def stringify(obj):
-    """stringify whatever object you have"""
+    """Stringify whatever object you have"""
     if isinstance(obj, list):
         response = ", ".join([stringify(o) for o in obj])
     elif isinstance(obj, dict):
@@ -102,14 +120,21 @@ def split_images(images_dir, ext_images, masks_dir, ext_masks, output_dir, targe
         k = 0
         for y in range(0, img.shape[0], target_size):
             for x in range(0, img.shape[1], target_size):
-                img_tile = img[y:y + target_size, x:x + target_size]
-                mask_tile = mask[y:y + target_size, x:x + target_size]
+                img_tile = img[y : y + target_size, x : x + target_size]
+                mask_tile = mask[y : y + target_size, x : x + target_size]
 
-                if img_tile.shape[0] == target_size and img_tile.shape[1] == target_size:
-                    out_img_path = os.path.join(output_dir, "{}_{}.jpg".format(img_filename, k))
+                if (
+                    img_tile.shape[0] == target_size
+                    and img_tile.shape[1] == target_size
+                ):
+                    out_img_path = os.path.join(
+                        output_dir, "{}_{}.jpg".format(img_filename, k)
+                    )
                     cv2.imwrite(out_img_path, img_tile)
 
-                    out_mask_path = os.path.join(output_dir, "{}_{}_m.png".format(mask_filename, k))
+                    out_mask_path = os.path.join(
+                        output_dir, "{}_{}_m.png".format(mask_filename, k)
+                    )
                     cv2.imwrite(out_mask_path, mask_tile)
 
                     file.write("{}_{}".format(img_filename, k) + "\n")
@@ -129,7 +154,7 @@ def load_voc_format_dataset(dir_path, csv_file_path):
         lines = f.readlines()
         for line in lines[1:]:
             line = line.decode("utf-8")
-            labels_list = line[line.find("\t") + 1:].split("\t")
+            labels_list = line[line.find("\t") + 1 :].split("\t")
             multi_hot_labels[line[: line.find("\t")]] = np.asarray(
                 list((map(float, labels_list)))
             )
@@ -150,11 +175,13 @@ def load_voc_format_dataset(dir_path, csv_file_path):
 
 def has_file_allowed_extension(file_path, extensions):
     """Checks if a file is an allowed extension.
-    Args:
-        file_path (string): path to a file
-        extensions (iterable of strings): extensions to consider (lowercase)
-    Returns:
-        bool: True if the filename ends with one of given extensions
+
+    :pararm file_path: path to a file
+    :type file_path: str
+    :param extensions: list of allowed extensions
+    :type extensions: list
+    :return: True if the file is an allowed extension, False otherwise
+    :rtype: bool
     """
     filename_lower = file_path.lower()
     return any(filename_lower.endswith(ext) for ext in extensions)
@@ -205,21 +232,41 @@ def submit_inria_results(input_dir, output_dir):
     for file in os.listdir(input_dir):
         if file.endswith("_Buildings.png"):
             input_file = os.path.join(input_dir, file)
-            output_file = os.path.join(input_dir, file).replace("_Buildings.png", ".tif")
+            output_file = os.path.join(input_dir, file).replace(
+                "_Buildings.png", ".tif"
+            )
             command = "gdal_translate -of GTiff " + input_file + " " + output_file
             subprocess.call(command, shell=True)
             input_file = os.path.join(input_dir, file).replace("_Buildings.png", ".tif")
-            output_file = os.path.join(output_dir, file).replace("_Buildings.png", ".tif")
-            command = "gdal_translate --config GDAL_PAM_ENABLED NO -co COMPRESS=CCITTFAX4 -co NBITS=1 " \
-                      + input_file + " " + output_file
+            output_file = os.path.join(output_dir, file).replace(
+                "_Buildings.png", ".tif"
+            )
+            command = (
+                "gdal_translate --config GDAL_PAM_ENABLED NO -co COMPRESS=CCITTFAX4 -co NBITS=1 "
+                + input_file
+                + " "
+                + output_file
+            )
             subprocess.call(command, shell=True)
 
 
 def save_best_model(model, model_directory, epoch, optimizer, loss, start, run_id):
     """
     Saves the model on disk
-    :param model_directory:
-    :return:
+    :param model: model to save
+    :type model: torch.nn.Module
+    :param model_directory: directory where to save the model
+    :type model_directory: str
+    :param epoch: current epoch
+    :type epoch: int
+    :param optimizer: optimizer used for training
+    :type optimizer: torch.optim.Optimizer
+    :param loss: loss value
+    :type loss: float
+    :param start: start time
+    :type start: float
+    :param run_id: run id
+    :type run_id: str
     """
     if not os.path.isdir(os.path.join(model_directory, run_id)):
         os.makedirs(os.path.join(model_directory, run_id))
@@ -245,4 +292,3 @@ def save_best_model(model, model_directory, epoch, optimizer, loss, start, run_i
 
 def collate_fn(batch):
     return tuple(zip(*batch))
-

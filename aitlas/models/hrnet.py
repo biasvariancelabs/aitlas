@@ -1,3 +1,4 @@
+"""HRNet model for segmentation"""
 import timm
 import torch
 import torch.nn as nn
@@ -11,18 +12,22 @@ NLOW = 60
 
 
 class HRNetModule(nn.Module):
-    """HRNet model implementation based on <https://github.com/huggingface/pytorch-image-models/tree/main/timm>
+    """HRNet model implementation
+
+    .. note:: Based on https://github.com/huggingface/pytorch-image-models/tree/main/timm
+
     """
 
     def __init__(
         self, head: nn.Module, pretrained: bool = True, higher_res: bool = False
     ):
-        """ Pretrained backbone for HRNet.
-
-        Args:
-            head: Output head
-            pretrained: If True, uses imagenet pretrained weights
-            higher_res: If True, retains higher resolution features
+        """Pretrained backbone for HRNet.
+        :param head: Output head
+        :type head: nn.Module
+        :param pretrained: If True, uses imagenet pretrained weights
+        :type pretrained: bool
+        :param higher_res: If True, retains higher resolution features
+        :type higher_res: bool
         """
         super().__init__()
         self.head = head
@@ -65,11 +70,12 @@ class HRNetModule(nn.Module):
 
 class HRNetSegHead(nn.Module):
     def __init__(self, nclasses: int = 3, higher_res: bool = False):
-        """ Segmentation head for HRNet. Does not have pretrained weights.
+        """Segmentation head for HRNet. Does not have pretrained weights.
 
-        Args:
-            nclasses: Number of output classes
-            higher_res: If True, retains higher resolution features
+        :param nclasses: Number of output classes
+        :type nclasses: int
+        :param higher_res: If True, retains higher resolution features
+        :type higher_res: bool
         """
         super().__init__()
         self.res_modifier = 2 if higher_res else 1

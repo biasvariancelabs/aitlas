@@ -1,10 +1,7 @@
 """
-
-    Adapted from:
-        https://github.com/dl4sits/BreizhCrops
-
-    Original implementation of InceptionTime model:
-        https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/InceptionTime.py
+InceptionTime model
+    
+    .. note:: Original implementation of InceptionTime model https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/InceptionTime.py
 
 """
 
@@ -19,7 +16,10 @@ from .schemas import InceptionTimeSchema
 
 
 class InceptionTime(BaseMulticlassClassifier):
-    """InceptionTime model implementation based on <https://github.com/dl4sits/BreizhCrops>
+    """InceptionTime model implementation
+
+    .. note:: Based https://github.com/dl4sits/BreizhCrops
+
     """
 
     schema = InceptionTimeSchema
@@ -86,7 +86,7 @@ class InceptionModule(nn.Module):
 
         self.bottleneck = nn.Linear(num_filters, out_features=1, bias=use_bias)
 
-        kernel_size_s = [kernel_size // (2 ** i) for i in range(3)]
+        kernel_size_s = [kernel_size // (2**i) for i in range(3)]
         self.convolutions = [
             nn.Conv1d(
                 1,

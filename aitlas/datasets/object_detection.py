@@ -20,7 +20,7 @@ from .schemas import (
 
 
 class BaseObjectDetectionDataset(BaseDataset):
-    """Base object detection class"""
+    """Base object detection dataset class"""
 
     name = "Object Detection Dataset"
 
@@ -250,11 +250,12 @@ class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
 
     def __getitem__(self, index):
         """
-        Args:
-            index (int): Index
 
-        Returns:
-            tuple: (image, target) where target is index of the target class.
+        :param index: Index
+        :type index: int
+        :return: tuple where target is a dictionary where target is index of the target class
+        :rtype: tuple of (image, target)
+
         """
         img_data = self.data[index]
 

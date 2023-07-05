@@ -18,8 +18,9 @@ class Kmeans:
 
     def cluster(self, data, verbose=False):
         """Performs k-means clustering.
-            Args:
-                x_data (np.array N * dim): data to cluster
+       
+        :param x_data:  data to cluster
+        :type x_data: np.array (N * dim)
         """
         start = time.time()
 

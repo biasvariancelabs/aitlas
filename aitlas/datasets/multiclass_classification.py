@@ -11,12 +11,12 @@ from ..utils import image_loader
 from .schemas import ClassificationDatasetSchema
 
 
-'''
+"""
 The format of the multiclass classification dataset is:
 image_path1,label1
 image_path2,label2
 ...
-'''
+"""
 
 
 class MultiClassClassificationDataset(BaseDataset):
@@ -32,13 +32,13 @@ class MultiClassClassificationDataset(BaseDataset):
         self.data = self.load_dataset()
 
     def __getitem__(self, index):
-        '''
-        Args:
-            index (int): Index
+        """
+        :param index: Index
+        :type index: int
+        :return: tuple where target is index of the target class.
+        :rtype: tuple (image, target)
 
-        Returns:
-            tuple: (image, target) where target is index of the target class.
-        '''
+        """
         # load image
         img = image_loader(self.data[index][0])
         # apply transformations
@@ -89,7 +89,9 @@ class MultiClassClassificationDataset(BaseDataset):
         if size % 5:
             raise ValueError("The provided size should be divided by 5!")
         image_indices = random.sample(range(0, len(self.data)), size)
-        figure, ax = plt.subplots(int(size / 5), 5, figsize=(13.75, 2.8*int(size/5)))
+        figure, ax = plt.subplots(
+            int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5))
+        )
         if show_title:
             figure.suptitle(
                 "Example images with labels from {}".format(self.get_name()),

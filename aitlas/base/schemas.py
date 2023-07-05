@@ -40,16 +40,24 @@ class BaseDatasetSchema(Schema):
         missing=False, description="Whether to use page-locked memory"
     )
     transforms = fields.List(
-        fields.String, missing=None, description="Classes to run transformations over the input data.",
+        fields.String,
+        missing=None,
+        description="Classes to run transformations over the input data.",
     )
     target_transforms = fields.List(
-        fields.String, missing=None, description="Classes to run transformations over the target data.",
+        fields.String,
+        missing=None,
+        description="Classes to run transformations over the target data.",
     )
     joint_transforms = fields.List(
-        fields.String, missing=None, description="Classes to run transformations over the input and target data.",
+        fields.String,
+        missing=None,
+        description="Classes to run transformations over the input and target data.",
     )
     labels = fields.List(
-        fields.String, missing=None, description="Labels for the dataset",
+        fields.String,
+        missing=None,
+        description="Labels for the dataset",
     )
 
 
@@ -75,6 +83,7 @@ class BaseModelSchema(Schema):
     :param use_ddp: Flag indicating whether to turn on distributed data processing. Default is False.
     :type use_ddp: bool, optional
     """
+
     num_classes = fields.Int(missing=2, description="Number of classes", example=2)
     use_cuda = fields.Bool(missing=True, description="Whether to use CUDA if possible")
     metrics = fields.List(
@@ -131,7 +140,8 @@ class BaseClassifierSchema(BaseModelSchema):
         missing=True, description="Whether to use a pretrained network or not."
     )
     local_model_path = fields.String(
-        missing=None, description="Local path of the pre-trained model",
+        missing=None,
+        description="Local path of the pre-trained model",
     )
     threshold = fields.Float(
         missing=0.5, description="Prediction threshold if needed", example=0.5
@@ -180,9 +190,13 @@ class BaseObjectDetectionSchema(BaseClassifierSchema):
         description="Classes of metrics you want to calculate",
         example=["accuracy", "precision", "recall", "f1_score", "iou"],
     )
-    step_size = fields.Integer(missing=15, description="Step size for LR scheduler.",)
+    step_size = fields.Integer(
+        missing=15,
+        description="Step size for LR scheduler.",
+    )
     gamma = fields.Float(
-        missing=0.1, description="Gamma (multiplier) for LR scheduler.",
+        missing=0.1,
+        description="Gamma (multiplier) for LR scheduler.",
     )
 
 

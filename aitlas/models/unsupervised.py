@@ -1,5 +1,5 @@
+"""DeepCluster model"""
 import math
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -11,7 +11,10 @@ from .schemas import UnsupervisedDeepMulticlassClassifierSchema
 
 
 class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
-    """Unsupervised Deep Learning model implementation based on Deep Clustering: <https://github.com/facebookresearch/deepcluster>"""
+    """Unsupervised Deep Learning model implementation
+
+    .. note:: Based on Deep Clustering: <https://github.com/facebookresearch/deepcluster>
+    """
 
     schema = UnsupervisedDeepMulticlassClassifierSchema
 
@@ -82,7 +85,7 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
         optimizer_tl = torch.optim.SGD(
             self.model.top_layer.parameters(),
             lr=self.learning_rate,
-            weight_decay=10 ** self.weight_decay,
+            weight_decay=10**self.weight_decay,
         )
 
         # send both optimizers
@@ -220,10 +223,12 @@ def vgg16(sobel=False, bn=True, out=1000):
 
 
 class UnifLabelSampler(Sampler):
-    """ Samples elements uniformely accross pseudolabels.
-        Args:
-            N (int): size of returned iterator.
-            images_lists: dict of key (target), value (list of data with this target)
+    """Samples elements uniformely accross pseudolabels.
+
+    :param N: size of returned iterator.
+    :type N: int
+    :param images_lists: lists of images for each pseudolabel.
+    :type images_list: dict of key (target), value (list of data with this target)
     """
 
     def __init__(self, N, images_lists):

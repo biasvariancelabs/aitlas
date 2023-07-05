@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+dependencies:
+  - python>=3
+  - pandoc
+  - ipykernel
+  - pip
+  - pip:
+    - nbsphinx

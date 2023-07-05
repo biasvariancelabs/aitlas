@@ -152,8 +152,8 @@ class DiceCoefficient(BaseMetric):
         Method to compute the Dice coefficient.
 
         Given two sets X and Y, the coefficient is calculated as:
-        .. math::
-             DSC = {2 * | X intersection Y |} / {|X| + |Y|},  where |X| and |Y| are the cardinalities of the two sets.
+
+        .. math:: DSC = {2 * | X intersection Y |} / {|X| + |Y|},  where |X| and |Y| are the cardinalities of the two sets.
 
         .. note:: Based on the implementation at: https://github.com/CosmiQ/cresi/blob/master/cresi/net/pytorch_utils/loss.py#L47
 

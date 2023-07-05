@@ -23,9 +23,7 @@ from geffnet.efficientnet_builder import (
     round_channels,
 )
 
-# try:
-#     import gdal
-# except ModuleNotFoundError as err:
+# import osgeo
 from osgeo import gdal
 from rasterio import features
 from shapely.geometry import shape
@@ -226,16 +224,16 @@ class GenEfficientNet(nn.Module):
 
 
 class UNetEfficientNet(BaseSegmentationClassifier):
-    """Unet EfficientNet model implementation based on <https://github.com/SpaceNetChallenge/SpaceNet_SAR_Buildings_Solutions/blob/master/1-zbigniewwojna/main.py#L178>"""
+    """Unet EfficientNet model implementation.
+    .. note:: Based on <https://github.com/SpaceNetChallenge/SpaceNet_SAR_Buildings_Solutions/blob/master/1-zbigniewwojna/main.py#L178>
+    """
 
     schema = UNetEfficientNetModelSchema
 
     def __init__(self, config):
         """
-        Parameters
-        ----------
-            config : Config
-                the configuration for this model
+        :param config : the configuration for this model
+        :type config : UNetEfficientNetModelSchema
         """
         super().__init__(config)
         dec_ch = [32, 64, 128, 256, 1024]

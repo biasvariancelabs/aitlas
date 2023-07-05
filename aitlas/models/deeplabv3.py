@@ -1,3 +1,4 @@
+"""DeepLabV3 model"""
 import torch.nn as nn
 from torchvision import models
 
@@ -5,7 +6,10 @@ from ..base import BaseSegmentationClassifier
 
 
 class DeepLabV3(BaseSegmentationClassifier):
-    """DeepLabV3 model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.segmentation.deeplabv3_resnet101.html#torchvision.models.segmentation.deeplabv3_resnet101>
+    """DeepLabV3 model implementation
+
+    .. note:: Based on https://pytorch.org/vision/stable/models/generated/torchvision.models.segmentation.deeplabv3_resnet101.html#torchvision.models.segmentation.deeplabv3_resnet101
+
     """
 
     def __init__(self, config):

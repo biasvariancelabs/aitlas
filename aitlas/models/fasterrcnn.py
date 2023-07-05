@@ -1,3 +1,4 @@
+"""FasterRCNN model for object detection"""
 from torchvision.models.detection import (
     FasterRCNN_ResNet50_FPN_V2_Weights,
     fasterrcnn_resnet50_fpn_v2,
@@ -8,7 +9,10 @@ from ..base import BaseObjectDetection
 
 
 class FasterRCNN(BaseObjectDetection):
-    """FasterRCNN model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.detection.fasterrcnn_resnet50_fpn_v2.html#torchvision.models.detection.fasterrcnn_resnet50_fpn_v2>
+    """FasterRCNN model implementation
+
+    .. note:: Based on https://pytorch.org/vision/stable/models/generated/torchvision.models.detection.fasterrcnn_resnet50_fpn_v2.html#torchvision.models.detection.fasterrcnn_resnet50_fpn_v2
+
     """
 
     def __init__(self, config):

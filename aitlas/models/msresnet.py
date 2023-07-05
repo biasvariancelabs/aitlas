@@ -1,11 +1,10 @@
 """
+MRSResNet model
 
-    Adapted from:
-        https://github.com/dl4sits/BreizhCrops
-
-    Original implementation of MSResNet model:
-        https://github.com/geekfeiw/Multi-Scale-1D-ResNet/blob/master/model/multi_scale_ori.py
-        https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/MSResNet.py
+.. note:: Adapted from https://github.com/dl4sits/BreizhCrops
+ Original implementation of MSResNet model:
+ https://github.com/geekfeiw/Multi-Scale-1D-ResNet/blob/master/model/multi_scale_ori.py 
+ https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/MSResNet.py
 
 """
 
@@ -138,8 +137,9 @@ class BasicBlock7x7(nn.Module):
 
 
 class MSResNet(BaseMulticlassClassifier):
-    """MSResNet model implementation based on <https://github.com/dl4sits/BreizhCrops>
-    """
+    """MSResNet model implementation
+
+    .. note:: Based on <https://github.com/dl4sits/BreizhCrops>"""
 
     schema = MSResNetSchema
 

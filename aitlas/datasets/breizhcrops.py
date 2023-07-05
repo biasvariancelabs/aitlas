@@ -1,10 +1,8 @@
 """
+BreizhCrops - a crop type classification dataset
 
-    Adapted from:
-        https://github.com/dl4sits/BreizhCrops
-
-    Original implementation of BreizhCrops dataset:
-        https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/datasets/breizhcrops.py
+.. note:: *Adapted from: https://github.com/dl4sits/BreizhCrops
+    *Original implementation of BreizhCrops dataset: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/datasets/breizhcrops.py
 
 """
 import logging
@@ -166,12 +164,13 @@ SELECTED_BANDS = {
 
 
 class BreizhCropsDataset(CropsDataset):
-    """BreizhCrops - a crop type classification dataset"""
+    """"""
 
     schema = BreizhCropsSchema
 
     def __init__(self, config):
         super().__init__(config)
+
         # :param region: dataset region. choose from "frh01", "frh02", "frh03", "frh04", "belle-ile"
         # :param root: where the data will be stored. defaults to `./breizhcrops_dataset`
         # :param ф: year of the data. currently only `2017`
@@ -302,11 +301,10 @@ class BreizhCropsDataset(CropsDataset):
 
     def __getitem__(self, index):
         """
-        Args:
-            index (int): Index
-
-        Returns:
-            tuple: (image, target) where target is index of the target class.
+        :param index: Index
+        :type index: int
+        :return: typle where target is index of the target class.
+        :rtype: tuple (image, target)
         """
         row = self.index.iloc[index]
 
@@ -384,9 +382,7 @@ class BreizhCropsDataset(CropsDataset):
         return fig
 
     """
-
-    TO DO ELENA: possibly move the download etc. somewhere else
-
+    TODO: possibly move the download etc. somewhere else
     """
 
     def download_csv_files(self, region):
@@ -401,21 +397,24 @@ class BreizhCropsDataset(CropsDataset):
 
     def build_folder_structure(self, root, year, level, region):
         """
-        folder structure
 
-        <root>
-           codes.csv
-           classmapping.csv
-           <year>
-              <region>.shp
-              <level>
-                 <region>.csv
-                 <region>.h5
-                 <region>
-                     <csv>
-                         123123.csv
-                         123125.csv
-                         ...
+        Folder structure:
+
+        .. code-block:: XML
+
+         <root>
+            codes.csv
+            classmapping.csv
+            <year>
+               <region>.shp
+               <level>
+                  <region>.csv
+                  <region>.h5
+                  <region>
+                      <csv>
+                          123123.csv
+                          123125.csv
+                          ...
         """
         year = str(year)
 
@@ -485,7 +484,7 @@ class BreizhCropsDataset(CropsDataset):
             logging.info(f"read {self.nclasses} classes from {classmapping}")
 
     def get_classes_to_ind(self, classmapping):
-        """ keep for now, could be needed to make it compatible with GenericMulticlass """
+        """keep for now, could be needed to make it compatible with GenericMulticlass"""
         if not os.path.exists(classmapping):
             if self.config.verbose:
                 logging.info(
@@ -502,8 +501,11 @@ class BreizhCropsDataset(CropsDataset):
         return mapping.T.to_dict("records")[0]
 
     def load_raw(self, csv_file):
-        """['B1', 'B10', 'B11', 'B12', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8',
-               'B8A', 'B9', 'QA10', 'QA20', 'QA60', 'doa', 'label', 'id']"""
+        """
+        .. code-block:: python
+
+         ['B1', 'B10', 'B11', 'B12', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'QA10', 'QA20', 'QA60', 'doa', 'label', 'id']
+        """
         sample = pd.read_csv(
             os.path.join(self.csvfolder, os.path.basename(csv_file)), index_col=0
         ).dropna()

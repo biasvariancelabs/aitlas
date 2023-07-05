@@ -1,7 +1,5 @@
 """Models base class.
-
 This is the base class for all models. All models should subclass it. 
-
 """
 import collections
 import copy

@@ -1,3 +1,4 @@
+"""VGG16 model"""
 import torch.nn as nn
 import torch.nn.init as init
 import torchvision.models as models
@@ -6,7 +7,10 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class VGG16(BaseMulticlassClassifier):
-    """VGG16 model implementation based on: <https://pytorch.org/vision/stable/models/generated/torchvision.models.vgg16.html#torchvision.models.vgg16>"""
+    """VGG16 model implementation
+
+    .. note:: Based on: <https://pytorch.org/vision/stable/models/generated/torchvision.models.vgg16.html#torchvision.models.vgg16>
+    """
 
     name = "VGG16"
 
@@ -36,7 +40,7 @@ class VGG16(BaseMulticlassClassifier):
             param.requires_grad = True
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model.classifier = self.model.classifier[:-3]
 
         return self.model
@@ -65,7 +69,7 @@ class VGG19(BaseMulticlassClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model.classifier = self.model.classifier[:-3]
 
         return self.model
@@ -100,7 +104,7 @@ class VGG16MultiLabel(BaseMultilabelClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model.classifier = self.model.classifier[:-3]
 
         return self.model
@@ -141,7 +145,7 @@ class VGG19MultiLabel(BaseMultilabelClassifier):
             param.requires_grad = True
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model.classifier = self.model.classifier[:-3]
 
         return self.model

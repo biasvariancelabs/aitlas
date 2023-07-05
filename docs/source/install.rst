@@ -1,0 +1,2 @@
+.. mdinclude:: markdown/install.md
+

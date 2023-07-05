@@ -1,3 +1,4 @@
+"""DenseNet161 model for multiclass classification"""
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -6,7 +7,10 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class DenseNet161(BaseMulticlassClassifier):
-    """DenseNet161 model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.densenet161.html#torchvision.models.densenet161>
+    """DenseNet161 model implementation
+
+    .. note:: Based on https://pytorch.org/vision/stable/models/generated/torchvision.models.densenet161.html#torchvision.models.densenet161
+
     """
 
     name = "DenseNet161"
@@ -38,7 +42,7 @@ class DenseNet161(BaseMulticlassClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model
@@ -80,7 +84,7 @@ class DenseNet161MultiLabel(BaseMultilabelClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model = nn.Sequential(*list(self.model.children())[:-1])
 
         return self.model

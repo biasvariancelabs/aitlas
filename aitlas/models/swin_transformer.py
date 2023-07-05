@@ -1,3 +1,4 @@
+"""Swin Transformer V2 model for multi-class and multi-label classification tasks."""
 import torch.nn as nn
 import torchvision.models as models
 
@@ -6,18 +7,19 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 class SwinTransformer(BaseMulticlassClassifier):
     """
-    A Swin Transformer V2 implementation for multi-class classification tasks. Based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.swin_v2_s.html#torchvision.models.swin_v2_s>
+    A Swin Transformer V2 implementation for multi-class classification tasks.
+
+    .. note:: Based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.swin_v2_s.html#torchvision.models.swin_v2_s>
     """
 
     name = "SwinTransformerV2"
 
     def __init__(self, config):
-
         """
         Initialize a SwinTransformer object with the given configuration.
 
-        Args:
-            config (Config): A configuration object containing model-related settings.
+        :param config: A configuration containing model-related settings.
+        :type config: Config schema object
         """
         super().__init__(config)
 
@@ -59,7 +61,9 @@ class SwinTransformer(BaseMulticlassClassifier):
 
 class SwinTransformerMultilabel(BaseMultilabelClassifier):
     """
-    A Swin Transformer V2 implementation for multi-label classification tasks. Based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.swin_v2_s.html#torchvision.models.swin_v2_s>
+    A Swin Transformer V2 implementation for multi-label classification tasks.
+
+    .. note:: Based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.swin_v2_s.html#torchvision.models.swin_v2_s>
     """
 
     name = "SwinTransformerV2"
@@ -68,8 +72,8 @@ class SwinTransformerMultilabel(BaseMultilabelClassifier):
         """
         Initialize a SwinTransformerMultilabel object with the given configuration.
 
-        Args:
-            config (Config): A configuration object containing model-related settings.
+        :param config: A configuration object containing model-related settings.
+        :type config: Config schema object
         """
         super().__init__(config)
 
@@ -100,10 +104,9 @@ class SwinTransformerMultilabel(BaseMultilabelClassifier):
         """
         Perform a forward pass through the model.
 
-        Args:
-            x (torch.Tensor): Input tensor with shape (batch_size, channels, height, width).
-
-        Returns:
-            torch.Tensor: Output tensor with shape (batch_size, num_classes).
+        :param x: Input tensor with shape (batch_size, channels, height, width).
+        :type x: torch.Tensor
+        :return: Output tensor with shape (batch_size, num_classes).
+        :rtype: torch.Tensor
         """
         return self.model(x)

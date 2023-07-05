@@ -28,9 +28,9 @@ class BaseDataset(Dataset, Configurable):
 
     def __init__(self, config):
         """BaseDataset constructor
+
         :param config: Configuration object which specifies the details of the dataset.
-        :type config: Config, contains information for the batch size, number of workers, list of labels,
-        list of transformations
+        :type config: Config, contains information for the batch size, number of workers, list of labels, list of transformations
         """
 
         Dataset.__init__(self)

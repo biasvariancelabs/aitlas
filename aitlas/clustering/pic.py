@@ -8,19 +8,18 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class PIC:
-    """Class to perform Power Iteration Clustering on a graph of nearest neighbors.
-        Args:
-            args: for consistency with k-means init
-            sigma (float): bandwith of the Gaussian kernel (default 0.2)
-            nnn (int): number of nearest neighbors (default 5)
-            alpha (float): parameter in PIC (default 0.001)
-            distribute_singletons (bool): If True, reassign each singleton to
-                                      the cluster of its closest non
-                                      singleton nearest neighbors (up to nnn
-                                      nearest neighbors).
-        Attributes:
-            images_lists (list of list): for each cluster, the list of image indexes
-                                         belonging to this cluster
+    """Class to perform Power Iteration Clustering on a graph of nearest neighbors. Arguments for consistency with k-means init:
+
+    :param sigma: bandwith of the Gaussian kernel (default 0.2)
+    :type sigma: float
+    :param nnn: number of nearest neighbors (default 5)
+    :type nnn: int
+    :param alpha: parameter in PIC (default 0.001)
+    :type alpha: float
+    :param distribute_singletons: If True, reassign each singleton to the cluster of its closest nonsingleton nearest neighbors (up to nnn nearest neighbors).
+    :type distribute_singletons: bool
+    :param images_lists: for each cluster, the list of image indexes belonging to this cluster
+    :type images_lists: list of lists of ints
     """
 
     def __init__(

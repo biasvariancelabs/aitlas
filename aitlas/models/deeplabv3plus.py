@@ -1,10 +1,14 @@
+"""DeepLabV3Plus model"""
 import segmentation_models_pytorch as smp
 
 from ..base import BaseSegmentationClassifier
 
 
 class DeepLabV3Plus(BaseSegmentationClassifier):
-    """DeepLabV3Plus model implementation based on <https://github.com/qubvel/segmentation_models.pytorch>
+    """DeepLabV3Plus model implementation
+
+    .. note:: Based on https://github.com/qubvel/segmentation_models.pytorch
+
     """
 
     def __init__(self, config):

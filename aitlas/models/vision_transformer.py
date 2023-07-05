@@ -1,3 +1,4 @@
+"""VisionTransformer model (base_patch16_224)"""
 import logging
 
 import timm
@@ -11,7 +12,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class VisionTransformer(BaseMulticlassClassifier):
-    """VisionTransformer model implementation based on: <https://github.com/huggingface/pytorch-image-models/tree/main/timm>"""
+    """VisionTransformer model implementation
+
+    .. note:: Based on: <https://github.com/huggingface/pytorch-image-models/tree/main/timm>
+    """
 
     name = "ViT base_patch16_224"
 

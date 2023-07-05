@@ -1,3 +1,5 @@
+"""AlexNet model for multiclass and multilabel classification
+"""
 import torch.nn as nn
 import torchvision.models as models
 
@@ -5,7 +7,9 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class AlexNet(BaseMulticlassClassifier):
-    """AlexNet model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.alexnet.html#torchvision.models.alexnet>
+    """AlexNet model implementation
+
+    .. note:: Based on https://pytorch.org/vision/stable/models/generated/torchvision.models.alexnet.html#torchvision.models.alexnet
     """
 
     name = "AlexNet"
@@ -30,7 +34,7 @@ class AlexNet(BaseMulticlassClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model.classifier = self.model.classifier[:-3]
 
         return self.model
@@ -66,7 +70,7 @@ class AlexNetMultiLabel(BaseMultilabelClassifier):
         return self.model(x)
 
     def extract_features(self):
-        """ Remove final layers if we only need to extract features """
+        """Remove final layers if we only need to extract features"""
         self.model.classifier = self.model.classifier[:-3]
 
         return self.model

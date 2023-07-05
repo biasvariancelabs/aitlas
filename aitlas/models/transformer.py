@@ -1,10 +1,8 @@
 """
-
-    Adapted from:
-        https://github.com/dl4sits/BreizhCrops
-
-    Original implementation of Transformer model:
-        https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/TransformerModel.py
+Transformer model
+   
+   .. note:: Adapted from: https://github.com/dl4sits/BreizhCrops
+   Original implementation of Transformer model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/TransformerModel.py
 
 """
 
@@ -19,8 +17,7 @@ from .schemas import TransformerModelSchema
 
 
 class TransformerModel(BaseMulticlassClassifier):
-    """Transformer model for multi-class classification model implementation based on <https://github.com/dl4sits/BreizhCrops>
-    """
+    """Transformer model for multi-class classification model implementation"""
 
     schema = TransformerModelSchema
 

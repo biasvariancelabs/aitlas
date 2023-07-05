@@ -5,13 +5,11 @@ from munch import Munch
 
 
 class Config(Munch):
-    """ Config object used for automatic object creation from a dict.
-    """
+    """Config object used for automatic object creation from a dictionary."""
 
     def __init__(self, config):
         def convert(obj):
-            """ Recursively convert a dict to Munch. (there is a Munch.from_dict method, but it's not python3 compatible)
-            """
+            """Recursively convert a dict to Munch. (there is a Munch.from_dict method, but it's not python3 compatible)"""
             if isinstance(obj, list):
                 return [convert(element) for element in obj]
             if isinstance(obj, dict):
@@ -41,8 +39,7 @@ class RunConfig(Schema):
 
 
 class Configurable(ABC):
-    """ Base class for all configurable objects.
-    """
+    """Base class for all configurable objects."""
 
     schema = None  # you need specify the schema of the class
 

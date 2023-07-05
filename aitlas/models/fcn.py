@@ -1,3 +1,4 @@
+"""FCN model for segmentation"""
 import torch.nn as nn
 from torchvision import models
 
@@ -5,7 +6,10 @@ from ..base import BaseSegmentationClassifier
 
 
 class FCN(BaseSegmentationClassifier):
-    """FCN model implementation based on <https://pytorch.org/vision/stable/models/generated/torchvision.models.segmentation.fcn_resnet101.html#torchvision.models.segmentation.fcn_resnet101>
+    """FCN model implementation
+
+    .. note:: Based on https://pytorch.org/vision/stable/models/generated/torchvision.models.segmentation.fcn_resnet101.html#torchvision.models.segmentation.fcn_resnet101
+
     """
 
     def __init__(self, config):

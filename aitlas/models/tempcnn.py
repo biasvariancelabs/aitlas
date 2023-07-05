@@ -1,11 +1,8 @@
 """
-
-    Adapted from:
-        https://github.com/dl4sits/BreizhCrops
-
-    Original implementation(s) of TempCNN model:
-        https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/LongShortTermMemory.py
-        https://github.com/charlotte-pel/temporalCNN
+Temporal Convolutional Neural Network (TempCNN) model
+  
+  .. note:: Adapted from: https://github.com/dl4sits/BreizhCrops
+  Original implementation(s) of TempCNN model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/LongShortTermMemory.py and https://github.com/charlotte-pel/temporalCNN
 
 """
 import torch.nn as nn
@@ -17,7 +14,9 @@ from .schemas import TempCNNSchema
 
 
 class TempCNN(BaseMulticlassClassifier):
-    """TempCNN model implementation based on <https://github.com/dl4sits/BreizhCrops>
+    """TempCNN model implementation
+
+    .. note:: Based on <https://github.com/dl4sits/BreizhCrops>
     """
 
     schema = TempCNNSchema

@@ -13,11 +13,13 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 def preprocess_features(npdata, pca=256):
     """Preprocess an array of features.
-    Args:
-        npdata (np.array N * ndim): features to preprocess
-        pca (int): dim of output
-    Returns:
-        np.array of dim N * pca: data PCA-reduced, whitened and L2-normalized
+
+    :param npdata: features to preprocess
+    :type npdata: np.array (N * dim)
+    :param pca: dim of output
+    :type pca: int
+    :return: data PCA-reduced, whitened and L2-normalized
+    :rtype: np.array (N * pca)
     """
     _, ndim = npdata.shape
     npdata = npdata.astype("float32")
@@ -37,12 +39,14 @@ def preprocess_features(npdata, pca=256):
 
 def make_graph(xb, nnn):
     """Builds a graph of nearest neighbors.
-    Args:
-        xb (np.array): data
-        nnn (int): number of nearest neighbors
-    Returns:
-        list: for each data the list of ids to its nnn nearest neighbors
-        list: for each data the list of distances to its nnn NN
+
+    :param xb: data
+    :type xb: np.array (N * dim)
+    :param nnn: number of nearest neighbors
+    :type nnn: int
+    :return: list for each data the list of ids to its nnn nearest neighbors
+    :return: list for each data the list of distances to its nnn NN
+    :rtype: np.array (N * nnn)
     """
     N, dim = xb.shape
 
@@ -60,13 +64,15 @@ def make_graph(xb, nnn):
 
 class ReassignedDataset(data.Dataset):
     """A dataset where the new images labels are given in argument.
-    Args:
-        image_indexes (list): list of data indexes
-        pseudolabels (list): list of labels for each data
-        dataset (list): list of tuples with paths to images
-        transform (callable, optional): a function/transform that takes in
-                                        an PIL image and returns a
-                                        transformed version
+
+    :param image_indexes: list of data indexes
+    :type image_indexes: list of ints
+    :param pseudolabels: list of labels for each data
+    :type pseudolabels: list of ints
+    :param dataset: initial dataset
+    :type dataset: list of tuples with paths to images
+    :param transform: a function/transform that takes in an PIL image and returns a transformed version
+    :type transform: callable, optional
     """
 
     def __init__(self, image_indexes, pseudolabels, dataset):
@@ -82,10 +88,9 @@ class ReassignedDataset(data.Dataset):
 
     def __getitem__(self, index):
         """
-        Args:
-            index (int): index of data
-        Returns:
-            tuple: (image, pseudolabel) where pseudolabel is the cluster of index datapoint
+        :params index: index of data
+        :type index: int
+        :return: tuple (image, pseudolabel) where pseudolabel is the cluster of index datapoint
         """
         return self.dataset.__getitem__(index)[0], self.pseudolabels[index]
 
@@ -94,12 +99,15 @@ class ReassignedDataset(data.Dataset):
 
 
 def cluster_assign(images_lists, dataset):
-    """ Creates a dataset from clustering, with clusters as labels.
-        Args:
-            images_lists (list of list): for each cluster, the list of image indexes belonging to this cluster
-            dataset (list): initial dataset
-        Returns:
-            ReassignedDataset(torch.utils.data.Dataset): a dataset with clusters as labels """
+    """Creates a dataset from clustering, with clusters as labels.
+
+    :params images_lists: for each cluster, the list of image indexes belonging to this cluster
+    :type images_lists: list of lists of ints
+    :params dataset: initial dataset
+    :type dataset: list of tuples with paths to images
+    :return: dataset with clusters as labels
+    :rtype: ReassignedDataset(torch.utils.data.Dataset)
+    """
     assert images_lists is not None
     pseudolabels = []
     image_indexes = []
@@ -112,11 +120,12 @@ def cluster_assign(images_lists, dataset):
 
 def run_kmeans(x, nmb_clusters, verbose=False):
     """Runs kmeans on 1 GPU.
-    Args:
-        x: data
-        nmb_clusters (int): number of clusters
-    Returns:
-        list: ids of data in each cluster
+    :param x: data
+    :type x: np.array (N * dim)
+    :param nmb_clusters: number of clusters
+    :type nmb_clusters: int
+    :return: list of ids for each data to its nearest cluster
+    :rtype: list of ints
     """
     n_data, d = x.shape
 
@@ -146,15 +155,15 @@ def arrange_clustering(images_lists):
 
 def make_adjacencyW(I, D, sigma):
     """Create adjacency matrix with a Gaussian kernel.
-    Args:
-        I (numpy array): for each vertex the ids to its nnn linked vertices
-                  + first column of identity.
-        D (numpy array): for each data the l2 distances to its nnn linked vertices
-                  + first column of zeros.
-        sigma (float): Bandwith of the Gaussian kernel.
 
-    Returns:
-        csr_matrix: affinity matrix of the graph.
+    :param I: for each vertex the ids to its nnn linked vertices + first column of identity.
+    :type I: numpy array
+    :param D: for each data the l2 distances to its nnn linked vertices + first column of zeros.
+    :type D: numpy array
+    :param sigma: bandwith of the Gaussian kernel.
+    :type sigma: float
+    :return:  affinity matrix of the graph.
+    :rtype: scipy.sparse.csr_matrix
     """
     V, k = I.shape
     k = k - 1
@@ -162,7 +171,7 @@ def make_adjacencyW(I, D, sigma):
     indptr = np.multiply(k, np.arange(V + 1))
 
     def exp_ker(d):
-        return np.exp(-d / sigma ** 2)
+        return np.exp(-d / sigma**2)
 
     exp_ker = np.vectorize(exp_ker)
     res_D = exp_ker(D)
