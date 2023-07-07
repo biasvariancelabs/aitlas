@@ -18,7 +18,7 @@ import sphinx.ext.autodoc
 sys.path.insert(0, os.path.abspath("../../aitlas"))
 print(sys.executable)
 
-project = "AiTLAS"
+project = "AiTLAS : Artificial Intelligence Toolbox for Earth Observation"
 copyright = "2023, Bias Variance Labs"
 author = "Bias Variance Labs"
 release = "1.0.0"
@@ -49,6 +49,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "sphinx_mdinclude",
+    'sphinx.ext.imgconverter',
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
@@ -93,6 +94,14 @@ epub_show_urls = "footnote"
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+
+
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = True
+
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = 'sphinx'
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
@@ -100,8 +109,10 @@ html_logo = "_media/AiTALS_vertical_gradient.png"
 html_theme = "sphinx_book_theme"
 html_static_path = ["_static", "_media"]
 
-# -- Options for LaTeX output ------------------------------------------------
+htmlhelp_basename = 'mainDoc'
 
+# -- Options for LaTeX output ------------------------------------------------
+latex_engine = 'pdflatex'
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
@@ -115,11 +126,19 @@ latex_elements = {
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
+    'fncychap': '\\usepackage[Lenny]{fncychap}',
+    'fontpkg': '\\usepackage{amsmath,amsfonts,amssymb,amsthm,plex-sans,plex-serif,plex-mono}',
+        # Additional stuff for the LaTeX preamble.
+
 }
+
+latex_logo = '_media/AiTALS_horizontal_gradient_subtitle.png'
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, "aitlas.tex", doc_title, author, "manual"),
-]
+# latex_documents = [
+#     ("working", "aitlas_working.tex", doc_title, author, "doc")
+#     ("examples", "aitlas_examples.tex", doc_title, author, "api_doc")
+#     ("modules", "aitlas_modules.tex", doc_title, author, "api_doc"),
+# ]

@@ -1,4 +1,4 @@
-# Installation
+# AiTLAS installation
 
 The best way to install `aitlas`, is if you create a virtual environment and install the  requirements with `pip`. Here are the steps:
 - Go to the folder where you cloned the repo.
