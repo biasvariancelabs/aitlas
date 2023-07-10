@@ -35,4 +35,4 @@ sphinx-book-theme==1.0.1
 sphinx_mdinclude==0.5.3
 ttach==0.0.3
 geffnet==1.0.2
-solaris==0.4.0
+# solaris==0.4.0 # needs downgrade of albumentations==0.4.3
