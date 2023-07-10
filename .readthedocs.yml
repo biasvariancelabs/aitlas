@@ -18,10 +18,11 @@ sphinx:
 # https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
 
 python:
-   install:
-   - requirements: requirements.txt
-   - method: pip
+  install:
+    - requirements: requirements.txt
+    - method: pip
       path: .
+  system_packages: true
 
 # conda:
 #   environment: docs/environment.yml

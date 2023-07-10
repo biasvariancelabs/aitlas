@@ -125,7 +125,7 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     'papersize': 'a4paper',
-    # The font size ('10pt', '11pt' or '12pt').
+    # The font size ('10pt', '11pt' or '12pt')
     #
     'pointsize': '10pt',
     # Additional stuff for the LaTeX preamble.
@@ -135,7 +135,7 @@ latex_elements = {
     #
     # 'figure_align': 'htbp',
     'fncychap': '\\usepackage[Sonny]{fncychap}',
-    'fontpkg': '\\usepackage{amsmath, amsfonts, amssymb, amsthm, plex-sans, plex-serif, plex-mono, xcolor}',
+    'fontpkg': '\\usepackage{amsmath, amsfonts, amssymb, amsthm, plex-sans, plex-serif, xcolor}',
     'printindex': r'\def\twocolumn[#1]{#1}\footnotesize\raggedright\printindex',
      # Additional stuff for the LaTeX preamble.
     #
