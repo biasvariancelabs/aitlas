@@ -9,7 +9,7 @@ formats: all
 build:
   os: ubuntu-22.04
   tools:
-    python: "miniconda3-4.7"
+    python: "3.8"
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/source/conf.py
@@ -21,8 +21,8 @@ python:
    install:
    - requirements: requirements.txt
 
-conda:
-  environment: docs/environment.yml
+# conda:
+#   environment: docs/environment.yml
 
 formats:
   - pdf
