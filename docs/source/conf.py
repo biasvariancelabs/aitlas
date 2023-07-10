@@ -58,7 +58,7 @@ extensions = [
 
 # Include typehints in descriptions
 autodoc_typehints = "description"
-autodoc_mock_imports = ['gdal','tensorflow','osr','SpaceNet6Dataset','solaris']
+autodoc_mock_imports = ['gdal','tensorflow','osr','SpaceNet6Dataset']
 #nitpicky = True
 
 # Both the class’ and the __init__ method’s docstring are concatenated and inserted.

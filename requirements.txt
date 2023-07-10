@@ -16,7 +16,7 @@ matplotlib>=3.4.1
 tensorboard>=2.6.0
 tqdm>=4.56.0
 seaborn>=0.11.1
-albumentations>=1.0.3
+
 opencv-python>=4.5.3
 scikit-learn>=0.24.1
 scikit-image>=0.18.1
@@ -35,4 +35,5 @@ sphinx-book-theme==1.0.1
 sphinx_mdinclude==0.5.3
 ttach==0.0.3
 geffnet==1.0.2
-# solaris==0.4.0 # needs downgrade of albumentations==0.4.3
+albumentations==0.4.3
+solaris==0.4.0 # clash with albumentations>=1.0.3
