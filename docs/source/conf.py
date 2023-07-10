@@ -21,7 +21,7 @@ print(sys.executable)
 project = "AiTLAS : Artificial Intelligence Toolbox for Earth Observation"
 copyright = "2023, Bias Variance Labs"
 author = "Bias Variance Labs"
-release = "1.0.0"
+#release = "1.0.0"
 doc_title="AiTLAS documentation"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -58,6 +58,8 @@ extensions = [
 
 # Include typehints in descriptions
 autodoc_typehints = "description"
+autodoc_mock_imports = ['gdal','tensorflow','osr','SpaceNet6Dataset']
+#nitpicky = True
 
 # Both the class’ and the __init__ method’s docstring are concatenated and inserted.
 autoclass_content = "both"
@@ -111,8 +113,14 @@ html_static_path = ["_static", "_media"]
 
 htmlhelp_basename = 'mainDoc'
 
+
+
+
+
+
 # -- Options for LaTeX output ------------------------------------------------
 latex_engine = 'pdflatex'
+
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
@@ -126,13 +134,77 @@ latex_elements = {
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
-    'fncychap': '\\usepackage[Lenny]{fncychap}',
-    'fontpkg': '\\usepackage{amsmath,amsfonts,amssymb,amsthm,plex-sans,plex-serif,plex-mono}',
-        # Additional stuff for the LaTeX preamble.
+    'fncychap': '\\usepackage[Sonny]{fncychap}',
+    'fontpkg': '\\usepackage{amsmath, amsfonts, amssymb, amsthm, plex-sans, plex-serif, plex-mono, xcolor}',
+    'printindex': r'\def\twocolumn[#1]{#1}\footnotesize\raggedright\printindex',
+     # Additional stuff for the LaTeX preamble.
+    #
 
-}
+   
+     'preamble': r'''
 
-latex_logo = '_media/AiTALS_horizontal_gradient_subtitle.png'
+
+    \usepackage{datetime}
+    \newdateformat{MonthYearFormat}{%
+    \monthname[\THEMONTH], \THEYEAR}
+    ''',
+
+    'maketitle': r'''
+   
+     
+        \begin{titlepage}
+            \centering
+
+           \begin{figure}[!h]
+            \centering
+                \includegraphics[width=0.3\linewidth]{AiTALS_vertical_gradient.png}
+            \end{figure}
+
+            \vspace*{40mm} %%% * is used to give space from top
+            {\sffamily \Huge \textbf{AiTLAS}}\\ 
+            \vspace*{5mm}
+            {\sffamily \Large Artificial Intelligence Toolbox for Earth Observation}\\
+         
+
+            \vspace{0mm}
+ 
+
+            \vspace{40mm}
+            {\sffamily \Large \textbf{Documentation}}\\
+           
+            \vspace{30mm}
+            {\sffamily Bias Variance Labs\\}
+             \url{www.bvlabs.ai}\\
+
+            \vspace*{10mm}
+            {\sffamily \small  \MonthYearFormat\today}
+
+         \end{titlepage}
+         
+         {\sffamily \small \tableofcontents
+         \clearpage}
+
+     ''',
+    # # Latex figure (float) alignment
+    
+    # # 'figure_align': 'htbp',
+    'sphinxsetup': \
+        'TitleColor={rgb}{0,0,0}, \
+         HeaderFamily=\\sffamily\\bfseries, \
+         InnerLinkColor={rgb}{0.208,0.374,0.486},',
+  }
+#latex_engine = 'xelatex'
+latex_show_urls = 'footnote'
+    # latex_elements = {
+    # 'fontpkg': r'''
+    #     \setmainfont{DejaVu Serif}
+    #     \setsansfont{DejaVu Sans}
+    #     \setmonofont{DejaVu Sans Mono}
+    # ''',
+latex_logo = '_media/AiTALS_vertical_gradient.png'
+
+
+#latex_documents = [(master_doc, 'aitlas.tex', doc_title, 'Bias Variance Labs', 'manual','toctree_only=False')]
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
