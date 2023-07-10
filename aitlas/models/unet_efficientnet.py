@@ -23,8 +23,11 @@ from geffnet.efficientnet_builder import (
     round_channels,
 )
 
-# import osgeo
-from osgeo import gdal
+try:
+    import gdal
+except ModuleNotFoundError as err:
+    from osgeo import gdal
+
 from rasterio import features
 from shapely.geometry import shape
 from shapely.wkt import dumps

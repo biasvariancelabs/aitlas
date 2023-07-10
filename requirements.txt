@@ -33,3 +33,6 @@ ipykernel==6.15.0
 nbsphinx==0.9.1
 sphinx-book-theme==1.0.1
 sphinx_mdinclude==0.5.3
+ttach==0.0.3
+geffnet==1.0.2
+gdal

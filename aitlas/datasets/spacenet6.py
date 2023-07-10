@@ -10,10 +10,10 @@ from multiprocessing import Pool
 
 import cv2
 
-# try:
-#     import gdal
-# except ModuleNotFoundError as err:
-from osgeo import gdal
+try:
+    import gdal
+except ModuleNotFoundError as err:
+    from osgeo import gdal
 
 import numpy as np
 import pandas as pd
