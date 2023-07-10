@@ -1,8 +1,8 @@
 """
 BreizhCrops - a crop type classification dataset
 
-.. note:: *Adapted from: https://github.com/dl4sits/BreizhCrops
-    *Original implementation of BreizhCrops dataset: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/datasets/breizhcrops.py
+.. note:: Adapted from: https://github.com/dl4sits/BreizhCrops ;
+    Original implementation of BreizhCrops dataset: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/datasets/breizhcrops.py
 
 """
 import logging

@@ -2,8 +2,8 @@
     StarRNN model for multiclass classification
     
     .. note:: Adapted from https://github.com/dl4sits/BreizhCrops
-    Original implementation of StarRNN model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/StarRNN.py 
-    Author: Türkoglu Mehmet Özgür <ozgur.turkoglu@geod.baug.ethz.ch>
+            Original implementation of StarRNN model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/StarRNN.py
+            Author: Türkoglu Mehmet Özgür <ozgur.turkoglu@geod.baug.ethz.ch>
 """
 
 import math
