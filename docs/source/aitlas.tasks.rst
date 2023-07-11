@@ -1,5 +1,5 @@
-Tasks module
-====================
+.. Tasks module
+.. ====================
 
 aitlas.tasks.evaluate module
 ----------------------------

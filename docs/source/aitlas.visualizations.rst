@@ -1,5 +1,5 @@
-Visualizations package
-=============================
+.. Visualizations module
+.. =============================
 
 aitlas.visualizations.classification module
 -------------------------------------------

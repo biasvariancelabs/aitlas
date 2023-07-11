@@ -1,5 +1,5 @@
-Base module
-===================
+.. Base module
+.. ===================
 
 aitlas.base.classification module
 ---------------------------------

@@ -1,5 +1,5 @@
-Clustering module
-=========================
+.. Clustering module
+.. =========================
 
 aitlas.clustering.kmeans module
 -------------------------------

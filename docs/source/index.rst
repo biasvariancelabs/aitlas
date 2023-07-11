@@ -12,7 +12,7 @@
 
 .. AiTLAS: Artificial Intelligence Toolbox for Earth Observation 
 .. ====================================================================
-.. Documentation
+.. .. Documentation
 
 
 .. toctree::

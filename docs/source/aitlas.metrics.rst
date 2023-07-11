@@ -1,6 +1,3 @@
-Metrics package
-======================
-
 aitlas.metrics.classification module
 ------------------------------------
 
