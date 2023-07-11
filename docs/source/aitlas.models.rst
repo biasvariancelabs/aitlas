@@ -1,5 +1,5 @@
-.. Models module
-.. =====================
+Models
+=====================
 
 aitlas.models.alexnet module
 ----------------------------

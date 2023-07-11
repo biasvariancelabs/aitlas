@@ -109,10 +109,28 @@ pygments_style = 'sphinx'
 
 html_logo = "_media/AiTALS_vertical_gradient.png"
 html_theme = "sphinx_book_theme"
+html_title = "AiTLAS Documentation"
 html_static_path = ["_static", "_media"]
 
 htmlhelp_basename = 'mainDoc'
 
+# html_context = {
+#   'display_github': True,
+#   'github_user': 'biasvariancelabs',
+#   'github_repo': 'aitlas',
+#   'github_version': 'master'
+# }
+
+html_theme_options = {
+    "repository_url": "https://github.com/biasvariancelabs/aitlas/",
+    "path_to_docs": "",
+    "repository_branch": "master",
+    "use_repository_button": True,
+    "launch_buttons": {
+        "colab_url": "https://colab.research.google.com/",
+    },
+    "default_mode": "light",
+}
 
 
 

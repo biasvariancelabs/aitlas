@@ -1,5 +1,5 @@
-.. Datasets module
-.. =======================
+Datasets
+=======================
 
 aitlas.datasets.aid module
 --------------------------

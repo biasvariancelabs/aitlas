@@ -1,5 +1,6 @@
 """
-.. notes:: Based on the implementation at: https://github.com/SpaceNetChallenge/SpaceNet_SAR_Buildings_Solutions/blob/master/1-zbigniewwojna/main.py#L412
+.. note:: Based on the implementation at: https://github.com/SpaceNetChallenge/SpaceNet_SAR_Buildings_Solutions/blob/master/1-zbigniewwojna/main.py#L412
+
 """
 import glob
 import math

@@ -1,7 +1,10 @@
 """
     OmniScaleCNN model implementation 
     
-    .. note:: Adapted from https://github.com/dl4sits/BreizhCrops ; Original implementation of OmniScaleCNN model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/OmniScaleCNN.py
+.. note:: 
+    Adapted from https://github.com/dl4sits/BreizhCrops
+    
+    Original implementation of OmniScaleCNN model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/OmniScaleCNN.py
 
 """
 

@@ -1,5 +1,5 @@
-.. Visualizations module
-.. =============================
+Visualizations
+=============================
 
 aitlas.visualizations.classification module
 -------------------------------------------

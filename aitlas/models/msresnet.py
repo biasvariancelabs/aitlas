@@ -1,10 +1,10 @@
 """
 MRSResNet model
 
-.. note:: Adapted from https://github.com/dl4sits/BreizhCrops
- Original implementation of MSResNet model:
- https://github.com/geekfeiw/Multi-Scale-1D-ResNet/blob/master/model/multi_scale_ori.py 
- https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/MSResNet.py
+.. note:: 
+    Adapted from https://github.com/dl4sits/BreizhCrops
+    
+    Original implementation of MSResNet model: https://github.com/geekfeiw/Multi-Scale-1D-ResNet/blob/master/model/multi_scale_ori.py and  https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/MSResNet.py
 
 """
 

@@ -1,11 +1,15 @@
 Examples
 ================
 
+.. note::
+    * You will have to download the datasets from their respective source. You can find a link for each dataset in the respective dataset class in ``aitlas/datasets/`` or use the **AiTLAS Semantic Data Catalog** available at `eodata.bvlabs.ai <http://eodata.bvlabs.ai>`_ .
+    * You can also find various trained models, model configurations and processing details of many datasets (with their corresponding splits used for training and evaluating the models) in our **AiTLAS Benchmark Arena** repository available at  `aitlas-arena.bvlabs.ai <http://aitlas-arena.bvlabs.ai>`_ .
+
 
 Multi-class classification tasks
------------------------
-
+--------------------------------------------------------------------------------------------
 .. toctree::
+
     examples/multclass_datasets_statistics.ipynb
     examples/multiclass_classification_example_aid.ipynb
     examples/multiclass_classification_example_clrs.ipynb
@@ -21,9 +25,9 @@ Multi-class classification tasks
     examples/multiclass_classification_example_whu_rs19.ipynb
 
 Multi-label classification tasks
------------------------
-
+--------------------------------------------------------------------------------------------
 .. toctree::
+
     examples/multilabel_datasets_statistics.ipynb
     examples/multilabel_classification_example_aid.ipynb
     examples/multilabel_classification_example_big_earth_net_19.ipynb
@@ -35,13 +39,15 @@ Multi-label classification tasks
 
 
 Visualization of model predictions with GradCam
------------------------
+--------------------------------------------------------------------------------------------
 .. toctree::
+
     examples/grad_cam_classification_example.ipynb
 
 Semantic image segmentation tasks
------------------------
+--------------------------------------------------------------------------------------------
 .. toctree::
+
     examples/semantic_segmentation_datasets_statistics.ipynb
     examples/semantic_segmentation_example_airs.ipynb
     examples/semantic_segmentation_example_amazon_rainforest.ipynb
@@ -53,24 +59,28 @@ Semantic image segmentation tasks
     examples/semantic_segmentation_example_massachusetts_roads.ipynb
 
 Object detection tasks
------------------------
+--------------------------------------------------------------------------------------------
 .. toctree::
+
     examples/object_detection_example_hrrsd.ipynb
 
 Land-use classification tasks
------------------------
+--------------------------------------------------------------------------------------------
 .. toctree::
+
     examples/land_use_classification_benchmark.ipynb
 
 Crop-type prediction tasks
------------------------
+--------------------------------------------------------------------------------------------
 .. toctree::
+
     examples/crop_type_prediction_example_netherlands.ipynb
 
 
 EO patch data analysis (Breizhcrops example)
------------------------
+--------------------------------------------------------------------------------------------
 .. toctree::
+
     examples/breizhcrops_eopatch_data_analysis.ipynb
     examples/breizhcrops_evaluation_aitlas.ipynb
 

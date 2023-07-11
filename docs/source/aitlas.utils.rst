@@ -1,5 +1,5 @@
-.. Utils module
-.. ====================
+Utils
+====================
 
 aitlas.utils.segmentation\_losses module
 ----------------------------------------

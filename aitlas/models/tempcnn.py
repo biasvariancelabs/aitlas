@@ -1,9 +1,10 @@
 """
 Temporal Convolutional Neural Network (TempCNN) model
   
-  .. note:: Adapted from: https://github.com/dl4sits/BreizhCrops
-  
-  Original implementation(s) of TempCNN model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/LongShortTermMemory.py and https://github.com/charlotte-pel/temporalCNN
+.. note::
+    Adapted from: https://github.com/dl4sits/BreizhCrops
+    
+    Original implementation(s) of TempCNN model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/LongShortTermMemory.py and https://github.com/charlotte-pel/temporalCNN
 
 """
 import torch.nn as nn

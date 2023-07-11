@@ -1,5 +1,5 @@
-.. Transforms module
-.. =========================
+Transforms
+=========================
 
 aitlas.transforms.big\_earth\_net module
 ----------------------------------------

@@ -31,4 +31,11 @@ pip install .
 ```
 in the folder where you cloned the repo.
 
----
+
+<!-- ---
+
+**Note:** You will have to download the datasets from their respective source. You can find a link for each dataset in the respective dataset class in `aitlas/datasets/` or use the **AiTLAS Semantic Data Catalog** available at [eodata.bvlabs.ai](http://eodata.bvlabs.ai).
+
+You can also find various trained models, model configurations and processing details of many datasets (with their corresponding splits used for training and evaluating the models) in our **AiTLAS Benchmark Arena** repository available at [aitlas-arena.bvlabs.ai](aitlas-arena.bvlabs.ai).
+
+--- -->
