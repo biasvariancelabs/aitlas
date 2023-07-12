@@ -55,6 +55,7 @@ extensions = [
 ]
 
 #
+autosummary_generate = True
 
 # Include typehints in descriptions
 autodoc_typehints = "description"
@@ -65,13 +66,16 @@ autodoc_mock_imports = ['gdal','solaris','tensorflow','osr']
 autoclass_content = "both"
 
 # Content is in the same order as in module
+autodoc_inherit_docstrings = False
 autodoc_member_order = "bysource"
 
 
 source_suffix = [".rst", ".md"]
 master_doc = "index"
+
+
 autoclass_content = "both"
-add_module_names = True
+add_module_names = False
 
 napoleon_google_docstring = True
 napoleon_use_param = True
@@ -133,7 +137,15 @@ html_theme_options = {
 }
 
 
-
+intersphinx_mapping = {
+    "torch": ("https://pytorch.org/docs/stable/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+    "pandas": ("https://pandas.pydata.org/docs/", None),
+    "python": ("https://docs.python.org/3", None),
+}
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -204,8 +216,7 @@ latex_elements = {
 
      ''',
     # # Latex figure (float) alignment
-    
-    # # 'figure_align': 'htbp',
+    # 'figure_align': 'htbp',
     'sphinxsetup': \
         'TitleColor={rgb}{0,0,0}, \
          HeaderFamily=\\sffamily\\bfseries, \
@@ -213,22 +224,7 @@ latex_elements = {
   }
 #latex_engine = 'xelatex'
 latex_show_urls = 'footnote'
-    # latex_elements = {
-    # 'fontpkg': r'''
-    #     \setmainfont{DejaVu Serif}
-    #     \setsansfont{DejaVu Sans}
-    #     \setmonofont{DejaVu Sans Mono}
-    # ''',
 latex_logo = '_media/AiTALS_vertical_gradient.png'
 
 
 #latex_documents = [(master_doc, 'aitlas.tex', doc_title, 'Bias Variance Labs', 'manual','toctree_only=False')]
-
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title,
-#  author, documentclass [howto, manual, or own class]).
-# latex_documents = [
-#     ("working", "aitlas_working.tex", doc_title, author, "doc")
-#     ("examples", "aitlas_examples.tex", doc_title, author, "api_doc")
-#     ("modules", "aitlas_modules.tex", doc_title, author, "api_doc"),
-# ]
