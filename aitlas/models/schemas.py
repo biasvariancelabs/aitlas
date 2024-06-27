@@ -247,3 +247,10 @@ class CNNRNNModelSchema(BaseModelSchema):
     threshold = fields.Float(
         required=False, missing=0.5, description="Label probability threshold."
     )
+
+class DeepLabV3ModelSchema(BaseSegmentationClassifierSchema):
+    input_dim = fields.Int(
+        required=True,
+        description="Number of bands",
+        validate=validate.OneOf([13, 10, 11]),
+    )

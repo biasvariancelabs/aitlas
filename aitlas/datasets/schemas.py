@@ -300,3 +300,20 @@ class So2SatDatasetSchema(BaseDatasetSchema):
     h5_file = fields.String(
         required=True, description="H5 file on disk", example="./data/train.h5"
     )
+
+class CloudDatasets_AI4QCSchema(BaseDatasetSchema):
+    """
+    Schema for configuring CESBIO_AI4QC dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or 13 channels", example="all/rgb"
+    )
+
+
+
