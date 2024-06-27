@@ -6,7 +6,6 @@ from .amazon_rainforest import AmazonRainforestDataset
 from .big_earth_net import BigEarthNetDataset
 from .brazilian_coffee_scenes import BrazilianCoffeeScenesDataset
 from .aeroscapes import AeroscapesDataset
-from .gta_v_sid import GTADataset
 from .loveda import LoveDADataset
 from .potsdam import PotsdamDataset
 from .whu_aerial import WHUAerialDataset
@@ -17,6 +16,7 @@ from .PixBox_AI4QC import PixBox_AI4QCDataset
 from .KappaSet_AI4QC import KappaSet_AI4QCDataset
 from .CloudSEN12 import CloudSEN12Dataset
 from .Hollstein_AI4QC import Hollstein_AI4QCDataset
+from .gta_v_sid import GTADataset
 
 # Datasets for crop type prediction
 from .breizhcrops import BreizhCropsDataset
