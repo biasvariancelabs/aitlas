@@ -5,7 +5,23 @@ from .airs import AIRSDataset
 from .amazon_rainforest import AmazonRainforestDataset
 from .big_earth_net import BigEarthNetDataset
 from .brazilian_coffee_scenes import BrazilianCoffeeScenesDataset
+from .aeroscapes import AeroscapesDataset
+from .loveda import LoveDADataset
+from .potsdam import PotsdamDataset
+from .whu_aerial import WHUAerialDataset
+from .whu_mix import WHUMixDataset
+from .cesbio_ai4qc import CESBIO_AI4QCDataset
+from .gsfc_ai4qc import GSFC_AI4QCDataset
+from .pixbox_ai4qc import PixBox_AI4QCDataset
+from .kappaset_ai4qc import KappaSet_AI4QCDataset
+from .cloudsen12 import CloudSEN12Dataset
+from .hollstein_ai4qc import Hollstein_AI4QCDataset
 from .gta_v_sid import GTADataset
+from .gsfc import GSFCDataset 
+from .cesbio import CESBIODataset
+from .kappazeta import KappaZetaDataset
+from .kappaset import KappaSetDataset
+from .hollstein import HollsteinDataset
 
 # Datasets for crop type prediction
 from .breizhcrops import BreizhCropsDataset
