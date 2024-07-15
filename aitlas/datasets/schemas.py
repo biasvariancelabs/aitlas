@@ -102,6 +102,18 @@ class ObjectDetectionCocoDatasetSchema(BaseDatasetSchema):
         missing=True, description="Do we need to hardcode the background as a class?"
     )
 
+class ObjectDetectionRfiCocoDatasetSchema(BaseDatasetSchema):
+    """
+    Schema for configuring an object detection dataset given in COCO format.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/DIOR/"
+    )
+    annotation_dir = fields.String(
+        missing='/',
+        description="JSON Coco files path on disk",
+        example="./data/annotations/"
+    )
 
 class BigEarthNetSchema(BaseDatasetSchema):
     """
