@@ -22,6 +22,10 @@ from .cesbio import CESBIODataset
 from .kappazeta import KappaZetaDataset
 from .kappaset import KappaSetDataset
 from .hollstein import HollsteinDataset
+from .gid15 import GID15Dataset
+from .uavid import UAVidDataset 
+from .floodnet import FloodNetDataset
+from .deepglobe import DeepGlobeDataset
 
 # Datasets for crop type prediction
 from .breizhcrops import BreizhCropsDataset
