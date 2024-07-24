@@ -49,4 +49,5 @@ class GTADataset(SemanticSegmentationDataset):
         label_count = pd.DataFrame.from_dict(label_dist, orient='index')
         label_count.columns = ["Number of pixels"]
         label_count = label_count.astype(float)
+
         return label_count
