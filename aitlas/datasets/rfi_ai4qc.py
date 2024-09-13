@@ -25,7 +25,7 @@ quick-looks (png images). This dataset can be used to train object detection alg
 detect these RFIs in a satellite image.
 '''
 
-url = "https://zenodo.org/records/12698384"
+url = "https://zenodo.org/records/13757181"
 name = "RFI_AI4QC"
 
 class ObjectDetectionRfiPascalDataset(BaseObjectDetectionDataset):
@@ -265,7 +265,6 @@ class ObjectDetectionRfiCocoDataset(BaseObjectDetectionDataset):
         df_count = df_count.iloc[:, ::-1].reset_index()
         df_count = df_count.drop(['category_id'], axis=1)
         df_count.columns = ["Label", "Count"]
-        df_count.Label = df_count.Label.values[::-1]
         
         return df_count
 
