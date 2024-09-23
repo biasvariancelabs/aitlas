@@ -61,3 +61,4 @@ from .npz import NpzDataset
 from .rfi_ai4qc import ObjectDetectionRfiPascalDataset, ObjectDetectionRfiCocoDataset, ObjectDetectionRfiYoloDataset
 
 from .spacenet6 import SpaceNet6Dataset
+from .new_anomalies import S1NewAnomaliesDataset, S2NewAnomaliesDataset
