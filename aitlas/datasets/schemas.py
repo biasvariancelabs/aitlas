@@ -315,7 +315,7 @@ class So2SatDatasetSchema(BaseDatasetSchema):
 
 class CloudDatasets_AI4QCSchema(BaseDatasetSchema):
     """
-    Schema for configuring CESBIO_AI4QC dataset.
+    Schema for configuring Cloud AI4QC datasets.
     """
     csv_file = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv"
@@ -327,5 +327,14 @@ class CloudDatasets_AI4QCSchema(BaseDatasetSchema):
         missing="rgb", description="Read RGB channels or 13 channels", example="all/rgb"
     )
 
-
+class ClusteringDatasetSchema(BaseDatasetSchema):
+    """
+    Schema for configuring a clustering dataset.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/New_anomalies/"
+    )
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv",
+    )
 
