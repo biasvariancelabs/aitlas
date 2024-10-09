@@ -63,6 +63,7 @@ from .uc_merced_multilabel import UcMercedMultiLabelDataset
 from .whu_rs19 import WHURS19Dataset
 from .npz import NpzDataset
 from .rfi_ai4qc import ObjectDetectionRfiPascalDataset, ObjectDetectionRfiCocoDataset, ObjectDetectionRfiYoloDataset
+from .parallax_ai4qc import ObjectDetectionRotatedParallaxDataset, ObjectDetectionStraightParallaxDataset
 
 from .spacenet6 import SpaceNet6Dataset
 from .s1anomalies_ai4qc import S1NewAnomaliesDataset

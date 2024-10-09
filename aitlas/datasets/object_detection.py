@@ -380,3 +380,95 @@ class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
             del data[key]
 
         return labels, data, annotations
+    
+class BaseObjectDetectionRotatedBboxDataset(BaseDataset):
+    """Base object detection dataset class for a dataset with rotated bounding boxes"""
+
+    name = "Object Detection Rotated Bbox Dataset"
+
+    def dataloader(self):
+        return torch.utils.data.DataLoader(
+            self,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            collate_fn=collate_fn,
+        )
+
+    def __len__(self):
+        return len(self.data)
+
+    def apply_transformations(self, image, target):
+        if self.joint_transform:
+            image, target = self.joint_transform((image, target))
+        if self.transform:
+            image = self.transform(image)
+        if self.target_transform:
+            target = self.target_transform(target)
+        return image, target
+
+    def get_labels(self):
+        return self.labels
+
+    def show_image(self, index, show_title=False):
+        # plot the image and bboxes
+        # Bounding boxes are defined as follows: x-min y-min width height
+        img, target = self[index]
+        fig = plt.figure(figsize=(10, 8))
+        plt.subplot(1, 2, 1)
+        plt.imshow(img)
+        plt.axis("off")
+
+        ax = plt.subplot(1, 2, 2)
+        plt.imshow(img)
+        plt.axis("off")
+        for box, label, rotation in zip(target["boxes"], target["labels"], target["rotation"]):
+            x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
+            rect = patches.Rectangle(
+                (x, y), width, height, angle=rotation, rotation_point='xy', linewidth=2, edgecolor="violet", facecolor="none"
+            )
+
+            # Draw the bounding box on top of the image
+            ax.add_patch(rect)
+            ax.annotate(
+                self.labels[label],
+                (box[0] + 15, box[1] - 20),
+                color="violet",
+                fontsize=12,
+                ha="center",
+                va="center",
+            )
+        plt.tight_layout()
+        plt.show()
+        return fig
+
+    def show_batch(self, size, show_labels=False):
+        if size % 5:
+            raise ValueError("The provided size should be divided by 5!")
+        image_indices = random.sample(range(0, len(self)), size)
+        figure, ax = plt.subplots(
+            int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5))
+        )
+
+        for axes, image_index in zip(ax.flatten(), image_indices):
+            img, target = self[image_index]
+            axes.imshow(img)
+            for box, label, rotation in zip(target["boxes"], target["labels"], target["rotation"]):
+                x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
+                rect = patches.Rectangle(
+                    (x, y),
+                    width,
+                    height,
+                    angle=rotation,
+                    rotation_point='xy',
+                    linewidth=2,
+                    edgecolor="violet",
+                    facecolor="none",
+                )
+                # Draw the bounding box on top of the image
+                axes.add_patch(rect)
+            axes.set_xticks([])
+            axes.set_yticks([])
+        figure.tight_layout()
+        return figure
