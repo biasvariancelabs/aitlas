@@ -14,7 +14,7 @@ LABELS = [
 
 class RSSCN7Dataset(MultiClassClassificationDataset):
 
-    url = "https://docs.google.com/viewer?a=v&pid=sites&srcid=ZGVmYXVsdGRvbWFpbnxxaW56b3VjbnxneDo1MDYzYWMxOWIwMjRiMWFi"
+    url = "https://www.kaggle.com/datasets/nifulislam/rsscn7-dataset"
 
     labels = LABELS
     name = "RSSCN7 dataset"

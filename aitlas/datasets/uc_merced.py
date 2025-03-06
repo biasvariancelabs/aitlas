@@ -28,6 +28,7 @@ LABELS = [
 
 class UcMercedDataset(MultiClassClassificationDataset):
 
+    url = "https://www.kaggle.com/datasets/abdulhasibuddin/uc-merced-land-use-dataset"
     labels = LABELS
     name = "UC Merced dataset"
 

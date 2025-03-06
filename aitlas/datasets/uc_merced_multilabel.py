@@ -23,7 +23,7 @@ LABELS = [
 
 
 class UcMercedMultiLabelDataset(MultiLabelClassificationDataset):
-    url = "https://drive.google.com/file/d/1DtKiauowCB0ykjFe8v0OVvT76rEfOk0v/view"
+    url = "https://www.dropbox.com/scl/fi/dlrn78p72m1wxdyc1y2l9/UCMercedLanduse.zip?rlkey=hsu2tnwvszcb2i7ewoyuvt34p&e=2"
 
     labels = LABELS
     name = "UC Merced multilabel dataset"

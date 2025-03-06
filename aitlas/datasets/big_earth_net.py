@@ -202,6 +202,7 @@ def cls2multihot(cls_vec, label_indices):
 class BigEarthNetDataset(BaseDataset):
     """BigEarthNet dataset adaptation"""
 
+    url = "https://bigearth.net/"
     schema = BigEarthNetSchema
     name = "Big Earth Net"
 

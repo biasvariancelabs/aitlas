@@ -45,7 +45,7 @@ LABELS = [
 
 class PatternNetDataset(MultiClassClassificationDataset):
 
-    url = "https://arxiv.org/abs/1706.03424"
+    url = "https://sites.google.com/view/zhouwx/dataset"
     labels = LABELS
 
     name = "PatternNet dataset"
