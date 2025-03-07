@@ -9,7 +9,7 @@ LABELS = ["Airport", "BareLand", "BaseballField", "Beach", "Bridge", "Center", "
 
 class AIDDataset(MultiClassClassificationDataset):
 
-    url = "https://1drv.ms/u/s!AthY3vMZmuxChNR0Co7QHpJ56M-SvQ"
+    url = "https://www.kaggle.com/datasets/jiayuanchengala/aid-scene-classification-datasets"
 
     labels = LABELS
     name = "AID dataset"

@@ -44,7 +44,7 @@ class So2SatDataset(BaseDataset):
         of the world, and comes with a split into fully independent, non-overlapping training, validation, and test sets.
     """
 
-    url = "https://dataserv.ub.tum.de/s/m1483140/download?path=%2F&files=testing.h5"
+    url = "https://github.com/zhu-xlab/So2Sat-LCZ42"
     name = "So2Sat dataset"
     schema = So2SatDatasetSchema
     labels = LABELS
