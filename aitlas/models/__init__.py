@@ -32,3 +32,5 @@ from .unet import Unet
 from .unet_efficientnet import UNetEfficientNet
 from .vgg import VGG16, VGG19, VGG16MultiLabel, VGG19MultiLabel
 from .vision_transformer import VisionTransformer, VisionTransformerMultilabel
+
+from .dofa_v1 import DOFA_v1

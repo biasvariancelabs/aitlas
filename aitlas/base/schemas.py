@@ -202,3 +202,22 @@ class BaseObjectDetectionSchema(BaseClassifierSchema):
 
 class BaseTransformsSchema(Schema):
     pass
+
+class BaseFoundationModelSchema(BaseModelSchema):
+    """
+    Schema for configuring a base foundation model.
+
+    :param pretrained: Flag indicating whether to use a pretrained model. Default is True.
+    :type pretrained: bool, optional
+    """
+
+    backbone_name = fields.String(
+        required=True,
+        description="Name of the model to use as a backbone.",
+        example="vit_base_dofa"
+    )
+
+    pretrained = fields.Bool(
+        missing=True, description="Whether to use a pretrained network or not."
+    )
+    pass

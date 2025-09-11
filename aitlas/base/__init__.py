@@ -1,6 +1,7 @@
 from .classification import BaseMulticlassClassifier, BaseMultilabelClassifier
 from .config import Config, Configurable, ObjectConfig, RunConfig
 from .datasets import BaseDataset
+from .foundation import FoundationModel
 from .metrics import BaseMetric
 from .models import BaseModel
 from .schemas import BaseClassifierSchema, BaseDatasetSchema, BaseModelSchema
