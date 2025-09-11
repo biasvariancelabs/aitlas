@@ -1,14 +1,12 @@
 import pytest
 import torch
 
-# Adjust the import path to match your file structure.
-# Assuming your new DOFA model class is named DOFAModel.
-from aitlas.models.dofa_v1 import DOFA_v1
+from aitlas.models import DOFA_v1
 
 @pytest.fixture(scope="module")
 def dofa_model():
     """
-    A pytest fixture that instantiates the DOFAModel once per test module.
+    A pytest fixture that instantiates the DOFA_v1 once per test module.
     
     Using `scope="module"` is efficient as it prevents reloading the model
     for every single test function.
@@ -43,7 +41,7 @@ def dummy_data():
 
 def test_dofa_forward_pass(dofa_model, dummy_data):
     """
-    Tests the forward pass of the DOFAModel to ensure it produces an
+    Tests the forward pass of the DOFA_v1 to ensure it produces an
     embedding of the correct shape.
     """
     # Arrange: Get the model and data from our fixtures
