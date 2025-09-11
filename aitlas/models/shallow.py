@@ -5,7 +5,7 @@ from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class ShallowCNNNet(BaseMulticlassClassifier):
-    """Simlpe shallow multi-class CNN network for testing purposes
+    """Simple shallow multi-class CNN network for testing purposes
     """
 
     def __init__(self, config):
