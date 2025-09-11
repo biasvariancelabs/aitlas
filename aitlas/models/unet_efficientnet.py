@@ -33,7 +33,7 @@ from shapely.geometry import shape
 from shapely.wkt import dumps
 from skimage import io, measure
 from skimage.segmentation import watershed
-from solaris.eval.base import Evaluator
+#from solaris.eval.base import Evaluator
 from torch.hub import load_state_dict_from_url
 from tqdm import tqdm
 
@@ -112,7 +112,7 @@ def post_process_single(
     return csv_addition
 
 
-def evaluation(prediction_csv, gt_csv):
+'''def evaluation(prediction_csv, gt_csv):
     evaluator = Evaluator(gt_csv)
     evaluator.load_proposal(prediction_csv, proposalCSV=True, conf_field_list=[])
     report = evaluator.eval_iou_spacenet_csv(miniou=0.5)
@@ -125,7 +125,7 @@ def evaluation(prediction_csv, gt_csv):
         fn += entry["FalseNeg"]
     f1score = (2 * tp) / (2 * tp + fp + fn)
     # print("Validation F1 {} tp {} fp {} fn {}".format(f1score, tp, fp, fn))
-    return f1score
+    return f1score'''
 
 
 class FocalLoss2d(nn.Module):
