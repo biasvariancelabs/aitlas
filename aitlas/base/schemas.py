@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, ValidationError, pre_load
 
 
 class BaseDatasetSchema(Schema):
@@ -209,15 +209,30 @@ class BaseFoundationModelSchema(BaseModelSchema):
 
     :param pretrained: Flag indicating whether to use a pretrained model. Default is True.
     :type pretrained: bool, optional
+
+    :param backbone_name: Name of the model to use as a backbone. Required.
+    :type backbone_name: str, required
+
+    :param local_model_path: Local path of the pretrained model. Default is None.
+    :type local_model_path: str, optional
+
+    :param use_cuda: Flag indicating whether to use CUDA if available. Default is True.
+    :type use_cuda: bool, optional
+
     """
-
-    backbone_name = fields.String(
-        required=True,
-        description="Name of the model to use as a backbone.",
-        example="vit_base_dofa"
-    )
-
     pretrained = fields.Bool(
         missing=True, description="Whether to use a pretrained network or not."
     )
+    backbone_name = fields.String(
+        required=True,
+        description="Name of the model to use as a backbone.",
+        example="vit_base_patch16"
+    )
+    local_model_path = fields.String(
+        required=True,
+        description="Local path of the pre-trained model (existing or to be downloaded from Huggingface).",
+    )
+    use_cuda = fields.Bool(
+        missing=True, description="Whether to use CUDA if possible")
+
     pass

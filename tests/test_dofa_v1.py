@@ -18,7 +18,6 @@ def dofa_model():
     try:
         model = DOFA_v1(mock_config)
         model.eval()  # Set the model to evaluation mode
-        print(model)
         return model
     except Exception as e:
         pytest.fail(f"Failed to instantiate DOFA_v1: {e}")
