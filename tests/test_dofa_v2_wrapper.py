@@ -44,11 +44,11 @@ def test_model_instantiation_from_local_path(base_config):
 
     try:
         model = DOFA_v2(base_config)
-        backbone = model.load_backbone()
         
         assert isinstance(model, DOFA_v2)
-        assert isinstance(backbone, OFAViT)
-        assert isinstance(backbone.head, nn.Identity)
+        assert model.backbone is not None
+        assert isinstance(model.backbone, OFAViT)
+        assert isinstance(model.backbone.head, nn.Identity)
         
     except Exception as e:
         pytest.fail(f"Model instantiation from local path failed: {e}")
@@ -58,7 +58,6 @@ def test_forward_features_pass(base_config):
     """
 
     model = DOFA_v2(base_config)
-    model.backbone = model.load_backbone() 
     
     dummy_input = torch.randn(1, 3, 224, 224)
     wave_list = [0.665, 0.56, 0.49]  # Example wavelengths for RGB channels
@@ -80,6 +79,7 @@ def test_forward_features_pass(base_config):
 def test_fallback_to_huggingface_download(mock_torch_load, mock_hf_download, mock_vit_factory, dummy_checkpoint_path):
     """Tests the fallback mechanism, now also mocking the model factory function.
     """
+
     mock_model_instance = MagicMock()
     mock_vit_factory.return_value = mock_model_instance
     
@@ -126,6 +126,6 @@ def test_raises_error_for_invalid_backbones(backbone_name):
         "pretrained": True
     }
     
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Unsupported or missing backbone|No pretrained weights are available for backbone"):
         model = DOFA_v2(config)
         model.load_backbone()

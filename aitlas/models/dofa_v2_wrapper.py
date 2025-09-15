@@ -16,27 +16,6 @@ class DOFA_v2(FoundationModel):
     def __init__(self, config):    
         super().__init__(config)
 
-    '''def load_backbone(self):
-        # Do nothing for now
-        pass'''
-
-    '''def load_backbone(self):
-        """ Loads the DOFA_v2 backbone model from huggingface repository
-        """
-        # Set the file path annd download the weights
-        file_path = os.path.dirname(os.path.abspath(__file__))
-        download_path = hf_hub_download(repo_id="XShadow/DOFA", filename="DOFA_ViT_base_e100.pth", local_dir=file_path)
-        print(download_path)
-        # Load the model
-        checkpoint = torch.load(download_path)
-        backbone = vit_base_patch16()
-        msg = backbone.load_state_dict(checkpoint, strict=False)
-        # Move the model to GPU
-        backbone = backbone.to('cuda:1')
-        
-        return backbone'''
-
-
     def load_backbone(self):
         """ Loads the DOFA_v2 backbone model from huggingface repository or from a local path (if available).
         """
@@ -102,13 +81,20 @@ class DOFA_v2(FoundationModel):
         if hasattr(backbone, 'head'):
             backbone.head = nn.Identity()
 
+        # This method MUST return the loaded backbone object for the parent class.
         return backbone
-
 
     def forward_features(self, x, wave_list):
         """ Forward pass through the DOFA_v2 model to get the feature embeddings.
         """
         
+        # Add this check at the beginning
+        if self.backbone is None:
+            raise RuntimeError(
+                "The backbone model has not been loaded. "
+                "Please call the .load_backbone() method before the forward pass."
+            )
+
         # Pass the input through the backbone
         embedding = self.backbone.forward_features(x, wave_list)
 
