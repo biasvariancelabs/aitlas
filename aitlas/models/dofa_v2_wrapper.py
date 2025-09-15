@@ -38,7 +38,7 @@ class DOFA_v2(FoundationModel):
 
 
     def load_backbone(self):
-        """ Loads the DOFA_v2 backbone model from huggingface repository
+        """ Loads the DOFA_v2 backbone model from huggingface repository or from a local path (if available).
         """
 
         # Define checkpoints for all backbones available on Huggingface
@@ -103,3 +103,13 @@ class DOFA_v2(FoundationModel):
             backbone.head = nn.Identity()
 
         return backbone
+
+
+    def forward_features(self, x, wave_list):
+        """ Forward pass through the DOFA_v2 model to get the feature embeddings.
+        """
+        
+        # Pass the input through the backbone
+        embedding = self.backbone.forward_features(x, wave_list)
+
+        return embedding

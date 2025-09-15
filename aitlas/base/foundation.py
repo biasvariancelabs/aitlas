@@ -22,22 +22,15 @@ class FoundationModel(BaseModel):
         """
         raise NotImplementedError("Each foundation model should implement 'load_backbone' to load its backbone.")
 
-    def forward(self, x, **kwargs):
-        """Forward pass through the model
+    def forward_features(self, x, **kwargs):
+        """Forward pass through the model to get the feature embeddings.
 
-        Each foundation model should implement this method to define its forward pass.
+        Each foundation model should implement this method to define its forward_features pass.
 
         :param x: Input image tensor
         :type x: torch.Tensor
-        **kwargs: Additional arguments that might be required for the forward pass, such a as wave_list for certain models
+        **kwargs: Additional arguments that might be required for the forward_features pass, such a as wave_list for certain models
         :return: Output feature embeddings or predictions
         :rtype: torch.Tensor
         """
-        raise NotImplementedError("Each foundation model should implement 'forward' to define its forward pass.")
-
-        if hasattr(self.backbone, 'forward_features'):
-            # Check if the backbone has a 'forward_features' method (a common pattern for getting embeddings in vision transformers)
-            return self.backbone.forward_features(x, **kwargs)
-        else:
-            # Fallback for backbones without 'forward_features'
-            return self.backbone(x, **kwargs)
+        raise NotImplementedError("Each foundation model should implement 'forward_features' to define its forward pass to get the feature embaddings.")
