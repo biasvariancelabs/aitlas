@@ -35,7 +35,7 @@ class DOFA_v2(FoundationModel):
             'vit_huge_patch14': None
         }
         
-        if self.config.pretrained: # Load pretrained weights from a local folder
+        if self.config.pretrained: # Load pretrained weights
             if self.config.local_model_path:
 
                 # Check if the provided local path exists
