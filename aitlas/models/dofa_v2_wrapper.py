@@ -37,17 +37,14 @@ class DOFA_v2(FoundationModel):
         
         if self.config.pretrained: # Load pretrained weights
             if self.config.local_model_path:
-
                 # Check if the provided local path exists
                 if not os.path.exists(self.config.local_model_path):
                     print(f"Provided local model path does not exist: {self.config.local_model_path}")
                     print("Weights will be downloaded from Huggingface instead.")
-
                     # Check if backbone is supported
                     if self.config.backbone_name not in backbone_checkpoints:
                         raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(backbone_checkpoints.keys())}")
                     else:
-
                         # Check if backbone has weights available
                         if backbone_checkpoints[self.config.backbone_name] is None:
                             raise ValueError(f"No pretrained weights are available for backbone '{self.config.backbone_name}'.")
@@ -59,7 +56,6 @@ class DOFA_v2(FoundationModel):
                             backbone = globals()[self.config.backbone_name]()
                             msg = backbone.load_state_dict(checkpoint, strict=False)
                             print("Successfully loaded checkpoint:", checkpoint_name)
-
                 else:
                     print(f"Loading weights from the provided local path: {self.config.local_model_path}")
                     checkpoint = torch.load(self.config.local_model_path)
@@ -73,7 +69,6 @@ class DOFA_v2(FoundationModel):
                     backbone = globals()[self.backbone_name]()
                     msg = backbone.load_state_dict(checkpoint, strict=False)
                     print("Successfully loaded checkpoint:", checkpoint_name)
-
         else: # Load model without pretrained weights
             raise NotImplementedError("Loading model without pretrained weights is not supported.")
 
@@ -88,7 +83,7 @@ class DOFA_v2(FoundationModel):
         """ Forward pass through the DOFA_v2 model to get the feature embeddings.
         """
         
-        # Add this check at the beginning
+        # Check if backbone is loaded
         if self.backbone is None:
             raise RuntimeError(
                 "The backbone model has not been loaded. "
