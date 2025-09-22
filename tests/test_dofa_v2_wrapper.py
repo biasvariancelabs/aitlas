@@ -19,6 +19,7 @@ def create_dummy_vit_base_state_dict():
 def dummy_checkpoint_path(tmp_path_factory):
     """Creates a temporary dummy checkpoint file that perfectly matches the model.
     """
+
     chkpt_dir = tmp_path_factory.mktemp("checkpoints")
     file_path = chkpt_dir / "DOFA_ViT_base_e100.pth"
     perfect_state_dict = create_dummy_vit_base_state_dict()
@@ -39,7 +40,7 @@ def base_config(dummy_checkpoint_path):
     return basic_config
 
 def test_model_instantiation_from_local_path(base_config):
-    """Tests the model instantiation for a vali local checkpoint.
+    """Tests the model instantiation for a valid local checkpoint.
     """
 
     try:
