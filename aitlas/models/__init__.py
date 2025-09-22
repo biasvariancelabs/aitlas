@@ -36,3 +36,6 @@ from .vision_transformer import VisionTransformer, VisionTransformerMultilabel
 from .DOFA import DOFA_v1
 from .DOFA import OFAViT, vit_base_patch16, vit_large_patch16, vit_small_patch16, vit_huge_patch14
 from .dofa_v2_wrapper import DOFA_v2
+
+from .ScaleMAE import MaskedAutoencoderViT, vit_base_patch16, vit_large_patch16, vit_huge_patch14
+from .scale_mae_wrapper import ScaleMAE
