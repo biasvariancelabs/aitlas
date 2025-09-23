@@ -50,13 +50,13 @@ class ScaleMAE(FoundationModel):
                             # For now, just load the first checkpoint available for the backbone
                             checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
                             self.config.local_model_path = hf_hub_download(repo_id="isaaccorley/vit_large_patch16_224_fmow_rgb_scalemae", filename=checkpoint_name, local_dir=os.path.dirname(self.config.local_model_path))
-                            checkpoint = torch.load(self.config.local_model_path)
+                            checkpoint = torch.load(self.config.local_model_path, weights_only=False)
                             backbone = globals()[self.config.backbone_name](fixed_output_size=fixed_output_size)
                             msg = backbone.load_state_dict(checkpoint, strict=False)
                             print("Successfully loaded checkpoint:", checkpoint_name)
                 else:
                     print(f"Loading weights from the provided local path: {self.config.local_model_path}")
-                    checkpoint = torch.load(self.config.local_model_path)
+                    checkpoint = torch.load(self.config.local_model_path, weights_only=False)
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     self.backbone_name = None
