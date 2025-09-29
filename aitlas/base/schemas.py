@@ -233,6 +233,10 @@ class BaseFoundationModelSchema(BaseModelSchema):
         description="Local path of the pre-trained model (existing or to be downloaded from Huggingface).",
     )
     use_cuda = fields.Bool(
-        missing=True, description="Whether to use CUDA if possible")
+        missing=True, description="Whether to use CUDA if possible"
+    )
+    flash_attn = fields.Bool(
+        missing=False, description="Whether to use flash attention (if cuda and flash attention are available)"
+    )
 
     pass
