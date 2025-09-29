@@ -2,7 +2,7 @@ absl-py==2.3.1
 accessible-pygments==0.0.5
 aenum==3.1.16
 affine==2.4.0
-aitlas @ file:///home/dragik/tadej/aitlas
+-e git+https://github.com/biasvariancelabs/aitlas@396573fd8becc4cf4bf55beca90601a53616752e#egg=aitlas
 alabaster==0.7.16
 albucore==0.0.24
 albumentations==2.0.8
@@ -36,6 +36,7 @@ defusedxml==0.7.1
 dill==0.4.0
 distlib==0.4.0
 docutils==0.19
+einops==0.8.1
 eo-learn==1.5.7
 eo-learn-core==1.5.0
 eo-learn-geometry==1.5.0
@@ -44,6 +45,7 @@ faiss-cpu==1.12.0
 fastjsonschema==2.21.2
 filelock==3.19.1
 fiona==1.10.1
+flash_attn==2.8.3
 fonttools==4.59.2
 fs==2.4.16
 fs-s3fs==1.1.1
