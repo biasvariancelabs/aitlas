@@ -89,7 +89,7 @@ class AnySat(FoundationModel):
         # This method MUST return the loaded backbone object for the parent class.
         return backbone
     
-    def forward_features(self, x, patch_size, output_type='patch', **kwargs):
+    def forward_features(self, x, patch_size, output='patch', **kwargs):
         """Extract features from the model.
         """
-        return self.backbone(x, patch_size=patch_size, output=output_type, **kwargs)
+        return self.backbone(x, patch_size=patch_size, output=output, **kwargs)

@@ -74,7 +74,7 @@ def test_forward_features_pass_no_flash_attn_output_type_tile(base_config):
 
     try:
         # Call the method with the dictionary and patch size
-        output = model.forward_features(dummy_input, patch_size=patch_size, output_type='tile')
+        output = model.forward_features(dummy_input, patch_size=patch_size, output='tile')
         assert output.shape == expected_shape
         
     except Exception as e:
@@ -104,7 +104,7 @@ def test_forward_features_pass_with_flash_attn_output_type_tile(base_config):
     try:
         # Call the method with the dictionary and patch size
         with torch.autocast(device_type="cuda", dtype=torch.float16):
-            output = model.forward_features(dummy_input, patch_size=patch_size, output_type='tile')
+            output = model.forward_features(dummy_input, patch_size=patch_size, output='tile')
             assert output.shape == expected_shape
             assert output.dtype == torch.float16
         
@@ -132,7 +132,7 @@ def test_forward_features_pass_no_flash_attn_output_type_patch(base_config):
 
     try:
         # Call the method with the dictionary and patch size
-        output = model.forward_features(dummy_input, patch_size=patch_size, output_type='patch')
+        output = model.forward_features(dummy_input, patch_size=patch_size, output='patch')
         assert output.shape == expected_shape
         
     except Exception as e:
@@ -162,7 +162,7 @@ def test_forward_features_pass_with_flash_attn_output_type_patch(base_config):
     try:
         # Call the method with the dictionary and patch size
         with torch.autocast(device_type="cuda", dtype=torch.float16):
-            output = model.forward_features(dummy_input, patch_size=patch_size, output_type='patch')
+            output = model.forward_features(dummy_input, patch_size=patch_size, output='patch')
             assert output.shape == expected_shape
             assert output.dtype == torch.float16
         
@@ -190,7 +190,7 @@ def test_forward_features_pass_no_flash_attn_output_type_dense(base_config):
 
     try:
         # Call the method with the dictionary and patch size
-        output = model.forward_features(dummy_input, patch_size=patch_size, output_type='dense', output_modality='s2') # 'dense' also requires 'output_modality'
+        output = model.forward_features(dummy_input, patch_size=patch_size, output='dense', output_modality='s2') # 'dense' also requires 'output_modality'
         assert output.shape == expected_shape
         
     except Exception as e:
@@ -220,7 +220,7 @@ def test_forward_features_pass_with_flash_attn_output_type_dense(base_config):
     try:
         # Call the method with the dictionary and patch size
         with torch.autocast(device_type="cuda", dtype=torch.float16):
-            output = model.forward_features(dummy_input, patch_size=patch_size, output_type='dense', output_modality='s2') # 'dense' also requires 'output_modality'
+            output = model.forward_features(dummy_input, patch_size=patch_size, output='dense', output_modality='s2') # 'dense' also requires 'output_modality'
             assert output.shape == expected_shape
             assert output.dtype == torch.float32 # A different output dtype than previously
         
@@ -248,7 +248,7 @@ def test_forward_features_pass_no_flash_attn_output_type_all(base_config):
 
     try:
         # Call the method with the dictionary and patch size
-        output = model.forward_features(dummy_input, patch_size=patch_size, output_type='all')
+        output = model.forward_features(dummy_input, patch_size=patch_size, output='all')
         assert output.shape == expected_shape
         
     except Exception as e:
@@ -278,7 +278,7 @@ def test_forward_features_pass_with_flash_attn_output_type_all(base_config):
     try:
         # Call the method with the dictionary and patch size
         with torch.autocast(device_type="cuda", dtype=torch.float16):
-            output = model.forward_features(dummy_input, patch_size=patch_size, output_type='all')
+            output = model.forward_features(dummy_input, patch_size=patch_size, output='all')
             assert output.shape == expected_shape
             assert output.dtype == torch.float16 # A different output dtype than previously
         
