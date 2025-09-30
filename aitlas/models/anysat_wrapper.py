@@ -1,4 +1,5 @@
 import os
+import shutil
 import torch
 import torch.nn as nn
 from huggingface_hub import hf_hub_download
@@ -53,7 +54,12 @@ class AnySat(FoundationModel):
                         else: # Download the weights and load the model
                             # For now, just load the first checkpoint available for the backbone
                             checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
-                            self.config.local_model_path = hf_hub_download(repo_id="g-struc/AnySat", filename=checkpoint_name, local_dir=os.path.dirname(self.config.local_model_path))
+                            downloaded_path = hf_hub_download(repo_id="g-astruc/AnySat", filename=checkpoint_name, subfolder="models", local_dir=os.path.dirname(self.config.local_model_path))
+                            # Move the file from the subfolder to the desired location
+                            shutil.move(downloaded_path, self.config.local_model_path)                   
+                            # Clean up the empty 'models' directory
+                            os.rmdir(os.path.dirname(downloaded_path))
+                            # Load the checkpoint from the corrected local path
                             checkpoint = torch.load(self.config.local_model_path, weights_only=False)
                             state_dict = checkpoint['state_dict']
                             backbone = globals()[self.config.backbone_name](flash_attn=flash_attn)
@@ -83,7 +89,7 @@ class AnySat(FoundationModel):
         # This method MUST return the loaded backbone object for the parent class.
         return backbone
     
-    def forward_features(self, x, patch_size, output_type='patch'):
+    def forward_features(self, x, patch_size, output_type='patch', **kwargs):
         """Extract features from the model.
         """
-        return self.backbone(x, patch_size=patch_size, output=output_type)
+        return self.backbone(x, patch_size=patch_size, output=output_type, **kwargs)
