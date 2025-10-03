@@ -37,6 +37,11 @@ from .DOFA import DOFA_v1
 from .DOFA import OFAViT, vit_base_patch16, vit_large_patch16, vit_small_patch16, vit_huge_patch14
 from .dofa_v2_wrapper import DOFA_v2
 
+from .SatMAE import MaskedAutoencoderViT, mae_vit_base, mae_vit_large, mae_vit_huge
+from .SatMAE import MaskedAutoencoderGroupChannelViT, mae_vit_base_multispectral, mae_vit_large_multispectral, mae_vit_huge_multispectral
+from .SatMAE import MaskedAutoencoderTemporalViT, mae_vit_base_temporal, mae_vit_large_temporal, mae_vit_large_temporal_samemask, mae_vit_huge_temporal
+from .satmae_wrapper import SatMAE
+
 from .ScaleMAE import MaskedAutoencoderViT, vit_base_patch16, vit_large_patch16, vit_huge_patch14
 from .scale_mae_wrapper import ScaleMAE
 
