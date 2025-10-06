@@ -98,14 +98,14 @@ class SatMAE(FoundationModel):
                             temp_checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
                             checkpoint_name = temp_checkpoint_name['filename']
                             record_id = temp_checkpoint_name['record_id']
-                            self.config.local_model_path = self._download_from_zenodo(record_id=record_id, checkpoint_name=checkpoint_name)                            
-                            checkpoint = torch.load(self.config.local_model_path)
+                            self._download_from_zenodo(record_id=record_id, checkpoint_name=checkpoint_name, local_model_path=self.config.local_model_path)                            
+                            checkpoint = torch.load(self.config.local_model_path, weights_only=False)
                             backbone = globals()[self.config.backbone_name]()
                             msg = backbone.load_state_dict(checkpoint, strict=False)
                             print("Successfully loaded checkpoint:", checkpoint_name)
                 else:
                     print(f"Loading weights from the provided local path: {self.config.local_model_path}")
-                    checkpoint = torch.load(self.config.local_model_path)
+                    checkpoint = torch.load(self.config.local_model_path, weights_only=False)
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     self.backbone_name = None
@@ -164,7 +164,7 @@ class SatMAE(FoundationModel):
             return embedding
 
     # Internal methods
-    def _download_from_zenodo(self, record_id: str, filename: str):
+    def _download_from_zenodo(self, record_id: str, checkpoint_name: str, local_model_path: str):
         """Internal method to handle downloading files from Zenodo.
         """
 
@@ -172,15 +172,12 @@ class SatMAE(FoundationModel):
         response = requests.get(zenodo_url)
         record_data = response.json()
         
-        file_to_download = next(f for f in record_data['files'] if f['key'] == filename)
+        file_to_download = next(f for f in record_data['files'] if f['key'] == checkpoint_name)
         download_url = file_to_download['links']['self']
-        
-        filepath = os.path.join(self.download_dir, filename)
         
         with requests.get(download_url, stream=True) as r:
             r.raise_for_status()
-            with open(filepath, 'wb') as f, tqdm(unit='B', unit_scale=True, desc=filename) as progress_bar:
+            with open(local_model_path, 'wb') as f, tqdm(unit='B', unit_scale=True, desc=checkpoint_name) as progress_bar:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
                     progress_bar.update(len(chunk))
-        return filepath

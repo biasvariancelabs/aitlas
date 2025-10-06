@@ -55,7 +55,7 @@ def dummy_temporal_checkpoint(tmp_path_factory):
     torch.save(create_dummy_temporal_state_dict(), path)
     return str(path)
 
-# --- Configuration Fixtures ---
+# Configuration fixtures
 @pytest.fixture
 def config_standard(dummy_standard_checkpoint):
     """Provides a valid config for the standard model."""
@@ -121,18 +121,26 @@ def test_fallback_to_zenodo_download(mock_torch_load, mock_download, mock_model_
     """Tests the fallback to Zenodo download if local_model_path is invalid."""
     mock_model_instance = MagicMock()
     mock_model_factory.return_value = mock_model_instance
-    mock_download.return_value = dummy_multispectral_checkpoint
+    mock_download.return_value = None 
     mock_torch_load.return_value = create_dummy_multispectral_state_dict()
 
+    non_existent_path = "/path/to/non_existent/model.pth"
+
     config = {
-        "local_model_path": "/path/to/non_existent/model.pth",
+        "local_model_path": non_existent_path,
         "backbone_name": "mae_vit_large_multispectral",
         "pretrained": True,
     }
     model = SatMAE(config)
 
-    mock_download.assert_called_once()
-    mock_torch_load.assert_called_once_with(dummy_multispectral_checkpoint)
+    mock_download.assert_called_once_with(
+        record_id='7338613', 
+        checkpoint_name='pretrain-vit-large-e199.pth',
+        local_model_path=non_existent_path
+    )
+    
+    mock_torch_load.assert_called_once_with(non_existent_path, weights_only=False)
+    
     mock_model_factory.assert_called_once()
     mock_model_instance.load_state_dict.assert_called_once()
 
