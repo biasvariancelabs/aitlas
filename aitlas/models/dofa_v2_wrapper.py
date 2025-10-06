@@ -17,7 +17,7 @@ class DOFA_v2(FoundationModel):
         super().__init__(config)
 
     def load_backbone(self):
-        """ Loads the DOFA_v2 backbone model from huggingface repository or from a local path (if available).
+        """ Loads the DOFA_v2 backbone model from Huggingface repository or from a local path (if available).
         """
 
         # Define checkpoints for all backbones available on Huggingface

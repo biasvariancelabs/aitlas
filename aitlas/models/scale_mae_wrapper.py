@@ -17,7 +17,7 @@ class ScaleMAE(FoundationModel):
         super().__init__(config)
 
     def load_backbone(self):
-        """ Loads the Scale-MAE backbone model from Github or from a local path (if available).
+        """ Loads the Scale-MAE backbone model from Huggingface or from a local path (if available).
         """
 
         # Define checkpoints for all backbones available on Huggingface
