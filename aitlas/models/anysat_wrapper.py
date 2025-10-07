@@ -92,4 +92,15 @@ class AnySat(FoundationModel):
     def forward_features(self, x, patch_size, output='patch', **kwargs):
         """Extract features from the model.
         """
-        return self.backbone(x, patch_size=patch_size, output=output, **kwargs)
+
+        # Check if backbone is loaded
+        if self.backbone is None:
+            raise RuntimeError(
+                "The backbone model has not been loaded. "
+                "Please call the .load_backbone() method before the forward pass."
+            )
+        
+        # Pass the input through the backbone
+        embedding = self.backbone(x, patch_size=patch_size, output=output, **kwargs)
+
+        return embedding
