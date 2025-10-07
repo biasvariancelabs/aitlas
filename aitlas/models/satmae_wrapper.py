@@ -132,11 +132,11 @@ class SatMAE(FoundationModel):
 
     def forward_features(self, x, timestamps=None, **kwargs):
             """ Forward pass through the SatMAE model to get feature embeddings.
-            This method handles  (RGB), multispectral, and temporal backbones.
+            This method handles RGB, multispectral, and temporal backbones.
             
             Args:
                 x (torch.Tensor): The input tensor.
-                    - For standard/multispectral models, shape should be (N, C, H, W).
+                    - For RGB/multispectral models, shape should be (N, C, H, W).
                     - For temporal models, shape should be (N, T, C, H, W).
                 timestamps (torch.Tensor, optional): A tensor of timestamps required
                     only for the temporal model. Defaults to None.
