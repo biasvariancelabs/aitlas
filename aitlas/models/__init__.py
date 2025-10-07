@@ -42,6 +42,10 @@ from .SatMAE import MaskedAutoencoderGroupChannelViT, mae_vit_base_multispectral
 from .SatMAE import MaskedAutoencoderTemporalViT, mae_vit_base_temporal, mae_vit_large_temporal, mae_vit_large_temporal_samemask, mae_vit_huge_temporal
 from .satmae_wrapper import SatMAE
 
+from .SatMAE_plusplus import MaskedAutoencoderViT, mae_vit_base, mae_vit_large
+from .SatMAE_plusplus import MaskedAutoencoderGroupChannelViT, mae_vit_base_multispectral, mae_vit_large_multispectral
+from .satmae_plusplus_wrapper import SatMAE_plusplus
+
 from .ScaleMAE import MaskedAutoencoderViT, vit_base_patch16, vit_large_patch16, vit_huge_patch14
 from .scale_mae_wrapper import ScaleMAE
 

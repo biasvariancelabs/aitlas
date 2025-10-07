@@ -13,7 +13,8 @@ cd tests
 # Run the specified pytest file, disabling warnings to keep the output clean
 #pytest --disable-warnings test_dofa_v2_0.py
 #pytest -s --disable-warnings test_dofa_v2_wrapper.py
-pytest -s --disable-warnings test_satmae_wrapper.py
+#pytest -s --disable-warnings test_satmae_wrapper.py
+pytest -s --disable-warnings test_satmae_plusplus_wrapper.py
 #pytest -s --disable-warnings test_scale_mae_wrapper.py
 #pytest -s --disable-warnings test_anysat_wrapper.py
 #pytest test_dofa_v2_0.py
