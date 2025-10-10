@@ -3,6 +3,7 @@ from marshmallow import Schema, fields, validate
 
 from ..base import BaseModelSchema
 from ..base.schemas import BaseSegmentationClassifierSchema
+from ..base.schemas import BaseFoundationModelSchema
 
 
 class TransformerModelSchema(BaseClassifierSchema):
@@ -253,4 +254,16 @@ class DeepLabV3ModelSchema(BaseSegmentationClassifierSchema):
         required=True,
         description="Number of bands",
         validate=validate.OneOf([13, 10, 11]),
+    )
+
+class PrestoSchema(BaseFoundationModelSchema):
+    pixel_batch_size = fields.Int(
+        required=False,
+        load_default=64,
+        description="Batch size for pixel-wise processing."
+    )
+    month = fields.Int(
+        required=False,
+        load_default=6,
+        description="Default month for time-series encoding."
     )
