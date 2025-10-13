@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 from copy import deepcopy
 from typing import Optional, Tuple, Union, cast
 
@@ -10,84 +9,10 @@ from torch import nn
 from torch.jit import Final
 from torch.nn import functional as F
 
-# Define constants
-PRESTO_S2_BANDS = [
-    "B02",
-    "B03",
-    "B04",
-    "B05",
-    "B06",
-    "B07",
-    "B08",
-    "B8A",
-    "B09",
-    "B11",
-    "B12",
-]
-PRESTO_S1_BANDS = ["vv", "vh"]
-ERA5_BANDS = ["temperature_2m", "total_precipitation"]
-SRTM_BANDS = ["elevation", "slope"]
-PRESTO_BANDS = PRESTO_S1_BANDS + PRESTO_S2_BANDS + ERA5_BANDS + SRTM_BANDS + ["NDVI"]
-
-# For normalization
-PRESTO_ADD_BY = torch.Tensor(
-    [
-        25.0,
-        25.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        -272.15,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-    ]
+from .utils import (
+    PRESTO_S1_BANDS, _PRESTO_S2_BANDS_ALL, ERA5_BANDS, SRTM_BANDS, _PRESTO_BANDS_ALL, INPUT_PRESTO_S2_BANDS, 
+    INPUT_PRESTO_BANDS, NUM_DYNAMIC_WORLD_CLASSES, PRESTO_ADD_BY, PRESTO_DIV_BY, BANDS_GROUPS_IDX
 )
-PRESTO_DIV_BY = torch.Tensor(
-    [
-        25.0,
-        25.0,
-        1e4,
-        1e4,
-        1e4,
-        1e4,
-        1e4,
-        1e4,
-        1e4,
-        1e4,
-        1e4,
-        1e4,
-        35.0,
-        0.03,
-        2000.0,
-        50.0,
-        1.0,
-    ]
-)
-
-BANDS_GROUPS_IDX = OrderedDict(
-    [
-        ("S1", [0, 1]),
-        ("S2_RGB", [2, 3, 4]),
-        ("S2_Red_Edge", [5, 6, 7]),
-        ("S2_NIR_10m", [8]),
-        ("S2_NIR_20m", [9]),
-        ("S2_SWIR", [10, 11]),
-        ("ERA5", [12, 13]),
-        ("SRTM", [14, 15]),
-        ("NDVI", [16]),
-    ]
-)
-
-NUM_DYNAMIC_WORLD_CLASSES = 9
 
 
 class Attention(nn.Module):
@@ -819,7 +744,7 @@ class PrestoModel(nn.Module):
         model.train()
         return model
 
-def presto_default(**kwargs):
+def presto_default_model(**kwargs):
     model = PrestoModel.construct(
         encoder_embedding_size=128,
         channel_embed_ratio=0.25,
@@ -834,3 +759,6 @@ def presto_default(**kwargs):
         **kwargs,
     )
     return model
+
+# set recommended archs
+presto_default = presto_default_model

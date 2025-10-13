@@ -265,5 +265,5 @@ class PrestoSchema(BaseFoundationModelSchema):
     month = fields.Int(
         required=False,
         load_default=6,
-        description="Default month for time-series encoding."
+        description="Default starting month (0-11) for time-series encoding if not provided in the input sample.",
     )
