@@ -51,7 +51,6 @@ from .scale_mae_wrapper import ScaleMAE
 
 from .AnySat import OmniSatModule
 from .AnySat import AnySatModule, anysat_tiny, anysat_small, anysat_base
-from .omnisat_wrapper import OmniSat
 from .anysat_wrapper import AnySat
 
 from .Presto import PrestoModel, presto_default
