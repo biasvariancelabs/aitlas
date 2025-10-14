@@ -90,59 +90,51 @@ class Presto(FoundationModel):
         # This method MUST return the loaded backbone object for the parent class.
         return backbone
     
-    def forward_features(self, inputs: List[Dict[str, Any]]) -> torch.Tensor:
-        """Processes a batch of B image time-series to extract feature embeddings.
+    def forward_features(self, inputs: Dict[str, Any]) -> torch.Tensor:
+            """Processes a batch of B image time-series to extract feature embeddings.
 
-        Args:
-            inputs (List[Dict[str, Any]]): A list of data samples. Each sample
-                is a dictionary where data tensors (e.g., "s1") must have the
-                shape (T, C, H, W).
+            Args:
+                inputs (Dict[str, Any]): A dictionary where keys are data types
+                    (e.g., "s1", "latlons") and values are the corresponding
+                    batched tensors. Data tensors should have the shape
+                    (B, T, C, H, W).
 
-        Returns:
-            torch.Tensor: A tensor of feature embeddings with the shape
-                (B, D, H, W), where B is the number of images in the input batch.
-        """
-        
-        if self.backbone is None:
-            raise RuntimeError("Backbone not loaded.")
-        if not inputs:
-            raise ValueError("Input list cannot be empty.")
+            Returns:
+                torch.Tensor: A tensor of feature embeddings with the shape
+                    (B, D, H, W), where B is the number of images in the input batch.
+            """
+            
+            if self.backbone is None:
+                raise RuntimeError("Backbone not loaded.")
+            if not inputs:
+                raise ValueError("Input dictionary cannot be empty.")
 
-        # Stack user inputs into a single dictionary of batched tensors
-        stacked_inputs = {}
-        for key in self.input_keys:
-            if key in inputs[0]:
-                data_list = [sample.get(key) for sample in inputs]
-                if isinstance(data_list[0], torch.Tensor):
-                    stacked_inputs[key] = torch.stack(data_list)
-                else: # Handles list of ints for month
-                    stacked_inputs[key] = torch.tensor(data_list, dtype=torch.long)
+            # Call the utility function with the provided dictionary
+            x, dw, latlons, months = prepare_presto_input(
+                **inputs,
+                default_month=self.month
+            )
+            
+            b, t, _, h, w = x.shape
+            
+            # Reshape all prepared tensors into pixel-series batches
+            pixel_x = rearrange(x, "b t c h w -> (b h w) t c")
+            pixel_dw = rearrange(dw, "b t h w -> (b h w) t")
+            pixel_months = repeat(months, "b t -> (b h w) t", h=h, w=w)
+            pixel_latlons = rearrange(latlons, "b c h w -> (b h w) c")
+            
+            # Call the encoder once with the fully prepared pixel batches
+            embeddings = self.backbone.encoder(
+                x=pixel_x,
+                dynamic_world=pixel_dw,
+                latlons=pixel_latlons,
+                month=pixel_months,
+                eval_task=True
+            )
 
-        # Call the single utility function to prepare ALL tensors
-        x, dw, latlons, months = prepare_presto_input(
-            **stacked_inputs,
-            default_month=self.month
-        )
-        
-        b, t, _, h, w = x.shape
-        
-        # Reshape all prepared tensors into pixel-series batches
-        pixel_x = rearrange(x, "b t c h w -> (b h w) t c")
-        pixel_dw = rearrange(dw, "b t h w -> (b h w) t")
-        pixel_months = repeat(months, "b t -> (b h w) t", h=h, w=w)
-        pixel_latlons = rearrange(latlons, "b c h w -> (b h w) c")
-        
-        # Call the encoder once with the fully prepared pixel batches
-        embeddings = self.backbone.encoder(
-            x=pixel_x,
-            dynamic_world=pixel_dw,
-            latlons=pixel_latlons,
-            month=pixel_months,
-            eval_task=True
-        )
-
-        # Reshape the output
-        output_features = rearrange(
-            embeddings, "(b h w) d -> b d h w", b=b, h=h, w=w
-        )
-        return output_features
+            # Reshape the output back to a spatial format
+            output_features = rearrange(
+                embeddings, "(b h w) d -> b d h w", b=b, h=h, w=w
+            )
+            
+            return output_features

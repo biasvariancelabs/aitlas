@@ -4,7 +4,7 @@ import os
 from unittest.mock import patch, MagicMock
 
 from aitlas.models.presto_wrapper import Presto, PrestoSchema
-from aitlas.models.Presto.utils import prepare_presto_input, INPUT_PRESTO_S2_BANDS
+from aitlas.models.Presto.utils import prepare_presto_input
 from aitlas.models.Presto.presto import PrestoModel, presto_default
 
 # Fixtures
@@ -30,24 +30,21 @@ def config_presto(dummy_presto_checkpoint):
     }
 
 @pytest.fixture
-def dummy_input_list():
-    """Creates a valid input list of dicts with both S1 and S2 data."""
-    batch_size, T, H, W = 2, 12, 8, 8
-    C_s1 = 2 # Sentinel-1
-    C_s2 = 10 # Sentinel-2
+def dummy_input_dict():
+    """Creates a valid input dictionary of batched tensors."""
+    B, T, H, W = 2, 12, 8, 8
+    C_s1 = 2
+    C_s2 = 10
     
-    return [
-        {
-            "s1": torch.randn(T, C_s1, H, W),
-            "s2": torch.randn(T, C_s2, H, W),
-            "latlons": torch.randn(2, H, W),
-            "dynamic_world": torch.randint(0, 9, (T, H, W))
-        }
-        for _ in range(batch_size)
-    ]
+    return {
+        "s1": torch.randn(B, T, C_s1, H, W),
+        "s2": torch.randn(B, T, C_s2, H, W),
+        "latlons": torch.randn(B, 2, H, W),
+        "dynamic_world": torch.randint(0, 9, (B, T, H, W)),
+    }
 
 # Tests
-# Test the utility function
+# Utility function tests
 class TestPreparePrestoInputs:
     def test_happy_path_with_s1_and_s2(self):
         """Tests the utility with both S1 and S2 data to check merging."""
@@ -74,7 +71,7 @@ class TestPreparePrestoInputs:
         assert torch.all(dw == 9)
         assert torch.all(mnths == torch.fmod(torch.arange(5, 5 + t, dtype=torch.long), 12))
 
-# Test the Presto wrapper class
+# Wrapper class tests
 class TestPrestoWrapper:
     
     # Integration tests
@@ -84,25 +81,25 @@ class TestPrestoWrapper:
         assert isinstance(model, Presto)
         assert isinstance(model.backbone, PrestoModel)
 
-    def test_forward_pass_happy_path(self, config_presto, dummy_input_list):
-        """Tests a real forward pass with both S1 and S2 data."""
+    def test_forward_pass_happy_path(self, config_presto, dummy_input_dict):
+        """Tests a real forward pass with a dictionary of batched tensors."""
         B, D, H, W = 2, 128, 8, 8
         
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         
         model = Presto(config_presto).to(device)
 
-        for sample in dummy_input_list:
-            for key, tensor in sample.items():
-                if isinstance(tensor, torch.Tensor):
-                    sample[key] = tensor.to(device)
+        # Move all tensors in the dummy input dictionary to the device
+        for key, tensor in dummy_input_dict.items():
+            if isinstance(tensor, torch.Tensor):
+                dummy_input_dict[key] = tensor.to(device)
         
-        output = model.forward_features(dummy_input_list)
+        output = model.forward_features(dummy_input_dict)
         
         assert output.shape == (B, D, H, W)
         assert output.device.type == device
 
-    # Unit tests
+    # Unit tests with mocking
     @patch('aitlas.models.presto_wrapper.presto_default')
     @patch('aitlas.models.presto_wrapper.hf_hub_download')
     @patch('aitlas.models.presto_wrapper.torch.load')
@@ -121,17 +118,16 @@ class TestPrestoWrapper:
         mock_torch_load.assert_called_with(mock_hf_download.return_value, weights_only=False)
 
     def test_forward_pass_empty_input(self, config_presto):
-        """Tests the error case for an empty input list."""
+        """Tests the error case for an empty input dictionary."""
         model = Presto(config_presto)
-        with pytest.raises(ValueError, match="Input list cannot be empty"):
-            model.forward_features([])
+        with pytest.raises(ValueError, match="Input dictionary cannot be empty"):
+            model.forward_features({})
 
-    def test_forward_pass_raises_error_if_latlons_missing(self, config_presto, dummy_input_list):
+    def test_forward_pass_raises_error_if_latlons_missing(self, config_presto, dummy_input_dict):
         """Tests that a ValueError is raised if the latlons key is missing."""
-        for sample in dummy_input_list:
-            del sample['latlons']
+        del dummy_input_dict['latlons']
             
         model = Presto(config_presto)
         
         with pytest.raises(ValueError, match="`latlons` tensor is required"):
-            model.forward_features(dummy_input_list)
+            model.forward_features(dummy_input_dict)
