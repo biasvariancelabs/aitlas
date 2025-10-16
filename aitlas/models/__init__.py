@@ -55,3 +55,7 @@ from .anysat_wrapper import AnySat
 
 from .Presto import PrestoModel, presto_default
 from .presto_wrapper import Presto
+
+from .GASSL import MoCo, gassl_moco_resnet50
+from .GASSL import MoCo_geo, gassl_moco_geo_resnet50
+from .gassl_wrapper import GASSL

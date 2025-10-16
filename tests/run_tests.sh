@@ -17,5 +17,6 @@ cd tests
 #pytest -s --disable-warnings test_satmae_plusplus_wrapper.py
 #pytest -s --disable-warnings test_scale_mae_wrapper.py
 #pytest -s --disable-warnings test_anysat_wrapper.py
-pytest -s --disable-warnings test_presto_wrapper.py
+#pytest -s --disable-warnings test_presto_wrapper.py
+pytest -s --disable-warnings test_gassl_wrapper.py
 #pytest test_dofa_v2_0.py
