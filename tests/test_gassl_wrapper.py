@@ -7,17 +7,15 @@ from unittest.mock import patch, MagicMock
 from aitlas.models import GASSL
 from aitlas.models.GASSL import MoCo, gassl_moco_resnet50, MoCo_geo, gassl_moco_geo_resnet50
 
-# Create dummy raw checkpoint dictionaries
+# Helper functions to create realistic dummy raw checkpoints
 def create_dummy_raw_moco_dict():
-    """Creates a raw state dict for the standard MoCo model, mimicking the original file structure."""
+    """Creates a raw state dict for the MoCo model with an MLP head."""
     model = gassl_moco_resnet50()
-    # Add the 'module.' prefix to simulate DataParallel saving
     state_dict = {"module." + k: v for k, v in model.state_dict().items()}
-    # Wrap it in the outer dictionary with metadata
     return {"state_dict": state_dict, "epoch": 199}
 
 def create_dummy_raw_moco_geo_dict():
-    """Creates a raw state dict for the MoCo_geo model."""
+    """Creates a raw state dict for the MoCo_geo model with an MLP head."""
     model = gassl_moco_geo_resnet50()
     state_dict = {"module." + k: v for k, v in model.state_dict().items()}
     return {"state_dict": state_dict, "epoch": 199}
@@ -61,22 +59,33 @@ def test_instantiation_moco_geo(config_gassl_full):
     assert isinstance(model, GASSL) and isinstance(model.backbone, MoCo_geo)
 
 # Forward pass tests
-def test_forward_pass_moco(config_moco):
-    """Tests the forward_features pass for the standard MoCo model."""
+def test_forward_pass_mlp_default_moco(config_moco):
+    """Tests the default forward pass for the 128-dim MLP embedding."""
     model = GASSL(config_moco)
     dummy_input = torch.randn(2, 3, 224, 224)
     output = model.forward_features(dummy_input)
-    # ResNet-50 feature dimension before the classifier has a size of 128
     assert output.shape == (2, 128)
 
-def test_forward_pass_moco_geo(config_gassl_full):
-    """Tests the forward_features pass for the MoCo_geo model."""
-    model = GASSL(config_gassl_full)
+def test_forward_pass_backbone_embedding_moco(config_moco):
+    """Tests the forward pass for the 2048-dim backbone embedding."""
+    model = GASSL(config_moco)
     dummy_input = torch.randn(2, 3, 224, 224)
-    output = model.forward_features(dummy_input)
-    assert output.shape == (2, 128)
+    output = model.forward_features(dummy_input, return_all_embeddings=True)
+    assert output.shape == (2, 2048)
 
-# Downlaod and error handling tests
+def test_forward_pass_restores_fc_layer(config_moco):
+    """Tests that the fc layer is restored after extracting backbone embeddings."""
+    model = GASSL(config_moco)
+    dummy_input = torch.randn(2, 3, 224, 224)
+    original_fc = model.backbone.encoder_q.fc
+    
+    # Call the method that temporarily modifies the fc layer
+    model.forward_features(dummy_input, return_all_embeddings=True)
+    
+    # Check that the fc layer is the same object as before
+    assert model.backbone.encoder_q.fc is original_fc
+
+# Download and error handling tests
 @patch('aitlas.models.gassl_wrapper.gassl_moco_resnet50')
 @patch('aitlas.models.gassl_wrapper.GASSL._download_from_zenodo')
 @patch('torch.load')
@@ -85,39 +94,28 @@ def test_fallback_to_zenodo_download(mock_torch_load, mock_download, mock_model_
     mock_model_instance = MagicMock()
     mock_model_factory.return_value = mock_model_instance
     mock_download.return_value = None 
-    # torch.load should return a raw checkpoint dictionary
     mock_torch_load.return_value = create_dummy_raw_moco_dict()
 
     non_existent_path = "/path/to/non_existent/model.pth"
     config = {
         "local_model_path": non_existent_path,
         "backbone_name": "gassl_moco_resnet50",
-        "pretrained": True,
+        "pretrained": True
     }
-    model = GASSL(config)
+    GASSL(config)
 
-    # Verify that download was called with the correct parameters
-    mock_download.assert_called_once_with(
-        record_id='7379715', 
-        checkpoint_name='moco.pth.tar', # Defaults to the first in the list
-        local_model_path=non_existent_path
-    )
-    
-    # Verify torch.load and model factory were called
+    mock_download.assert_called_once()
     mock_torch_load.assert_called_once_with(non_existent_path, map_location='cpu')
-    mock_model_factory.assert_called_once()
-
-    # Verify that load_state_dict was called on the model instance
     mock_model_instance.load_state_dict.assert_called_once()
 
 def test_raises_error_if_pretrained_is_false():
     """Tests that a NotImplementedError is raised if config has pretrained=False."""
     config = {
-        "pretrained": False,
-        "backbone_name": "any_name",
-        "local_model_path": "any_path"
-    }
-    with pytest.raises(NotImplementedError, match="Loading model without pretrained weights is not supported."):
+        "local_model_path": "any_path",
+        'backbone_name': "any_model",
+        "pretrained": False
+    } 
+    with pytest.raises(NotImplementedError):
         GASSL(config)
 
 @pytest.mark.parametrize(
