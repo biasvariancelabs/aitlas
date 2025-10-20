@@ -122,7 +122,7 @@ class GASSL(FoundationModel):
                 )
 
             # Check whether 128-dim or 2048-dim embeddings should be returned
-            return_all_embeddings = kwargs.get('return_all_embeddings', False)
+            return_all_embeddings = kwargs.get('return_all_embeddings', True)
 
             # Get the encoder
             encoder = self.backbone.encoder_q

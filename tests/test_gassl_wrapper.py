@@ -58,20 +58,21 @@ def test_instantiation_moco_geo(config_gassl_full):
     model = GASSL(config_gassl_full)
     assert isinstance(model, GASSL) and isinstance(model.backbone, MoCo_geo)
 
-# Forward pass tests
-def test_forward_pass_mlp_default_moco(config_moco):
-    """Tests the default forward pass for the 128-dim MLP embedding."""
+def test_forward_pass_backbone_default_moco(config_moco):
+    """Tests the default forward pass for the 2048-dim backbone embedding."""
     model = GASSL(config_moco)
     dummy_input = torch.randn(2, 3, 224, 224)
+    # The default call should now return the 2048-dim backbone embedding
     output = model.forward_features(dummy_input)
-    assert output.shape == (2, 128)
+    assert output.shape == (2, 2048)
 
-def test_forward_pass_backbone_embedding_moco(config_moco):
-    """Tests the forward pass for the 2048-dim backbone embedding."""
+def test_forward_pass_mlp_embedding_moco(config_moco):
+    """Tests the forward pass for the 128-dim MLP embedding."""
     model = GASSL(config_moco)
     dummy_input = torch.randn(2, 3, 224, 224)
-    output = model.forward_features(dummy_input, return_all_embeddings=True)
-    assert output.shape == (2, 2048)
+    # To get the 128-dim embedding, we must now explicitly ask for it
+    output = model.forward_features(dummy_input, return_all_embeddings=False)
+    assert output.shape == (2, 128)
 
 def test_forward_pass_restores_fc_layer(config_moco):
     """Tests that the fc layer is restored after extracting backbone embeddings."""
@@ -79,8 +80,8 @@ def test_forward_pass_restores_fc_layer(config_moco):
     dummy_input = torch.randn(2, 3, 224, 224)
     original_fc = model.backbone.encoder_q.fc
     
-    # Call the method that temporarily modifies the fc layer
-    model.forward_features(dummy_input, return_all_embeddings=True)
+    # Call the method that modifies the fc layer (now the default behavior)
+    model.forward_features(dummy_input)
     
     # Check that the fc layer is the same object as before
     assert model.backbone.encoder_q.fc is original_fc
