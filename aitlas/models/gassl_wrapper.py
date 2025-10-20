@@ -109,7 +109,7 @@ class GASSL(FoundationModel):
             
             Args:
                 x (torch.Tensor): The input tensor of shape (N, C, H, W).
-                **kwargs: Can include `embedding_type`.
+                **kwargs: Can include `return_all_embeddings`.
                     return_all_embeddings=False (default): Returns 128-dim embedding from MLP head.
                     return_all_embeddings=True: Returns 2048-dim embedding from ResNet backbone.
             """
