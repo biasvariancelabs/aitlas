@@ -58,6 +58,7 @@ def test_instantiation_moco_geo(config_gassl_full):
     model = GASSL(config_gassl_full)
     assert isinstance(model, GASSL) and isinstance(model.backbone, MoCo_geo)
 
+# Forward pass tests
 def test_forward_pass_backbone_default_moco(config_moco):
     """Tests the default forward pass for the 2048-dim backbone embedding."""
     model = GASSL(config_moco)
