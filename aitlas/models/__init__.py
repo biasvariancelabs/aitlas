@@ -59,3 +59,6 @@ from .presto_wrapper import Presto
 from .GASSL import MoCo, gassl_moco_resnet50
 from .GASSL import MoCo_geo, gassl_moco_geo_resnet50
 from .gassl_wrapper import GASSL
+
+from .SeCo import MoCoV2Module, seco_resnet18, seco_resnet50
+from. seco_wrapper import SeCo
