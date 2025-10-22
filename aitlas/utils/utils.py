@@ -48,7 +48,7 @@ def image_loader(file_path, convert_to_grayscale=False):
 
     """
     filename, file_extension = os.path.splitext(file_path)
-    if file_extension in [".jpg", ".png", ".bmp", ".jpeg"]:
+    if file_extension in [".jpg", ".png", ".bmp", ".jpeg", ".JPG", ".PNG", ".BMP", ".JPEG"]:
         return pil_loader(file_path, convert_to_grayscale)
     elif file_extension in [".tif", ".tiff", ".TIF", ".TIFF"]:
         return tiff_loader(file_path)
