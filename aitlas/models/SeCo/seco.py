@@ -239,7 +239,7 @@ def seco_resnet18_model(**kwargs):
     return model
 
 def seco_resnet50_model(**kwargs):
-    model = MoCoV2Module(base_encoder='resnet50', emb_dim=128, num_negatives=16384, emb_spaces=3) #TODO: find the num_negatives in the checkpoint
+    model = MoCoV2Module(base_encoder='resnet50', emb_dim=128, num_negatives=16384, emb_spaces=3)
     return model
 
 # set recommended archs
