@@ -62,3 +62,6 @@ from .gassl_wrapper import GASSL
 
 from .SeCo import MoCoV2Module, seco_resnet18, seco_resnet50
 from. seco_wrapper import SeCo
+
+from .CACo import MoCoV2CACoModule, caco_resnet18, caco_resnet50
+from .caco_wrapper import CACo
