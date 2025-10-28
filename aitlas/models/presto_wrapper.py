@@ -91,50 +91,50 @@ class Presto(FoundationModel):
         return backbone
     
     def forward_features(self, inputs: Dict[str, Any]) -> torch.Tensor:
-            """Processes a batch of B image time-series to extract feature embeddings.
+        """Processes a batch of B image time-series to extract feature embeddings.
 
-            Args:
-                inputs (Dict[str, Any]): A dictionary where keys are data types
-                    (e.g., "s1", "latlons") and values are the corresponding
-                    batched tensors. Data tensors should have the shape
-                    (B, T, C, H, W).
+        Args:
+            inputs (Dict[str, Any]): A dictionary where keys are data types
+                (e.g., "s1", "latlons") and values are the corresponding
+                batched tensors. Data tensors should have the shape
+                (B, T, C, H, W).
 
-            Returns:
-                torch.Tensor: A tensor of feature embeddings with the shape
-                    (B, D, H, W), where B is the number of images in the input batch.
-            """
-            
-            if self.backbone is None:
-                raise RuntimeError("Backbone not loaded.")
-            if not inputs:
-                raise ValueError("Input dictionary cannot be empty.")
+        Returns:
+            torch.Tensor: A tensor of feature embeddings with the shape
+                (B, D, H, W), where B is the number of images in the input batch.
+        """
+        
+        if self.backbone is None:
+            raise RuntimeError("Backbone not loaded.")
+        if not inputs:
+            raise ValueError("Input dictionary cannot be empty.")
 
-            # Call the utility function with the provided dictionary
-            x, dw, latlons, months = prepare_presto_input(
-                **inputs,
-                default_month=self.month
-            )
-            
-            b, t, _, h, w = x.shape
-            
-            # Reshape all prepared tensors into pixel-series batches
-            pixel_x = rearrange(x, "b t c h w -> (b h w) t c")
-            pixel_dw = rearrange(dw, "b t h w -> (b h w) t")
-            pixel_months = repeat(months, "b t -> (b h w) t", h=h, w=w)
-            pixel_latlons = rearrange(latlons, "b c h w -> (b h w) c")
-            
-            # Call the encoder once with the fully prepared pixel batches
-            embeddings = self.backbone.encoder(
-                x=pixel_x,
-                dynamic_world=pixel_dw,
-                latlons=pixel_latlons,
-                month=pixel_months,
-                eval_task=True
-            )
+        # Call the utility function with the provided dictionary
+        x, dw, latlons, months = prepare_presto_input(
+            **inputs,
+            default_month=self.month
+        )
+        
+        b, t, _, h, w = x.shape
+        
+        # Reshape all prepared tensors into pixel-series batches
+        pixel_x = rearrange(x, "b t c h w -> (b h w) t c")
+        pixel_dw = rearrange(dw, "b t h w -> (b h w) t")
+        pixel_months = repeat(months, "b t -> (b h w) t", h=h, w=w)
+        pixel_latlons = rearrange(latlons, "b c h w -> (b h w) c")
+        
+        # Call the encoder once with the fully prepared pixel batches
+        embeddings = self.backbone.encoder(
+            x=pixel_x,
+            dynamic_world=pixel_dw,
+            latlons=pixel_latlons,
+            month=pixel_months,
+            eval_task=True
+        )
 
-            # Reshape the output back to a spatial format
-            output_features = rearrange(
-                embeddings, "(b h w) d -> b d h w", b=b, h=h, w=w
-            )
-            
-            return output_features
+        # Reshape the output back to a spatial format
+        output_features = rearrange(
+            embeddings, "(b h w) d -> b d h w", b=b, h=h, w=w
+        )
+        
+        return output_features

@@ -104,45 +104,45 @@ class GASSL(FoundationModel):
         return backbone
 
     def forward_features(self, x, **kwargs):
-            """ Forward pass through the GASSL model to get feature embeddings.
-            This method handles both MoCo and MoCo_geo backbones.
-            
-            Args:
-                x (torch.Tensor): The input tensor of shape (N, C, H, W).
-                **kwargs: Can include `return_all_embeddings`.
-                    return_all_embeddings=False (default): Returns 128-dim embedding from MLP head.
-                    return_all_embeddings=True: Returns 2048-dim embedding from ResNet backbone.
-            """
-            
-            # Check if backbone is loaded
-            if self.backbone is None:
-                raise RuntimeError(
-                    "The backbone model has not been loaded. "
-                    "Please call the .load_backbone() method before the forward pass."
-                )
+        """ Forward pass through the GASSL model to get feature embeddings.
+        This method handles both MoCo and MoCo_geo backbones.
+        
+        Args:
+            x (torch.Tensor): The input tensor of shape (N, C, H, W).
+            **kwargs: Can include `return_all_embeddings`.
+                return_all_embeddings=False (default): Returns 128-dim embedding from MLP head.
+                return_all_embeddings=True: Returns 2048-dim embedding from ResNet backbone.
+        """
+        
+        # Check if backbone is loaded
+        if self.backbone is None:
+            raise RuntimeError(
+                "The backbone model has not been loaded. "
+                "Please call the .load_backbone() method before the forward pass."
+            )
 
-            # Check whether 128-dim or 2048-dim embeddings should be returned
-            return_all_embeddings = kwargs.get('return_all_embeddings', True)
+        # Check whether 128-dim or 2048-dim embeddings should be returned
+        return_all_embeddings = kwargs.get('return_all_embeddings', True)
 
-            # Get the encoder
+        # Get the encoder
+        encoder = self.backbone.encoder_q
+        
+        if not return_all_embeddings: # Return 128-dim embeddings       
+            # Pass the input through the backbone (query encoder). Approach is the same for MoCo and MoCo_geo.
+            embedding = encoder(x)
+        else: # Return 2048-dim embeddings
+            # Remove the MLP head (fully-connected layer) with Identity
             encoder = self.backbone.encoder_q
-            
-            if not return_all_embeddings: # Return 128-dim embeddings       
-                # Pass the input through the backbone (query encoder). Approach is the same for MoCo and MoCo_geo.
-                embedding = encoder(x)
-            else: # Return 2048-dim embeddings
-                # Remove the MLP head (fully-connected layer) with Identity
-                encoder = self.backbone.encoder_q
-                # Store the original fully-connected layer
-                original_fc = encoder.fc        
-                # Replace it with an identity layer
-                encoder.fc = nn.Identity()           
-                # Run the forward pass
-                embedding = encoder(x)         
-                # Restore the original fc layer
-                encoder.fc = original_fc
-            
-            return embedding
+            # Store the original fully-connected layer
+            original_fc = encoder.fc        
+            # Replace it with an identity layer
+            encoder.fc = nn.Identity()           
+            # Run the forward pass
+            embedding = encoder(x)         
+            # Restore the original fc layer
+            encoder.fc = original_fc
+        
+        return embedding
 
     # Internal methods
     def _download_from_zenodo(self, record_id: str, checkpoint_name: str, local_model_path: str):

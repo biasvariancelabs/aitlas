@@ -100,23 +100,23 @@ class CACo(FoundationModel):
         return backbone
 
     def forward_features(self, x, **kwargs):
-            """ Forward pass through the CACo model to get feature embeddings.
-            
-            Args:
-                x (torch.Tensor): The input tensor of shape (N, C, H, W).
-            """
-            
-            # Check if backbone is loaded
-            if self.backbone is None:
-                raise RuntimeError(
-                    "The backbone model has not been loaded. "
-                    "Please call the .load_backbone() method before the forward pass."
-                )
+        """ Forward pass through the CACo model to get feature embeddings.
+        
+        Args:
+            x (torch.Tensor): The input tensor of shape (N, C, H, W).
+        """
+        
+        # Check if backbone is loaded
+        if self.backbone is None:
+            raise RuntimeError(
+                "The backbone model has not been loaded. "
+                "Please call the .load_backbone() method before the forward pass."
+            )
 
-            # Pass the input through the backbone (query encoder).
-            embedding = self.backbone.encoder_q(x) # 512-dim embeddings (resnet18) or 2048-dim embeddings (resnet50)
-            
-            return embedding
+        # Pass the input through the backbone (query encoder).
+        embedding = self.backbone.encoder_q(x) # 512-dim embeddings (resnet18) or 2048-dim embeddings (resnet50)
+        
+        return embedding
 
     # Internal methods
     def _download_from_cornell(self, checkpoint_name: str, local_model_path: str):

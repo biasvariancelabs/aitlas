@@ -104,25 +104,25 @@ class SatMAE_plusplus(FoundationModel):
         return backbone
     
     def forward_features(self, x, **kwargs):
-            """ Forward pass through the SatMAE++ model to get feature embeddings.
-            This method handles RGB and multispectral backbones.
-            
-            Args:
-                x (torch.Tensor): The input tensor.
-                    - For RGB/multispectral models, shape should be (N, C, H, W).
-            """
-            
-            # Check if backbone is loaded
-            if self.backbone is None:
-                raise RuntimeError(
-                    "The backbone model has not been loaded. "
-                    "Please call the .load_backbone() method before the forward pass."
-                )
+        """ Forward pass through the SatMAE++ model to get feature embeddings.
+        This method handles RGB and multispectral backbones.
+        
+        Args:
+            x (torch.Tensor): The input tensor.
+                - For RGB/multispectral models, shape should be (N, C, H, W).
+        """
+        
+        # Check if backbone is loaded
+        if self.backbone is None:
+            raise RuntimeError(
+                "The backbone model has not been loaded. "
+                "Please call the .load_backbone() method before the forward pass."
+            )
 
-            # Pass the input through the backbone
-            latent, _, _ = self.backbone.forward_encoder(x, mask_ratio=0.0, **kwargs)
-            # Take the cls token as the final embedding
-            embedding = latent[:, 0, :]
+        # Pass the input through the backbone
+        latent, _, _ = self.backbone.forward_encoder(x, mask_ratio=0.0, **kwargs)
+        # Take the cls token as the final embedding
+        embedding = latent[:, 0, :]
 
-            return embedding
+        return embedding
 

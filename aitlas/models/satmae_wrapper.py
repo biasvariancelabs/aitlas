@@ -131,37 +131,37 @@ class SatMAE(FoundationModel):
         return backbone
 
     def forward_features(self, x, timestamps=None, **kwargs):
-            """ Forward pass through the SatMAE model to get feature embeddings.
-            This method handles RGB, multispectral, and temporal backbones.
-            
-            Args:
-                x (torch.Tensor): The input tensor.
-                    - For RGB/multispectral models, shape should be (N, C, H, W).
-                    - For temporal models, shape should be (N, T, C, H, W).
-                timestamps (torch.Tensor, optional): A tensor of timestamps required
-                    only for the temporal model. Defaults to None.
-            """
-            
-            # Check if backbone is loaded
-            if self.backbone is None:
-                raise RuntimeError(
-                    "The backbone model has not been loaded. "
-                    "Please call the .load_backbone() method before the forward pass."
-                )
+        """ Forward pass through the SatMAE model to get feature embeddings.
+        This method handles RGB, multispectral, and temporal backbones.
+        
+        Args:
+            x (torch.Tensor): The input tensor.
+                - For RGB/multispectral models, shape should be (N, C, H, W).
+                - For temporal models, shape should be (N, T, C, H, W).
+            timestamps (torch.Tensor, optional): A tensor of timestamps required
+                only for the temporal model. Defaults to None.
+        """
+        
+        # Check if backbone is loaded
+        if self.backbone is None:
+            raise RuntimeError(
+                "The backbone model has not been loaded. "
+                "Please call the .load_backbone() method before the forward pass."
+            )
 
-            # Check if the backbone is temporal
-            if isinstance(self.backbone, MaskedAutoencoderTemporalViT):
-                raise NotImplementedError("Loading a temporal SatMAE model is not supported due to a bug in the source code for encoding timestamps.")        
-                if timestamps is None:
-                    raise ValueError("The temporal model requires a 'timestamps' argument.")
-                
-                latent, _, _ = self.backbone.forward_encoder(x, timestamps, mask_ratio=0.0, **kwargs)
-            else: # Standard (RGB) or multispectral backbone
-                latent, _, _ = self.backbone.forward_encoder(x, mask_ratio=0.0, **kwargs)
+        # Check if the backbone is temporal
+        if isinstance(self.backbone, MaskedAutoencoderTemporalViT):
+            raise NotImplementedError("Loading a temporal SatMAE model is not supported due to a bug in the source code for encoding timestamps.")        
+            if timestamps is None:
+                raise ValueError("The temporal model requires a 'timestamps' argument.")
+            
+            latent, _, _ = self.backbone.forward_encoder(x, timestamps, mask_ratio=0.0, **kwargs)
+        else: # Standard (RGB) or multispectral backbone
+            latent, _, _ = self.backbone.forward_encoder(x, mask_ratio=0.0, **kwargs)
 
-            # Take the cls token as the final embedding
-            embedding = latent[:, 0, :]
-            return embedding
+        # Take the cls token as the final embedding
+        embedding = latent[:, 0, :]
+        return embedding
 
     # Internal methods
     def _download_from_zenodo(self, record_id: str, checkpoint_name: str, local_model_path: str):
