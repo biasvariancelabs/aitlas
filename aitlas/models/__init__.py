@@ -65,3 +65,6 @@ from. seco_wrapper import SeCo
 
 from .CACo import MoCoV2CACoModule, caco_resnet18, caco_resnet50
 from .caco_wrapper import CACo
+
+from .Prithvi import PrithviMAE, PrithviViT, prithvi_eo_v1_base, prithvi_eo_v2_tiny_tl, prithvi_eo_v2_base_tl, prithvi_eo_v2_large, prithvi_eo_v2_large_tl, prithvi_eo_v2_huge, prithvi_eo_v2_huge_tl
+from .prithvi_wrapper import Prithvi
