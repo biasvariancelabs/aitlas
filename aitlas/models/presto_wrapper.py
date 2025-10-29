@@ -31,7 +31,7 @@ class Presto(FoundationModel):
 
         # Define backbone checkpoints
         backbone_checkpoints = {
-                'presto_default': [
+            'presto_default': [
                 {
                     'filename': 'model-bfa691d3.pth',
                     'repo_id': 'torchgeo/presto',

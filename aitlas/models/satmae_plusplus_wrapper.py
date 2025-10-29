@@ -23,7 +23,7 @@ class SatMAE_plusplus(FoundationModel):
 
         # Define backbone checkpoints
         backbone_checkpoints = {
-                'mae_vit_large': [
+            'mae_vit_large': [
                 {
                     'filename': 'checkpoint_ViT-L_pretrain_fmow_rgb.pth',
                     'repo_id': 'mubashir04/checkpoint_ViT-L_pretrain_fmow_rgb',
