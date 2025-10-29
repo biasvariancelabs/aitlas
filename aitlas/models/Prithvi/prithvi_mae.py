@@ -531,7 +531,7 @@ class PrithviViT(nn.Module):
     def prepare_features_for_image_model(self, features: list[torch.Tensor]) -> list[torch.Tensor]:
         out = []
 
-        # Fix that: Get the correct spatial grid dimensions from the patch_embed
+        # Fixed that: Get the correct spatial grid dimensions from the patch_embed
         # self.patch_embed.grid_size is [t_config, h_patches, w_patches]
         h_patches = self.patch_embed.grid_size[1]
         w_patches = self.patch_embed.grid_size[2]
@@ -550,9 +550,9 @@ class PrithviViT(nn.Module):
                 x_no_token,
                 "batch (t h w) e -> batch (t e) h w",
                 e=self.embed_dim,
-                t=effective_time_dim, # This is now 38
-                h=h_patches,          # This is 14
-                w=w_patches           # This is 14
+                t=effective_time_dim,
+                h=h_patches,
+                w=w_patches
             )
             out.append(encoded)
         return out
@@ -659,7 +659,7 @@ class MAEDecoder(nn.Module):
         x = x + decoder_pos_embed[:, 1:, :]
 
         if self.temporal_encoding and temporal_coords is not None:
-            num_tokens_per_frame = x.shape[1] // sample_shape[0] # Fixed that
+            num_tokens_per_frame = x.shape[1] // self.num_frames # TODO: fix the decoder to process more than num_frames=4 time steps
             temporal_encoding = self.temporal_embed_dec(temporal_coords, num_tokens_per_frame)
             # Add temporal encoding w/o cls token
             x = x + temporal_encoding
