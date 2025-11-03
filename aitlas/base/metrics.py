@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from ignite.metrics import confusion_matrix
 from ignite.metrics.multilabel_confusion_matrix import MultiLabelConfusionMatrix
-from sklearn.metrics import average_precision_score, roc_auc_score
+from sklearn.metrics import average_precision_score, roc_auc_score, hamming_loss
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
 
@@ -181,18 +181,21 @@ class MultiLabelRunningScore(RunningScore):
         )
         self.list_y_prob = []
         self.list_y_true = []
+        self.list_y_pred = []
 
     def reset(self):
         """Reset the confusion matrix and list of probabilities"""
         self.confusion_matrix.reset()
         self.list_y_prob = []
         self.list_y_true = []
+        self.list_y_pred = []
 
     def update(self, y_true, y_pred, y_prob=None):
         """Updates stats on each batch"""
         self.confusion_matrix.update((y_pred, y_true))
         self.list_y_prob.extend(y_prob.tolist())
         self.list_y_true.extend(y_true.tolist())
+        self.list_y_pred.extend(y_pred.tolist())
 
     def map(self):
         return {
@@ -205,6 +208,13 @@ class MultiLabelRunningScore(RunningScore):
         return {
             "roc_auc_score": roc_auc_score(
                 np.array(self.list_y_true), np.array(self.list_y_prob), average=None
+            )
+        }
+
+    def hamming_loss(self):
+        return {
+            "hamming_loss": hamming_loss(
+                np.array(self.list_y_true), np.array(self.list_y_pred)
             )
         }
 

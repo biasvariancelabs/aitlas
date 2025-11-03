@@ -5,7 +5,7 @@ affine==2.4.0
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.1
 aiosignal==1.4.0
--e git+https://github.com/biasvariancelabs/aitlas@1bf6a5b4aa0174511112a05e1839ecf4835aea44#egg=aitlas
+aitlas @ file:///home/dragik/tadej/aitlas
 alabaster==0.7.16
 albucore==0.0.24
 albumentations==2.0.8
@@ -179,6 +179,7 @@ pure_eval==0.2.3
 pyarrow==21.0.0
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
+pycocotools==2.0.10
 pycparser==2.23
 pydantic==2.11.7
 pydantic_core==2.33.2
