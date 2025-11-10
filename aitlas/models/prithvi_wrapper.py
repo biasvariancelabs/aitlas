@@ -146,7 +146,7 @@ class Prithvi(FoundationModel):
         location_coords: None | torch.Tensor = None,
         segmentation_features: bool = False,
         **kwargs
-        ) -> torch.Tensor:
+    ) -> torch.Tensor:
         """ Forward pass through the Prithvi model to get feature embeddings.
         
         Args:
