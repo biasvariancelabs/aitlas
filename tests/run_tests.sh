@@ -21,5 +21,6 @@ cd tests
 #pytest -s --disable-warnings test_gassl_wrapper.py
 #pytest -s --disable-warnings test_seco_wrapper.py
 #pytest -s --disable-warnings test_caco_wrapper.py
-pytest -s --disable-warnings test_prithvi_wrapper.py
+#pytest -s --disable-warnings test_prithvi_wrapper.py
+pytest -s --disable-warnings test_galileo_wrapper.py
 #pytest test_dofa_v2_0.py
