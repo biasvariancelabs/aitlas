@@ -52,10 +52,8 @@ class So2SatDataset(BaseDataset):
     def __init__(self, config):
         super().__init__(config)
 
-        self.file_path = self.config.h5_file
-        self.data = h5py.File(
-            self.file_path
-        )  # TODO: we should close this file eventually
+        self.h5_file = self.config.h5_file
+        self.data = self.load_dataset(self.h5_file)
 
     def __getitem__(self, index):
         label = self.data["label"][index]
@@ -72,6 +70,11 @@ class So2SatDataset(BaseDataset):
             label = self.target_transform(label)
 
         return img, np.where(label == 1.0)[0][0]
+    
+    def load_dataset(self, h5_file, csv_file=None):
+        self.data = h5py.File(h5_file, 'r')
+
+        return self.data
 
     def __len__(self):
         return self.data["label"].shape[0]
