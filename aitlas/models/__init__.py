@@ -71,3 +71,6 @@ from .prithvi_wrapper import Prithvi
 
 from .Galileo import GalileoBase, Encoder, Decoder
 from .galileo_wrapper import Galileo
+
+from .Panopticon import PanopticonModule, panopticon_base
+from .panopticon_wrapper import Panopticon
