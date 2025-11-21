@@ -1,7 +1,7 @@
 from .alexnet import AlexNet, AlexNetMultiLabel
 from .cnn_rnn import CNNRNN
 from .convnext import ConvNeXtTiny, ConvNeXtTinyMultiLabel
-from .deeplabv3 import DeepLabV3
+from .deeplabv3 import DeepLabV3, DeepLabV3_13_bands
 from .deeplabv3plus import DeepLabV3Plus
 from .densenet import DenseNet161, DenseNet161MultiLabel
 from .efficientnet import (
@@ -16,18 +16,23 @@ from .efficientnet_v2 import EfficientNetV2
 from .swin_transformer import SwinTransformer, SwinTransformerMultilabel
 from .fasterrcnn import FasterRCNN
 from .fcn import FCN
+from .fpn import FPN
 from .hrnet import HRNet
 from .inceptiontime import InceptionTime
 from .lstm import LSTM
 from .mlp_mixer import MLPMixer, MLPMixerMultilabel
 from .msresnet import MSResNet
 from .omniscalecnn import OmniScaleCNN
+from .pspnet import PSPNet
 from .resnet import ResNet50, ResNet50MultiLabel, ResNet152, ResNet152MultiLabel
+from .segformer import SegFormer
 from .shallow import ShallowCNNNet, ShallowCNNNetMultilabel
 from .starrnn import StarRNN
 from .tempcnn import TempCNN
 from .transformer import TransformerModel
 from .unet import Unet
+from .unet_plusplus import UnetPlusPlus
+from .upernet import UPerNet
 
 from .unet_efficientnet import UNetEfficientNet
 from .vgg import VGG16, VGG19, VGG16MultiLabel, VGG19MultiLabel
