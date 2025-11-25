@@ -93,7 +93,7 @@ class Panopticon(FoundationModel):
         Args:
             x_dict (dict): Dictionary of input tensors with keys:
                 imgs (torch.Tensor): Tensor of shape (B, C, H, W).
-                chn_ids (torch.Tensor): Tensor of shape (B,C) encoding the spectral information
+                chn_ids (torch.Tensor): Tensor of shape (B, C) encoding the spectral information
                          of each channel. For optical channels, this is the wavelength in
                          nanometers. For SAR channels, this is a negative integer as outlined
                          in https://github.com/Panopticon-FM/panopticon/blob/main/dinov2/configs/data/satellites/sentinel1.yaml
