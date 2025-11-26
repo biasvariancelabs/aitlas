@@ -79,3 +79,6 @@ from .galileo_wrapper import Galileo
 
 from .Panopticon import PanopticonModule, panopticon_base
 from .panopticon_wrapper import Panopticon
+
+from .CopernicusFM import CopernicusFMModule, copernicusfm_base, copernicusfm_large
+from .copernicusfm_wrapper import CopernicusFM
