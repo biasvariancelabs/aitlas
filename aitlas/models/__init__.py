@@ -82,3 +82,6 @@ from .panopticon_wrapper import Panopticon
 
 from .CopernicusFM import CopernicusFMModule, copernicusfm_base, copernicusfm_large
 from .copernicusfm_wrapper import CopernicusFM
+
+from .CROMA import CROMAModule, croma_base, croma_large
+from .croma_wrapper import CROMA
