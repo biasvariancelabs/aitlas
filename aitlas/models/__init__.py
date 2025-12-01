@@ -85,3 +85,6 @@ from .copernicusfm_wrapper import CopernicusFM
 
 from .CROMA import CROMAModule, croma_base, croma_large
 from .croma_wrapper import CROMA
+
+from .TerraFM import TerraFMModule, terrafm_base, terrafm_large
+from .terrafm_wrapper import TerraFM
