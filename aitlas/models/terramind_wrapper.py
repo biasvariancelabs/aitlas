@@ -5,7 +5,14 @@ from torch import Tensor
 from typing import Sequence
 from huggingface_hub import hf_hub_download
 from ..base.foundation import FoundationModel
-from .TerraMind import TerraMindModule, terramind_v1_tiny, terramind_v1_small, terramind_v1_base, terramind_v1_large
+from .TerraMind import (
+    TerraMindModule, 
+    terramind_v1_tiny, 
+    terramind_v1_small, 
+    terramind_v1_base, 
+    terramind_v1_large,
+    checkpoint_filter_fn,
+)
 
 class TerraMind(FoundationModel):
     """AiTLAS wrapper class for TerraMind model
@@ -75,7 +82,8 @@ class TerraMind(FoundationModel):
                             self.config.local_model_path = hf_hub_download(repo_id=repo_id, filename=checkpoint_name, local_dir=os.path.dirname(self.config.local_model_path))                           
                             checkpoint = torch.load(self.config.local_model_path, weights_only=False)
                             backbone = globals()[self.config.backbone_name]()
-                            msg = backbone.load_state_dict(checkpoint, strict=False)
+                            checkpoint = checkpoint_filter_fn(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind
+                            msg = backbone.load_state_dict(checkpoint, strict=True)
                             print("Successfully loaded checkpoint:", checkpoint_name)
                 else:
                     print(f"Loading weights from the provided local path: {self.config.local_model_path}")
@@ -92,7 +100,8 @@ class TerraMind(FoundationModel):
                                 self.backbone_name = name
                                 break
                     backbone = globals()[self.backbone_name]()
-                    msg = backbone.load_state_dict(checkpoint, strict=False)
+                    checkpoint = checkpoint_filter_fn(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind
+                    msg = backbone.load_state_dict(checkpoint, strict=True)
                     print("Successfully loaded checkpoint:", checkpoint_name)
         else: # Load model without pretrained weights
             raise NotImplementedError("Loading model without pretrained weights is not supported.")

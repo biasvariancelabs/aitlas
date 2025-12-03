@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 from torch import nn
 from .tm_utils import LayerNorm
@@ -5,6 +6,7 @@ from .terramind import TerraMindModule
 from .terramind_vit import TerraMindViT
 from .terramind_tim import TerraMindTiM
 
+logger = logging.getLogger("terramind")
 
 PRETRAINED_BANDS = {
     "untok_sen2l2a@224": [
@@ -84,6 +86,28 @@ v1_pretraining_std = {
     }
 }'''
 
+def checkpoint_filter_fn(state_dict, model: TerraMindViT | TerraMindModule) -> dict:
+    """Manually filter pre-trained weights for TerraMind to enable strict weight loading."""
+
+    model_state_dict = model.state_dict()
+    clean_dict = {}
+    for k, v in state_dict.items():
+        if k in model_state_dict:
+            if v.shape == model_state_dict[k].shape:
+                clean_dict[k] = v
+            else:
+                logger.warning(f"Shape for {k} ({list(v.shape)}) does not match model weights "
+                               f"({list(model_state_dict[k].shape)}), skipping weights.")
+
+    missing_params = set(model_state_dict.keys()) - set(clean_dict.keys())
+    for k in missing_params:
+        if not k.startswith('tokenizer'):
+            logger.warning(f"Weights for {k} are missing in state dict, using random initialization.")
+        clean_dict[k] = model_state_dict[k]
+
+    state_dict = clean_dict
+
+    return state_dict
 
 def terramind_v1_tiny(**kwargs):
     model = TerraMindViT(
