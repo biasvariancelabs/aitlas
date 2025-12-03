@@ -88,3 +88,5 @@ from .croma_wrapper import CROMA
 
 from .TerraFM import TerraFMModule, terrafm_base, terrafm_large
 from .terrafm_wrapper import TerraFM
+
+from .unet_change_detection import UnetChangeDetection
