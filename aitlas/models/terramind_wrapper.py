@@ -6,7 +6,6 @@ from typing import Sequence
 from huggingface_hub import hf_hub_download
 from ..base.foundation import FoundationModel
 from .TerraMind import (
-    TerraMindModule, 
     terramind_v1_tiny, 
     terramind_v1_small, 
     terramind_v1_base, 

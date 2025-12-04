@@ -5,6 +5,15 @@ from .tm_utils import LayerNorm
 from .terramind import TerraMindModule
 from .terramind_vit import TerraMindViT
 from .terramind_tim import TerraMindTiM
+from ..tokenizer.tokenizer_register import (
+    terramind_v1_tokenizer_s2l2a,
+    terramind_v1_tokenizer_s1rtc,
+    terramind_v1_tokenizer_s1grd,
+    terramind_v1_tokenizer_dem,
+    terramind_v1_tokenizer_lulc,
+    terramind_v1_tokenizer_ndvi,
+    terramind_v1_coords_tokenizer,
+)
 
 logger = logging.getLogger("terramind")
 
@@ -74,7 +83,7 @@ v1_pretraining_std = {
     "tok_ndvi@224": [0.322],
 }
 
-'''tokenizer_dict = {
+tokenizer_dict = {
     "v1": {
         "tok_sen2l2a@224": terramind_v1_tokenizer_s2l2a,
         "tok_sen1rtc@224": terramind_v1_tokenizer_s1rtc,
@@ -84,7 +93,7 @@ v1_pretraining_std = {
         "tok_ndvi@224": terramind_v1_tokenizer_ndvi,
         "coords": terramind_v1_coords_tokenizer,
     }
-}'''
+}
 
 def checkpoint_filter_fn(state_dict, model: TerraMindViT | TerraMindModule) -> dict:
     """Manually filter pre-trained weights for TerraMind to enable strict weight loading."""
@@ -122,7 +131,7 @@ def terramind_v1_tiny(**kwargs):
         norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
         act_layer=nn.GELU,
         gated_mlp=False,
-        #pretrained_bands=PRETRAINED_BANDS, TODO: Implement this and checkpoint_filter_fn_generate
+        #pretrained_bands=PRETRAINED_BANDS,
         #tokenizer_dict=tokenizer_dict['v1'],
         #**kwargs
     )

@@ -22,7 +22,7 @@ from functools import partial
 
 from .decoder_embeddings import ImageTokenDecoderEmbedding, SequenceDecoderEmbedding
 from .encoder_embeddings import ImageEncoderEmbedding, ImageTokenEncoderEmbedding, SequenceEncoderEmbedding
-from .utils import generate_uint15_hash
+from ..utils import generate_uint15_hash
 
 MODALITY_INFO = {
      'sen1grd@264': {

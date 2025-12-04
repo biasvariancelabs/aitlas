@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Navigate to the aitlas project directory
-cd /home/dragik/jan/aitlas_jan
+cd /home/dragik/tadej/aitlas
 
 # Install the package in editable mode from the current directory
 # This ensures that any changes to the source code are reflected immediately
@@ -26,7 +26,7 @@ cd tests
 #pytest -s --disable-warnings test_panopticon_wrapper.py
 #pytest -s --disable-warnings test_copernicusfm_wrapper.py
 #pytest -s --disable-warnings test_croma_wrapper.py
-#pytest -s --disable-warnings test_terrafm_wrapper.py
+pytest -s --disable-warnings test_terrafm_wrapper.py
 #pytest test_dofa_v2_0.py
 #pytest -s --disable-warnings test_unet_change_detection.py
-pytest -s --disable-warnings test_change_detection.py
+#pytest -s --disable-warnings test_change_detection.py
