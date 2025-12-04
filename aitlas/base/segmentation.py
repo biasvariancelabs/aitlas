@@ -34,9 +34,13 @@ class CombinedFocalDiceLoss(nn.Module):
         self.weight_dice = weight_dice
 
     def forward(self, y_pred, y_true):
-        y_true_argmax = torch.argmax(y_true, dim=1)
-        focal = self.focal_loss(y_pred, y_true_argmax)
-        dice = self.dice_loss(y_pred, y_true_argmax)
+        if self.focal_loss.mode == "multiclass":
+            # if y_true is one-hot, convert to class indices
+            if y_true.dim() == 4 and y_true.shape[1] > 1:
+                y_true = torch.argmax(y_true, dim=1)
+        
+        focal = self.focal_loss(y_pred, y_true)
+        dice = self.dice_loss(y_pred, y_true)
         return self.weight_focal * focal + self.weight_dice * dice
 
 class BaseSegmentationClassifier(BaseModel):
@@ -47,12 +51,11 @@ class BaseSegmentationClassifier(BaseModel):
 
     def __init__(self, config):
         super().__init__(config)
-
+        self.mode = self.config.mode
         self.running_metrics = SegmentationRunningScore(self.num_classes, self.device)
 
     def get_predicted(self, outputs, threshold=None):
         """Get predicted classes from the model outputs.
-
         :param outputs: Model outputs with shape (batch_size, num_classes, H, W).
         :type outputs: torch.Tensor
         :param threshold: The threshold for classification, defaults to None. Not used in multiclass.
@@ -60,11 +63,19 @@ class BaseSegmentationClassifier(BaseModel):
         :return: tuple containing the probabilities and predicted classes
         :rtype: tuple
         """
-        num_classes = outputs.shape[1]
-        predicted_probs = torch.softmax(outputs, dim=1)
-        predicted = torch.argmax(predicted_probs, dim=1)
-        predicted_onehot = F.one_hot(predicted, num_classes=num_classes).permute(0, 3, 1, 2)
-        return predicted_probs, predicted_onehot
+        if self.mode == "binary":
+            predicted_probs = torch.sigmoid(outputs)
+            predicted = (predicted_probs > (threshold or self.config.threshold)).long()
+        elif self.mode == "multilabel":
+            predicted_probs = torch.sigmoid(outputs)
+            predicted = (predicted_probs > (threshold or self.config.threshold)).long()
+        else:  # multiclass
+            num_classes = outputs.shape[1]
+            predicted_probs = torch.softmax(outputs, dim=1)
+            predicted = torch.argmax(predicted_probs, dim=1)
+            predicted = F.one_hot(predicted, num_classes=num_classes).permute(0, 3, 1, 2)
+
+        return predicted_probs, predicted
 
     def load_optimizer(self):
         """Load the optimizer"""
@@ -72,7 +83,7 @@ class BaseSegmentationClassifier(BaseModel):
 
     def load_criterion(self):
         """Load the loss function"""
-        return CombinedFocalDiceLoss()
+        return CombinedFocalDiceLoss(mode=self.mode)
 
     def load_lr_scheduler(self, optimizer):
         """Load the learning rate scheduler"""

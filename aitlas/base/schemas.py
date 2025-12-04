@@ -167,6 +167,12 @@ class BaseSegmentationClassifierSchema(BaseClassifierSchema):
         description="Classes of metrics you want to calculate",
         example=["accuracy", "precision", "recall", "f1_score", "iou"],
     )
+    mode = fields.String(
+        missing="multiclass",
+        description="Segmentation mode: 'binary', 'multiclass', or 'multilabel'",
+        validate=validate.OneOf(["binary", "multiclass", "multilabel"]),
+        example="multiclass",
+    )
 
 
 class BaseObjectDetectionSchema(BaseClassifierSchema):
