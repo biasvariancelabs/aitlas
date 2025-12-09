@@ -19,33 +19,33 @@ logger = logging.getLogger("terramind")
 
 PRETRAINED_BANDS = {
     "untok_sen2l2a@224": [
-        "COASTAL_AEROSOL",
-        "BLUE",
-        "GREEN",
-        "RED",
-        "RED_EDGE_1",
-        "RED_EDGE_2",
-        "RED_EDGE_3",
-        "NIR_BROAD",
-        "NIR_NARROW",
-        "WATER_VAPOR",
-        "SWIR_1",
-        "SWIR_2",
+        "B01",
+        "B02",
+        "B03",
+        "B04",
+        "B05",
+        "B06",
+        "B07",
+        "B08",
+        "B8A",
+        "B09",
+        "B11",
+        "B12",
     ],
     "untok_sen2l1c@224": [
-        "COASTAL_AEROSOL",
-        "BLUE",
-        "GREEN",
-        "RED",
-        "RED_EDGE_1",
-        "RED_EDGE_2",
-        "RED_EDGE_3",
-        "NIR_BROAD",
-        "NIR_NARROW",
-        "WATER_VAPOR",
-        "CIRRUS",
-        "SWIR_1",
-        "SWIR_2",
+        "B01",
+        "B02",
+        "B03",
+        "B04",
+        "B05",
+        "B06",
+        "B07",
+        "B08",
+        "B8A",
+        "B09",
+        "B10",
+        "B11",
+        "B12",
     ],
     "untok_sen2rgb@224": ["RED", "GREEN", "BLUE"],
     "untok_sen1grd@224": ["VV", "VH"],
@@ -95,6 +95,48 @@ tokenizer_dict = {
     }
 }
 
+def select_modality_patch_embed_weights(model: TerraMindViT, bands: dict[str, list], pretrained_bands: dict[str, list]):
+    """
+    Update patch embeddings weights for each provided modality by selecting the pretrained weights for each band.
+    Args:
+         model (TerraMindViT): model
+         bands (dict[str, list]): Bands with format {<modality>: [<band names>]}
+         pretrained_bands (dict[str, list]): Pretrained bands of the model with format {<modality>: [<band names>]}
+    """
+    # Update modality names to match model layer names
+    bands = {model.mod_name_mapping[k]: v for k, v in bands.items()}
+    for mod, mod_bands in bands.items():
+        if mod not in pretrained_bands:
+            logger.info(f"Cannot load band weights for modality {mod}, not found in pretrained bands.")
+            continue
+
+        pixel_count = model.encoder_embeddings[mod].patch_size[0] * model.encoder_embeddings[mod].patch_size[1]
+
+        pretrained_weight = model.encoder_embeddings[mod].proj.weight.clone()
+        # Init new projection layer with updated number of channels
+        model.encoder_embeddings[mod].proj = nn.Linear(
+            pixel_count * len(mod_bands),
+            model.encoder_embeddings[mod].dim_tokens,
+            bias=False
+        )
+        temp_weight = model.encoder_embeddings[mod].proj.weight.clone()
+
+        # Reshape to [dim, pixel, band]
+        temp_weight = temp_weight.view(temp_weight.shape[0], pixel_count, -1)
+        pretrained_weight = pretrained_weight.view(pretrained_weight.shape[0], pixel_count, -1)
+
+        # Copy weights of bands
+        for index, band in enumerate(mod_bands):
+            if band in pretrained_bands[mod]:
+                logging.info(f"Loaded weights for {band} in position {index} of patch embed")
+                pretrained_index = pretrained_bands[mod].index(band)
+                temp_weight[..., index] = pretrained_weight[..., pretrained_index]
+
+        # Update model weights
+        model.encoder_embeddings[mod].proj.weight = nn.Parameter(temp_weight.view(temp_weight.shape[0], -1))
+
+    return model
+
 def checkpoint_filter_fn(state_dict, model: TerraMindViT | TerraMindModule) -> dict:
     """Manually filter pre-trained weights for TerraMind to enable strict weight loading."""
 
@@ -118,6 +160,8 @@ def checkpoint_filter_fn(state_dict, model: TerraMindViT | TerraMindModule) -> d
 
     return state_dict
 
+
+# Models
 def terramind_v1_tiny(**kwargs):
     model = TerraMindViT(
         encoder_depth=12,
@@ -131,9 +175,8 @@ def terramind_v1_tiny(**kwargs):
         norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
         act_layer=nn.GELU,
         gated_mlp=False,
-        #pretrained_bands=PRETRAINED_BANDS,
-        #tokenizer_dict=tokenizer_dict['v1'],
-        #**kwargs
+        tokenizer_dict=tokenizer_dict['v1'],
+        **kwargs
     )
     return model
 
@@ -150,9 +193,8 @@ def terramind_v1_small(**kwargs):
         norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
         act_layer=nn.GELU,
         gated_mlp=False,
-        #pretrained_bands=PRETRAINED_BANDS, TODO
-        #tokenizer_dict=tokenizer_dict['v1'],
-        #**kwargs
+        tokenizer_dict=tokenizer_dict['v1'],
+        **kwargs
     )
     return model
 
@@ -169,9 +211,8 @@ def terramind_v1_base(**kwargs):
         norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
         act_layer=nn.SiLU,
         gated_mlp=True,
-        #pretrained_bands=PRETRAINED_BANDS, TODO
-        #tokenizer_dict=tokenizer_dict['v1'],
-        #**kwargs
+        tokenizer_dict=tokenizer_dict['v1'],
+        **kwargs
     )
     return model
 
@@ -188,8 +229,7 @@ def terramind_v1_large(**kwargs):
         norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
         act_layer=nn.SiLU,
         gated_mlp=True,
-        #pretrained_bands=PRETRAINED_BANDS, TODO
-        #tokenizer_dict=tokenizer_dict["v1"],
-        #**kwargs
+        tokenizer_dict=tokenizer_dict["v1"],
+        **kwargs
     )
     return model

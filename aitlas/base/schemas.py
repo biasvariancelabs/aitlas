@@ -244,5 +244,12 @@ class BaseFoundationModelSchema(BaseModelSchema):
     flash_attn = fields.Bool(
         missing=False, description="Whether to use flash attention (if cuda and flash attention are available)"
     )
+    # Only for TerraMind
+    modalities = fields.List(
+        fields.String,
+        missing=None,
+        description="List of modalities to be used as input.",
+        example=['S2L2A', 'S2L1C', 'RGB', 'S1GRD', 'S1RTC', 'DEM']
+    )
 
     pass

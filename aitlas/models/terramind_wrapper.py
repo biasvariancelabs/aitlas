@@ -11,6 +11,8 @@ from .TerraMind import (
     terramind_v1_base, 
     terramind_v1_large,
     checkpoint_filter_fn,
+    select_modality_patch_embed_weights,
+    PRETRAINED_BANDS
 )
 
 class TerraMind(FoundationModel):
@@ -80,7 +82,7 @@ class TerraMind(FoundationModel):
                             repo_id = temp_checkpoint_name['repo_id']
                             self.config.local_model_path = hf_hub_download(repo_id=repo_id, filename=checkpoint_name, local_dir=os.path.dirname(self.config.local_model_path))                           
                             checkpoint = torch.load(self.config.local_model_path, weights_only=False)
-                            backbone = globals()[self.config.backbone_name]()
+                            backbone = globals()[self.config.backbone_name](modalities=self.config.modalities)
                             checkpoint = checkpoint_filter_fn(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind
                             msg = backbone.load_state_dict(checkpoint, strict=True)
                             print("Successfully loaded checkpoint:", checkpoint_name)
@@ -98,7 +100,7 @@ class TerraMind(FoundationModel):
                             if checkpoint_name in filenames:
                                 self.backbone_name = name
                                 break
-                    backbone = globals()[self.backbone_name]()
+                    backbone = globals()[self.backbone_name](modalities=self.config.modalities)
                     checkpoint = checkpoint_filter_fn(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind
                     msg = backbone.load_state_dict(checkpoint, strict=True)
                     print("Successfully loaded checkpoint:", checkpoint_name)
@@ -111,6 +113,25 @@ class TerraMind(FoundationModel):
 
         # This method MUST return the loaded backbone object for the parent class.
         return backbone
+
+
+    def select_input_bands(self, 
+        bands: dict[str, Sequence[str]],
+        pretrained_bands: dict[str, Sequence[str]] = PRETRAINED_BANDS
+    ) -> None:
+        """ Select input bands for each modality and update the patch embedding weights accordingly.
+
+        Args:
+            bands (dict[str, Sequence[str]]): Bands with format {<modality>: [<band names>]}
+
+        """
+
+        # Update patch embeddings weights for each provided modality by selecting the pretrained weights for each band
+        self.backbone = select_modality_patch_embed_weights(
+            model=self.backbone,
+            bands=bands,
+            pretrained_bands=pretrained_bands
+        )
 
 
     def forward_features(self, 

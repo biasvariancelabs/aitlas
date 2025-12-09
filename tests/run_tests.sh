@@ -26,7 +26,8 @@ cd tests
 #pytest -s --disable-warnings test_panopticon_wrapper.py
 #pytest -s --disable-warnings test_copernicusfm_wrapper.py
 #pytest -s --disable-warnings test_croma_wrapper.py
-pytest -s --disable-warnings test_terrafm_wrapper.py
+#pytest -s --disable-warnings test_terrafm_wrapper.py
+pytest -s --disable-warnings test_terramind_wrapper.py
 #pytest test_dofa_v2_0.py
 #pytest -s --disable-warnings test_unet_change_detection.py
 #pytest -s --disable-warnings test_change_detection.py
