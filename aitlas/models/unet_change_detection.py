@@ -26,35 +26,29 @@ class DecoderBlock(nn.Module):
     def forward(self, x, skip=None):
         # Upsample the input (x)
         x = F.interpolate(x, scale_factor=2, mode="nearest")
-        
+
         # Concatenate with skip connection if provided
         if skip is not None:
             x = torch.cat([x, skip], dim=1)
-            
+
         x = self.conv1(x)
         x = self.conv2(x)
         return x
 
 
-class UnetChangeDetection(BaseChangeDetection):
+class SiameseUnet(nn.Module):
     """
     Siamese U-Net for change detection.
     Based on: https://github.com/likyoo/change_detection.pytorch implementation of U-Net for change detection.
-    
-    Faithful to the change_detection.pytorch library structure:
-    - Uses ResNet encoder (Siamese)
-    - Uses 5 Decoder blocks with BatchNorm
-    - Concatenation fusion
     """
-
-    def __init__(self, config):
-        super().__init__(config)
-        self.num_classes = self.config.num_classes
-        self.in_channels = 3 #self.config.in_channels
+    def __init__(self, in_channels, num_classes, pretrained):
+        super().__init__()
+        self.in_channels = in_channels
+        self.num_classes = num_classes
 
         # --- Encoder Definition ---
         # Initialize standard model
-        self.encoder = models.resnet50(pretrained=self.config.pretrained)
+        self.encoder = models.resnet50(pretrained=pretrained)
         
         # Patch first layer if input is not RGB
         if self.in_channels != 3:
@@ -83,9 +77,9 @@ class UnetChangeDetection(BaseChangeDetection):
         self.blocks = nn.ModuleList()
         
         # Head (Input to Block 0) is f5 * 2 (concatenated)
-        head_channels = encoder_channels[-1] * 2 
+        head_channels = encoder_channels[-1] * 2
         
-        # Dynamically build blocks using the inferred encoder_channels list
+         # Dynamically build blocks using the inferred encoder_channels list
         self.blocks.append(DecoderBlock(head_channels, encoder_channels[3] * 2, decoder_channels[0]))
         self.blocks.append(DecoderBlock(decoder_channels[0], encoder_channels[2] * 2, decoder_channels[1]))
         self.blocks.append(DecoderBlock(decoder_channels[1], encoder_channels[1] * 2, decoder_channels[2]))
@@ -158,3 +152,20 @@ class UnetChangeDetection(BaseChangeDetection):
         x = self.segmentation_head(x)
         
         return x
+
+
+class UnetChangeDetection(BaseChangeDetection):
+    """
+    Wrapper for the Siamese U-Net for change detection.
+    """
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.model = SiameseUnet(
+            in_channels=3, #self.config.in_channels,
+            num_classes=self.config.num_classes,
+            pretrained=self.config.pretrained
+        )
+
+    def forward(self, x1, x2):
+        return self.model(x1, x2)
