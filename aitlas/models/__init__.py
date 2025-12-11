@@ -92,4 +92,6 @@ from .terrafm_wrapper import TerraFM
 from .unet_change_detection import UnetChangeDetection
 
 from .TerraMind import terramind_v1_tiny, terramind_v1_small, terramind_v1_base, terramind_v1_large
+from .TerraMind import terramind_v1_tiny_generate, terramind_v1_small_generate, terramind_v1_base_generate, terramind_v1_large_generate
+
 from .terramind_wrapper import TerraMind

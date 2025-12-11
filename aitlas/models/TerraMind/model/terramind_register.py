@@ -4,6 +4,7 @@ from torch import nn
 from .tm_utils import LayerNorm
 from .terramind import TerraMindModule
 from .terramind_vit import TerraMindViT
+from .terramind_generation import TerraMindGeneration
 from .terramind_tim import TerraMindTiM
 from ..tokenizer.tokenizer_register import (
     terramind_v1_tokenizer_s2l2a,
@@ -160,6 +161,31 @@ def checkpoint_filter_fn(state_dict, model: TerraMindViT | TerraMindModule) -> d
 
     return state_dict
 
+def checkpoint_filter_fn_generate(state_dict, model: TerraMindGeneration) -> dict:
+    """Manually filter pre-trained weights for TerraMind to enable strict weight loading."""
+
+    model_state_dict = model.state_dict()
+    clean_dict = {}
+    for k, v in state_dict.items():
+        encdec_k = "sampler.model." + k
+        if encdec_k in model_state_dict:
+            if v.shape == model_state_dict[encdec_k].shape:
+                clean_dict[encdec_k] = v
+            else:
+                logger.warning(f"Shape for {k} ({list(v.shape)}) does not match model weights "
+                               f"({list(model_state_dict[encdec_k].shape)}), skipping weights.")
+
+    missing_params = set(model_state_dict.keys()) - set(clean_dict.keys())
+    for k in missing_params:
+        if not k.startswith("tokenizer"):
+            # No warning because tokenizer weights are loaded separately
+            logger.warning(f"Weights for {k} are missing in state dict, using random initialization.")
+        clean_dict[k] = model_state_dict[k]
+
+    state_dict = clean_dict
+
+    return state_dict
+
 
 # Models
 def terramind_v1_tiny(**kwargs):
@@ -230,6 +256,90 @@ def terramind_v1_large(**kwargs):
         act_layer=nn.SiLU,
         gated_mlp=True,
         tokenizer_dict=tokenizer_dict["v1"],
+        **kwargs
+    )
+    return model
+
+def terramind_v1_tiny_generate(**kwargs):
+    model = TerraMindGeneration(
+        encoder_depth=12,
+        decoder_depth=4,
+        dim=192,
+        num_heads=3,
+        mlp_ratio=4,
+        qkv_bias=True,
+        proj_bias=True,
+        mlp_bias=True,
+        num_register_tokens=0,
+        norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
+        act_layer=nn.GELU,
+        gated_mlp=False,
+        pretraining_mean=v1_pretraining_mean,
+        pretraining_std=v1_pretraining_std,
+        tokenizer_dict=tokenizer_dict['v1'],
+        **kwargs
+    )
+    return model
+
+def terramind_v1_small_generate(**kwargs):
+    model = TerraMindGeneration(
+        encoder_depth=12,
+        decoder_depth=6,
+        dim=384,
+        num_heads=6,
+        mlp_ratio=4,
+        qkv_bias=True,
+        proj_bias=True,
+        mlp_bias=True,
+        num_register_tokens=0,
+        norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
+        act_layer=nn.GELU,
+        gated_mlp=False,
+        pretraining_mean=v1_pretraining_mean,
+        pretraining_std=v1_pretraining_std,
+        tokenizer_dict=tokenizer_dict['v1'],
+        **kwargs
+    )
+    return model
+
+def terramind_v1_base_generate(**kwargs):
+    model = TerraMindGeneration(
+        encoder_depth=12,
+        decoder_depth=12,
+        dim=768,
+        num_heads=12,
+        mlp_ratio=4,
+        qkv_bias=False,
+        proj_bias=False,
+        mlp_bias=False,
+        num_register_tokens=0,
+        norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
+        act_layer=nn.SiLU,
+        gated_mlp=True,
+        pretraining_mean=v1_pretraining_mean,
+        pretraining_std=v1_pretraining_std,
+        tokenizer_dict=tokenizer_dict['v1'],
+        **kwargs
+    )
+    return model
+
+def terramind_v1_large_generate(**kwargs):
+    model = TerraMindGeneration(
+        encoder_depth=24,
+        decoder_depth=24,
+        dim=1024,
+        num_heads=16,
+        mlp_ratio=4,
+        qkv_bias=False,
+        proj_bias=False,
+        mlp_bias=False,
+        num_register_tokens=0,
+        norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
+        act_layer=nn.SiLU,
+        gated_mlp=True,
+        pretraining_mean=v1_pretraining_mean,
+        pretraining_std=v1_pretraining_std,
+        tokenizer_dict=tokenizer_dict['v1'],
         **kwargs
     )
     return model

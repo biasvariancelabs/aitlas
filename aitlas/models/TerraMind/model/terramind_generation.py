@@ -240,8 +240,14 @@ class TerraMindGeneration(nn.Module):
         if standardize:
             for mod, value in d.items():
                 if self.mod_name_mapping[mod] in self.pretraining_mean:
-                    d[mod] = ((value - self.pretraining_mean[self.mod_name_mapping[mod]]) /
-                              self.pretraining_std[self.mod_name_mapping[mod]])
+                    # Get the mean and std values
+                    mean_tensor = self.pretraining_mean[self.mod_name_mapping[mod]]
+                    std_tensor = self.pretraining_std[self.mod_name_mapping[mod]]                   
+                    # Send to device
+                    mean_tensor = mean_tensor.to(value.device)
+                    std_tensor = std_tensor.to(value.device)
+                    # Normalize
+                    d[mod] = (value - mean_tensor) / std_tensor
 
         # Define the initial input
         input_dict = {}
@@ -353,7 +359,9 @@ class TerraMindGeneration(nn.Module):
         if standardize:
             for mod, value in out.items():
                 if self.mod_name_mapping[mod] in self.pretraining_mean:
-                    out[mod] = (value * self.pretraining_std[self.mod_name_mapping[mod]] +
-                                self.pretraining_mean[self.mod_name_mapping[mod]])
+                    mean_tensor = self.pretraining_mean[self.mod_name_mapping[mod]].to(value.device)
+                    std_tensor = self.pretraining_std[self.mod_name_mapping[mod]].to(value.device)
+                    # Apply de-standardization
+                    out[mod] = value * std_tensor + mean_tensor
 
         return out

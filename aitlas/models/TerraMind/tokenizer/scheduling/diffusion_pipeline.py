@@ -23,7 +23,7 @@ from diffusers import DiffusionPipeline
 from diffusers.schedulers.scheduling_utils import SchedulerMixin
 from tqdm import tqdm
 
-from  ...utils.to_2tuple
+from  ...utils import to_2tuple
 
 
 def rescale_noise_cfg(noise_cfg, noise_pred_conditional, guidance_rescale=0.0):

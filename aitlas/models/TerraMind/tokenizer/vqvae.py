@@ -41,7 +41,7 @@ from .scheduling import (
     PipelineCond,
 )
 
-from ...utils import denormalize
+from ..utils import denormalize
 
 try:
     from diffusers.schedulers.scheduling_utils import SchedulerMixin

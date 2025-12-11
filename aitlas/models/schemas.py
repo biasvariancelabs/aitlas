@@ -267,3 +267,17 @@ class PrestoSchema(BaseFoundationModelSchema):
         load_default=6,
         description="Default starting month (0-11) for time-series encoding if not provided in the input sample.",
     )
+
+class TerraMindSchema(BaseFoundationModelSchema):
+    modalities = fields.List(
+        fields.String,
+        missing=None,
+        description="List of modalities to be used as input.",
+        example=['S2L2A', 'S2L1C', 'RGB', 'S1GRD', 'S1RTC', 'DEM']
+    )
+    output_modalities = fields.List(
+        fields.String,
+        missing=None,
+        description="List of modalities to be used as output.",
+        example=['S2L2A', 'S2L1C', 'RGB', 'S1GRD', 'S1RTC', 'DEM']
+    )

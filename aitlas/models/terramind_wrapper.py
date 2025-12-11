@@ -4,13 +4,19 @@ import torch.nn as nn
 from torch import Tensor
 from typing import Sequence
 from huggingface_hub import hf_hub_download
+from .schemas import TerraMindSchema
 from ..base.foundation import FoundationModel
 from .TerraMind import (
     terramind_v1_tiny, 
     terramind_v1_small, 
     terramind_v1_base, 
     terramind_v1_large,
+    terramind_v1_tiny_generate, 
+    terramind_v1_small_generate, 
+    terramind_v1_base_generate, 
+    terramind_v1_large_generate,
     checkpoint_filter_fn,
+    checkpoint_filter_fn_generate,
     select_modality_patch_embed_weights,
     PRETRAINED_BANDS
 )
@@ -22,6 +28,7 @@ class TerraMind(FoundationModel):
     """
 
     name = "TerraMind"
+    schema = TerraMindSchema
 
     def __init__(self, config):    
         super().__init__(config)
@@ -36,28 +43,56 @@ class TerraMind(FoundationModel):
                 {
                     'filename': 'TerraMind_v1_tiny.pt', 
                     'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-tiny',
-                    'description': 'TerraMind foundation model with a ViT-tiny backbone'
+                    'description': 'TerraMind encoder with a ViT-tiny backbone'
                 }
             ],
             'terramind_v1_small': [
                 {
                     'filename': 'TerraMind_v1_small.pt', 
                     'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-small',
-                    'description': 'TerraMind foundation model with a ViT-small backbone'
+                    'description': 'TerraMind encoder with a ViT-small backbone'
                 }
             ],
             'terramind_v1_base': [
                 {
                     'filename': 'TerraMind_v1_base.pt', 
                     'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-base',
-                    'description': 'TerraMind foundation model with a ViT-base backbone'
+                    'description': 'TerraMind encoder with a ViT-base backbone'
                 }
             ],
             'terramind_v1_large': [
                 {
                     'filename': 'TerraMind_v1_large.pt', 
                     'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-large',
-                    'description': 'TerraMind foundation model with a ViT-large backbone'
+                    'description': 'TerraMind encoder with a ViT-large backbone'
+                }
+            ],
+            'terramind_v1_tiny_generate': [
+                {
+                    'filename': 'TerraMind_v1_tiny.pt', 
+                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-tiny',
+                    'description': 'TerraMind any-to-any generation model with a ViT-tiny backbone'
+                }
+            ],
+            'terramind_v1_small_generate': [
+                {
+                    'filename': 'TerraMind_v1_small.pt', 
+                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-small',
+                    'description': 'TerraMind any-to-any generation model with a ViT-small backbone'
+                }
+            ],
+            'terramind_v1_base_generate': [
+                {
+                    'filename': 'TerraMind_v1_base.pt', 
+                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-base',
+                    'description': 'TerraMind any-to-any generation model with a ViT-base backbone'
+                }
+            ],
+            'terramind_v1_large_generate': [
+                {
+                    'filename': 'TerraMind_v1_large.pt', 
+                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-large',
+                    'description': 'TerraMind any-to-any generation model with a ViT-large backbone'
                 }
             ],
         }
@@ -82,8 +117,13 @@ class TerraMind(FoundationModel):
                             repo_id = temp_checkpoint_name['repo_id']
                             self.config.local_model_path = hf_hub_download(repo_id=repo_id, filename=checkpoint_name, local_dir=os.path.dirname(self.config.local_model_path))                           
                             checkpoint = torch.load(self.config.local_model_path, weights_only=False)
-                            backbone = globals()[self.config.backbone_name](modalities=self.config.modalities)
-                            checkpoint = checkpoint_filter_fn(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind
+                            # Check which TerraMind model type to use
+                            if 'generate' in self.config.backbone_name:
+                                backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, output_modalities=self.config.output_modalities)
+                                checkpoint = checkpoint_filter_fn_generate(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind any-to-any generation models
+                            else: 
+                                backbone = globals()[self.config.backbone_name](modalities=self.config.modalities)
+                                checkpoint = checkpoint_filter_fn(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind
                             msg = backbone.load_state_dict(checkpoint, strict=True)
                             print("Successfully loaded checkpoint:", checkpoint_name)
                 else:
@@ -100,8 +140,13 @@ class TerraMind(FoundationModel):
                             if checkpoint_name in filenames:
                                 self.backbone_name = name
                                 break
-                    backbone = globals()[self.backbone_name](modalities=self.config.modalities)
-                    checkpoint = checkpoint_filter_fn(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind
+                    # Check which TerraMind model type to use
+                    if 'generate' in self.config.backbone_name:
+                        backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, output_modalities=self.config.output_modalities)
+                        checkpoint = checkpoint_filter_fn_generate(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind any-to-any generation models
+                    else: 
+                        backbone = globals()[self.config.backbone_name](modalities=self.config.modalities)
+                        checkpoint = checkpoint_filter_fn(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind
                     msg = backbone.load_state_dict(checkpoint, strict=True)
                     print("Successfully loaded checkpoint:", checkpoint_name)
         else: # Load model without pretrained weights
@@ -155,3 +200,29 @@ class TerraMind(FoundationModel):
         embedding = self.backbone.forward(d=x, **kwargs)
 
         return embedding
+
+    def generate_images(self, 
+        x: dict[str, torch.Tensor] | torch.Tensor | None = None,
+        standardize: bool | None = True,
+        verbose:  bool | None = True,
+        timesteps: int | None = 50,
+        **kwargs
+    ) -> dict[str, torch.Tensor]:
+        """
+        Forward pass through the TerraMind any-to-any generation model to get generated outputs.
+
+        Args:
+            x (dict, torch.Tensor): Dict of inputs or input tensor with shape (B, C, H, W). Alternatively, keyword arguments with modality=tensor.
+            standardize (bool): Whether to standardize the input images before generation. Default is True.
+            verbose (bool): Whether to print verbose output during generation. Default is True.
+            timesteps (int): Number of timesteps for the generation process. Default is 50.
+
+        Retrns:
+            generated_images (dict, torch.Tensor): Dict of generated output images
+
+        """
+
+        # Pass the input through the any-to-any generation model
+        generated_images = self.backbone.forward(d=x, standardize=standardize, verbose=verbose, timesteps=timesteps, **kwargs)
+
+        return generated_images
