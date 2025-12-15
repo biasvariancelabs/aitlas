@@ -1,4 +1,4 @@
-"""UNet model for segmentation"""
+"""PSPNet model for segmentation"""
 import segmentation_models_pytorch as smp
 
 from ..base import BaseSegmentationClassifier
