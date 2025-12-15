@@ -13,7 +13,7 @@ class SegFormer(BaseSegmentationClassifier):
         super().__init__(config)
 
         self.model = smp.Segformer(
-            encoder_name="resnet50",
+            encoder_name="mit_b2",
             encoder_weights="imagenet"
             if self.config.pretrained
             else None,  # set pretrained weights for encoder
