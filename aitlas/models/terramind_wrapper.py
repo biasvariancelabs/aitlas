@@ -119,7 +119,7 @@ class TerraMind(FoundationModel):
                             checkpoint = torch.load(self.config.local_model_path, weights_only=False)
                             # Check which TerraMind model type to use
                             if 'generate' in self.config.backbone_name:
-                                backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, output_modalities=self.config.output_modalities)
+                                backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, output_modalities=self.config.output_modalities, pretrained=True)
                                 checkpoint = checkpoint_filter_fn_generate(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind any-to-any generation models
                             else: 
                                 backbone = globals()[self.config.backbone_name](modalities=self.config.modalities)
@@ -142,7 +142,7 @@ class TerraMind(FoundationModel):
                                 break
                     # Check which TerraMind model type to use
                     if 'generate' in self.config.backbone_name:
-                        backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, output_modalities=self.config.output_modalities)
+                        backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, output_modalities=self.config.output_modalities, pretrained=True)
                         checkpoint = checkpoint_filter_fn_generate(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind any-to-any generation models
                     else: 
                         backbone = globals()[self.config.backbone_name](modalities=self.config.modalities)
@@ -158,7 +158,6 @@ class TerraMind(FoundationModel):
 
         # This method MUST return the loaded backbone object for the parent class.
         return backbone
-
 
     def select_input_bands(self, 
         bands: dict[str, Sequence[str]],
@@ -178,7 +177,6 @@ class TerraMind(FoundationModel):
             pretrained_bands=pretrained_bands
         )
 
-
     def forward_features(self, 
         x: dict[str, torch.Tensor] | torch.Tensor | None = None, 
         **kwargs
@@ -195,6 +193,13 @@ class TerraMind(FoundationModel):
             list[torch.Tensor]: List of transformer layer outputs. Shape (B, L, D).
 
         """
+
+        # If the backbone name contains "generate", raise TypeError
+        if "generate" in self.config.backbone_name:
+            raise TypeError(
+                f"The current backbone does not support feature embeddings. "
+                "Please use a backbone without '_generate' in the backbone name (e.g., 'terramind_v1_tiny')."
+            )
 
         # Pass the input through the backbone (encoder)
         embedding = self.backbone.forward(d=x, **kwargs)
@@ -221,6 +226,13 @@ class TerraMind(FoundationModel):
             generated_images (dict, torch.Tensor): Dict of generated output images
 
         """
+        
+        # If the backbone name does not contain "generate", raise TypeError
+        if "generate" not in self.config.backbone_name:
+            raise TypeError(
+                f"The current backbone does not support image generation. "
+                "Please use a backbone with '_generate' in the backbone name (e.g., 'terramind_v1_tiny_generate')."
+            )
 
         # Pass the input through the any-to-any generation model
         generated_images = self.backbone.forward(d=x, standardize=standardize, verbose=verbose, timesteps=timesteps, **kwargs)
