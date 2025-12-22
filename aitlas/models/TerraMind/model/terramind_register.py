@@ -186,8 +186,42 @@ def checkpoint_filter_fn_generate(state_dict, model: TerraMindGeneration) -> dic
 
     return state_dict
 
+def checkpoint_filter_fn_tim(state_dict, model: TerraMindTiM) -> dict:
+    """Manually filter pre-trained weights for TerraMind ViT to enable strict weight loading."""
+
+    model_state_dict = model.state_dict()
+    clean_dict = {}
+    for k, v in state_dict.items():
+        if k in model_state_dict:
+            if v.shape == model_state_dict[k].shape:
+                clean_dict[k] = v
+            else:
+                logger.warning(f"Shape for {k} ({list(v.shape)}) does not match model weights "
+                               f"({list(model_state_dict[k].shape)}), skipping weights.")
+        if "sampler.model." + k in model_state_dict:
+            # Copy weights for MAE model for TiM
+            encdec_k = "sampler.model." + k
+            if v.shape == model_state_dict[encdec_k].shape:
+                clean_dict[encdec_k] = v
+            else:
+                raise ValueError(f"Shape for {k} ({list(v.shape)}) does not match MAE model weights "
+                                 f"({list(model_state_dict[encdec_k].shape)}). Cannot run chain of thoughts without MAE.")
+
+    missing_params = set(model_state_dict.keys()) - set(clean_dict.keys())
+    for k in missing_params:
+        if k.startswith("sampler.model."):
+            raise ValueError(f"Weights for {k} are missing in state dict, cannot run chain of thoughts without MAE.")
+        if not k.startswith('tokenizer'):
+            logger.warning(f"Weights for {k} are missing in state dict, using random initialization.")
+        clean_dict[k] = model_state_dict[k]
+
+    state_dict = clean_dict
+
+    return state_dict
+
 
 # Models
+# Encoders
 def terramind_v1_tiny(**kwargs):
     model = TerraMindViT(
         encoder_depth=12,
@@ -260,6 +294,7 @@ def terramind_v1_large(**kwargs):
     )
     return model
 
+# Any-to-any generation
 def terramind_v1_tiny_generate(**kwargs):
     model = TerraMindGeneration(
         encoder_depth=12,
@@ -343,3 +378,169 @@ def terramind_v1_large_generate(**kwargs):
         **kwargs
     )
     return model
+
+# Thinking in Modalities (TiM)
+def terramind_v1_tiny_tim(**kwargs):
+    model = TerraMindTiM(
+        encoder_depth=12,
+        decoder_depth=4,
+        dim=192,
+        num_heads=3,
+        mlp_ratio=4,
+        qkv_bias=True,
+        proj_bias=True,
+        mlp_bias=True,
+        num_register_tokens=0,
+        norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
+        act_layer=nn.GELU,
+        gated_mlp=False,
+        tokenizer_dict=tokenizer_dict['v1'],
+        **kwargs
+    )
+    return model
+
+def terramind_v1_small_tim(**kwargs):
+    model = TerraMindTiM(
+        encoder_depth=12,
+        decoder_depth=6,
+        dim=384,
+        num_heads=6,
+        mlp_ratio=4,
+        qkv_bias=True,
+        proj_bias=True,
+        mlp_bias=True,
+        num_register_tokens=0,
+        norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
+        act_layer=nn.GELU,
+        gated_mlp=False,
+        tokenizer_dict=tokenizer_dict['v1'],
+        **kwargs
+    )
+    return model
+
+def terramind_v1_base_tim(**kwargs):
+    model = TerraMindTiM(
+        encoder_depth=12,
+        decoder_depth=12,
+        dim=768,
+        num_heads=12,
+        mlp_ratio=4,
+        qkv_bias=False,
+        proj_bias=False,
+        mlp_bias=False,
+        num_register_tokens=0,
+        norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
+        act_layer=nn.SiLU,
+        gated_mlp=True,
+        tokenizer_dict=tokenizer_dict['v1'],
+        **kwargs
+    )
+    return model
+
+def terramind_v1_large_tim(**kwargs):
+    model = TerraMindTiM(
+        encoder_depth=24,
+        decoder_depth=24,
+        dim=1024,
+        num_heads=16,
+        mlp_ratio=4,
+        qkv_bias=False,
+        proj_bias=False,
+        mlp_bias=False,
+        num_register_tokens=0,
+        norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
+        act_layer=nn.SiLU,
+        gated_mlp=True,
+        tokenizer_dict=tokenizer_dict["v1"],
+        **kwargs
+    )
+    return model
+
+def terramind_v1_tiny_encdec(**kwargs):
+    assert "encoder_embeddings" in kwargs and "decoder_embeddings" in kwargs and "modality_info" in kwargs, \
+        ("TerraMind encdec models expect encoder_embeddings, decoder_embeddings, and modality_info. "
+         "For generation, use the terramind_v1_base_generate model.")
+
+    model = TerraMindModule(
+        encoder_depth=12,
+        decoder_depth=4,
+        dim=192,
+        num_heads=3,
+        mlp_ratio=4,
+        qkv_bias=True,
+        proj_bias=True,
+        mlp_bias=True,
+        num_register_tokens=0,
+        norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
+        act_layer=nn.GELU,
+        gated_mlp=False,
+        **kwargs
+    )
+    return model
+
+def terramind_v1_small_encdec(**kwargs):
+    assert "encoder_embeddings" in kwargs and "decoder_embeddings" in kwargs and "modality_info" in kwargs, \
+        ("TerraMind encdec models expect encoder_embeddings, decoder_embeddings, and modality_info. "
+        "For generation, use the terramind_v1_base_generate model.")
+
+    model = TerraMindModule(
+        encoder_depth=12,
+        decoder_depth=6,
+        dim=384,
+        num_heads=6,
+        mlp_ratio=4,
+        qkv_bias=True,
+        proj_bias=True,
+        mlp_bias=True,
+        num_register_tokens=0,
+        norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
+        act_layer=nn.GELU,
+        gated_mlp=False,
+        **kwargs
+    )
+    return model
+
+def terramind_v1_base_encdec(**kwargs):
+    assert "encoder_embeddings" in kwargs and "decoder_embeddings" in kwargs and "modality_info" in kwargs, \
+        ("TerraMind encdec models expect encoder_embeddings, decoder_embeddings, and modality_info. "
+         "For generation, use the terramind_v1_base_generate model.")
+
+    model = TerraMindModule(
+        encoder_depth=12,
+        decoder_depth=12,
+        dim=768,
+        num_heads=12,
+        mlp_ratio=4,
+        qkv_bias=False,
+        proj_bias=False,
+        mlp_bias=False,
+        num_register_tokens=0,
+        norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
+        act_layer=nn.SiLU,
+        gated_mlp=True,
+        **kwargs
+    )
+    return model
+
+def terramind_v1_large_encdec(**kwargs):
+    assert "encoder_embeddings" in kwargs and "decoder_embeddings" in kwargs and "modality_info" in kwargs, \
+        ("TerraMind encdec models expect encoder_embeddings, decoder_embeddings, and modality_info. "
+         "For generation, use the terramind_v1_large_generate model.")
+
+    model = TerraMindModule(
+        encoder_depth=24,
+        decoder_depth=24,
+        dim=1024,
+        num_heads=16,
+        mlp_ratio=4,
+        qkv_bias=False,
+        proj_bias=False,
+        mlp_bias=False,
+        num_register_tokens=0,
+        norm_layer=partial(LayerNorm, eps=1e-6, bias=False),
+        act_layer=nn.SiLU,
+        gated_mlp=True,
+        **kwargs
+    )
+    return model
+

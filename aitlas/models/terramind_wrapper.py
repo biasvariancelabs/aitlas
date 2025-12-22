@@ -15,8 +15,13 @@ from .TerraMind import (
     terramind_v1_small_generate, 
     terramind_v1_base_generate, 
     terramind_v1_large_generate,
+    terramind_v1_tiny_tim, 
+    terramind_v1_small_tim, 
+    terramind_v1_base_tim, 
+    terramind_v1_large_tim,
     checkpoint_filter_fn,
     checkpoint_filter_fn_generate,
+    checkpoint_filter_fn_tim,
     select_modality_patch_embed_weights,
     PRETRAINED_BANDS
 )
@@ -95,6 +100,34 @@ class TerraMind(FoundationModel):
                     'description': 'TerraMind any-to-any generation model with a ViT-large backbone'
                 }
             ],
+            'terramind_v1_tiny_tim': [
+                {
+                    'filename': 'TerraMind_v1_tiny.pt', 
+                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-tiny',
+                    'description': 'TerraMind Thinking in Modalities (TiM) model with a ViT-tiny backbone'
+                }
+            ],
+            'terramind_v1_small_tim': [
+                {
+                    'filename': 'TerraMind_v1_small.pt', 
+                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-small',
+                    'description': 'TerraMind Thinking in Modalities (TiM) model with a ViT-small backbone'
+                }
+            ],
+            'terramind_v1_base_tim': [
+                {
+                    'filename': 'TerraMind_v1_base.pt', 
+                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-base',
+                    'description': 'TerraMind Thinking in Modalities (TiM) model with a ViT-base backbone'
+                }
+            ],
+            'terramind_v1_large_tim': [
+                {
+                    'filename': 'TerraMind_v1_large.pt', 
+                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-large',
+                    'description': 'TerraMind Thinking in Modalities (TiM) model with a ViT-large backbone'
+                }
+            ],
         }
         
         if self.config.pretrained: # Load pretrained weights
@@ -121,6 +154,9 @@ class TerraMind(FoundationModel):
                             if 'generate' in self.config.backbone_name:
                                 backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, output_modalities=self.config.output_modalities, pretrained=True)
                                 checkpoint = checkpoint_filter_fn_generate(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind any-to-any generation models
+                            elif 'tim' in self.config.backbone_name:
+                                backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, tim_modalities=self.config.tim_modalities, pretrained=True)
+                                checkpoint = checkpoint_filter_fn_tim(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind Thinking in Modalities (TiM) models
                             else: 
                                 backbone = globals()[self.config.backbone_name](modalities=self.config.modalities)
                                 checkpoint = checkpoint_filter_fn(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind
@@ -144,6 +180,9 @@ class TerraMind(FoundationModel):
                     if 'generate' in self.config.backbone_name:
                         backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, output_modalities=self.config.output_modalities, pretrained=True)
                         checkpoint = checkpoint_filter_fn_generate(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind any-to-any generation models
+                    elif 'tim' in self.config.backbone_name:
+                        backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, tim_modalities=self.config.tim_modalities, pretrained=True)
+                        checkpoint = checkpoint_filter_fn_tim(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind Thinking in Modalities (TiM) models
                     else: 
                         backbone = globals()[self.config.backbone_name](modalities=self.config.modalities)
                         checkpoint = checkpoint_filter_fn(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind
@@ -170,6 +209,18 @@ class TerraMind(FoundationModel):
 
         """
 
+        # If the backbone name contains "generate" or "tim", raise TypeError
+        if "generate" in self.config.backbone_name:
+            raise TypeError(
+                f"The current backbone does not support selecting input bands. "
+                "Please use a backbone without '_generate' in the backbone name (e.g., 'terramind_v1_tiny')."
+            )
+        elif "tim" in self.config.backbone_name:
+            raise TypeError(
+                f"The current backbone does not support selecting input bands. "
+                "Please use a backbone without '_tim' in the backbone name (e.g., 'terramind_v1_tiny')."
+            )
+
         # Update patch embeddings weights for each provided modality by selecting the pretrained weights for each band
         self.backbone = select_modality_patch_embed_weights(
             model=self.backbone,
@@ -182,7 +233,7 @@ class TerraMind(FoundationModel):
         **kwargs
     ) -> list[torch.Tensor]:
         """
-        Forward pass through the TerraMind model to get feature embeddings.
+        Forward pass through the TerraMind model (encoder) to get feature embeddings.
 
         Args:
             x (dict, torch.Tensor): Dict of inputs or input tensor with shape (B, C, H, W)
@@ -194,12 +245,20 @@ class TerraMind(FoundationModel):
 
         """
 
-        # If the backbone name contains "generate", raise TypeError
+        # If the backbone name contains "generate" or "tim", raise TypeError
         if "generate" in self.config.backbone_name:
             raise TypeError(
                 f"The current backbone does not support feature embeddings. "
                 "Please use a backbone without '_generate' in the backbone name (e.g., 'terramind_v1_tiny')."
             )
+        elif "tim" in self.config.backbone_name:
+            raise TypeError(
+                f"The current backbone does not support feature embeddings. "
+                "Please use a backbone without '_tim' in the backbone name (e.g., 'terramind_v1_tiny')."
+            )
+
+        if isinstance(x, dict):
+            x = x.copy()
 
         # Pass the input through the backbone (encoder)
         embedding = self.backbone.forward(d=x, **kwargs)
@@ -238,3 +297,35 @@ class TerraMind(FoundationModel):
         generated_images = self.backbone.forward(d=x, standardize=standardize, verbose=verbose, timesteps=timesteps, **kwargs)
 
         return generated_images
+
+    def thinking_in_modalities(self, 
+        x: dict[str, torch.Tensor] | torch.Tensor | None = None, 
+        **kwargs
+    ) -> list[torch.Tensor]:
+        """
+        Forward pass through the TerraMind Thinking in Modalities model to get feature embeddings.
+
+        Args:
+            x (dict, torch.Tensor): Dict of inputs or input tensor with shape (B, C, H, W)
+
+            Alternatively, keyword arguments with modality=tensor.
+
+        Returns:
+            list[torch.Tensor]: List of transformer layer outputs. Shape (B, L, D).
+
+        """
+
+        # If the backbone name contains "generate" or "tim", raise TypeError
+        if "tim" not in self.config.backbone_name:
+            raise TypeError(
+                f"The current backbone does not support Thinking in Modalities. "
+                "Please use a backbone with '_tim' in the backbone name (e.g., 'terramind_v1_tiny_tim')."
+            )
+
+        if isinstance(x, dict):
+            x = x.copy()
+
+        # Pass the input through the backbone (encoder)
+        embedding = self.backbone.forward(d=x, **kwargs)
+
+        return embedding

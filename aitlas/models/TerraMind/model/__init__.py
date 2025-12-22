@@ -7,8 +7,13 @@ from .terramind_register import (
     terramind_v1_small_generate, 
     terramind_v1_base_generate, 
     terramind_v1_large_generate,
+    terramind_v1_tiny_tim, 
+    terramind_v1_small_tim, 
+    terramind_v1_base_tim, 
+    terramind_v1_large_tim,
     checkpoint_filter_fn,
     checkpoint_filter_fn_generate,
+    checkpoint_filter_fn_tim,
     select_modality_patch_embed_weights,
     PRETRAINED_BANDS
 )
