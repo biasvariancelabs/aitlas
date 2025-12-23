@@ -24,8 +24,16 @@ class ScaleMAE(FoundationModel):
         backbone_checkpoints = {
             'vit_base_patch16': None,
             'vit_large_patch16': [
-                'scalemae-vitlarge-800.pth',
-                'vit_large_patch16_224_fmow_rgb_scalemae-98ed9821.pth'
+                {
+                    'filename': 'scalemae-vitlarge-800.pth', 
+                    'repo_id': 'isaaccorley/vit_large_patch16_224_fmow_rgb_scalemae',
+                    'description': 'Scale-MAE ViT large model trained on fMoW RGB'
+                },
+                {
+                    'filename': 'vit_large_patch16_224_fmow_rgb_scalemae-98ed9821.pth', 
+                    'repo_id': 'isaaccorley/vit_large_patch16_224_fmow_rgb_scalemae',
+                    'description': 'Scale-MAE ViT large model trained on fMoW RGB (alternate checkpoint)'
+                }
             ],
             'vit_huge_patch14': None
         }
@@ -48,8 +56,10 @@ class ScaleMAE(FoundationModel):
                             raise ValueError(f"No pretrained weights are available for backbone '{self.config.backbone_name}'.")
                         else: # Download the weights and load the model
                             # For now, just load the first checkpoint available for the backbone
-                            checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
-                            self.config.local_model_path = hf_hub_download(repo_id="isaaccorley/vit_large_patch16_224_fmow_rgb_scalemae", filename=checkpoint_name, local_dir=os.path.dirname(self.config.local_model_path))
+                            temp_checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
+                            checkpoint_name = temp_checkpoint_name['filename']
+                            repo_id = temp_checkpoint_name['repo_id']
+                            self.config.local_model_path = hf_hub_download(repo_id=repo_id, filename=checkpoint_name, local_dir=os.path.dirname(self.config.local_model_path))
                             checkpoint = torch.load(self.config.local_model_path, weights_only=False)
                             backbone = globals()[self.config.backbone_name](fixed_output_size=fixed_output_size)
                             msg = backbone.load_state_dict(checkpoint, strict=False)
@@ -60,10 +70,14 @@ class ScaleMAE(FoundationModel):
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     self.backbone_name = None
-                    for name, checkpoints in backbone_checkpoints.items():
-                        if checkpoints and checkpoint_name in checkpoints:
-                            self.backbone_name = name
-                            break
+                    for name, checkpoint_list in backbone_checkpoints.items():
+                        # Ensure the list of checkpoints is not None before iterating
+                        if checkpoint_list:
+                            # Create a list of all filenames for the current backbone
+                            filenames = [ckpt['filename'] for ckpt in checkpoint_list]
+                            if checkpoint_name in filenames:
+                                self.backbone_name = name
+                                break
                     backbone = globals()[self.backbone_name](fixed_output_size=fixed_output_size)
                     msg = backbone.load_state_dict(checkpoint, strict=False)
                     print("Successfully loaded checkpoint:", checkpoint_name)

@@ -26,8 +26,16 @@ class AnySat(FoundationModel):
             'anysat_tiny': None,
             'anysat_small': None,
             'anysat_base': [
-                'AnySat.pth',
-                'AnySat_full.pth'
+                {
+                    'filename': 'AnySat.pth',
+                    'repo_id': 'g-astruc/AnySat',
+                    'description': 'AnySat model'
+                },
+                {
+                    'filename': 'AnySat_full.pth',
+                    'repo_id': 'g-astruc/AnySat',
+                    'description': 'AnySat model (full)'
+                }
             ]
         }
 
@@ -53,8 +61,10 @@ class AnySat(FoundationModel):
                             raise ValueError(f"No pretrained weights are available for backbone '{self.config.backbone_name}'.")
                         else: # Download the weights and load the model
                             # For now, just load the first checkpoint available for the backbone
-                            checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
-                            downloaded_path = hf_hub_download(repo_id="g-astruc/AnySat", filename=checkpoint_name, subfolder="models", local_dir=os.path.dirname(self.config.local_model_path))
+                            temp_checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
+                            checkpoint_name = temp_checkpoint_name['filename']
+                            repo_id = temp_checkpoint_name['repo_id']
+                            downloaded_path = hf_hub_download(repo_id=repo_id, filename=checkpoint_name, subfolder="models", local_dir=os.path.dirname(self.config.local_model_path))
                             # Move the file from the subfolder to the desired location
                             shutil.move(downloaded_path, self.config.local_model_path)                   
                             # Clean up the empty 'models' directory
@@ -71,11 +81,14 @@ class AnySat(FoundationModel):
                     state_dict = checkpoint['state_dict']
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
-                    self.backbone_name = None
-                    for name, checkpoints in backbone_checkpoints.items():
-                        if checkpoints and checkpoint_name in checkpoints:
-                            self.backbone_name = name
-                            break
+                    for name, checkpoint_list in backbone_checkpoints.items():
+                        # Ensure the list of checkpoints is not None before iterating
+                        if checkpoint_list:
+                            # Create a list of all filenames for the current backbone
+                            filenames = [ckpt['filename'] for ckpt in checkpoint_list]
+                            if checkpoint_name in filenames:
+                                self.backbone_name = name
+                                break
                     backbone = globals()[self.backbone_name](flash_attn=flash_attn)
                     msg = backbone.model.load_state_dict(state_dict, strict=True)
                     print("Successfully loaded checkpoint:", checkpoint_name)

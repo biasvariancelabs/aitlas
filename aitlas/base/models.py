@@ -716,7 +716,7 @@ class BaseModel(nn.Module, Configurable):
         """Loads a model from a checkpoint"""
         if os.path.isfile(file_path):
             logging.info(f"Loading checkpoint {file_path}")
-            checkpoint = torch.load(file_path)
+            checkpoint = torch.load(file_path, map_location=self.device) # Can be either CPU or GPU
 
             if "state_dict" in checkpoint:
                 self.model.load_state_dict(checkpoint["state_dict"], strict=False)
