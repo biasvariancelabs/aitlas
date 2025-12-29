@@ -5,14 +5,14 @@ import os
 from unittest.mock import patch, MagicMock
 
 from aitlas.models import ScaleMAE
-from aitlas.models.ScaleMAE.scale_mae import MaskedAutoencoderViT, vit_base_patch16, vit_large_patch16, vit_huge_patch14
+from aitlas.models.ScaleMAE.scale_mae import MaskedAutoencoderViT, scalemae_vit_large_patch16
 
 
 def create_dummy_vit_large_state_dict():
     """Creates a state dict from a fresh model instance.
     """
 
-    model = vit_large_patch16(
+    model = scalemae_vit_large_patch16(
         fixed_output_size = 224
     )
     return model.state_dict()
@@ -35,7 +35,7 @@ def base_config(dummy_checkpoint_path):
 
     basic_config = {
         "local_model_path": dummy_checkpoint_path,
-        "backbone_name": "vit_large_patch16",
+        "backbone_name": "scalemae_vit_large_patch16",
         "pretrained": True
     }
 
@@ -78,7 +78,7 @@ def test_forward_features_pass(base_config):
         pytest.fail(f"Model forward_features pass failed: {e}")
 
 # The patch path should point to the file where Scale-MAE is defined, e.g., 'scale_mae_wrapper.py'
-@patch('aitlas.models.scale_mae_wrapper.vit_large_patch16')
+@patch('aitlas.models.scale_mae_wrapper.scalemae_vit_large_patch16')
 @patch('aitlas.models.scale_mae_wrapper.hf_hub_download')
 @patch('torch.load')
 def test_fallback_to_huggingface_download(mock_torch_load, mock_hf_download, mock_vit_factory, dummy_checkpoint_path):
@@ -93,7 +93,7 @@ def test_fallback_to_huggingface_download(mock_torch_load, mock_hf_download, moc
 
     config = {
         "local_model_path": "/path/to/non_existent/model.pth",
-        "backbone_name": "vit_large_patch16",
+        "backbone_name": "scalemae_vit_large_patch16",
         "pretrained": True
     }
 

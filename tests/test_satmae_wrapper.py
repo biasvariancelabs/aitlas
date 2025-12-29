@@ -7,29 +7,29 @@ from unittest.mock import patch, MagicMock
 from aitlas.models import SatMAE
 from aitlas.models.SatMAE import (
     MaskedAutoencoderViT,
-    mae_vit_large,
+    satmae_vit_large,
     MaskedAutoencoderGroupChannelViT,
-    mae_vit_large_multispectral,
+    satmae_vit_large_multispectral,
     MaskedAutoencoderTemporalViT,
-    mae_vit_large_temporal,
+    satmae_vit_large_temporal,
 )
 
 # Create state dictionaries
 def create_dummy_standard_state_dict():
     """Creates a state dict for the standard SatMAE model."""
-    model = mae_vit_large()
+    model = satmae_vit_large()
     model.head = nn.Identity()
     return model.state_dict()
 
 def create_dummy_multispectral_state_dict():
     """Creates a state dict for the multispectral SatMAE model."""
-    model = mae_vit_large_multispectral()
+    model = satmae_vit_large_multispectral()
     model.head = nn.Identity()
     return model.state_dict()
 
 def create_dummy_temporal_state_dict():
     """Creates a state dict for the temporal SatMAE model."""
-    model = mae_vit_large_temporal()
+    model = satmae_vit_large_temporal()
     model.head = nn.Identity()
     return model.state_dict()
 
@@ -59,17 +59,17 @@ def dummy_temporal_checkpoint(tmp_path_factory):
 @pytest.fixture
 def config_standard(dummy_standard_checkpoint):
     """Provides a valid config for the standard model."""
-    return {"local_model_path": dummy_standard_checkpoint, "backbone_name": "mae_vit_large", "pretrained": True}
+    return {"local_model_path": dummy_standard_checkpoint, "backbone_name": "satmae_vit_large", "pretrained": True}
 
 @pytest.fixture
 def config_multispectral(dummy_multispectral_checkpoint):
     """Provides a valid config for the multispectral model."""
-    return {"local_model_path": dummy_multispectral_checkpoint, "backbone_name": "mae_vit_large_multispectral", "pretrained": True}
+    return {"local_model_path": dummy_multispectral_checkpoint, "backbone_name": "satmae_vit_large_multispectral", "pretrained": True}
 
 @pytest.fixture
 def config_temporal(dummy_temporal_checkpoint):
     """Provides a valid config for the temporal model."""
-    return {"local_model_path": dummy_temporal_checkpoint, "backbone_name": "mae_vit_large_temporal", "pretrained": True}
+    return {"local_model_path": dummy_temporal_checkpoint, "backbone_name": "satmae_vit_large_temporal", "pretrained": True}
 
 # Test cases
 # Model instantiation tests
@@ -114,7 +114,7 @@ def test_forward_features_raises_error_for_temporal_model(config_temporal):
         model.forward_features(dummy_input)
 
 # Download and error handling tests
-@patch('aitlas.models.satmae_wrapper.mae_vit_large_multispectral')
+@patch('aitlas.models.satmae_wrapper.satmae_vit_large_multispectral')
 @patch('aitlas.models.satmae_wrapper.SatMAE._download_from_zenodo')
 @patch('torch.load')
 def test_fallback_to_zenodo_download(mock_torch_load, mock_download, mock_model_factory, dummy_multispectral_checkpoint):
@@ -128,7 +128,7 @@ def test_fallback_to_zenodo_download(mock_torch_load, mock_download, mock_model_
 
     config = {
         "local_model_path": non_existent_path,
-        "backbone_name": "mae_vit_large_multispectral",
+        "backbone_name": "satmae_vit_large_multispectral",
         "pretrained": True,
     }
     model = SatMAE(config)

@@ -4,9 +4,9 @@ import torch.nn as nn
 import requests
 from tqdm import tqdm
 from ..base.foundation import FoundationModel
-from .SatMAE.models_mae import MaskedAutoencoderViT, mae_vit_large
-from .SatMAE.models_mae_group_channels import MaskedAutoencoderGroupChannelViT, mae_vit_base_multispectral, mae_vit_large_multispectral
-from .SatMAE.models_mae_temporal import MaskedAutoencoderTemporalViT, mae_vit_large_temporal
+from .SatMAE.models_mae import MaskedAutoencoderViT, satmae_vit_large
+from .SatMAE.models_mae_group_channels import MaskedAutoencoderGroupChannelViT, satmae_vit_base_multispectral, satmae_vit_large_multispectral
+from .SatMAE.models_mae_temporal import MaskedAutoencoderTemporalViT, satmae_vit_large_temporal
 
 class SatMAE(FoundationModel):
     """AiTLAS wrapper class for SatMAE model
@@ -25,7 +25,7 @@ class SatMAE(FoundationModel):
 
         # Define backbone checkpoints
         backbone_checkpoints = {
-            'mae_vit_large': [
+            'satmae_vit_large': [
                 {
                     'filename': 'fmow_pretrain.pth', 
                     'record_id': '7369797',
@@ -37,7 +37,7 @@ class SatMAE(FoundationModel):
                     'description': 'Non-temporal checkpoint fine-tuned on fMoW'
                 }
             ],
-            'mae_vit_large_multispectral': [
+            'satmae_vit_large_multispectral': [
                 {
                     'filename': 'pretrain-vit-large-e199.pth', 
                     'record_id': '7338613',
@@ -49,7 +49,7 @@ class SatMAE(FoundationModel):
                     'description': 'Multispectral checkpoint fine-tuned on fMoW-Sentinel'
                 }
             ],
-            'mae_vit_large_temporal': [
+            'satmae_vit_large_temporal': [
                 {
                     'filename': 'pretrain_fmow_temporal.pth', 
                     'record_id': '7369797',
@@ -61,7 +61,7 @@ class SatMAE(FoundationModel):
                     'description': 'Temporal checkpoint fine-tuned on fMoW'
                 }
             ],
-            'mae_vit_base_multispectral': [
+            'satmae_vit_base_multispectral': [
                 {
                     'filename': 'pretrain-vit-base-e199.pth', 
                     'record_id': '7338613',
@@ -72,12 +72,7 @@ class SatMAE(FoundationModel):
                     'record_id': '7338613',
                     'description': 'Multispectral (base model) checkpoint fine-tuned on fMoW-Sentinel'
                 }
-            ],
-            'mae_vit_base' : None,
-            'mae_vit_base_temporal': None,
-            'mae_vit_huge': None,
-            'mae_vit_huge_multispectral': None,
-            'mae_vit_huge_temporal': None
+            ]
         }
         
         if self.config.pretrained: # Load pretrained weights

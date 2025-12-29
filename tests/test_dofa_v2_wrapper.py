@@ -5,14 +5,14 @@ import os
 from unittest.mock import patch, MagicMock
 
 from aitlas.models import DOFA_v2
-from aitlas.models.DOFA.dofa_v2 import OFAViT, vit_base_patch16
+from aitlas.models.DOFA.dofa_v2 import OFAViT, dofa_v1_vit_base_patch16
 
 
 def create_dummy_vit_base_state_dict():
     """Creates a state dict from a fresh model instance.
     """
 
-    model = vit_base_patch16()
+    model = dofa_v1_vit_base_patch16()
     return model.state_dict()
 
 @pytest.fixture(scope="session")
@@ -33,7 +33,7 @@ def base_config(dummy_checkpoint_path):
 
     basic_config = {
         "local_model_path": dummy_checkpoint_path,
-        "backbone_name": "vit_base_patch16",
+        "backbone_name": "dofa_v1_vit_base_patch16",
         "pretrained": True
     }
 
@@ -74,7 +74,7 @@ def test_forward_features_pass(base_config):
         pytest.fail(f"Model forward_features pass failed: {e}")
 
 # The patch path should point to the file where DOFA_v2 is defined, e.g., 'dofa_v2_wrapper.py'
-@patch('aitlas.models.dofa_v2_wrapper.vit_base_patch16')
+@patch('aitlas.models.dofa_v2_wrapper.dofa_v1_vit_base_patch16')
 @patch('aitlas.models.dofa_v2_wrapper.hf_hub_download')
 @patch('torch.load')
 def test_fallback_to_huggingface_download(mock_torch_load, mock_hf_download, mock_vit_factory, dummy_checkpoint_path):
@@ -89,7 +89,7 @@ def test_fallback_to_huggingface_download(mock_torch_load, mock_hf_download, moc
 
     config = {
         "local_model_path": "/path/to/non_existent/model.pth",
-        "backbone_name": "vit_base_patch16",
+        "backbone_name": "dofa_v1_vit_base_patch16",
         "pretrained": True
     }
 

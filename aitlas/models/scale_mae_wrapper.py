@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from huggingface_hub import hf_hub_download
 from ..base.foundation import FoundationModel
-from .ScaleMAE.scale_mae import MaskedAutoencoderViT, vit_base_patch16, vit_large_patch16, vit_huge_patch14
+from .ScaleMAE.scale_mae import MaskedAutoencoderViT, scalemae_vit_large_patch16
 
 class ScaleMAE(FoundationModel):
     """AiTLAS wrapper class for Scale-MAE model
@@ -22,8 +22,7 @@ class ScaleMAE(FoundationModel):
 
         # Define checkpoints for all backbones available on Huggingface
         backbone_checkpoints = {
-            'vit_base_patch16': None,
-            'vit_large_patch16': [
+            'scalemae_vit_large_patch16': [
                 {
                     'filename': 'scalemae-vitlarge-800.pth', 
                     'repo_id': 'isaaccorley/vit_large_patch16_224_fmow_rgb_scalemae',
@@ -34,8 +33,7 @@ class ScaleMAE(FoundationModel):
                     'repo_id': 'isaaccorley/vit_large_patch16_224_fmow_rgb_scalemae',
                     'description': 'Scale-MAE ViT large model trained on fMoW RGB (alternate checkpoint)'
                 }
-            ],
-            'vit_huge_patch14': None
+            ]
         }
 
         # Get the fixed output size from the config (default is 224)

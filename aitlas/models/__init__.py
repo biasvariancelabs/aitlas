@@ -39,19 +39,19 @@ from .vgg import VGG16, VGG19, VGG16MultiLabel, VGG19MultiLabel
 from .vision_transformer import VisionTransformer, VisionTransformerMultilabel
 
 from .DOFA import DOFA_v1
-from .DOFA import OFAViT, vit_base_patch16, vit_large_patch16, vit_base_patch14, vit_large_patch14
+from .DOFA import OFAViT, dofa_v1_vit_base_patch16, dofa_v1_vit_large_patch16, dofa_v2_vit_base_patch14, dofa_v2_vit_large_patch14
 from .dofa_v2_wrapper import DOFA_v2
 
-from .SatMAE import MaskedAutoencoderViT, mae_vit_base, mae_vit_large, mae_vit_huge
-from .SatMAE import MaskedAutoencoderGroupChannelViT, mae_vit_base_multispectral, mae_vit_large_multispectral, mae_vit_huge_multispectral
-from .SatMAE import MaskedAutoencoderTemporalViT, mae_vit_base_temporal, mae_vit_large_temporal, mae_vit_large_temporal_samemask, mae_vit_huge_temporal
+from .SatMAE import MaskedAutoencoderViT, satmae_vit_large
+from .SatMAE import MaskedAutoencoderGroupChannelViT, satmae_vit_base_multispectral, satmae_vit_large_multispectral
+from .SatMAE import MaskedAutoencoderTemporalViT, satmae_vit_large_temporal
 from .satmae_wrapper import SatMAE
 
-from .SatMAE_plusplus import MaskedAutoencoderViT, mae_vit_base, mae_vit_large
-from .SatMAE_plusplus import MaskedAutoencoderGroupChannelViT, mae_vit_base_multispectral, mae_vit_large_multispectral
+from .SatMAE_plusplus import MaskedAutoencoderViT, satmae_plusplus_vit_large
+from .SatMAE_plusplus import MaskedAutoencoderGroupChannelViT, satmae_plusplus_vit_large_multispectral
 from .satmae_plusplus_wrapper import SatMAE_plusplus
 
-from .ScaleMAE import MaskedAutoencoderViT, vit_base_patch16, vit_large_patch16, vit_huge_patch14
+from .ScaleMAE import MaskedAutoencoderViT, scalemae_vit_large_patch16
 from .scale_mae_wrapper import ScaleMAE
 
 from .AnySat import OmniSatModule

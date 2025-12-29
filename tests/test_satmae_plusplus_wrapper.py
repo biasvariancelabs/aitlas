@@ -5,19 +5,19 @@ import os
 from unittest.mock import patch, MagicMock
 
 from aitlas.models import SatMAE_plusplus
-from aitlas.models.SatMAE_plusplus.models_mae import MaskedAutoencoderViT, mae_vit_large
-from aitlas.models.SatMAE_plusplus.models_mae_group_channels import MaskedAutoencoderGroupChannelViT, mae_vit_large_multispectral
+from aitlas.models.SatMAE_plusplus.models_mae import MaskedAutoencoderViT, satmae_plusplus_vit_large
+from aitlas.models.SatMAE_plusplus.models_mae_group_channels import MaskedAutoencoderGroupChannelViT, satmae_plusplus_vit_large_multispectral
 
 # Create state dictionaries
 def create_dummy_standard_state_dict():
     """Creates a state dict for the standard SatMAE++ model."""
-    model = mae_vit_large()
+    model = satmae_plusplus_vit_large()
     model.head = nn.Identity()
     return model.state_dict()
 
 def create_dummy_multispectral_state_dict():
     """Creates a state dict for the multispectral SatMAE++ model."""
-    model = mae_vit_large_multispectral()
+    model = satmae_plusplus_vit_large_multispectral()
     model.head = nn.Identity()
     return model.state_dict()
 
@@ -42,12 +42,12 @@ def dummy_multispectral_checkpoint(tmp_path_factory):
 @pytest.fixture
 def config_standard(dummy_standard_checkpoint):
     """Provides a valid config for the standard model loading from a local file."""
-    return {"local_model_path": dummy_standard_checkpoint, "backbone_name": "mae_vit_large", "pretrained": True}
+    return {"local_model_path": dummy_standard_checkpoint, "backbone_name": "satmae_plusplus_vit_large", "pretrained": True}
 
 @pytest.fixture
 def config_multispectral(dummy_multispectral_checkpoint):
     """Provides a valid config for the multispectral model loading from a local file."""
-    return {"local_model_path": dummy_multispectral_checkpoint, "backbone_name": "mae_vit_large_multispectral", "pretrained": True}
+    return {"local_model_path": dummy_multispectral_checkpoint, "backbone_name": "satmae_plusplus_vit_large_multispectral", "pretrained": True}
 
 # Test cases
 # Model instantiation tests
@@ -79,7 +79,7 @@ def test_forward_pass_multispectral(config_multispectral):
     assert output.shape == (2, 1024)
 
 # Download and error handling tests
-@patch('aitlas.models.satmae_plusplus_wrapper.mae_vit_large_multispectral')
+@patch('aitlas.models.satmae_plusplus_wrapper.satmae_plusplus_vit_large_multispectral')
 @patch('aitlas.models.satmae_plusplus_wrapper.hf_hub_download')
 @patch('torch.load')
 def test_fallback_to_hf_hub_download(mock_torch_load, mock_hf_download, mock_model_factory):
@@ -93,7 +93,7 @@ def test_fallback_to_hf_hub_download(mock_torch_load, mock_hf_download, mock_mod
 
     config = {
         "local_model_path": non_existent_path,
-        "backbone_name": "mae_vit_large_multispectral",
+        "backbone_name": "satmae_plusplus_vit_large_multispectral",
         "pretrained": True,
     }
     

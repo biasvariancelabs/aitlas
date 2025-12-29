@@ -9,20 +9,14 @@ from .models_vit_temporal import TemporalVisionTransformer
 
 from .models_mae import (
     MaskedAutoencoderViT,
-    mae_vit_base,
-    mae_vit_large,
-    mae_vit_huge
+    satmae_vit_large,
 )
 from .models_mae_group_channels import (
     MaskedAutoencoderGroupChannelViT,
-    mae_vit_base_multispectral,
-    mae_vit_large_multispectral,
-    mae_vit_huge_multispectral
+    satmae_vit_base_multispectral,
+    satmae_vit_large_multispectral,
 ) 
 from .models_mae_temporal import (
     MaskedAutoencoderTemporalViT,
-    mae_vit_base_temporal,
-    mae_vit_large_temporal,
-    mae_vit_large_temporal_samemask,
-    mae_vit_huge_temporal
+    satmae_vit_large_temporal
 )

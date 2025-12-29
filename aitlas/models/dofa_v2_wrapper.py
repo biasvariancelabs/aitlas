@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from huggingface_hub import hf_hub_download
 from ..base.foundation import FoundationModel
-from .DOFA.dofa_v2 import OFAViT, vit_base_patch16, vit_large_patch16, vit_base_patch14, vit_large_patch14
+from .DOFA.dofa_v2 import OFAViT, dofa_v1_vit_base_patch16, dofa_v1_vit_large_patch16, dofa_v2_vit_base_patch14, dofa_v2_vit_large_patch14
 
 class DOFA_v2(FoundationModel):
     """AiTLAS wrapper class for DOFA_v2 model
@@ -22,7 +22,7 @@ class DOFA_v2(FoundationModel):
 
         # Define checkpoints for all backbones available on Huggingface
         backbone_checkpoints = {
-            'vit_base_patch16': [
+            'dofa_v1_vit_base_patch16': [
                 {
                     'filename': 'DOFA_ViT_base_e100.pth', 
                     'repo_id': 'XShadow/DOFA',
@@ -34,21 +34,21 @@ class DOFA_v2(FoundationModel):
                     'description': 'DOFA ViT base model trained for 100 epochs (full weights)'
                 }
             ],
-            'vit_large_patch16': [
+            'dofa_v1_vit_large_patch16': [
                 {
                     'filename': 'DOFA_ViT_large_e100.pth',
                     'repo_id': 'XShadow/DOFA',
                     'description': 'DOFA ViT large model trained for 100 epochs'
                 }
             ],
-            'vit_base_patch14': [ # DOFA_v2
+            'dofa_v2_vit_base_patch14': [ # DOFA_v2
                 {
                     'filename': 'dofav2_vit_base_e150.pth',
                     'repo_id': 'XShadow/DOFA',
                     'description': 'DOFA_v2 ViT base model trained for 150 epochs'
                 }
             ],            
-            'vit_large_patch14': [ # DOFA_v2
+            'dofa_v2_vit_large_patch14': [ # DOFA_v2
                 {
                     'filename': 'dofav2_vit_large_e150.pth',
                     'repo_id': 'XShadow/DOFA',

@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 from huggingface_hub import hf_hub_download
 from ..base.foundation import FoundationModel
-from .SatMAE_plusplus.models_mae import MaskedAutoencoderViT, mae_vit_large
-from .SatMAE_plusplus.models_mae_group_channels import MaskedAutoencoderGroupChannelViT, mae_vit_large_multispectral
+from .SatMAE_plusplus.models_mae import MaskedAutoencoderViT, satmae_plusplus_vit_large
+from .SatMAE_plusplus.models_mae_group_channels import MaskedAutoencoderGroupChannelViT, satmae_plusplus_vit_large_multispectral
 
 class SatMAE_plusplus(FoundationModel):
     """AiTLAS wrapper class for SatMAE++ model
@@ -23,7 +23,7 @@ class SatMAE_plusplus(FoundationModel):
 
         # Define backbone checkpoints
         backbone_checkpoints = {
-            'mae_vit_large': [
+            'satmae_plusplus_vit_large': [
                 {
                     'filename': 'checkpoint_ViT-L_pretrain_fmow_rgb.pth',
                     'repo_id': 'mubashir04/checkpoint_ViT-L_pretrain_fmow_rgb',
@@ -35,7 +35,7 @@ class SatMAE_plusplus(FoundationModel):
                     'description': 'Non-temporal checkpoint fine-tuned on fMoW-RGB'
                 }
             ],
-            'mae_vit_large_multispectral': [
+            'satmae_plusplus_vit_large_multispectral': [
                 {
                     'filename': 'checkpoint_ViT-L_pretrain_fmow_sentinel.pth',
                     'repo_id': 'mubashir04/checkpoint_ViT-L_pretrain_fmow_sentinel',
@@ -46,11 +46,7 @@ class SatMAE_plusplus(FoundationModel):
                     'repo_id': 'mubashir04/checkpoint_ViT-L_finetune_fmow_sentinel',
                     'description': 'Multispectral checkpoint fine-tuned on fMoW-Sentinel'
                 }
-            ],
-            'mae_vit_base' : None,
-            'mae_vit_base_multispectral': None,
-            'mae_vit_huge': None,
-            'mae_vit_huge_multispectral': None
+            ]
         }
 
         if self.config.pretrained: # Load pretrained weights
