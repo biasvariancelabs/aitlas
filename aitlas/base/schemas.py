@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate, ValidationError, pre_load
+from marshmallow import Schema, fields, validate, ValidationError, pre_load, INCLUDE
 
 
 class BaseDatasetSchema(Schema):
@@ -252,7 +252,7 @@ class BaseFoundationModelSchema(BaseModelSchema):
 
     pass
 
-class CompositeModelSchema(BaseModelSchema):
+class CompositeModelSchema(BaseFoundationModelSchema):
     """
     Schema for configuring composite models that combine a backbone, neck, decoder, and head.
     
@@ -278,16 +278,14 @@ class CompositeModelSchema(BaseModelSchema):
     :type head_params: dict, optional
     """
 
+    class Meta:
+        unknown = INCLUDE # Configures the schema to accept "unknown" fields (like modalities) so they can be passed down to the backbone for validation.
+
     task_type = fields.String(
         required=True,
         description="Type of task for the composite model.",
         validate=validate.OneOf(["classification", "segmentation", "object detection", "change detection"]),
         example="segmentation",
-    )
-    backbone_name = fields.String(
-        required=True,
-        description="Name of the model to use as a backbone.",
-        example="vit_base_patch16"
     )
     neck_name = fields.String(
         missing=None,

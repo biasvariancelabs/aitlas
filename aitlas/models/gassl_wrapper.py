@@ -7,7 +7,9 @@ from collections import OrderedDict
 from ..base.foundation import FoundationModel
 from .GASSL.gassl import MoCo, gassl_moco_resnet50
 from .GASSL.gassl_geo import MoCo_geo, gassl_moco_geo_resnet50
+from aitlas.models.registries import BACKBONE_REGISTRY
 
+BACKBONE_REGISTRY.register("GASSL")
 class GASSL(FoundationModel):
     """AiTLAS wrapper class for GASSL model
     
@@ -16,40 +18,40 @@ class GASSL(FoundationModel):
 
     name = "GASSL"
 
+    # Define backbone checkpoints
+    BACKBONE_CHECKPOINTS = {
+        'gassl_moco_resnet50': [
+            {
+                'filename': 'moco.pth.tar', 
+                'record_id': '7379715',
+                'description': 'Baseline checkpoint pre-trained on fMoW'
+            },
+            {
+                'filename': 'moco_tp.pth.tar', 
+                'record_id': '7379715',
+                'description': 'Checkpoint pre-trained on fMoW with temporal positive pairs'
+            }
+        ],
+        'gassl_moco_geo_resnet50': [
+            {
+                'filename': 'moco_geo.pth.tar', 
+                'record_id': '7379715',
+                'description': 'Checkpoint pre-trained on fMoW with geo-aware sampling'
+            },
+            {
+                'filename': 'moco_geo+tp.pth.tar', 
+                'record_id': '7379715',
+                'description': 'Full GASSL checkpoint pre-trained on fMoW with geo-aware sampling and temporal positive pairs'
+            }
+        ]
+    }
+
     def __init__(self, config):    
         super().__init__(config)
 
     def load_backbone(self):
         """ Loads the GASSL backbone model from Zenodo repository or from a local path (if available).
         """
-
-        # Define backbone checkpoints
-        backbone_checkpoints = {
-            'gassl_moco_resnet50': [
-                {
-                    'filename': 'moco.pth.tar', 
-                    'record_id': '7379715',
-                    'description': 'Baseline checkpoint pre-trained on fMoW'
-                },
-                {
-                    'filename': 'moco_tp.pth.tar', 
-                    'record_id': '7379715',
-                    'description': 'Checkpoint pre-trained on fMoW with temporal positive pairs'
-                }
-            ],
-            'gassl_moco_geo_resnet50': [
-                {
-                    'filename': 'moco_geo.pth.tar', 
-                    'record_id': '7379715',
-                    'description': 'Checkpoint pre-trained on fMoW with geo-aware sampling'
-                },
-                {
-                    'filename': 'moco_geo+tp.pth.tar', 
-                    'record_id': '7379715',
-                    'description': 'Full GASSL checkpoint pre-trained on fMoW with geo-aware sampling and temporal positive pairs'
-                }
-            ]
-        }
         
         if self.config.pretrained: # Load pretrained weights
             if self.config.local_model_path:
@@ -58,15 +60,15 @@ class GASSL(FoundationModel):
                     print(f"Provided local model path does not exist: {self.config.local_model_path}")
                     print("Weights will be downloaded from Zenodo instead.")
                     # Check if backbone is supported
-                    if self.config.backbone_name not in backbone_checkpoints:
-                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(backbone_checkpoints.keys())}")
+                    if self.config.backbone_name not in self.BACKBONE_CHECKPOINTS:
+                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}")
                     else:
                         # Check if backbone has weights available
-                        if backbone_checkpoints[self.config.backbone_name] is None:
+                        if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
                             raise ValueError(f"No pretrained weights are available for backbone '{self.config.backbone_name}'.")
                         else: # Download the weights and load the model
                             # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
+                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][0]
                             checkpoint_name = temp_checkpoint_name['filename']
                             record_id = temp_checkpoint_name['record_id']
                             self._download_from_zenodo(record_id=record_id, checkpoint_name=checkpoint_name, local_model_path=self.config.local_model_path)                                                        
@@ -81,7 +83,7 @@ class GASSL(FoundationModel):
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     self.backbone_name = None
-                    for name, checkpoint_list in backbone_checkpoints.items():
+                    for name, checkpoint_list in self.BACKBONE_CHECKPOINTS.items():
                         # Ensure the list of checkpoints is not None before iterating
                         if checkpoint_list:
                             # Create a list of all filenames for the current backbone
@@ -188,4 +190,5 @@ class GASSL(FoundationModel):
                 
         return cleaned_state_dict
 
-
+for variant in GASSL.BACKBONE_CHECKPOINTS.keys():
+    BACKBONE_REGISTRY.register(variant)(GASSL)

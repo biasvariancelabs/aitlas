@@ -6,8 +6,9 @@ from tqdm import tqdm
 import requests
 from ..base.foundation import FoundationModel
 from .CACo.caco import MoCoV2CACoModule, caco_resnet18, caco_resnet50
+from aitlas.models.registries import BACKBONE_REGISTRY
 
-
+BACKBONE_REGISTRY.register("CACo")
 class CACo(FoundationModel):
     """AiTLAS wrapper class for CACo model
     
@@ -16,36 +17,36 @@ class CACo(FoundationModel):
 
     name = "CACo"
 
+    # Define backbone checkpoints
+    BACKBONE_CHECKPOINTS = {
+        'caco_resnet18': [
+            {
+                'filename': 'resnet18_caco_geo_100k_1000.pth', 
+                'description': 'CACo with a resnet18 backbone pretrained on 100k patches'
+            },
+            {
+                'filename': 'resnet18_caco_geo_1m_200.pth', 
+                'description': 'CACo with a resnet18 backbone pretrained on 1M patches'
+            }
+        ],
+        'caco_resnet50': [
+            {
+                'filename': 'resnet50_caco_geo_100k_1000.pth', 
+                'description': 'CACo with a resnet50 backbone pretrained on 100k patches'
+            },
+            {
+                'filename': 'resnet50_caco_geo_1m_200.pth', 
+                'description': 'CACo with a resnet50 backbone pretrained on 1M patches'
+            }
+        ]
+    }
+
     def __init__(self, config):    
         super().__init__(config)
 
     def load_backbone(self):
         """ Loads the CACo backbone model from Cornell University website or from a local path (if available).
         """
-
-        # Define backbone checkpoints
-        backbone_checkpoints = {
-            'caco_resnet18': [
-                {
-                    'filename': 'resnet18_caco_geo_100k_1000.pth', 
-                    'description': 'CACo with a resnet18 backbone pretrained on 100k patches'
-                },
-                {
-                    'filename': 'resnet18_caco_geo_1m_200.pth', 
-                    'description': 'CACo with a resnet18 backbone pretrained on 1M patches'
-                }
-            ],
-            'caco_resnet50': [
-                {
-                    'filename': 'resnet50_caco_geo_100k_1000.pth', 
-                    'description': 'CACo with a resnet50 backbone pretrained on 100k patches'
-                },
-                {
-                    'filename': 'resnet50_caco_geo_1m_200.pth', 
-                    'description': 'CACo with a resnet50 backbone pretrained on 1M patches'
-                }
-            ]
-        }
         
         if self.config.pretrained: # Load pretrained weights
             if self.config.local_model_path:
@@ -54,15 +55,15 @@ class CACo(FoundationModel):
                     print(f"Provided local model path does not exist: {self.config.local_model_path}")
                     print("Weights will be downloaded from Cornell University website instead.")
                     # Check if backbone is supported
-                    if self.config.backbone_name not in backbone_checkpoints:
-                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(backbone_checkpoints.keys())}")
+                    if self.config.backbone_name not in self.BACKBONE_CHECKPOINTS:
+                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}")
                     else:
                         # Check if backbone has weights available
-                        if backbone_checkpoints[self.config.backbone_name] is None:
+                        if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
                             raise ValueError(f"No pretrained weights are available for backbone '{self.config.backbone_name}'.")
                         else: # Download the weights and load the model
                             # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
+                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][0]
                             checkpoint_name = temp_checkpoint_name['filename']
                             print(checkpoint_name)
                             self._download_from_cornell(checkpoint_name=checkpoint_name, local_model_path=self.config.local_model_path)
@@ -77,7 +78,7 @@ class CACo(FoundationModel):
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     self.backbone_name = None
-                    for name, checkpoint_list in backbone_checkpoints.items():
+                    for name, checkpoint_list in self.BACKBONE_CHECKPOINTS.items():
                         # Ensure the list of checkpoints is not None before iterating
                         if checkpoint_list:
                             # Create a list of all filenames for the current backbone
@@ -162,3 +163,6 @@ class CACo(FoundationModel):
             print(f"\nAn error occurred: {e}")
             if os.path.exists(local_model_path):
                 os.remove(local_model_path)
+
+for variant in CACo.BACKBONE_CHECKPOINTS.keys():
+    BACKBONE_REGISTRY.register(variant)(CACo)

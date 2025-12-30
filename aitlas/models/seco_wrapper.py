@@ -8,8 +8,9 @@ import pytorch_lightning
 from collections import OrderedDict
 from ..base.foundation import FoundationModel
 from .SeCo.seco import MoCoV2Module, seco_resnet18, seco_resnet50
+from aitlas.models.registries import BACKBONE_REGISTRY
 
-
+BACKBONE_REGISTRY.register("SeCo")
 class SeCo(FoundationModel):
     """AiTLAS wrapper class for SeCo model
     
@@ -18,40 +19,40 @@ class SeCo(FoundationModel):
 
     name = "SeCo"
 
+    # Define backbone checkpoints
+    BACKBONE_CHECKPOINTS = {
+        'seco_resnet18': [
+            {
+                'filename': 'seco_resnet18_100k.ckpt', 
+                'record_id': '4728033',
+                'description': 'SeCo with a resnet18 backbone pretrained on 100k patches'
+            },
+            {
+                'filename': 'seco_resnet18_1m.ckpt', 
+                'record_id': '4728033',
+                'description': 'SeCo with a resnet18 backbone pretrained on 1M patches'
+            }
+        ],
+        'seco_resnet50': [
+            {
+                'filename': 'seco_resnet50_100k.ckpt', 
+                'record_id': '4728033',
+                'description': 'SeCo with a resnet50 backbone pretrained on 100k patches'
+            },
+            {
+                'filename': 'seco_resnet50_1m.ckpt', 
+                'record_id': '4728033',
+                'description': 'SeCo with a resnet50 backbone pretrained on 1M patches'
+            }
+        ]
+    }
+
     def __init__(self, config):    
         super().__init__(config)
 
     def load_backbone(self):
         """ Loads the SeCo backbone model from Zenodo repository or from a local path (if available).
         """
-
-        # Define backbone checkpoints
-        backbone_checkpoints = {
-            'seco_resnet18': [
-                {
-                    'filename': 'seco_resnet18_100k.ckpt', 
-                    'record_id': '4728033',
-                    'description': 'SeCo with a resnet18 backbone pretrained on 100k patches'
-                },
-                {
-                    'filename': 'seco_resnet18_1m.ckpt', 
-                    'record_id': '4728033',
-                    'description': 'SeCo with a resnet18 backbone pretrained on 1M patches'
-                }
-            ],
-            'seco_resnet50': [
-                {
-                    'filename': 'seco_resnet50_100k.ckpt', 
-                    'record_id': '4728033',
-                    'description': 'SeCo with a resnet50 backbone pretrained on 100k patches'
-                },
-                {
-                    'filename': 'seco_resnet50_1m.ckpt', 
-                    'record_id': '4728033',
-                    'description': 'SeCo with a resnet50 backbone pretrained on 1M patches'
-                }
-            ]
-        }
 
         # A fake module mapping to satisfy the unpickler expecting an old PyTorch Lightning patch
         sys.modules['pytorch_lightning.utilities.argparse_utils'] = pytorch_lightning
@@ -65,15 +66,15 @@ class SeCo(FoundationModel):
                     print(f"Provided local model path does not exist: {self.config.local_model_path}")
                     print("Weights will be downloaded from Zenodo instead.")
                     # Check if backbone is supported
-                    if self.config.backbone_name not in backbone_checkpoints:
-                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(backbone_checkpoints.keys())}")
+                    if self.config.backbone_name not in self.BACKBONE_CHECKPOINTS:
+                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}")
                     else:
                         # Check if backbone has weights available
-                        if backbone_checkpoints[self.config.backbone_name] is None:
+                        if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
                             raise ValueError(f"No pretrained weights are available for backbone '{self.config.backbone_name}'.")
                         else: # Download the weights and load the model
                             # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
+                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][0]
                             checkpoint_name = temp_checkpoint_name['filename']
                             record_id = temp_checkpoint_name['record_id']
                             self._download_from_zenodo(record_id=record_id, checkpoint_name=checkpoint_name, local_model_path=self.config.local_model_path)
@@ -88,7 +89,7 @@ class SeCo(FoundationModel):
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     self.backbone_name = None
-                    for name, checkpoint_list in backbone_checkpoints.items():
+                    for name, checkpoint_list in self.BACKBONE_CHECKPOINTS.items():
                         # Ensure the list of checkpoints is not None before iterating
                         if checkpoint_list:
                             # Create a list of all filenames for the current backbone
@@ -177,4 +178,5 @@ class SeCo(FoundationModel):
                 
         return cleaned_state_dict
 
-
+for variant in SeCo.BACKBONE_CHECKPOINTS.keys():
+    BACKBONE_REGISTRY.register(variant)(SeCo)

@@ -5,7 +5,9 @@ from huggingface_hub import hf_hub_download
 from ..base.foundation import FoundationModel
 from .SatMAE_plusplus.models_mae import MaskedAutoencoderViT, satmae_plusplus_vit_large
 from .SatMAE_plusplus.models_mae_group_channels import MaskedAutoencoderGroupChannelViT, satmae_plusplus_vit_large_multispectral
+from aitlas.models.registries import BACKBONE_REGISTRY
 
+BACKBONE_REGISTRY.register("SatMAE_plusplus")
 class SatMAE_plusplus(FoundationModel):
     """AiTLAS wrapper class for SatMAE++ model
     
@@ -14,40 +16,40 @@ class SatMAE_plusplus(FoundationModel):
 
     name = "SatMAE++"
 
+    # Define backbone checkpoints
+    BACKBONE_CHECKPOINTS = {
+        'satmae_plusplus_vit_large': [
+            {
+                'filename': 'checkpoint_ViT-L_pretrain_fmow_rgb.pth',
+                'repo_id': 'mubashir04/checkpoint_ViT-L_pretrain_fmow_rgb',
+                'description': 'Non-temporal checkpoint pre-trained on fMoW-RGB'
+            },
+            {
+                'filename': 'checkpoint_ViT-L_finetune_fmow_rgb',
+                'repo_id': 'mubashir04/checkpoint_ViT-L_finetune_fmow_rgb',
+                'description': 'Non-temporal checkpoint fine-tuned on fMoW-RGB'
+            }
+        ],
+        'satmae_plusplus_vit_large_multispectral': [
+            {
+                'filename': 'checkpoint_ViT-L_pretrain_fmow_sentinel.pth',
+                'repo_id': 'mubashir04/checkpoint_ViT-L_pretrain_fmow_sentinel',
+                'description': 'Multispectral checkpoint pre-trained on fMoW-Sentinel'
+            },
+            {
+                'filename': 'checkpoint_ViT-L_finetune_fmow_sentinel.pth', 
+                'repo_id': 'mubashir04/checkpoint_ViT-L_finetune_fmow_sentinel',
+                'description': 'Multispectral checkpoint fine-tuned on fMoW-Sentinel'
+            }
+        ]
+    }
+
     def __init__(self, config):    
         super().__init__(config)
 
     def load_backbone(self):
         """ Loads the SatMAE++ backbone model from Huggingface repository or from a local path (if available).
         """
-
-        # Define backbone checkpoints
-        backbone_checkpoints = {
-            'satmae_plusplus_vit_large': [
-                {
-                    'filename': 'checkpoint_ViT-L_pretrain_fmow_rgb.pth',
-                    'repo_id': 'mubashir04/checkpoint_ViT-L_pretrain_fmow_rgb',
-                    'description': 'Non-temporal checkpoint pre-trained on fMoW-RGB'
-                },
-                {
-                    'filename': 'checkpoint_ViT-L_finetune_fmow_rgb',
-                    'repo_id': 'mubashir04/checkpoint_ViT-L_finetune_fmow_rgb',
-                    'description': 'Non-temporal checkpoint fine-tuned on fMoW-RGB'
-                }
-            ],
-            'satmae_plusplus_vit_large_multispectral': [
-                {
-                    'filename': 'checkpoint_ViT-L_pretrain_fmow_sentinel.pth',
-                    'repo_id': 'mubashir04/checkpoint_ViT-L_pretrain_fmow_sentinel',
-                    'description': 'Multispectral checkpoint pre-trained on fMoW-Sentinel'
-                },
-                {
-                    'filename': 'checkpoint_ViT-L_finetune_fmow_sentinel.pth', 
-                    'repo_id': 'mubashir04/checkpoint_ViT-L_finetune_fmow_sentinel',
-                    'description': 'Multispectral checkpoint fine-tuned on fMoW-Sentinel'
-                }
-            ]
-        }
 
         if self.config.pretrained: # Load pretrained weights
             if self.config.local_model_path:
@@ -56,15 +58,15 @@ class SatMAE_plusplus(FoundationModel):
                     print(f"Provided local model path does not exist: {self.config.local_model_path}")
                     print("Weights will be downloaded from Huggingface instead.")
                     # Check if backbone is supported
-                    if self.config.backbone_name not in backbone_checkpoints:
-                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(backbone_checkpoints.keys())}")
+                    if self.config.backbone_name not in self.BACKBONE_CHECKPOINTS:
+                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}")
                     else:
                         # Check if backbone has weights available
-                        if backbone_checkpoints[self.config.backbone_name] is None:
+                        if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
                             raise ValueError(f"No pretrained weights are available for backbone '{self.config.backbone_name}'.")
                         else: # Download the weights and load the model
                             # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
+                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][0]
                             checkpoint_name = temp_checkpoint_name['filename']
                             repo_id = temp_checkpoint_name['repo_id']
                             self.config.local_model_path = hf_hub_download(repo_id=repo_id, filename=checkpoint_name, local_dir=os.path.dirname(self.config.local_model_path))
@@ -78,7 +80,7 @@ class SatMAE_plusplus(FoundationModel):
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     self.backbone_name = None
-                    for name, checkpoint_list in backbone_checkpoints.items():
+                    for name, checkpoint_list in self.BACKBONE_CHECKPOINTS.items():
                         # Ensure the list of checkpoints is not None before iterating
                         if checkpoint_list:
                             # Create a list of all filenames for the current backbone
@@ -122,3 +124,5 @@ class SatMAE_plusplus(FoundationModel):
 
         return embedding
 
+for variant in SatMAE_plusplus.BACKBONE_CHECKPOINTS.keys():
+    BACKBONE_REGISTRY.register(variant)(SatMAE_plusplus)

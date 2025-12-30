@@ -7,7 +7,9 @@ from ..base.foundation import FoundationModel
 from .SatMAE.models_mae import MaskedAutoencoderViT, satmae_vit_large
 from .SatMAE.models_mae_group_channels import MaskedAutoencoderGroupChannelViT, satmae_vit_base_multispectral, satmae_vit_large_multispectral
 from .SatMAE.models_mae_temporal import MaskedAutoencoderTemporalViT, satmae_vit_large_temporal
+from aitlas.models.registries import BACKBONE_REGISTRY
 
+BACKBONE_REGISTRY.register("SatMAE")
 class SatMAE(FoundationModel):
     """AiTLAS wrapper class for SatMAE model
     
@@ -16,64 +18,64 @@ class SatMAE(FoundationModel):
 
     name = "SatMAE"
 
+    # Define backbone checkpoints
+    BACKBONE_CHECKPOINTS = {
+        'satmae_vit_large': [
+            {
+                'filename': 'fmow_pretrain.pth', 
+                'record_id': '7369797',
+                'description': 'Non-temporal checkpoint pre-trained on fMoW'
+            },
+            {
+                'filename': 'fmow_finetune.pth', 
+                'record_id': '7369797',
+                'description': 'Non-temporal checkpoint fine-tuned on fMoW'
+            }
+        ],
+        'satmae_vit_large_multispectral': [
+            {
+                'filename': 'pretrain-vit-large-e199.pth', 
+                'record_id': '7338613',
+                'description': 'Multispectral checkpoint pre-trained on fMoW-Sentinel'
+            },
+            {
+                'filename': 'finetune-vit-large-e7.pth', 
+                'record_id': '7338613',
+                'description': 'Multispectral checkpoint fine-tuned on fMoW-Sentinel'
+            }
+        ],
+        'satmae_vit_large_temporal': [
+            {
+                'filename': 'pretrain_fmow_temporal.pth', 
+                'record_id': '7369797',
+                'description': 'Temporal checkpoint pre-trained on fMoW'
+            },
+            {
+                'filename': 'finetune_fmow_temporal.pth', 
+                'record_id': '7369797',
+                'description': 'Temporal checkpoint fine-tuned on fMoW'
+            }
+        ],
+        'satmae_vit_base_multispectral': [
+            {
+                'filename': 'pretrain-vit-base-e199.pth', 
+                'record_id': '7338613',
+                'description': 'Multispectral (base model) checkpoint pre-trained on fMoW-Sentinel'
+            },
+            {
+                'filename': 'finetune-vit-base-e7.pth', 
+                'record_id': '7338613',
+                'description': 'Multispectral (base model) checkpoint fine-tuned on fMoW-Sentinel'
+            }
+        ]
+    }
+
     def __init__(self, config):    
         super().__init__(config)
 
     def load_backbone(self):
         """ Loads the SatMAE backbone model from Zenodo repository or from a local path (if available).
         """
-
-        # Define backbone checkpoints
-        backbone_checkpoints = {
-            'satmae_vit_large': [
-                {
-                    'filename': 'fmow_pretrain.pth', 
-                    'record_id': '7369797',
-                    'description': 'Non-temporal checkpoint pre-trained on fMoW'
-                },
-                {
-                    'filename': 'fmow_finetune.pth', 
-                    'record_id': '7369797',
-                    'description': 'Non-temporal checkpoint fine-tuned on fMoW'
-                }
-            ],
-            'satmae_vit_large_multispectral': [
-                {
-                    'filename': 'pretrain-vit-large-e199.pth', 
-                    'record_id': '7338613',
-                    'description': 'Multispectral checkpoint pre-trained on fMoW-Sentinel'
-                },
-                {
-                    'filename': 'finetune-vit-large-e7.pth', 
-                    'record_id': '7338613',
-                    'description': 'Multispectral checkpoint fine-tuned on fMoW-Sentinel'
-                }
-            ],
-            'satmae_vit_large_temporal': [
-                {
-                    'filename': 'pretrain_fmow_temporal.pth', 
-                    'record_id': '7369797',
-                    'description': 'Temporal checkpoint pre-trained on fMoW'
-                },
-                {
-                    'filename': 'finetune_fmow_temporal.pth', 
-                    'record_id': '7369797',
-                    'description': 'Temporal checkpoint fine-tuned on fMoW'
-                }
-            ],
-            'satmae_vit_base_multispectral': [
-                {
-                    'filename': 'pretrain-vit-base-e199.pth', 
-                    'record_id': '7338613',
-                    'description': 'Multispectral (base model) checkpoint pre-trained on fMoW-Sentinel'
-                },
-                {
-                    'filename': 'finetune-vit-base-e7.pth', 
-                    'record_id': '7338613',
-                    'description': 'Multispectral (base model) checkpoint fine-tuned on fMoW-Sentinel'
-                }
-            ]
-        }
         
         if self.config.pretrained: # Load pretrained weights
             if self.config.local_model_path:
@@ -82,15 +84,15 @@ class SatMAE(FoundationModel):
                     print(f"Provided local model path does not exist: {self.config.local_model_path}")
                     print("Weights will be downloaded from Zenodo instead.")
                     # Check if backbone is supported
-                    if self.config.backbone_name not in backbone_checkpoints:
-                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(backbone_checkpoints.keys())}")
+                    if self.config.backbone_name not in self.BACKBONE_CHECKPOINTS:
+                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}")
                     else:
                         # Check if backbone has weights available
-                        if backbone_checkpoints[self.config.backbone_name] is None:
+                        if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
                             raise ValueError(f"No pretrained weights are available for backbone '{self.config.backbone_name}'.")
                         else: # Download the weights and load the model
                             # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
+                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][0]
                             checkpoint_name = temp_checkpoint_name['filename']
                             record_id = temp_checkpoint_name['record_id']
                             self._download_from_zenodo(record_id=record_id, checkpoint_name=checkpoint_name, local_model_path=self.config.local_model_path)                            
@@ -104,7 +106,7 @@ class SatMAE(FoundationModel):
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     self.backbone_name = None
-                    for name, checkpoint_list in backbone_checkpoints.items():
+                    for name, checkpoint_list in self.BACKBONE_CHECKPOINTS.items():
                         # Ensure the list of checkpoints is not None before iterating
                         if checkpoint_list:
                             # Create a list of all filenames for the current backbone
@@ -176,3 +178,6 @@ class SatMAE(FoundationModel):
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
                     progress_bar.update(len(chunk))
+
+for variant in SatMAE.BACKBONE_CHECKPOINTS.keys():
+    BACKBONE_REGISTRY.register(variant)(SatMAE)

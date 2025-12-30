@@ -1,4 +1,5 @@
 from .classification import BaseMulticlassClassifier, BaseMultilabelClassifier
+from .composite import CompositeModel
 from .config import Config, Configurable, ObjectConfig, RunConfig
 from .datasets import BaseDataset
 from .foundation import FoundationModel

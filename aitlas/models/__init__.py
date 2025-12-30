@@ -56,7 +56,7 @@ from .ScaleMAE import MaskedAutoencoderViT, scalemae_vit_large_patch16
 from .scale_mae_wrapper import ScaleMAE
 
 from .AnySat import OmniSatModule
-from .AnySat import AnySatModule, anysat_tiny, anysat_small, anysat_base
+from .AnySat import AnySatModule, anysat_base
 from .anysat_wrapper import AnySat
 
 from .Presto import PrestoModel, presto_default
@@ -87,7 +87,7 @@ from .copernicusfm_wrapper import CopernicusFM
 from .CROMA import CROMAModule, croma_base, croma_large
 from .croma_wrapper import CROMA
 
-from .TerraFM import TerraFMModule, terrafm_base, terrafm_large
+from .TerraFM import TerraFMModule, terrafm_base
 from .terrafm_wrapper import TerraFM
 
 from .unet_change_detection import UnetChangeDetection
@@ -97,3 +97,8 @@ from .TerraMind import terramind_v1_tiny_generate, terramind_v1_small_generate, 
 from .TerraMind import terramind_v1_tiny_tim, terramind_v1_small_tim, terramind_v1_base_tim, terramind_v1_large_tim
 
 from .terramind_wrapper import TerraMind
+
+from .registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY
+from .decoders import * # Registers decoders
+from .heads import * # Registers heads
+from .necks import * # Registers necks

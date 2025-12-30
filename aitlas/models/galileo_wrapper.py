@@ -9,8 +9,9 @@ from einops import rearrange, repeat
 from ..base.foundation import FoundationModel
 from .Galileo import GalileoBase, Encoder, Decoder
 from .Galileo.utils import CONFIG_FILENAME, ENCODER_FILENAME, construct_galileo_input
+from aitlas.models.registries import BACKBONE_REGISTRY
 
-
+BACKBONE_REGISTRY.register("Galileo")
 class Galileo(FoundationModel):
     """AiTLAS wrapper class for Galileo model
     
@@ -21,43 +22,43 @@ class Galileo(FoundationModel):
 
     input_keys = ["s1", "s2", "era5", "tc", "viirs", "srtm", "dw", "wc", "landscan", "latlon"]
 
+    # Define backbone checkpoints
+    BACKBONE_CHECKPOINTS = {
+        'galileo_nano': [
+            {
+                'filename': ENCODER_FILENAME,
+                'config_name': CONFIG_FILENAME,
+                'repo_id': 'nasaharvest/galileo',
+                'subfolder': 'models/nano',
+                'description': 'Galileo model weights for nano model'
+            }
+        ],
+        'galileo_tiny': [
+            {
+                'filename': ENCODER_FILENAME,
+                'config_name': CONFIG_FILENAME,
+                'repo_id': 'nasaharvest/galileo',
+                'subfolder': 'models/tiny',
+                'description': 'Galileo model weights for tiny model'
+            }
+        ],
+        'galileo_base': [
+            {
+                'filename': ENCODER_FILENAME,
+                'config_name': CONFIG_FILENAME,
+                'repo_id': 'nasaharvest/galileo',
+                'subfolder': 'models/base',
+                'description': 'Galileo model weights for base model'
+            }
+        ]
+    }
+
     def __init__(self, config):
         super().__init__(config)
 
     def load_backbone(self):
         """ Loads the Galileo backbone model from Huggingface repository or from a local path (if available).
         """
-
-        # Define backbone checkpoints
-        backbone_checkpoints = {
-            'galileo_nano': [
-                {
-                    'filename': ENCODER_FILENAME,
-                    'config_name': CONFIG_FILENAME,
-                    'repo_id': 'nasaharvest/galileo',
-                    'subfolder': 'models/nano',
-                    'description': 'Galileo model weights for nano model'
-                }
-            ],
-            'galileo_tiny': [
-                {
-                    'filename': ENCODER_FILENAME,
-                    'config_name': CONFIG_FILENAME,
-                    'repo_id': 'nasaharvest/galileo',
-                    'subfolder': 'models/tiny',
-                    'description': 'Galileo model weights for tiny model'
-                }
-            ],
-            'galileo_base': [
-                {
-                    'filename': ENCODER_FILENAME,
-                    'config_name': CONFIG_FILENAME,
-                    'repo_id': 'nasaharvest/galileo',
-                    'subfolder': 'models/base',
-                    'description': 'Galileo model weights for base model'
-                }
-            ]
-        }
 
         if self.config.pretrained: # Load pretrained weights
             if self.config.local_model_path:
@@ -66,15 +67,15 @@ class Galileo(FoundationModel):
                     print(f"Provided local model path does not exist: {self.config.local_model_path}")
                     print("Weights will be downloaded from Huggingface instead.")
                     # Check if backbone is supported
-                    if self.config.backbone_name not in backbone_checkpoints:
-                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(backbone_checkpoints.keys())}")
+                    if self.config.backbone_name not in self.BACKBONE_CHECKPOINTS:
+                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}")
                     else:
                         # Check if backbone has weights available
-                        if backbone_checkpoints[self.config.backbone_name] is None:
+                        if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
                             raise ValueError(f"No pretrained weights are available for backbone '{self.config.backbone_name}'.")
                         else: # Download the weights and load the model
                             # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
+                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][0]
                             checkpoint_name = temp_checkpoint_name['filename']
                             config_name = temp_checkpoint_name['config_name']
                             repo_id = temp_checkpoint_name['repo_id']
@@ -94,7 +95,7 @@ class Galileo(FoundationModel):
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     self.backbone_name = None
-                    for name, checkpoint_list in backbone_checkpoints.items():
+                    for name, checkpoint_list in self.BACKBONE_CHECKPOINTS.items():
                         # Ensure the list of checkpoints is not None before iterating
                         if checkpoint_list:
                             # Create a list of all filenames for the current backbone
@@ -189,3 +190,6 @@ class Galileo(FoundationModel):
             embedding = self.backbone.average_tokens(*embedding[:-1]) # Exclude the months token when calculating the average
         
         return embedding
+
+for variant in Galileo.BACKBONE_CHECKPOINTS.keys():
+    BACKBONE_REGISTRY.register(variant)(Galileo)

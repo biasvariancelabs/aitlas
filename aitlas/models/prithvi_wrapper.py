@@ -4,8 +4,9 @@ import torch.nn as nn
 from huggingface_hub import hf_hub_download
 from ..base.foundation import FoundationModel
 from .Prithvi.prithvi_mae import PrithviMAE, PrithviViT, prithvi_eo_v1_base, prithvi_eo_v2_tiny_tl, prithvi_eo_v2_base_tl, prithvi_eo_v2_large, prithvi_eo_v2_large_tl, prithvi_eo_v2_huge, prithvi_eo_v2_huge_tl
+from aitlas.models.registries import BACKBONE_REGISTRY
 
-
+BACKBONE_REGISTRY.register("Prithvi")
 class Prithvi(FoundationModel):
     """AiTLAS wrapper class for Prithvi model
     
@@ -14,80 +15,80 @@ class Prithvi(FoundationModel):
 
     name = "Prithvi"
 
+    # Define backbone checkpoints
+    BACKBONE_CHECKPOINTS = {
+        'prithvi_eo_v1_base': [
+            {
+                'filename': 'Prithvi_EO_V1_100M.pt', 
+                'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-1.0-100M',
+                'description': 'Prithvi-EO-1.0 with 100M parameters'
+            },
+            {
+                'filename': 'sen1floods11_Prithvi_100M.pth', 
+                'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-1.0-100M-sen1floods11',
+                'description': 'Prithvi-EO-1.0 with 100M parameters fine-tuned on Sen1Floods11 dataset'
+            },
+            {
+                'filename': 'burn_scars_Prithvi_100M.pth', 
+                'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-1.0-100M-burn-scar',
+                'description': 'Prithvi-EO-1.0 with 100M parameters fine-tuned on HLS Burn Scar Scenes dataset'
+            },
+            {
+                'filename': 'multi_temporal_crop_classification_Prithvi_100M.pth', 
+                'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-1.0-100M-multi-temporal-crop-classification',
+                'description': 'Prithvi-EO-1.0 with 100M parameters fine-tuned on Multi-Temporal Crop Classification dataset'
+            }
+        ],
+        'prithvi_eo_v2_tiny_tl': [
+            {
+                'filename': 'Prithvi_EO_V2_tiny_TL.pt', 
+                'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-2.0-tiny-TL',
+                'description': 'Prithvi-EO-2.0 based on ViT-tiny with time and location encodings'
+            }
+        ],
+        'prithvi_eo_v2_base_tl': [
+            {
+                'filename': 'Prithvi_EO_V2_100M_TL.pt', 
+                'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-2.0-100M-TL',
+                'description': 'Prithvi-EO-2.0 with 100M parameters with time and location encodings'
+            }
+        ],
+        'prithvi_eo_v2_large': [
+            {
+                'filename': 'Prithvi_EO_V2_300M.pt', 
+                'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-2.0-300M',
+                'description': 'Prithvi-EO-2.0 with 300M parameters without time and location encodings'
+            }
+        ],
+        'prithvi_eo_v2_large_tl': [
+            {
+                'filename': 'Prithvi_EO_V2_300M_TL.pt', 
+                'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-2.0-300M-TL',
+                'description': 'Prithvi-EO-2.0 with 300M parameters with time and location encodings'
+            }
+        ],
+        'prithvi_eo_v2_huge': [
+            {
+                'filename': 'Prithvi_EO_V2_600M.pt', 
+                'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-2.0-600M',
+                'description': 'Prithvi-EO-2.0 with 600M parameters without time and location encodings'
+            }
+        ],
+        'prithvi_eo_v2_huge_tl': [
+            {
+                'filename': 'Prithvi_EO_V2_600M_TL.pt', 
+                'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-2.0-600M-TL',
+                'description': 'Prithvi-EO-2.0 with 600M parameters with time and location encodings'
+            }
+        ],
+    }
+
     def __init__(self, config):    
         super().__init__(config)
 
     def load_backbone(self):
         """ Loads the Prithvi backbone model from Huggingface repository or from a local path (if available).
         """
-
-        # Define backbone checkpoints
-        backbone_checkpoints = {
-            'prithvi_eo_v1_base': [
-                {
-                    'filename': 'Prithvi_EO_V1_100M.pt', 
-                    'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-1.0-100M',
-                    'description': 'Prithvi-EO-1.0 with 100M parameters'
-                },
-                {
-                    'filename': 'sen1floods11_Prithvi_100M.pth', 
-                    'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-1.0-100M-sen1floods11',
-                    'description': 'Prithvi-EO-1.0 with 100M parameters fine-tuned on Sen1Floods11 dataset'
-                },
-                {
-                    'filename': 'burn_scars_Prithvi_100M.pth', 
-                    'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-1.0-100M-burn-scar',
-                    'description': 'Prithvi-EO-1.0 with 100M parameters fine-tuned on HLS Burn Scar Scenes dataset'
-                },
-                {
-                    'filename': 'multi_temporal_crop_classification_Prithvi_100M.pth', 
-                    'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-1.0-100M-multi-temporal-crop-classification',
-                    'description': 'Prithvi-EO-1.0 with 100M parameters fine-tuned on Multi-Temporal Crop Classification dataset'
-                }
-            ],
-            'prithvi_eo_v2_tiny_tl': [
-                {
-                    'filename': 'Prithvi_EO_V2_tiny_TL.pt', 
-                    'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-2.0-tiny-TL',
-                    'description': 'Prithvi-EO-2.0 based on ViT-tiny with time and location encodings'
-                }
-            ],
-            'prithvi_eo_v2_base_tl': [
-                {
-                    'filename': 'Prithvi_EO_V2_100M_TL.pt', 
-                    'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-2.0-100M-TL',
-                    'description': 'Prithvi-EO-2.0 with 100M parameters with time and location encodings'
-                }
-            ],
-            'prithvi_eo_v2_large': [
-                {
-                    'filename': 'Prithvi_EO_V2_300M.pt', 
-                    'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-2.0-300M',
-                    'description': 'Prithvi-EO-2.0 with 300M parameters without time and location encodings'
-                }
-            ],
-            'prithvi_eo_v2_large_tl': [
-                {
-                    'filename': 'Prithvi_EO_V2_300M_TL.pt', 
-                    'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-2.0-300M-TL',
-                    'description': 'Prithvi-EO-2.0 with 300M parameters with time and location encodings'
-                }
-            ],
-            'prithvi_eo_v2_huge': [
-                {
-                    'filename': 'Prithvi_EO_V2_600M.pt', 
-                    'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-2.0-600M',
-                    'description': 'Prithvi-EO-2.0 with 600M parameters without time and location encodings'
-                }
-            ],
-            'prithvi_eo_v2_huge_tl': [
-                {
-                    'filename': 'Prithvi_EO_V2_600M_TL.pt', 
-                    'repo_id': 'ibm-nasa-geospatial/Prithvi-EO-2.0-600M-TL',
-                    'description': 'Prithvi-EO-2.0 with 600M parameters with time and location encodings'
-                }
-            ],
-        }
         
         if self.config.pretrained: # Load pretrained weights
             if self.config.local_model_path:
@@ -96,15 +97,15 @@ class Prithvi(FoundationModel):
                     print(f"Provided local model path does not exist: {self.config.local_model_path}")
                     print("Weights will be downloaded from Huggingface instead.")
                     # Check if backbone is supported
-                    if self.config.backbone_name not in backbone_checkpoints:
-                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(backbone_checkpoints.keys())}")
+                    if self.config.backbone_name not in self.BACKBONE_CHECKPOINTS:
+                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}")
                     else:
                         # Check if backbone has weights available
-                        if backbone_checkpoints[self.config.backbone_name] is None:
+                        if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
                             raise ValueError(f"No pretrained weights are available for backbone '{self.config.backbone_name}'.")
                         else: # Download the weights and load the model
                             # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
+                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][0]
                             checkpoint_name = temp_checkpoint_name['filename']
                             repo_id = temp_checkpoint_name['repo_id']
                             self.config.local_model_path = hf_hub_download(repo_id=repo_id, filename=checkpoint_name, local_dir=os.path.dirname(self.config.local_model_path))                           
@@ -118,7 +119,7 @@ class Prithvi(FoundationModel):
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     self.backbone_name = None
-                    for name, checkpoint_list in backbone_checkpoints.items():
+                    for name, checkpoint_list in self.BACKBONE_CHECKPOINTS.items():
                         # Ensure the list of checkpoints is not None before iterating
                         if checkpoint_list:
                             # Create a list of all filenames for the current backbone
@@ -189,3 +190,6 @@ class Prithvi(FoundationModel):
         embedding = embedding[-1]
 
         return embedding
+
+for variant in Prithvi.BACKBONE_CHECKPOINTS.keys():
+    BACKBONE_REGISTRY.register(variant)(Prithvi)

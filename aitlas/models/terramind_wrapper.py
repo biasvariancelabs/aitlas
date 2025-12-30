@@ -25,7 +25,9 @@ from .TerraMind import (
     select_modality_patch_embed_weights,
     PRETRAINED_BANDS
 )
+from aitlas.models.registries import BACKBONE_REGISTRY
 
+BACKBONE_REGISTRY.register("TerraMind")
 class TerraMind(FoundationModel):
     """AiTLAS wrapper class for TerraMind model
     
@@ -35,100 +37,100 @@ class TerraMind(FoundationModel):
     name = "TerraMind"
     schema = TerraMindSchema
 
+    # Define backbone checkpoints
+    BACKBONE_CHECKPOINTS = {
+        'terramind_v1_tiny': [
+            {
+                'filename': 'TerraMind_v1_tiny.pt', 
+                'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-tiny',
+                'description': 'TerraMind encoder with a ViT-tiny backbone'
+            }
+        ],
+        'terramind_v1_small': [
+            {
+                'filename': 'TerraMind_v1_small.pt', 
+                'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-small',
+                'description': 'TerraMind encoder with a ViT-small backbone'
+            }
+        ],
+        'terramind_v1_base': [
+            {
+                'filename': 'TerraMind_v1_base.pt', 
+                'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-base',
+                'description': 'TerraMind encoder with a ViT-base backbone'
+            }
+        ],
+        'terramind_v1_large': [
+            {
+                'filename': 'TerraMind_v1_large.pt', 
+                'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-large',
+                'description': 'TerraMind encoder with a ViT-large backbone'
+            }
+        ],
+        'terramind_v1_tiny_generate': [
+            {
+                'filename': 'TerraMind_v1_tiny.pt', 
+                'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-tiny',
+                'description': 'TerraMind any-to-any generation model with a ViT-tiny backbone'
+            }
+        ],
+        'terramind_v1_small_generate': [
+            {
+                'filename': 'TerraMind_v1_small.pt', 
+                'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-small',
+                'description': 'TerraMind any-to-any generation model with a ViT-small backbone'
+            }
+        ],
+        'terramind_v1_base_generate': [
+            {
+                'filename': 'TerraMind_v1_base.pt', 
+                'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-base',
+                'description': 'TerraMind any-to-any generation model with a ViT-base backbone'
+            }
+        ],
+        'terramind_v1_large_generate': [
+            {
+                'filename': 'TerraMind_v1_large.pt', 
+                'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-large',
+                'description': 'TerraMind any-to-any generation model with a ViT-large backbone'
+            }
+        ],
+        'terramind_v1_tiny_tim': [
+            {
+                'filename': 'TerraMind_v1_tiny.pt', 
+                'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-tiny',
+                'description': 'TerraMind Thinking in Modalities (TiM) model with a ViT-tiny backbone'
+            }
+        ],
+        'terramind_v1_small_tim': [
+            {
+                'filename': 'TerraMind_v1_small.pt', 
+                'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-small',
+                'description': 'TerraMind Thinking in Modalities (TiM) model with a ViT-small backbone'
+            }
+        ],
+        'terramind_v1_base_tim': [
+            {
+                'filename': 'TerraMind_v1_base.pt', 
+                'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-base',
+                'description': 'TerraMind Thinking in Modalities (TiM) model with a ViT-base backbone'
+            }
+        ],
+        'terramind_v1_large_tim': [
+            {
+                'filename': 'TerraMind_v1_large.pt', 
+                'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-large',
+                'description': 'TerraMind Thinking in Modalities (TiM) model with a ViT-large backbone'
+            }
+        ],
+    }
+
     def __init__(self, config):    
         super().__init__(config)
 
     def load_backbone(self):
         """ Loads the TerraMind backbone model from Huggingface repository or from a local path (if available).
         """
-
-        # Define backbone checkpoints
-        backbone_checkpoints = {
-            'terramind_v1_tiny': [
-                {
-                    'filename': 'TerraMind_v1_tiny.pt', 
-                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-tiny',
-                    'description': 'TerraMind encoder with a ViT-tiny backbone'
-                }
-            ],
-            'terramind_v1_small': [
-                {
-                    'filename': 'TerraMind_v1_small.pt', 
-                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-small',
-                    'description': 'TerraMind encoder with a ViT-small backbone'
-                }
-            ],
-            'terramind_v1_base': [
-                {
-                    'filename': 'TerraMind_v1_base.pt', 
-                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-base',
-                    'description': 'TerraMind encoder with a ViT-base backbone'
-                }
-            ],
-            'terramind_v1_large': [
-                {
-                    'filename': 'TerraMind_v1_large.pt', 
-                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-large',
-                    'description': 'TerraMind encoder with a ViT-large backbone'
-                }
-            ],
-            'terramind_v1_tiny_generate': [
-                {
-                    'filename': 'TerraMind_v1_tiny.pt', 
-                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-tiny',
-                    'description': 'TerraMind any-to-any generation model with a ViT-tiny backbone'
-                }
-            ],
-            'terramind_v1_small_generate': [
-                {
-                    'filename': 'TerraMind_v1_small.pt', 
-                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-small',
-                    'description': 'TerraMind any-to-any generation model with a ViT-small backbone'
-                }
-            ],
-            'terramind_v1_base_generate': [
-                {
-                    'filename': 'TerraMind_v1_base.pt', 
-                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-base',
-                    'description': 'TerraMind any-to-any generation model with a ViT-base backbone'
-                }
-            ],
-            'terramind_v1_large_generate': [
-                {
-                    'filename': 'TerraMind_v1_large.pt', 
-                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-large',
-                    'description': 'TerraMind any-to-any generation model with a ViT-large backbone'
-                }
-            ],
-            'terramind_v1_tiny_tim': [
-                {
-                    'filename': 'TerraMind_v1_tiny.pt', 
-                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-tiny',
-                    'description': 'TerraMind Thinking in Modalities (TiM) model with a ViT-tiny backbone'
-                }
-            ],
-            'terramind_v1_small_tim': [
-                {
-                    'filename': 'TerraMind_v1_small.pt', 
-                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-small',
-                    'description': 'TerraMind Thinking in Modalities (TiM) model with a ViT-small backbone'
-                }
-            ],
-            'terramind_v1_base_tim': [
-                {
-                    'filename': 'TerraMind_v1_base.pt', 
-                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-base',
-                    'description': 'TerraMind Thinking in Modalities (TiM) model with a ViT-base backbone'
-                }
-            ],
-            'terramind_v1_large_tim': [
-                {
-                    'filename': 'TerraMind_v1_large.pt', 
-                    'repo_id': 'ibm-esa-geospatial/TerraMind-1.0-large',
-                    'description': 'TerraMind Thinking in Modalities (TiM) model with a ViT-large backbone'
-                }
-            ],
-        }
         
         if self.config.pretrained: # Load pretrained weights
             if self.config.local_model_path:
@@ -137,15 +139,15 @@ class TerraMind(FoundationModel):
                     print(f"Provided local model path does not exist: {self.config.local_model_path}")
                     print("Weights will be downloaded from Huggingface instead.")
                     # Check if backbone is supported
-                    if self.config.backbone_name not in backbone_checkpoints:
-                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(backbone_checkpoints.keys())}")
+                    if self.config.backbone_name not in self.BACKBONE_CHECKPOINTS:
+                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}")
                     else:
                         # Check if backbone has weights available
-                        if backbone_checkpoints[self.config.backbone_name] is None:
+                        if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
                             raise ValueError(f"No pretrained weights are available for backbone '{self.config.backbone_name}'.")
                         else: # Download the weights and load the model
                             # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = backbone_checkpoints[self.config.backbone_name][0]
+                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][0]
                             checkpoint_name = temp_checkpoint_name['filename']
                             repo_id = temp_checkpoint_name['repo_id']
                             self.config.local_model_path = hf_hub_download(repo_id=repo_id, filename=checkpoint_name, local_dir=os.path.dirname(self.config.local_model_path))                           
@@ -168,7 +170,7 @@ class TerraMind(FoundationModel):
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     self.backbone_name = None
-                    for name, checkpoint_list in backbone_checkpoints.items():
+                    for name, checkpoint_list in self.BACKBONE_CHECKPOINTS.items():
                         # Ensure the list of checkpoints is not None before iterating
                         if checkpoint_list:
                             # Create a list of all filenames for the current backbone
@@ -329,3 +331,8 @@ class TerraMind(FoundationModel):
         embedding = self.backbone.forward(d=x, **kwargs)
 
         return embedding
+    
+for variant in TerraMind.BACKBONE_CHECKPOINTS.keys():
+    # Any-to-any generation model cannot be used as backbone
+    if "generate" not in variant:
+        BACKBONE_REGISTRY.register(variant)(TerraMind)
