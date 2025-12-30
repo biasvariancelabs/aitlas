@@ -10,6 +10,11 @@ class FoundationModel(BaseModel):
 
     def __init__(self, config):
         super().__init__(config)
+
+        # Setup out_indices
+        self.out_indices = getattr(self.config, "out_indices", None)
+
+        # Load the backbone
         self.backbone = self.load_backbone()
 
     def load_backbone(self) -> nn.Module:

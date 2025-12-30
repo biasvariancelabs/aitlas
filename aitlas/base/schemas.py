@@ -224,8 +224,8 @@ class BaseFoundationModelSchema(BaseModelSchema):
 
     :param use_cuda: Flag indicating whether to use CUDA if available. Default is True.
     :type use_cuda: bool, optional
-
     """
+
     pretrained = fields.Bool(
         missing=True, description="Whether to use a pretrained network or not."
     )
@@ -243,6 +243,74 @@ class BaseFoundationModelSchema(BaseModelSchema):
     )
     flash_attn = fields.Bool(
         missing=False, description="Whether to use flash attention (if cuda and flash attention are available)"
+    )
+    out_indices = fields.List(
+        fields.Int(),
+        missing=None,
+        description="List of layer indices to return features from. If None, returns default embedding."
+    )
+
+    pass
+
+class CompositeModelSchema(BaseModelSchema):
+    """
+    Schema for configuring composite models that combine a backbone, neck, decoder, and head.
+    
+    :param task_type: Type of task for the composite model. Can be 'classification', 'segmentation', 'object detection', or 'change detection'.
+    :type task_type: str, required
+
+    :param backbone_name: Name of the model to use as a backbone. Required.
+    :type backbone_name: str, required
+
+    :param neck_name: Name of the component to use as a neck. Default is None.
+    :type neck_name: str, optional
+
+    :param decoder_name: Name of the model to use as a decoder. Default is None.
+    :type decoder_name: str, optional
+
+    :param decoder_params: Parameters passed to the decoder (e.g., {'pool_scales': [1,2,3,6]}). Default is an empty dictionary.
+    :type decoder_params: dict, optional
+
+    :param head_name: Name of the component to use as a head. Default is "Default".
+    :type head_name: str, optional
+
+    :param head_params: Parameters passed to the head (e.g., {'dropout': 0.1}). Default is an empty dictionary.
+    :type head_params: dict, optional
+    """
+
+    task_type = fields.String(
+        required=True,
+        description="Type of task for the composite model.",
+        validate=validate.OneOf(["classification", "segmentation", "object detection", "change detection"]),
+        example="segmentation",
+    )
+    backbone_name = fields.String(
+        required=True,
+        description="Name of the model to use as a backbone.",
+        example="vit_base_patch16"
+    )
+    neck_name = fields.String(
+        missing=None,
+        description="Name of the component to use as a neck (optional).",
+        example="ReshapeTokensToImage"
+    )
+    decoder_name = fields.String(
+        missing=None,
+        description="Name of the model to use as a decoder.",
+        example="UPerNetDecoder"
+    )
+    decoder_params = fields.Dict(
+        missing={}, 
+        description="Parameters passed to the decoder (e.g., {'pool_scales': [1,2,3,6]})."
+    )
+    head_name = fields.String(
+        missing="Default",
+        description="Name of the component to use as a head.",
+        example="SegmentationHead"
+    )
+    head_params = fields.Dict(
+        missing={},
+        description="Parameters passed to the head (e.g., {'dropout': 0.1})."
     )
 
     pass
