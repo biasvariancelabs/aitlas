@@ -99,6 +99,18 @@ from .TerraMind import terramind_v1_tiny_tim, terramind_v1_small_tim, terramind_
 from .terramind_wrapper import TerraMind
 
 from .registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY
+
+from .necks import (
+    AddBottleneckLayer, 
+    AggregateTokens, 
+    FeaturePyramidNetworkNeck, 
+    InterpolateToPyramidal, 
+    LearnedInterpolateToPyramidal, 
+    MaxpoolToPyramidal, 
+    PermuteDims, 
+    ReshapeTokensToImage, 
+    SelectIndices
+)
+
 from .decoders import * # Registers decoders
 from .heads import * # Registers heads
-from .necks import * # Registers necks
