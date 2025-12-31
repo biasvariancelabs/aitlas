@@ -269,7 +269,7 @@ class ReshapeTokensToImage(Neck):
                         else:
                             raise ValueError(f"Cannot infer grid shape from from input tokens ({x.shape[1]}) with "
                                              f"image_size = {image_size} in neck ReshapeTokensToImage. ")
-                    h = int(img_h // patch_size)
+                    h = int(image_size[0] // patch_size)
 
                 encoded = rearrange(
                     x_no_token,
