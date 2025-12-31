@@ -284,7 +284,7 @@ class CompositeModelSchema(BaseFoundationModelSchema):
     task_type = fields.String(
         required=True,
         description="Type of task for the composite model.",
-        validate=validate.OneOf(["classification", "segmentation", "object detection", "change detection"]),
+        validate=validate.OneOf(["classification", "segmentation", "object detection", "change detection", "feature extraction"]),
         example="segmentation",
     )
     neck_name = fields.String(
@@ -302,8 +302,8 @@ class CompositeModelSchema(BaseFoundationModelSchema):
         description="Parameters passed to the decoder (e.g., {'pool_scales': [1,2,3,6]})."
     )
     head_name = fields.String(
-        missing="Default",
-        description="Name of the component to use as a head.",
+        missing=None,
+        description="Name of the component to use as a head (optional).",
         example="SegmentationHead"
     )
     head_params = fields.Dict(
