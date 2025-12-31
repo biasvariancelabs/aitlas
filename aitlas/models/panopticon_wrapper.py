@@ -7,7 +7,7 @@ from ..base.foundation import FoundationModel
 from .Panopticon.panopticon import PanopticonModule, panopticon_base
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("Panopticon")
+
 class Panopticon(FoundationModel):
     """AiTLAS wrapper class for Panopticon model
     

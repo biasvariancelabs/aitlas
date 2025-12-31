@@ -9,7 +9,7 @@ from .GASSL.gassl import MoCo, gassl_moco_resnet50
 from .GASSL.gassl_geo import MoCo_geo, gassl_moco_geo_resnet50
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("GASSL")
+
 class GASSL(FoundationModel):
     """AiTLAS wrapper class for GASSL model
     

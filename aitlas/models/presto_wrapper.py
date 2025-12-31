@@ -10,7 +10,7 @@ from .Presto.presto import PrestoModel, presto_default
 from .Presto.utils import prepare_presto_input, INPUT_PRESTO_S2_BANDS, PRESTO_S1_BANDS, ERA5_BANDS, SRTM_BANDS
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("Presto")
+
 class Presto(FoundationModel):
     """AiTLAS wrapper class for Presto model
     

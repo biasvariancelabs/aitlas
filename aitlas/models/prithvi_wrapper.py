@@ -6,7 +6,7 @@ from ..base.foundation import FoundationModel
 from .Prithvi.prithvi_mae import PrithviMAE, PrithviViT, prithvi_eo_v1_base, prithvi_eo_v2_tiny_tl, prithvi_eo_v2_base_tl, prithvi_eo_v2_large, prithvi_eo_v2_large_tl, prithvi_eo_v2_huge, prithvi_eo_v2_huge_tl
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("Prithvi")
+
 class Prithvi(FoundationModel):
     """AiTLAS wrapper class for Prithvi model
     

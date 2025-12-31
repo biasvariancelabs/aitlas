@@ -7,7 +7,7 @@ from .SatMAE_plusplus.models_mae import MaskedAutoencoderViT, satmae_plusplus_vi
 from .SatMAE_plusplus.models_mae_group_channels import MaskedAutoencoderGroupChannelViT, satmae_plusplus_vit_large_multispectral
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("SatMAE_plusplus")
+
 class SatMAE_plusplus(FoundationModel):
     """AiTLAS wrapper class for SatMAE++ model
     

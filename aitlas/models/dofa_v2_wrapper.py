@@ -6,7 +6,7 @@ from ..base.foundation import FoundationModel
 from .DOFA.dofa_v2 import OFAViT, dofa_v1_vit_base_patch16, dofa_v1_vit_large_patch16, dofa_v2_vit_base_patch14, dofa_v2_vit_large_patch14
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("DOFA_v2")
+
 class DOFA_v2(FoundationModel):
     """AiTLAS wrapper class for DOFA_v2 model
     

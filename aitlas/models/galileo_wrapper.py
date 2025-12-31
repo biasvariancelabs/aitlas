@@ -11,7 +11,7 @@ from .Galileo import GalileoBase, Encoder, Decoder
 from .Galileo.utils import CONFIG_FILENAME, ENCODER_FILENAME, construct_galileo_input
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("Galileo")
+
 class Galileo(FoundationModel):
     """AiTLAS wrapper class for Galileo model
     

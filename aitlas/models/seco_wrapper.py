@@ -10,7 +10,7 @@ from ..base.foundation import FoundationModel
 from .SeCo.seco import MoCoV2Module, seco_resnet18, seco_resnet50
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("SeCo")
+
 class SeCo(FoundationModel):
     """AiTLAS wrapper class for SeCo model
     

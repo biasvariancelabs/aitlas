@@ -8,7 +8,7 @@ from ..base.foundation import FoundationModel
 from .CopernicusFM.copernicusfm import CopernicusFMModule, copernicusfm_base, copernicusfm_large
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("CopernicusFM")
+
 class CopernicusFM(FoundationModel):
     """AiTLAS wrapper class for CopernicusFM model
     

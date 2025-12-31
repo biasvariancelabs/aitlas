@@ -8,7 +8,7 @@ from ..base.foundation import FoundationModel
 from .CACo.caco import MoCoV2CACoModule, caco_resnet18, caco_resnet50
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("CACo")
+
 class CACo(FoundationModel):
     """AiTLAS wrapper class for CACo model
     

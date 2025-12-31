@@ -8,7 +8,7 @@ from ..base.foundation import FoundationModel
 from .TerraFM import TerraFMModule, terrafm_base
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("TerraFM")
+
 class TerraFM(FoundationModel):
     """AiTLAS wrapper class for TerraFM model
     

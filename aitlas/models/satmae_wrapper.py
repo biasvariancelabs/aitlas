@@ -9,7 +9,7 @@ from .SatMAE.models_mae_group_channels import MaskedAutoencoderGroupChannelViT, 
 from .SatMAE.models_mae_temporal import MaskedAutoencoderTemporalViT, satmae_vit_large_temporal
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("SatMAE")
+
 class SatMAE(FoundationModel):
     """AiTLAS wrapper class for SatMAE model
     

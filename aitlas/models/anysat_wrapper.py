@@ -7,7 +7,7 @@ from ..base.foundation import FoundationModel
 from .AnySat.anysat import AnySatModule, anysat_base
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("AnySat")
+
 class AnySat(FoundationModel):
     """AiTLAS wrapper class for AnySat model
     

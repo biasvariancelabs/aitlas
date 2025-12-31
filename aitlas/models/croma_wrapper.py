@@ -8,7 +8,7 @@ from ..base.foundation import FoundationModel
 from .CROMA.croma import CROMAModule, croma_base, croma_large
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("CROMA")
+
 class CROMA(FoundationModel):
     """AiTLAS wrapper class for CROMA model
     

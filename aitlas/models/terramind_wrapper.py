@@ -27,7 +27,7 @@ from .TerraMind import (
 )
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("TerraMind")
+
 class TerraMind(FoundationModel):
     """AiTLAS wrapper class for TerraMind model
     

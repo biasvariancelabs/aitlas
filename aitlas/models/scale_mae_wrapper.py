@@ -6,7 +6,7 @@ from ..base.foundation import FoundationModel
 from .ScaleMAE.scale_mae import MaskedAutoencoderViT, scalemae_vit_large_patch16
 from aitlas.models.registries import BACKBONE_REGISTRY
 
-BACKBONE_REGISTRY.register("ScaleMAE")
+
 class ScaleMAE(FoundationModel):
     """AiTLAS wrapper class for Scale-MAE model
     
