@@ -1,7 +1,6 @@
-from aitlas.base.schemas import BaseClassifierSchema
 from marshmallow import Schema, fields, validate
-
-from ..base import BaseModelSchema
+from ..base.schemas import BaseModelSchema
+from ..base.schemas import BaseClassifierSchema
 from ..base.schemas import BaseSegmentationClassifierSchema
 from ..base.schemas import BaseFoundationModelSchema
 

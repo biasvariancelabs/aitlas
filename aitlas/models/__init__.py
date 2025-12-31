@@ -113,4 +113,9 @@ from .necks import (
 )
 
 from .decoders import * # Registers decoders
-from .heads import * # Registers heads
+
+from .heads import (
+    RegressionHead,
+    ScalarHead,
+    SegmentationHead
+)
