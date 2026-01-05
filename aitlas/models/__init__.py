@@ -112,7 +112,19 @@ from .necks import (
     SelectIndices
 )
 
-from .decoders import * # Registers decoders
+from .decoders import (
+    ASPPModule, 
+    ASPPHead, 
+    ASPPSegmentationHead, 
+    ASPPRegressionHead,
+    FCNDecoder,
+    IdentityDecoder,
+    LinearDecoder,
+    MLPDecoder,
+    SatMAEHead,
+    UNetDecoder,
+    UPerNetDecoder
+)
 
 from .heads import (
     RegressionHead,
