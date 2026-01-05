@@ -2,7 +2,7 @@ import inspect
 import torch
 import torch.nn.functional as F
 from .models import BaseModel
-from aitlas.models.registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY
+from ..models.registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY
 from .schemas import CompositeModelSchema
 
 class CompositeModel(BaseModel):
@@ -14,6 +14,7 @@ class CompositeModel(BaseModel):
     def __init__(self, config):
         super().__init__(config)
 
+        # BACKBONE
         # Prepare backbone config
         backbone_config = dict(self.config)
         
