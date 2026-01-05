@@ -133,7 +133,8 @@ class CompositeModel(BaseModel):
                 if hasattr(first_block, "norm1") and hasattr(first_block.norm1, "normalized_shape"):
                     dim = first_block.norm1.normalized_shape[0]
                     # Isotropic: same dim for all layers
-                    found_channels = [dim] * 12 # Assume at least 12 layers? Better to filter by index later.
+                    num_blocks = len(raw_backbone.encoder)
+                    found_channels = [dim] * num_blocks
                     
                     # Create a list long enough to cover the requested indices
                     max_idx = max(out_indices) if out_indices else 4
