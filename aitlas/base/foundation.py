@@ -17,9 +17,6 @@ class FoundationModel(BaseModel):
         # Setup out_indices
         self.out_indices = getattr(self.config, "out_indices", None)
 
-        # Setup feture_info (defaults to None and is not necessary for standalone foundation models)
-        self.feature_info = self.get_feature_info()
-
     def load_backbone(self) -> nn.Module:
         """Load the backbone model
 
@@ -29,21 +26,6 @@ class FoundationModel(BaseModel):
         :rtype: torch.nn.Module
         """
         raise NotImplementedError("Each foundation model should implement 'load_backbone' to load its backbone.")
-    
-    def get_feature_info(self):
-            """
-            Optional: Return channel counts. 
-            Override this in the backbone wrapper to use it with CompositeModel.
-            """
-            # Check if the backbone has feature_info attribute
-            if hasattr(self.backbone, "feature_info"):
-                if hasattr(self.backbone.feature_info, "channels"):
-                    return self.backbone.feature_info.channels()
-                if isinstance(self.backbone.feature_info, list):
-                    return self.backbone.feature_info
-                    
-            # Default to None if not available
-            return None
 
     def forward_features(self, x, **kwargs):
         """Forward pass through the model to get the feature embeddings.

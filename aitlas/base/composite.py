@@ -37,15 +37,8 @@ class CompositeModel(BaseModel):
         backbone_cls = BACKBONE_REGISTRY.get(self.config.backbone_name)
         self.backbone = backbone_cls(backbone_config)
         
-        # Ensure backbone reports its channels
-        if getattr(self.backbone, "feature_info", None) is None:
-             raise ValueError(
-                 f"Backbone '{self.config.backbone_name}' has no channel information. "
-                 f"Please implement `get_feature_info()` in the {backbone_cls.__name__} wrapper "
-                 f"or set `self.feature_info` in its __init__."
-             )
-             
-        current_channels = self.backbone.feature_info
+        # Ensure backbone reports its channels   
+        current_channels = self._get_feature_info(self.backbone)
 
         # Instatiate components
         # NECK
@@ -75,8 +68,7 @@ class CompositeModel(BaseModel):
             
             self.decoder = self._instantiate_component(
                 decoder_cls, 
-                current_channels, 
-                num_classes=self.config.num_classes, 
+                current_channels,
                 **self.config.decoder_params
             )
             
@@ -109,6 +101,64 @@ class CompositeModel(BaseModel):
                     f"Please specify a head in the config."
                 )
 
+    def _get_feature_info(self, backbone):
+        """
+        Function to find output channels for any backbone.
+        """
+        # Option 1: Check if backbone wrapper contains the attribute 
+        # (not implemented at the moment, might be in the future)
+        if hasattr(backbone, "feature_info") and backbone.feature_info:
+            return backbone.feature_info
+
+        # Access the raw underlying backbone
+        raw_backbone = getattr(backbone, "backbone", backbone)
+        out_indices = self.config.get("out_indices", [1, 2, 3, 4])
+        
+        found_channels = None
+
+        # Option 2: Check for standard attributes (timm, Swin, etc.)
+        if hasattr(raw_backbone, "feature_info"): 
+            # timm style: [{'num_chs': 64, ...}, ...]
+            found_channels = [x['num_chs'] for x in raw_backbone.feature_info]
+        elif hasattr(raw_backbone, "embed_dims"):
+            # Swin, hierarchical transformers
+            found_channels = raw_backbone.embed_dims
+
+        # Option 3: Inspect structure (isotropic ViTs)
+        if found_channels is None:
+            # Check for 'encoder' block
+            if hasattr(raw_backbone, "encoder") and len(raw_backbone.encoder) > 0:
+                first_block = raw_backbone.encoder[0]
+                # Look for LayerNorm (norm1) to find embedding dimension
+                if hasattr(first_block, "norm1") and hasattr(first_block.norm1, "normalized_shape"):
+                    dim = first_block.norm1.normalized_shape[0]
+                    # Isotropic: same dim for all layers
+                    found_channels = [dim] * 12 # Assume at least 12 layers? Better to filter by index later.
+                    
+                    # Create a list long enough to cover the requested indices
+                    max_idx = max(out_indices) if out_indices else 4
+                    found_channels = [dim] * (max_idx + 1)
+
+        # Option 4: Forward pass on a dummy input
+        # Not implemented yet. TODO: Implement if needed
+
+        # Filter channels based on out_indices
+        if found_channels:
+            # Map 1-based indices (1,2,3,4) to 0-based list access
+            final_list = []
+            for idx in out_indices:
+                list_idx = idx - 1 if idx > 0 else idx
+                if 0 <= list_idx < len(found_channels):
+                    final_list.append(found_channels[list_idx])
+                else:
+                    # If index is out of bounds (e.g. isotropic ViT returning 1 tensor), reuse the last channel
+                    final_list.append(found_channels[-1])
+            return final_list
+
+        raise ValueError(
+            f"Could not detect channels for {self.config.backbone_name}. "
+        )
+    
     def _instantiate_component(self, cls, current_channels, **kwargs):
         """
         Smart helper to instantiate a component.
