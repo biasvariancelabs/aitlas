@@ -20,6 +20,7 @@ from .fpn import FPN
 from .hrnet import HRNet
 from .inceptiontime import InceptionTime
 from .lstm import LSTM
+from .manet import MAnet
 from .mlp_mixer import MLPMixer, MLPMixerMultilabel
 from .msresnet import MSResNet
 from .omniscalecnn import OmniScaleCNN
