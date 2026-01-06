@@ -1,5 +1,6 @@
 import inspect
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from .models import BaseModel
 from ..models.registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY
@@ -21,7 +22,7 @@ class CompositeModel(BaseModel):
         # Keys reserved for the orchestrator
         orchestrator_reserved_keys = [
             "task_type", 
-            "neck_name", "neck_params",
+            "necks",
             "decoder_name", "decoder_params", 
             "head_name", "head_params"
         ]
@@ -42,24 +43,36 @@ class CompositeModel(BaseModel):
 
         # Instatiate components
         # NECK
-        self.neck = None
-        if self.config.neck_name:
-            neck_cls = NECK_REGISTRY.get(self.config.neck_name)
-            
-            # Smartly instantiate neck (handles 'channel_list' or 'in_channels')
-            self.neck = self._instantiate_component(
-                neck_cls, 
-                current_channels, 
-                **self.config.get("neck_params", {})
-            )
-            
-            # Update current_channels for the next stage
-            # For TerraTorch necks that use 'process_channel_list'
-            if hasattr(self.neck, "process_channel_list"):
-                current_channels = self.neck.process_channel_list(current_channels)
-            # For other necks that could use 'out_channels'
-            elif hasattr(self.neck, "out_channels"):
-                current_channels = self.neck.out_channels
+        self.necks = nn.Sequential()
+        
+        if self.config.necks:
+            layers = []
+            for i, neck_conf in enumerate(self.config.necks):
+                # Copy to avoid modifying the original config
+                params = neck_conf.copy()
+                neck_name = params.pop("name", None)
+                # Check if 'name' is missing
+                if not neck_name:
+                    raise ValueError(f"Neck config at index {i} is missing 'name'.")
+                
+                # Get the neck class from the registry
+                neck_cls = NECK_REGISTRY.get(neck_name)
+                
+                # Instantiate the neck
+                neck_instance = self._instantiate_component(
+                    neck_cls, 
+                    current_channels, 
+                    **params
+                )
+                layers.append(neck_instance)
+
+                # Update channels for the next component in the chain
+                if hasattr(neck_instance, "process_channel_list"):
+                    current_channels = neck_instance.process_channel_list(current_channels)
+                elif hasattr(neck_instance, "out_channels"):
+                    current_channels = neck_instance.out_channels
+                
+            self.necks = nn.Sequential(*layers)
 
         # DECODER
         self.decoder = None
@@ -218,9 +231,10 @@ class CompositeModel(BaseModel):
         # Load backbone and get feature embeddings
         features = self.backbone(x)
         
-        # Pass through neck and decoder if they exist
-        if self.neck: 
-            features = self.neck(features)
+        # Pass through the neck(s)
+        features = self.necks(features)
+        
+        # Pass through the decoder, if it exists
         if self.decoder: 
             features = self.decoder(features)
 

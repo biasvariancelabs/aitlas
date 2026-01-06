@@ -262,8 +262,12 @@ class CompositeModelSchema(BaseFoundationModelSchema):
     :param backbone_name: Name of the model to use as a backbone. Required.
     :type backbone_name: str, required
 
-    :param neck_name: Name of the component to use as a neck. Default is None.
-    :type neck_name: str, optional
+    :param necks: List of neck configurations to execute sequentially. 
+                  Each item in the list must be a dictionary containing a "name" key 
+                  (referencing a registered neck class) and any specific parameters 
+                  required by that neck (e.g., `{"name": "SelectIndices", "indices": [1, 2, 3]}`).
+                  Default is None.
+    :type necks: list[dict], optional
 
     :param decoder_name: Name of the model to use as a decoder. Default is None.
     :type decoder_name: str, optional
@@ -287,10 +291,14 @@ class CompositeModelSchema(BaseFoundationModelSchema):
         validate=validate.OneOf(["classification", "segmentation", "object detection", "change detection", "feature extraction"]),
         example="segmentation",
     )
-    neck_name = fields.String(
+    necks = fields.List(
+        fields.Dict(),
         missing=None,
-        description="Name of the component to use as a neck (optional).",
-        example="ReshapeTokensToImage"
+        description="List of (optional) neck configurations to execute sequentially.",
+        example=[
+            {"name": "SelectIndices", "indices": [2, 5, 8, 11]},
+            {"name": "ReshapeTokensToImage", "remove_cls_token": False}
+        ]
     )
     decoder_name = fields.String(
         missing=None,
@@ -310,5 +318,12 @@ class CompositeModelSchema(BaseFoundationModelSchema):
         missing={},
         description="Parameters passed to the head (e.g., {'dropout': 0.1})."
     )
+    @pre_load
+    def ensure_list(self, data, **kwargs):
+        # Check if 'necks' exists and is a single dict (not a list of dicts)
+        if "necks" in data and isinstance(data["necks"], dict):
+            # Wrap it in a list automatically
+            data["necks"] = [data["necks"]]
+        return data
 
     pass
