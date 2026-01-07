@@ -90,13 +90,15 @@ class CompositeModel(BaseModel):
                 current_channels = self.decoder.out_channels
 
         # HEAD
-        head_cls = HEAD_REGISTRY.get(self.config.head_name)
-        self.head = self._instantiate_component(
-            head_cls, 
-            current_channels, 
-            num_classes=self.config.num_classes, 
-            **self.config.head_params
-        )
+        self.head = None
+        if self.config.head_name:
+            head_cls = HEAD_REGISTRY.get(self.config.head_name)
+            self.head = self._instantiate_component(
+                head_cls, 
+                current_channels, 
+                num_classes=self.config.num_classes, 
+                **self.config.head_params
+            )
 
         # Guardrails for different tasks
         task = self.config.task_type
@@ -125,11 +127,14 @@ class CompositeModel(BaseModel):
 
         # Access the raw underlying backbone
         raw_backbone = getattr(backbone, "backbone", backbone)
-        out_indices = self.config.get("out_indices", [1, 2, 3, 4])
+        # Handle the case where out_indices in config is None
+        out_indices = self.config.get("out_indices")
+        if out_indices is None:
+            out_indices = [1, 2, 3, 4]
         
         found_channels = None
 
-        # Option 2: Check for standard attributes (timm, Swin, etc.)
+        # Option 1: Check for standard attributes (timm, Swin, etc.)
         if hasattr(raw_backbone, "feature_info"): 
             # timm style: [{'num_chs': 64, ...}, ...]
             found_channels = [x['num_chs'] for x in raw_backbone.feature_info]
@@ -137,21 +142,42 @@ class CompositeModel(BaseModel):
             # Swin, hierarchical transformers
             found_channels = raw_backbone.embed_dims
 
-        # Option 3: Inspect structure (isotropic ViTs)
+        # Option 2: Inspect structure (isotropic ViTs)
         if found_channels is None:
-            # Check for 'encoder' block
+            # Case A: Check for 'encoder'
             if hasattr(raw_backbone, "encoder") and len(raw_backbone.encoder) > 0:
                 first_block = raw_backbone.encoder[0]
-                # Look for LayerNorm (norm1) to find embedding dimension
                 if hasattr(first_block, "norm1") and hasattr(first_block.norm1, "normalized_shape"):
                     dim = first_block.norm1.normalized_shape[0]
-                    # Isotropic: same dim for all layers
                     num_blocks = len(raw_backbone.encoder)
                     found_channels = [dim] * num_blocks
-                    
-                    # Create a list long enough to cover the requested indices
-                    max_idx = max(out_indices) if out_indices else 4
-                    found_channels = [dim] * (max_idx + 1)
+            # Case B: Check for 'blocks'
+            elif hasattr(raw_backbone, "blocks") and len(raw_backbone.blocks) > 0:
+                first_block = raw_backbone.blocks[0]
+                if hasattr(first_block, "norm1") and hasattr(first_block.norm1, "normalized_shape"):
+                    dim = first_block.norm1.normalized_shape[0]
+                    num_blocks = len(raw_backbone.blocks) 
+                    found_channels = [dim] * num_blocks
+
+        # Option 3: Inspect the structure (ResNet backbone)
+        if found_channels is None:
+            if hasattr(raw_backbone, "encoder_q"):
+                enc = raw_backbone.encoder_q
+                last_known_dim = None
+                # Iterate through all layers in the Sequential blocks
+                for child in enc.children():
+                    # We are looking for the ResNet stages
+                    if isinstance(child, torch.nn.Sequential) and len(child) > 0:
+                        last_block = child[-1]                        
+                        # Logic for ResNet18/34 (BasicBlock uses bn2)
+                        if hasattr(last_block, "bn2") and hasattr(last_block.bn2, "num_features"):
+                            last_known_dim = last_block.bn2.num_features                       
+                        # Logic for ResNet50/101 (Bottleneck uses bn3)
+                        elif hasattr(last_block, "bn3") and hasattr(last_block.bn3, "num_features"):
+                            last_known_dim = last_block.bn3.num_features
+                # If we found dimensions, return ONLY the final one as a single-item list.
+                if last_known_dim:
+                    found_channels = [last_known_dim] # [512] for ResNet18, [2048] for ResNet50
 
         # Option 4: Forward pass on a dummy input
         # Not implemented yet. TODO: Implement if needed
