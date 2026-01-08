@@ -40,7 +40,12 @@ class FoundationModel(BaseModel):
         """
         raise NotImplementedError("Each foundation model should implement 'forward_features' to define its forward pass to get the feature embaddings.")
 
-    def forward(self, x, **kwargs):
-        """ Standard forward pass. By default, it calls forward_features.
+    def forward(self, x=None, **kwargs):
+        """ Standard forward pass. 
+        If x is provided (standard models), it passes it as a positional arg.
+        If x is None (CROMA), it relies entirely on kwargs.
         """
-        return self.forward_features(x, **kwargs)
+        if x is not None:
+            return self.forward_features(x, **kwargs)
+        else:
+            return self.forward_features(**kwargs)

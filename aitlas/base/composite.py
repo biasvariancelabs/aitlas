@@ -208,7 +208,18 @@ class CompositeModel(BaseModel):
                             final_dim = base_dim
                             found_channels = [final_dim] * len(raw_backbone.blocks)
         
-        # Option 5: Forward pass on a dummy input
+        # Option 5: CROMA detection
+        if found_channels is None:
+            # Check for CROMA-specific attributes (Optical Projection Head)
+            if hasattr(raw_backbone, "s2_GAP_FFN") and isinstance(raw_backbone.s2_GAP_FFN, torch.nn.Sequential):
+                # CROMA uses a specific Sequential head for GAP: LayerNorm -> Linear -> GELU -> Linear
+                # We access the last Linear layer to get the output dimension (usually 768).
+                if len(raw_backbone.s2_GAP_FFN) > 0:
+                    last_layer = raw_backbone.s2_GAP_FFN[-1]
+                    if hasattr(last_layer, "out_features"):
+                        found_channels = [last_layer.out_features]
+        
+        # Option 6: Forward pass on a dummy input
         # Not implemented yet. TODO: Implement if needed
 
         # Filter channels based on out_indices
