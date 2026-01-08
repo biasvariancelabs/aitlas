@@ -128,7 +128,7 @@ def test_forward_features_pass_no_flash_attn_output_type_patch(base_config):
     patch_size = 640
     
     # Expected output shape for 'patch'
-    expected_shape = (1, 1, 1, 768)
+    expected_shape = (1, 768, 1, 1)
 
     try:
         # Call the method with the dictionary and patch size
@@ -157,7 +157,7 @@ def test_forward_features_pass_with_flash_attn_output_type_patch(base_config):
     patch_size = 640
     
     # Expected output shape for 'patch'
-    expected_shape = (1, 1, 1, 768)
+    expected_shape = (1, 768, 1, 1)
 
     try:
         # Call the method with the dictionary and patch size
@@ -186,7 +186,7 @@ def test_forward_features_pass_no_flash_attn_output_type_dense(base_config):
     patch_size = 640
     
     # Expected output shape for 'dense'
-    expected_shape = (1, 64, 64, 2*768)
+    expected_shape = (1, 2*768, 64, 64)
 
     try:
         # Call the method with the dictionary and patch size
@@ -215,7 +215,7 @@ def test_forward_features_pass_with_flash_attn_output_type_dense(base_config):
     patch_size = 640
     
     # Expected output shape for 'dense'
-    expected_shape = (1, 64, 64, 2*768)
+    expected_shape = (1, 2*768, 64, 64)
 
     try:
         # Call the method with the dictionary and patch size
@@ -272,7 +272,7 @@ def test_forward_features_pass_with_flash_attn_output_type_all(base_config):
     # patch_size is the ground size in meters (e.g., 640 m for a 64 x 64 S2 tile)
     patch_size = 640
     
-    # Expected output shape for 'dense'
+    # Expected output shape for 'all'
     expected_shape = (1, 2, 768)
 
     try:

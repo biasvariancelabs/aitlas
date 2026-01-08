@@ -5,6 +5,7 @@ import torch.nn as nn
 from huggingface_hub import hf_hub_download
 from ..base.foundation import FoundationModel
 from .AnySat.anysat import AnySatModule, anysat_base
+from .schemas import AnySatSchema
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 
@@ -15,6 +16,7 @@ class AnySat(FoundationModel):
     """
 
     name = "AnySat"
+    schema = AnySatSchema
 
     # Define checkpoints for all backbones available on Huggingface
     BACKBONE_CHECKPOINTS = {
@@ -34,6 +36,9 @@ class AnySat(FoundationModel):
 
     def __init__(self, config):    
         super().__init__(config)
+
+        self.patch_size = self.config.patch_size
+        self.output_mode = self.config.output
 
     def load_backbone(self):
         """ Loads the AnySat (backbone) model from HuggingFace or from a local path (if available).
@@ -102,7 +107,7 @@ class AnySat(FoundationModel):
         # This method MUST return the loaded backbone object for the parent class.
         return backbone
     
-    def forward_features(self, x, patch_size, output='patch', **kwargs):
+    def forward_features(self, x, patch_size=None, output=None, **kwargs):
         """Extract features from the model.
         """
 
@@ -112,9 +117,16 @@ class AnySat(FoundationModel):
                 "The backbone model has not been loaded. "
                 "Please call the .load_backbone() method before the forward pass."
             )
+
+        # Use provided patch_size and output mode, or default to config values
+        p_size = patch_size if patch_size is not None else self.patch_size
+        out_mode = output if output is not None else self.output_mode
         
         # Pass the input through the backbone
-        embedding = self.backbone(x, patch_size=patch_size, output=output, **kwargs)
+        embedding = self.backbone(x, patch_size=p_size, output=out_mode, **kwargs)
+
+        if out_mode in ['dense', 'patch']:
+            embedding = embedding.permute(0, 3, 1, 2) # From (N, H, W, C) to (N, C, H, W)
 
         return embedding
     

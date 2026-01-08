@@ -511,7 +511,6 @@ class AnySatModule(nn.Module):
             if modality.endswith('_dates'):
                 continue
             shape = x[modality].shape
-            print(shape)
             assert shape[-2] == shape[-1], "Images must be squared"
             if modality in ['s2', 's1-asc', 's1', 'alos', 'l7', 'l8', 'modis']:
                 assert len(shape) == 5, f"{modality} Images must be 5D: Batch, Time, Channels, Height, Width"

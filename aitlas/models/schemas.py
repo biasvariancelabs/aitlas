@@ -255,6 +255,19 @@ class DeepLabV3ModelSchema(BaseSegmentationClassifierSchema):
         validate=validate.OneOf([13, 10, 11]),
     )
 
+class AnySatSchema(BaseFoundationModelSchema):
+    
+    patch_size = fields.Integer(
+        missing=16,
+        description="Patch size for the model input processing."
+    )
+    
+    output = fields.String(
+        missing="patch",
+        validate=validate.OneOf(["patch", "tile", "dense", "all"]),
+        description="Output format: 'patch' (tokens), 'dense' (segmentation map),'tile' (classification vector) or all."
+    )
+
 class PrestoSchema(BaseFoundationModelSchema):
     pixel_batch_size = fields.Int(
         required=False,
