@@ -179,7 +179,36 @@ class CompositeModel(BaseModel):
                 if last_known_dim:
                     found_channels = [last_known_dim] # [512] for ResNet18, [2048] for ResNet50
 
-        # Option 4: Forward pass on a dummy input
+        # Option 4: AnySat detection
+        if found_channels is None:
+            # AnySat wrapper nests the model AnySatModule -> model (AnySatEncoder)     
+            if hasattr(raw_backbone, "model"):
+                possible_inner = raw_backbone.model
+                if hasattr(possible_inner, "spatial_encoder") or hasattr(possible_inner, "projector_s2"):
+                    raw_backbone = possible_inner
+            # Inspect the structure
+            if hasattr(raw_backbone, "blocks") and hasattr(raw_backbone, "spatial_encoder"):
+                # It is AnySat
+                if len(raw_backbone.blocks) > 0:
+                    first_block = raw_backbone.blocks[0]
+                    if hasattr(first_block, "norm1") and hasattr(first_block.norm1, "normalized_shape"):
+                        base_dim = first_block.norm1.normalized_shape[0] # Usually 768  
+                        # Check for 'dense' output mode in the config
+                        # AnySat 'dense' mode typically concatenates features or upscales, doubling channels (1536)
+                        backbone_params = self.config.get("backbone_params", {})
+                        # Also check root config in case params are merged
+                        output_mode = backbone_params.get("output", self.config.get("output"))
+                        if output_mode == "dense":
+                             # AnySat 'dense' output is usually 2x the base dimension
+                            final_dim = base_dim * 2 
+                            # Dense usually returns a single tensor, not a list of blocks
+                            found_channels = [final_dim] 
+                        else:
+                            # 'tile', 'patch', 'all' modes return the base dimension
+                            final_dim = base_dim
+                            found_channels = [final_dim] * len(raw_backbone.blocks)
+        
+        # Option 5: Forward pass on a dummy input
         # Not implemented yet. TODO: Implement if needed
 
         # Filter channels based on out_indices
