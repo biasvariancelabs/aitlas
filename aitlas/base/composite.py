@@ -142,15 +142,26 @@ class CompositeModel(BaseModel):
             # Swin, hierarchical transformers
             found_channels = raw_backbone.embed_dims
 
-        # Option 2: Inspect structure (isotropic ViTs)
+        # Option 2: Inspect structure (isotropic ViTs, Presto)
         if found_channels is None:
             # Case A: Check for 'encoder'
-            if hasattr(raw_backbone, "encoder") and len(raw_backbone.encoder) > 0:
-                first_block = raw_backbone.encoder[0]
-                if hasattr(first_block, "norm1") and hasattr(first_block.norm1, "normalized_shape"):
-                    dim = first_block.norm1.normalized_shape[0]
-                    num_blocks = len(raw_backbone.encoder)
-                    found_channels = [dim] * num_blocks
+            if hasattr(raw_backbone, "encoder"):
+                encoder_obj = raw_backbone.encoder
+                # Check if it is a list/container (e.g., AnySat, Panopticon, standard ViT)
+                if hasattr(encoder_obj, "__len__") and len(encoder_obj) > 0:
+                    first_block = encoder_obj[0]
+                    if hasattr(first_block, "norm1") and hasattr(first_block.norm1, "normalized_shape"):
+                        dim = first_block.norm1.normalized_shape[0]
+                        num_blocks = len(encoder_obj)
+                        found_channels = [dim] * num_blocks        
+                # Check if it is a single module (e.g., Presto)
+                else:
+                    if hasattr(encoder_obj, "norm"):
+                        norm_layer = encoder_obj.norm
+                        if hasattr(norm_layer, "normalized_shape"):
+                            # LayerNorm((128,), eps=1e-05, ...)
+                            dim = norm_layer.normalized_shape[0]
+                            found_channels = [dim]
             # Case B: Check for 'blocks'
             elif hasattr(raw_backbone, "blocks") and len(raw_backbone.blocks) > 0:
                 first_block = raw_backbone.blocks[0]
@@ -219,7 +230,28 @@ class CompositeModel(BaseModel):
                     if hasattr(last_layer, "out_features"):
                         found_channels = [last_layer.out_features]
         
-        # Option 6: Forward pass on a dummy input
+        # Option 6: Panopticon detection
+        if found_channels is None:
+            # Check for Panopticon wrapper structure
+            target_model = raw_backbone
+            if hasattr(target_model, "model") and hasattr(target_model.model, "blocks"):
+                # Drill down to the VisionTransformer inside PanopticonModule
+                target_model = target_model.model       
+            # Now check for standard ViT blocks
+            if hasattr(target_model, "blocks"):
+                # Get the last block to determine final output dimension
+                blocks = target_model.blocks
+                if len(blocks) > 0:
+                    last_block = blocks[-1]            
+                    # Detect dimension from the first LayerNorm or Linear layer in the block
+                    if hasattr(last_block, "norm1") and hasattr(last_block.norm1, "normalized_shape"):
+                        # norm1: LayerNorm((768,), ...)
+                        dim = last_block.norm1.normalized_shape[0]
+                        # Panopticon returns all tokens [B, N, 768] (dense=True) or CLS [B, 768] (dense=False)
+                        # In both cases, the feature dimension 'C' seen by heads/necks is 768.
+                        found_channels = [dim]
+        
+        # Option 7: Forward pass on a dummy input
         # Not implemented yet. TODO: Implement if needed
 
         # Filter channels based on out_indices
