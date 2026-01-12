@@ -894,7 +894,7 @@ def prithvi_eo_v1_base_model(**kwargs):
 
 def prithvi_eo_v2_tiny_tl_model(**kwargs):
     config = _cfg(
-        num_frames=1, embed_dim=192, depth=12, num_heads=3, decoder_embed_dim=512, decoder_depth=8,
+        num_frames=4, embed_dim=192, depth=12, num_heads=3, decoder_embed_dim=512, decoder_depth=8,
         decoder_num_heads=16, coords_encoding=["time", "location"], coords_scale_learn=True,
     )
     model = PrithviMAE(**config)
