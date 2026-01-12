@@ -255,8 +255,7 @@ class DeepLabV3ModelSchema(BaseSegmentationClassifierSchema):
         validate=validate.OneOf([13, 10, 11]),
     )
 
-class AnySatSchema(BaseFoundationModelSchema):
-    
+class AnySatSchema(BaseFoundationModelSchema):   
     patch_size = fields.Integer(
         missing=16,
         description="Patch size for the model input processing."
@@ -298,4 +297,11 @@ class TerraMindSchema(BaseFoundationModelSchema):
         missing=None,
         description="List of modalities to be used in Thinking in Modalities (TiM) setting.",
         example=['S2L2A', 'S2L1C', 'S1GRD', 'S1RTC', 'DEM']
+    )
+    merge_method = fields.String(
+        missing="mean",
+        allow_none=True,
+        validate=validate.OneOf(["mean", "max", "concat", "dict", None]),
+        example="mean",
+        description="Method to merge output for further processing."
     )

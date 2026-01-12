@@ -157,10 +157,10 @@ class TerraMind(FoundationModel):
                                 backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, output_modalities=self.config.output_modalities, pretrained=True)
                                 checkpoint = checkpoint_filter_fn_generate(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind any-to-any generation models
                             elif 'tim' in self.config.backbone_name:
-                                backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, tim_modalities=self.config.tim_modalities, pretrained=True)
+                                backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, tim_modalities=self.config.tim_modalities, merge_method=self.config.merge_method, pretrained=True)
                                 checkpoint = checkpoint_filter_fn_tim(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind Thinking in Modalities (TiM) models
                             else: 
-                                backbone = globals()[self.config.backbone_name](modalities=self.config.modalities)
+                                backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, merge_method=self.config.merge_method)
                                 checkpoint = checkpoint_filter_fn(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind
                             msg = backbone.load_state_dict(checkpoint, strict=True)
                             print("Successfully loaded checkpoint:", checkpoint_name)
@@ -183,10 +183,10 @@ class TerraMind(FoundationModel):
                         backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, output_modalities=self.config.output_modalities, pretrained=True)
                         checkpoint = checkpoint_filter_fn_generate(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind any-to-any generation models
                     elif 'tim' in self.config.backbone_name:
-                        backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, tim_modalities=self.config.tim_modalities, pretrained=True)
+                        backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, tim_modalities=self.config.tim_modalities, merge_method=self.config.merge_method, pretrained=True)
                         checkpoint = checkpoint_filter_fn_tim(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind Thinking in Modalities (TiM) models
                     else: 
-                        backbone = globals()[self.config.backbone_name](modalities=self.config.modalities)
+                        backbone = globals()[self.config.backbone_name](modalities=self.config.modalities, merge_method=self.config.merge_method)
                         checkpoint = checkpoint_filter_fn(checkpoint, backbone) # Additional checkpoint filtering function for TerraMind
                     msg = backbone.load_state_dict(checkpoint, strict=True)
                     print("Successfully loaded checkpoint:", checkpoint_name)
@@ -232,6 +232,7 @@ class TerraMind(FoundationModel):
 
     def forward_features(self, 
         x: dict[str, torch.Tensor] | torch.Tensor | None = None, 
+        merge_method: str | None = None,
         **kwargs
     ) -> list[torch.Tensor]:
         """
@@ -262,6 +263,10 @@ class TerraMind(FoundationModel):
         if isinstance(x, dict):
             x = x.copy()
 
+        # Update merge method if provided
+        if merge_method is not None:
+            self.backbone.merge_method = merge_method
+        
         # Pass the input through the backbone (encoder)
         embedding = self.backbone.forward(d=x, **kwargs)
 
@@ -301,16 +306,16 @@ class TerraMind(FoundationModel):
         return generated_images
 
     def thinking_in_modalities(self, 
-        x: dict[str, torch.Tensor] | torch.Tensor | None = None, 
+        x: dict[str, torch.Tensor] | torch.Tensor | None = None,
+        merge_method: str | None = None,
         **kwargs
     ) -> list[torch.Tensor]:
         """
         Forward pass through the TerraMind Thinking in Modalities model to get feature embeddings.
 
         Args:
-            x (dict, torch.Tensor): Dict of inputs or input tensor with shape (B, C, H, W)
-
-            Alternatively, keyword arguments with modality=tensor.
+            x (dict, torch.Tensor): Dict of inputs or input tensor with shape (B, C, H, W). Alternatively, keyword arguments with modality=tensor.
+            merge_method (str, optional): Method to merge modalities. Defaults to None.
 
         Returns:
             list[torch.Tensor]: List of transformer layer outputs. Shape (B, L, D).
@@ -326,6 +331,10 @@ class TerraMind(FoundationModel):
 
         if isinstance(x, dict):
             x = x.copy()
+
+        # Update merge method if provided
+        if merge_method is not None:
+            self.backbone.merge_method = merge_method
 
         # Pass the input through the backbone (encoder)
         embedding = self.backbone.forward(d=x, **kwargs)
