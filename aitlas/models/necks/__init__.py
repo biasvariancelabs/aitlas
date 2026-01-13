@@ -4,7 +4,8 @@ from .necks import (
     FeaturePyramidNetworkNeck, 
     InterpolateToPyramidal, 
     LearnedInterpolateToPyramidal, 
-    MaxpoolToPyramidal, 
+    MaxpoolToPyramidal,
+    NeckSequential, 
     PermuteDims, 
     ReshapeTokensToImage, 
     SelectIndices

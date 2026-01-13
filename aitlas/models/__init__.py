@@ -107,6 +107,7 @@ from .necks import (
     InterpolateToPyramidal, 
     LearnedInterpolateToPyramidal, 
     MaxpoolToPyramidal, 
+    NeckSequential,
     PermuteDims, 
     ReshapeTokensToImage, 
     SelectIndices

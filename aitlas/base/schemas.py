@@ -224,6 +224,12 @@ class BaseFoundationModelSchema(BaseModelSchema):
 
     :param use_cuda: Flag indicating whether to use CUDA if available. Default is True.
     :type use_cuda: bool, optional
+
+    :param flash_attn: Flag indicating whether to use flash attention (if CUDA and flash attention are available). Default is False.
+    :type flash_attn: bool, optional
+
+    :param out_indices: List of layer indices to return features from. If None, returns default embedding. Default is None.
+    :type out_indices: List[int], optional
     """
 
     pretrained = fields.Bool(

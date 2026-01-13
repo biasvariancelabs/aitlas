@@ -108,7 +108,7 @@ class AggregateTokens(Neck):
             elif feat.dim() == 5:
                 # Assuming spatiotemporal grid, flattening spatial dimension
                 B = feat.shape[0]
-                T = feat.shape[2]
+                T = feat.shape[2] # TODO: Verify this is correct, as it is probably feat.shape[1] for AiTLAS
                 feat = feat.reshape(B, -1, T, self.latent_dim[i])
 
             if self.drop_cls:

@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from .models import BaseModel
 from ..models.registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY
 from .schemas import CompositeModelSchema
+from ..models.necks import NeckSequential
 
 class CompositeModel(BaseModel):
     """Composite model consisting of backbone, neck, decoder, and head.
@@ -32,21 +33,19 @@ class CompositeModel(BaseModel):
 
         # Enforce defaults
         if "out_indices" not in backbone_config or backbone_config["out_indices"] is None:
-             backbone_config["out_indices"] = [1, 2, 3, 4]
+             backbone_config["out_indices"] = [0, 1, 2, 3]
 
         # Instantiate backbone
         backbone_cls = BACKBONE_REGISTRY.get(self.config.backbone_name)
         self.backbone = backbone_cls(backbone_config)
         
         # Ensure backbone reports its channels   
-        current_channels = self._get_feature_info(self.backbone)
+        self.current_channels = self._get_feature_info(self.backbone)
 
         # Instatiate components
-        # NECK
-        self.necks = nn.Sequential()
-        
+        # NECK(S)
+        layers = []
         if self.config.necks:
-            layers = []
             for i, neck_conf in enumerate(self.config.necks):
                 # Copy to avoid modifying the original config
                 params = neck_conf.copy()
@@ -61,18 +60,19 @@ class CompositeModel(BaseModel):
                 # Instantiate the neck
                 neck_instance = self._instantiate_component(
                     neck_cls, 
-                    current_channels, 
+                    self.current_channels, 
                     **params
                 )
                 layers.append(neck_instance)
 
                 # Update channels for the next component in the chain
                 if hasattr(neck_instance, "process_channel_list"):
-                    current_channels = neck_instance.process_channel_list(current_channels)
+                    self.current_channels = neck_instance.process_channel_list(self.current_channels)
                 elif hasattr(neck_instance, "out_channels"):
-                    current_channels = neck_instance.out_channels
-                
-            self.necks = nn.Sequential(*layers)
+                    self.current_channels = neck_instance.out_channels
+
+        # Create Sequential container for necks        
+        self.necks = NeckSequential(*layers)
 
         # DECODER
         self.decoder = None
@@ -81,13 +81,13 @@ class CompositeModel(BaseModel):
             
             self.decoder = self._instantiate_component(
                 decoder_cls, 
-                current_channels,
+                self.current_channels,
                 **self.config.decoder_params
             )
             
             # Update channels
             if hasattr(self.decoder, "out_channels"):
-                current_channels = self.decoder.out_channels
+                self.current_channels = self.decoder.out_channels
 
         # HEAD
         self.head = None
@@ -95,7 +95,7 @@ class CompositeModel(BaseModel):
             head_cls = HEAD_REGISTRY.get(self.config.head_name)
             self.head = self._instantiate_component(
                 head_cls, 
-                current_channels, 
+                self.current_channels, 
                 num_classes=self.config.num_classes, 
                 **self.config.head_params
             )
@@ -116,6 +116,63 @@ class CompositeModel(BaseModel):
                     f"Please specify a head in the config."
                 )
 
+    def forward(self, x=None, **kwargs):
+        # Check for 'tim' in backbone self.config.backbone_name for TerraMind's Thinking in Modalities
+        if "tim" in self.config.backbone_name:
+            backbone_fn = self.backbone.thinking_in_modalities
+        else:
+            # Standard forward method
+            backbone_fn = self.backbone
+        
+        # Load backbone and get feature embeddings
+        if x is not None:
+            features = backbone_fn(x, **kwargs)
+        else:
+            features = backbone_fn(**kwargs)
+
+        cur_shapes, cur_channels = self._get_feature_shape(features)
+        print(f"Feature shapes (backbone): {cur_shapes}")
+        print(f"Feature channels (backbone): {cur_channels}")
+        
+        # Pass through the neck(s)
+        # Use len(self.necks) because it is an nn.Sequential object
+        if len(self.necks) > 0:
+            features = self.necks(features, **kwargs)
+
+        cur_shapes, cur_channels = self._get_feature_shape(features)
+        print(f"Feature shapes (necks): {cur_shapes}")
+        print(f"Feature channels (necks): {cur_channels}")
+        
+        # Pass through the decoder, if it exists
+        if self.decoder is not None: 
+            features = self.decoder(features)
+
+        cur_shapes, cur_channels = self._get_feature_shape(features)
+        print(f"Feature shapes (decoder): {cur_shapes}")
+        print(f"Feature channels (decoder): {cur_channels}")
+
+        # If no head, return the features directly
+        if self.head is None:
+            return features    
+
+        # Pass through head to get final predictions
+        logits = self.head(features)
+
+        cur_shapes, cur_channels = self._get_feature_shape(logits)
+        print(f"Feature shapes (head): {cur_shapes}")
+        print(f"Feature channels (head): {cur_channels}")
+        
+        # Standard segmentation upsampling
+        if self.config.task_type == "segmentation":
+            # Upsample logits to match input image resolution (H, W)
+            logits = self._upsample_logits(logits, x, kwargs)
+             
+        cur_shapes, cur_channels = self._get_feature_shape(logits)
+        print(f"Final output shapes: {cur_shapes}")
+        print(f"Final output channels: {cur_channels}")
+
+        return logits
+    
     def _get_feature_info(self, backbone):
         """
         Function to find output channels for any backbone.
@@ -130,7 +187,7 @@ class CompositeModel(BaseModel):
         # Handle the case where out_indices in config is None
         out_indices = self.config.get("out_indices")
         if out_indices is None:
-            out_indices = [1, 2, 3, 4]
+            out_indices = [1, 2]
         
         found_channels = None
 
@@ -256,12 +313,11 @@ class CompositeModel(BaseModel):
 
         # Filter channels based on out_indices
         if found_channels:
-            # Map 1-based indices (1,2,3,4) to 0-based list access
             final_list = []
             for idx in out_indices:
-                list_idx = idx - 1 if idx > 0 else idx
-                if 0 <= list_idx < len(found_channels):
-                    final_list.append(found_channels[list_idx])
+                # If index is valid, append the corresponding channel
+                if 0 <= idx < len(found_channels):
+                    final_list.append(found_channels[idx])
                 else:
                     # If index is out of bounds (e.g. isotropic ViT returning 1 tensor), reuse the last channel
                     final_list.append(found_channels[-1])
@@ -285,14 +341,14 @@ class CompositeModel(BaseModel):
 
         # Prepare data forms
         # If it is a list
-        if isinstance(current_channels, list):
-            channels_list = current_channels
+        if isinstance(self.current_channels, list):
+            channels_list = self.current_channels
             # Handle case where list is empty
             single_channel = channels_list[-1] if channels_list else 0
         else:
             # If it is an int
-            channels_list = [current_channels]
-            single_channel = current_channels
+            channels_list = [self.current_channels]
+            single_channel = self.current_channels
 
         # Determine target index if specific layer is requested
         in_index = kwargs.get('in_index', -1)
@@ -325,33 +381,116 @@ class CompositeModel(BaseModel):
 
         return cls(**kwargs)
 
-    def forward(self, x):
-        # Load backbone and get feature embeddings
-        features = self.backbone(x)
-        
-        # Pass through the neck(s)
-        features = self.necks(features)
-        
-        # Pass through the decoder, if it exists
-        if self.decoder: 
-            features = self.decoder(features)
+    def _get_feature_shape(self, features):
+        """
+        Helper to find feature shapes and channels from backbone output.
+        """
 
-        # If no head, return the features directly
-        if self.head is None:
-            return features    
-
-        # Pass through head to get final predictions
-        logits = self.head(features)
+        # Case 1: Single dictionary (standard for some models)
+        if isinstance(features, dict):
+            feature_list = [v for v in features.values() if isinstance(v, torch.Tensor)]
         
-        # Standard segmentation upsampling
-        if self.config.task_type == "segmentation":
-            # Upsample logits to match input image resolution (H, W)
-            if logits.shape[-2:] != x.shape[-2:]:
-                logits = F.interpolate(
-                    logits, 
-                    size=x.shape[-2:], 
-                    mode='bilinear', 
-                    align_corners=False
-                )
-             
+        # Case 2: List or tuple
+        elif isinstance(features, (list, tuple)):
+            if len(features) > 0:
+                first_elem = features[0]
+                
+                # Case 2a: List of dictionaries (TerraMind style)
+                if isinstance(first_elem, dict):
+                    feature_list = []
+                    for item in features:
+                        if isinstance(item, dict):
+                            feature_list.extend([v for v in item.values() if isinstance(v, torch.Tensor)])
+                
+                # Case 2b: List of tensors (standard)
+                else:
+                    # Special handling for Galileo to limit to first 4 features
+                    if "galileo" in self.config.backbone_name and len(features) > 4:
+                        feature_list = list(features[:4])
+                    else:
+                        feature_list = features
+            else:
+                feature_list = [] # Empty list handling
+        
+        # Case 3: Single tensor
+        else:
+            feature_list = [features]
+
+        current_shapes = []
+        current_channels = []
+
+        for f in feature_list:
+            shape = list(f.shape)
+            current_shapes.append(shape)
+            
+            # Logic to find "channel" dim based on tensor rank
+            if len(shape) == 6:
+                # Galileo 6D: [B, H, W, T, G, D] -> Last dim is D
+                current_channels.append(shape[-1])
+
+            elif len(shape) == 5:
+                # Galileo 5D (space-only): [B, H, W, G, D] -> last dim is D
+                current_channels.append(shape[-1])
+
+            elif len(shape) == 4: 
+                # Standard PyTorch [B, C, H, W]
+                if "galileo" in self.config.backbone_name:
+                    current_channels.append(shape[-1]) # Galileo sometimes permutes to [B, T, H, W] or similar where D is last
+                else:
+                    current_channels.append(shape[1]) # Standard [B, C, H, W]
+
+            elif len(shape) == 3: 
+                # [B, N, C] -> Token-like (patch) -> Last dim is C
+                current_channels.append(shape[2])
+
+            elif len(shape) == 2: 
+                # [B, C] -> Vector (tile)
+                current_channels.append(shape[1])
+                
+            else:
+                current_channels.append("?")
+
+        return current_shapes, current_channels
+
+    
+    def _upsample_logits(self, logits, x, kwargs):
+        """
+        Helper to safely determine target size and upsample.
+        """
+        target_size = None
+
+        # Helper to find spatial dims in a potential input object
+        def get_shape(obj):
+            # Case A: It's a Tensor [B, C, H, W]
+            if isinstance(obj, torch.Tensor) and obj.ndim >= 3:
+                return obj.shape[-2:]
+            # Case B: It's a dictionary containing Tensors
+            if isinstance(obj, dict):
+                for v in obj.values():
+                    if isinstance(v, torch.Tensor) and v.ndim >= 3:
+                        return v.shape[-2:]
+            return None
+
+        # Option 1: Check explicit 'x'
+        if x is not None:
+            target_size = get_shape(x)
+
+        # Option 2: Check kwargs (for 'inputs', 's2', 'x_dict' etc.)
+        if target_size is None:
+            for v in kwargs.values():
+                target_size = get_shape(v)
+                if target_size: break
+
+        # Option 3: Fallback (If we can't find input size, don't resize)
+        if target_size is None:
+            target_size = logits.shape[-2:]
+
+        # Perform Interpolation
+        if logits.shape[-2:] != target_size:
+            return F.interpolate(
+                logits, 
+                size=target_size, 
+                mode='bilinear', 
+                align_corners=False
+            )
         return logits
