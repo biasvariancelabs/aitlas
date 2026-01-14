@@ -227,9 +227,6 @@ class BaseFoundationModelSchema(BaseModelSchema):
 
     :param flash_attn: Flag indicating whether to use flash attention (if CUDA and flash attention are available). Default is False.
     :type flash_attn: bool, optional
-
-    :param out_indices: List of layer indices to return features from. If None, returns default embedding. Default is None.
-    :type out_indices: List[int], optional
     """
 
     pretrained = fields.Bool(
@@ -249,11 +246,6 @@ class BaseFoundationModelSchema(BaseModelSchema):
     )
     flash_attn = fields.Bool(
         missing=False, description="Whether to use flash attention (if cuda and flash attention are available)"
-    )
-    out_indices = fields.List(
-        fields.Int(),
-        missing=None,
-        description="List of layer indices to return features from. If None, returns default embedding."
     )
 
     pass

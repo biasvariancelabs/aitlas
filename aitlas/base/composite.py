@@ -31,15 +31,12 @@ class CompositeModel(BaseModel):
         for key in orchestrator_reserved_keys:
             backbone_config.pop(key, None)
 
-        # Enforce defaults
-        if "out_indices" not in backbone_config or backbone_config["out_indices"] is None:
-             backbone_config["out_indices"] = [0, 1, 2, 3]
-
         # Instantiate backbone
         backbone_cls = BACKBONE_REGISTRY.get(self.config.backbone_name)
         self.backbone = backbone_cls(backbone_config)
         
-        # Ensure backbone reports its channels   
+        # Ensure backbone reports its output indices and channels
+        self.out_indices = self.backbone.out_indices
         self.current_channels = self._get_feature_info(self.backbone)
 
         # Instatiate components
@@ -56,6 +53,31 @@ class CompositeModel(BaseModel):
                 
                 # Get the neck class from the registry
                 neck_cls = NECK_REGISTRY.get(neck_name)
+
+                # If the neck asks for specific 'indices' (e.g., SelectIndices), validate the config input
+                if "indices" in params:
+                    requested_indices = params["indices"]
+                    # Handle case where config might be a single int
+                    if isinstance(requested_indices, int):
+                        requested_indices = [requested_indices]
+                    
+                    # Get max and min indices for validation
+                    max_idx = max(requested_indices) if requested_indices else -1
+                    min_idx = min(requested_indices) if requested_indices else 0
+                    available_count = len(self.out_indices)
+
+                    # Check upper bound
+                    if max_idx >= available_count:
+                        raise ValueError(
+                            f"Configuration error in neck '{neck_name}': "
+                            f"Requested index {max_idx} is out of bounds. "
+                            f"The backbone only outputs {available_count} "
+                            f"feature maps (indices 0 to {available_count-1})."
+                        )
+                    
+                    # Check lower bound
+                    if min_idx < 0:
+                        raise ValueError(f"Configuration error in neck '{neck_name}': Indices cannot be negative.")
                 
                 # Instantiate the neck
                 neck_instance = self._instantiate_component(
@@ -133,6 +155,12 @@ class CompositeModel(BaseModel):
         cur_shapes, cur_channels = self._get_feature_shape(features)
         print(f"Feature shapes (backbone): {cur_shapes}")
         print(f"Feature channels (backbone): {cur_channels}")
+
+        # Standardize features -> List[Tensor]
+        features = self._standardize_features(features)
+        
+        # Infer image size for necks if not provided in kwargs
+        kwargs = self._infer_image_size(x, kwargs)
         
         # Pass through the neck(s)
         # Use len(self.necks) because it is an nn.Sequential object
@@ -184,10 +212,6 @@ class CompositeModel(BaseModel):
 
         # Access the raw underlying backbone
         raw_backbone = getattr(backbone, "backbone", backbone)
-        # Handle the case where out_indices in config is None
-        out_indices = self.config.get("out_indices")
-        if out_indices is None:
-            out_indices = [1, 2]
         
         found_channels = None
 
@@ -307,14 +331,11 @@ class CompositeModel(BaseModel):
                         # Panopticon returns all tokens [B, N, 768] (dense=True) or CLS [B, 768] (dense=False)
                         # In both cases, the feature dimension 'C' seen by heads/necks is 768.
                         found_channels = [dim]
-        
-        # Option 7: Forward pass on a dummy input
-        # Not implemented yet. TODO: Implement if needed
 
-        # Filter channels based on out_indices
+        # Filter channels based on output indices
         if found_channels:
             final_list = []
-            for idx in out_indices:
+            for idx in self.out_indices:
                 # If index is valid, append the corresponding channel
                 if 0 <= idx < len(found_channels):
                     final_list.append(found_channels[idx])
@@ -386,23 +407,23 @@ class CompositeModel(BaseModel):
         Helper to find feature shapes and channels from backbone output.
         """
 
-        # Case 1: Single dictionary (standard for some models)
+        # Option 1: Single dictionary (standard for some models)
         if isinstance(features, dict):
             feature_list = [v for v in features.values() if isinstance(v, torch.Tensor)]
         
-        # Case 2: List or tuple
+        # Option 2: List or tuple
         elif isinstance(features, (list, tuple)):
             if len(features) > 0:
                 first_elem = features[0]
                 
-                # Case 2a: List of dictionaries (TerraMind style)
+                # Option 2a: List of dictionaries (TerraMind style)
                 if isinstance(first_elem, dict):
                     feature_list = []
                     for item in features:
                         if isinstance(item, dict):
                             feature_list.extend([v for v in item.values() if isinstance(v, torch.Tensor)])
                 
-                # Case 2b: List of tensors (standard)
+                # Option 2b: List of tensors (standard)
                 else:
                     # Special handling for Galileo to limit to first 4 features
                     if "galileo" in self.config.backbone_name and len(features) > 4:
@@ -412,7 +433,7 @@ class CompositeModel(BaseModel):
             else:
                 feature_list = [] # Empty list handling
         
-        # Case 3: Single tensor
+        # Option 3: Single tensor
         else:
             feature_list = [features]
 
@@ -452,6 +473,102 @@ class CompositeModel(BaseModel):
 
         return current_shapes, current_channels
 
+    def _standardize_features(self, features) -> list[torch.Tensor]:
+        """
+        Standardizes the output of various backbones into a uniform List[Tensor] format
+        expected by Necks and Heads.
+        """
+        
+        # Option 1: Single Tensor (e.g., standard ViT with one output)
+        if isinstance(features, torch.Tensor):
+            return [features]
+
+        # Option 2: Tuple (specific to Galileo with average_features=False)
+        elif isinstance(features, tuple):
+            # features[0] is the spatial embedding: (B, H', W', T, 7, D)
+            raw_tensor = features[0]
+            # Average pool over T (dim 3) and 7 (dim 4) -> (B, H', W', D)
+            pooled = raw_tensor.mean(dim=(3, 4))
+            # Permute to standard image format (B, D, H', W')
+            permuted = pooled.permute(0, 3, 1, 2)
+            return [permuted]
+
+        # Option 3: Dictionary (specific to CROMA)
+        elif isinstance(features, dict):
+            # Access the backbone modalities safely
+            if hasattr(self.backbone, 'backbone') and hasattr(self.backbone.backbone, 'modalities'):
+                modalities = self.backbone.backbone.modalities
+            else:
+                # Fallback: if we can't find the attribute, assume it's the full joint model
+                modalities = ['optical', 'sar']
+
+            # Robust checks
+            if len(modalities) == 1 and modalities[0] == 'optical':
+                return [features['optical_encodings']]
+            elif len(modalities) == 1 and modalities[0] == 'sar':
+                return [features['sar_encodings']]
+            else:
+                # Default to joint for ['optical', 'sar'], ['sar', 'optical'], or defaults
+                return [features['joint_encodings']]
+
+        # Option 4: Already a list
+        elif isinstance(features, list):
+            # Optional: Validate contents are tensors
+            for i, feat in enumerate(features):
+                if not isinstance(feat, torch.Tensor):
+                    raise TypeError(f"Expected features[{i}] to be a Tensor, but got {type(feat)}.")
+            return features
+
+        # Option 5: Unknown type
+        else:
+            raise TypeError(f"Expected features to be a Tensor, tuple, dict, or list of Tensors, but got {type(features)}.")
+
+    def _infer_image_size(self, x, kwargs: dict) -> dict:
+        """
+        Attempts to infer the spatial image size (H, W) from inputs 'x' or 'kwargs'
+        and injects 'image_size' into kwargs if found.
+        """
+        # If 'image_size' is already provided explicitly, trust it and return early
+        if "image_size" in kwargs:
+            return kwargs
+
+        ref_tensor = None
+
+        # Try input 'x' (standard backbones like ViT)
+        if x is not None:
+            if isinstance(x, torch.Tensor):
+                ref_tensor = x
+            elif isinstance(x, dict):
+                # Grab the first tensor found in the dictionary values
+                for v in x.values():
+                    if isinstance(v, torch.Tensor):
+                        ref_tensor = v
+                        break
+
+        # If 'x' failed, scan kwargs (multimodal backbones like CROMA, Presto)
+        if ref_tensor is None:
+            for k, v in kwargs.items():
+                # Look for tensors with spatial dimensions (ndim >= 4)
+                # Common keys: x_optical, x_sar, s2, images, etc.
+                if isinstance(v, torch.Tensor) and v.ndim >= 4:
+                    ref_tensor = v
+                    break
+                elif isinstance(v, dict):
+                     # Handle cases like Presto where input might be nested in a dict
+                     for sub_v in v.values():
+                         if isinstance(sub_v, torch.Tensor) and sub_v.ndim >= 4:
+                             ref_tensor = sub_v
+                             break
+                
+                if ref_tensor is not None:
+                    break
+
+        # Apply the size if a reference tensor was found
+        if ref_tensor is not None:
+            # We assume standard format (B, C, H, W) or (B, T, C, H, W)
+            kwargs["image_size"] = ref_tensor.shape[-2:]
+
+        return kwargs
     
     def _upsample_logits(self, logits, x, kwargs):
         """

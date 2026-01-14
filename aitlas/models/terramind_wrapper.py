@@ -128,6 +128,8 @@ class TerraMind(FoundationModel):
     def __init__(self, config):    
         super().__init__(config)
 
+        self.out_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,  10, 11]
+
     def load_backbone(self):
         """ Loads the TerraMind backbone model from Huggingface repository or from a local path (if available).
         """
@@ -196,6 +198,10 @@ class TerraMind(FoundationModel):
         # Replace the head with identity if it exists
         if hasattr(backbone, 'head'):
             backbone.head = nn.Identity()
+
+        # Check if 'large' is in the backbone name to update out_indices
+        if 'large' in self.config.backbone_name:
+            self.out_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
 
         # This method MUST return the loaded backbone object for the parent class.
         return backbone

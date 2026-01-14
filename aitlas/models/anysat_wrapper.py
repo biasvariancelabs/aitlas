@@ -39,6 +39,7 @@ class AnySat(FoundationModel):
 
         self.patch_size = self.config.patch_size
         self.output_mode = self.config.output
+        self.out_indices = [0]
 
     def load_backbone(self):
         """ Loads the AnySat (backbone) model from HuggingFace or from a local path (if available).

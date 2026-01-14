@@ -49,6 +49,8 @@ class GASSL(FoundationModel):
     def __init__(self, config):    
         super().__init__(config)
 
+        self.out_indices = [0]
+
     def load_backbone(self):
         """ Loads the GASSL backbone model from Zenodo repository or from a local path (if available).
         """
