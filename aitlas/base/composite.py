@@ -158,6 +158,9 @@ class CompositeModel(BaseModel):
 
         # Standardize features -> List[Tensor]
         features = self._standardize_features(features)
+
+        # Check and dynamically rebuild necks, decoders and heads if needed
+        self._check_and_rebuild_components(features)
         
         # Infer image size for necks if not provided in kwargs
         kwargs = self._infer_image_size(x, kwargs)
@@ -403,75 +406,78 @@ class CompositeModel(BaseModel):
         return cls(**kwargs)
 
     def _get_feature_shape(self, features):
-        """
-        Helper to find feature shapes and channels from backbone output.
-        """
+            """
+            Helper to find feature shapes and channels from backbone output.
+            """
 
-        # Option 1: Single dictionary (standard for some models)
-        if isinstance(features, dict):
-            feature_list = [v for v in features.values() if isinstance(v, torch.Tensor)]
-        
-        # Option 2: List or tuple
-        elif isinstance(features, (list, tuple)):
-            if len(features) > 0:
-                first_elem = features[0]
-                
-                # Option 2a: List of dictionaries (TerraMind style)
-                if isinstance(first_elem, dict):
-                    feature_list = []
-                    for item in features:
-                        if isinstance(item, dict):
-                            feature_list.extend([v for v in item.values() if isinstance(v, torch.Tensor)])
-                
-                # Option 2b: List of tensors (standard)
-                else:
-                    # Special handling for Galileo to limit to first 4 features
-                    if "galileo" in self.config.backbone_name and len(features) > 4:
-                        feature_list = list(features[:4])
-                    else:
-                        feature_list = features
-            else:
-                feature_list = [] # Empty list handling
-        
-        # Option 3: Single tensor
-        else:
-            feature_list = [features]
-
-        current_shapes = []
-        current_channels = []
-
-        for f in feature_list:
-            shape = list(f.shape)
-            current_shapes.append(shape)
+            # Option 1: Single dictionary (standard for some models)
+            if isinstance(features, dict):
+                feature_list = [v for v in features.values() if isinstance(v, torch.Tensor)]
             
-            # Logic to find "channel" dim based on tensor rank
-            if len(shape) == 6:
-                # Galileo 6D: [B, H, W, T, G, D] -> Last dim is D
-                current_channels.append(shape[-1])
-
-            elif len(shape) == 5:
-                # Galileo 5D (space-only): [B, H, W, G, D] -> last dim is D
-                current_channels.append(shape[-1])
-
-            elif len(shape) == 4: 
-                # Standard PyTorch [B, C, H, W]
-                if "galileo" in self.config.backbone_name:
-                    current_channels.append(shape[-1]) # Galileo sometimes permutes to [B, T, H, W] or similar where D is last
+            # Option 2: List or tuple
+            elif isinstance(features, (list, tuple)):
+                if len(features) > 0:
+                    first_elem = features[0]
+                    
+                    # Option 2a: List of dictionaries (TerraMind style)
+                    if isinstance(first_elem, dict):
+                        feature_list = []
+                        for item in features:
+                            if isinstance(item, dict):
+                                feature_list.extend([v for v in item.values() if isinstance(v, torch.Tensor)])
+                    
+                    # Option 2b: List of tensors (standard)
+                    else:
+                        # Special handling for Galileo to limit to first 4 features (Raw Output only)
+                        if "galileo" in self.config.backbone_name and len(features) > 4:
+                            feature_list = list(features[:4])
+                        else:
+                            feature_list = features
                 else:
-                    current_channels.append(shape[1]) # Standard [B, C, H, W]
-
-            elif len(shape) == 3: 
-                # [B, N, C] -> Token-like (patch) -> Last dim is C
-                current_channels.append(shape[2])
-
-            elif len(shape) == 2: 
-                # [B, C] -> Vector (tile)
-                current_channels.append(shape[1])
-                
+                    feature_list = [] # Empty list handling
+            
+            # Option 3: Single tensor
             else:
-                current_channels.append("?")
+                feature_list = [features]
 
-        return current_shapes, current_channels
+            current_shapes = []
+            current_channels = []
+
+            for f in feature_list:
+                if not isinstance(f, torch.Tensor):
+                    # Guard against non-tensor elements slipping through
+                    current_channels.append("?")
+                    continue
+                    
+                shape = list(f.shape)
+                current_shapes.append(shape)
+                
+                # Logic to find "channel" dim based on tensor rank
+                if len(shape) == 6:
+                    # Galileo 6D: [B, H, W, T, G, D] -> Last dim is D
+                    current_channels.append(shape[-1])
+
+                elif len(shape) == 5:
+                    # Galileo 5D (space-only): [B, H, W, G, D] -> last dim is D
+                    current_channels.append(shape[-1])
+
+                elif len(shape) == 4: 
+                    # Standard PyTorch [B, C, H, W]
+                    # Once standardized to 4D, it is always Channel-First (dim 1).
+                    current_channels.append(shape[1]) 
+
+                elif len(shape) == 3: 
+                    # [B, N, C] -> Token-like (patch) -> Last dim is C
+                    current_channels.append(shape[2])
+
+                elif len(shape) == 2: 
+                    # [B, C] -> Vector (tile)
+                    current_channels.append(shape[1])
+                    
+                else:
+                    current_channels.append("?")
+
+            return current_shapes, current_channels
 
     def _standardize_features(self, features) -> list[torch.Tensor]:
         """
@@ -569,6 +575,84 @@ class CompositeModel(BaseModel):
             kwargs["image_size"] = ref_tensor.shape[-2:]
 
         return kwargs
+    
+    def _check_and_rebuild_components(self, features: list[torch.Tensor]):
+        """
+        Checks feature shapes and dynamically rebuilds necks, decoders, and heads if needed.
+        """
+        
+        # Get current (temporary) feature shapes
+        _, temp_channels = self._get_feature_shape(features)
+
+        # Compare with self.current_channels to see if rebuilding is needed
+        if temp_channels != self.current_channels:
+            
+            # Update current channels
+            self.current_channels = temp_channels
+
+            # Get the device and dtype from the features
+            # We assume features is a list of tensors at this point
+            temp_tensor = features[0] if isinstance(features, list) else features
+            device = temp_tensor.device
+            dtype = temp_tensor.dtype
+
+            # Get the current mode (train/eval)
+            is_training_mode = self.training
+
+            # Rebuild NECK(S)
+            layers = []
+            if self.config.necks:
+                for i, neck_conf in enumerate(self.config.necks):
+                    params = neck_conf.copy()
+                    neck_name = params.pop("name", None)
+                    neck_cls = NECK_REGISTRY.get(neck_name)
+                    
+                    # Instantiate using existing helper
+                    neck_instance = self._instantiate_component(
+                        neck_cls, 
+                        self.current_channels, 
+                        **params
+                    )
+                    layers.append(neck_instance)
+
+                    # Update channels for next component
+                    if hasattr(neck_instance, "process_channel_list"):
+                        self.current_channels = neck_instance.process_channel_list(self.current_channels)
+                    elif hasattr(neck_instance, "out_channels"):
+                        self.current_channels = neck_instance.out_channels
+            
+            # Replace and move to device
+            self.necks = NeckSequential(*layers).to(device=device, dtype=dtype)
+            # Put back to original mode (train/eval)
+            self.necks.train(is_training_mode)
+
+            # Rebuild DECODER
+            if self.config.decoder_name:
+                decoder_cls = DECODER_REGISTRY.get(self.config.decoder_name)
+                self.decoder = self._instantiate_component(
+                    decoder_cls, 
+                    self.current_channels,
+                    **self.config.decoder_params
+                ).to(device=device, dtype=dtype)
+                
+                # Put back to original mode (train/eval)
+                self.decoder.train(is_training_mode)
+
+                if hasattr(self.decoder, "out_channels"):
+                    self.current_channels = self.decoder.out_channels
+            
+            # Rebuild HEAD
+            if self.config.head_name:
+                head_cls = HEAD_REGISTRY.get(self.config.head_name)
+                self.head = self._instantiate_component(
+                    head_cls, 
+                    self.current_channels, 
+                    num_classes=self.config.num_classes, 
+                    **self.config.head_params
+                ).to(device=device, dtype=dtype)
+
+                # Put back to original mode (train/eval)      
+                self.head.train(is_training_mode)     
     
     def _upsample_logits(self, logits, x, kwargs):
         """
