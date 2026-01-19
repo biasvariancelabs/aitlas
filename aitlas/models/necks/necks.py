@@ -366,17 +366,58 @@ class FeaturePyramidNetworkNeck(Neck):
     def process_channel_list(self, channel_list: list[int]) -> list[int]:
         channel_list = len(channel_list) * [self.out_channel]
         return channel_list
+    
+
+@NECK_REGISTRY.register("ExpandToFeatureMap")
+class ExpandToFeatureMap(Neck):
+    def __init__(self, channel_list: list[int], target_size: tuple[int, int] = (224, 224)):
+        """Expands a (B, D) vector into a (B, D, H, W) feature map by broadcasting.
+        
+        Args:
+            target_size (tuple[int, int]): The spatial resolution (H, W) to expand to.
+        """
+        super().__init__(channel_list)
+        self.target_size = target_size
+
+    def forward(self, features: list[torch.Tensor], **kwargs) -> list[torch.Tensor]:
+        out = []
+        for x in features:
+            # Input is (B, D)
+            if x.dim() == 2:
+                # View as (B, D, 1, 1)
+                x = x.view(x.shape[0], x.shape[1], 1, 1)
+                # Expand to (B, D, H, W) - this is just repeating the value
+                x = x.expand(-1, -1, self.target_size[0], self.target_size[1])
+                out.append(x)     
+            else:
+                # If already spatial, do nothing
+                out.append(x)
+        return out
+
+    def process_channel_list(self, channel_list: list[int]) -> list[int]:
+        # Dimensions don't change, only spatial shape does
+        return channel_list
 
 
-def build_neck_list(ops: list[dict], channel_list: list[int]) -> tuple[list[Neck], list[int]]:
-    neck_list = []
-    cur_channel_list = channel_list.copy()
-    for cur_op in ops:
-        op: Neck = NECK_REGISTRY.build(
-            cur_op["name"], cur_channel_list, **{k: v for k, v in cur_op.items() if k != "name"}
-        )
-        cur_channel_list = op.process_channel_list(cur_channel_list)
-        op.channel_list = cur_channel_list
-        neck_list.append(op)
+@NECK_REGISTRY.register("DuplicateFeatures")
+class DuplicateFeatures(Neck):
+    def __init__(self, channel_list: list[int], num_duplicates: int = 4):
+        """Duplicates the input feature list N times.
+        
+        Useful when adapting a single-output backbone (like an expanded vector)
+        to a multi-input neck (like LearnedInterpolateToPyramidal).
+        """
+        super().__init__(channel_list)
+        self.num_duplicates = num_duplicates
 
-    return neck_list, cur_channel_list
+    def forward(self, features: list[torch.Tensor], **kwargs) -> list[torch.Tensor]:
+        # If we have 1 feature, we return [feat, feat, feat, feat]
+        # This is memory efficient (just new references to the same data)
+        if len(features) == 1:
+            return [features[0] for _ in range(self.num_duplicates)]
+        
+        # If we already have a list, we repeat the whole list
+        return features * self.num_duplicates
+
+    def process_channel_list(self, channel_list: list[int]) -> list[int]:
+        return channel_list * self.num_duplicates

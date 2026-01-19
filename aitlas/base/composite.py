@@ -50,34 +50,12 @@ class CompositeModel(BaseModel):
                 # Check if 'name' is missing
                 if not neck_name:
                     raise ValueError(f"Neck config at index {i} is missing 'name'.")
+
+                # If the neck asks for specific 'indices' (e.g., SelectIndices), validate the config input
+                self._validate_indices(neck_name, params)
                 
                 # Get the neck class from the registry
                 neck_cls = NECK_REGISTRY.get(neck_name)
-
-                # If the neck asks for specific 'indices' (e.g., SelectIndices), validate the config input
-                if "indices" in params:
-                    requested_indices = params["indices"]
-                    # Handle case where config might be a single int
-                    if isinstance(requested_indices, int):
-                        requested_indices = [requested_indices]
-                    
-                    # Get max and min indices for validation
-                    max_idx = max(requested_indices) if requested_indices else -1
-                    min_idx = min(requested_indices) if requested_indices else 0
-                    available_count = len(self.out_indices)
-
-                    # Check upper bound
-                    if max_idx >= available_count:
-                        raise ValueError(
-                            f"Configuration error in neck '{neck_name}': "
-                            f"Requested index {max_idx} is out of bounds. "
-                            f"The backbone only outputs {available_count} "
-                            f"feature maps (indices 0 to {available_count-1})."
-                        )
-                    
-                    # Check lower bound
-                    if min_idx < 0:
-                        raise ValueError(f"Configuration error in neck '{neck_name}': Indices cannot be negative.")
                 
                 # Instantiate the neck
                 neck_instance = self._instantiate_component(
@@ -653,6 +631,38 @@ class CompositeModel(BaseModel):
 
                 # Put back to original mode (train/eval)      
                 self.head.train(is_training_mode)     
+    
+    def _validate_indices(self, neck_name: str, params: dict):
+        """
+        Internal helper to validate requested indices against available backbone features.
+        """
+        num_indices = len(self.out_indices)
+
+        if "indices" not in params or num_indices is None:
+            return
+
+        requested_indices = params["indices"]
+        
+        # Handle case where config might be a single int
+        if isinstance(requested_indices, int):
+            requested_indices = [requested_indices]
+
+        # Get max and min indices for validation
+        max_idx = max(requested_indices) if requested_indices else -1
+        min_idx = min(requested_indices) if requested_indices else 0
+
+        # Check upper bound
+        if max_idx >= num_indices:
+            raise ValueError(
+                f"Configuration error in neck '{neck_name}': "
+                f"Requested index {max_idx} is out of bounds. "
+                f"The backbone only outputs {len(self.out_indices)} "
+                f"feature maps (indices 0 to {len(self.out_indices)-1})."
+            )
+
+        # Check lower bound
+        if min_idx < 0:
+            raise ValueError(f"Configuration error in neck '{neck_name}': Indices cannot be negative.")
     
     def _upsample_logits(self, logits, x, kwargs):
         """
