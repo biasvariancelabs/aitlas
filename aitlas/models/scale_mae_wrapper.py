@@ -97,9 +97,13 @@ class ScaleMAE(FoundationModel):
         """ Forward pass through the Scale-MAE model to get the feature embeddings.
         
         Args:
-            x (torch.Tensor): A batch of RGB image tensors, e.g., shape [N, 3, 224, 224].
+            x (torch.Tensor): The input tensor of shape (B, 3, H, W).
             input_res (torch.Tensor): A 1D tensor of the Ground Sampling Distance for
-                                    each image in the batch, e.g., shape [N].
+                                    each image in the batch, e.g., shape (B,).
+
+        Returns:
+            embedding (torch.Tensor): The output feature embeddings of shape (B, D).
+            
         """
         
         # Check if backbone is loaded

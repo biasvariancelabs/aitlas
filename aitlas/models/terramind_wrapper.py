@@ -250,7 +250,7 @@ class TerraMind(FoundationModel):
             Alternatively, keyword arguments with modality=tensor.
 
         Returns:
-            list[torch.Tensor]: List of transformer layer outputs. Shape (B, L, D).
+            embedding (list[torch.Tensor]): List of transformer layer outputs. Shape (B, L, D).
 
         """
 
@@ -321,10 +321,10 @@ class TerraMind(FoundationModel):
 
         Args:
             x (dict, torch.Tensor): Dict of inputs or input tensor with shape (B, C, H, W). Alternatively, keyword arguments with modality=tensor.
-            merge_method (str, optional): Method to merge modalities. Defaults to None.
+            merge_method (str, optional): Method to merge modalities. Can be one of mean, max, concat or dict. Defaults to None (mean).
 
         Returns:
-            list[torch.Tensor]: List of transformer layer outputs. Shape (B, L, D).
+            embedding (list[torch.Tensor]): List of transformer layer outputs. Shape (B, L, D).
 
         """
 

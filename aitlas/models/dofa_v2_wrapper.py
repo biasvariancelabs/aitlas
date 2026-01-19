@@ -113,6 +113,15 @@ class DOFA_v2(FoundationModel):
 
     def forward_features(self, x, wave_list):
         """ Forward pass through the DOFA_v2 model to get the feature embeddings.
+        
+        Args:
+            x (torch.Tensor): The input tensor.
+                - For RGB/multispectral models, shape should be (B, C, H, W).
+            wave_list (list): List of wavelength values corresponding to the input channels of (C, ).
+
+        Returns:
+            embedding (torch.Tensor): The output feature embeddings of shape (B, D).
+
         """
         
         # Check if backbone is loaded

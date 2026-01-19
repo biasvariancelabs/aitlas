@@ -109,7 +109,11 @@ class SatMAE_plusplus(FoundationModel):
         
         Args:
             x (torch.Tensor): The input tensor.
-                - For RGB/multispectral models, shape should be (N, C, H, W).
+                - For RGB/multispectral models, shape should be (B, C, H, W).
+
+        Returns:
+            embedding (torch.Tensor): The output feature embeddings of shape (B, D).
+            
         """
         
         # Check if backbone is loaded

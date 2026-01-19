@@ -135,10 +135,14 @@ class SatMAE(FoundationModel):
         
         Args:
             x (torch.Tensor): The input tensor.
-                - For RGB/multispectral models, shape should be (N, C, H, W).
-                - For temporal models, shape should be (N, T, C, H, W).
+                - For RGB/multispectral models, shape should be (B, C, H, W).
+                - For temporal models, shape should be (B, T, C, H, W).
             timestamps (torch.Tensor, optional): A tensor of timestamps required
-                only for the temporal model. Defaults to None.
+                only for the temporal model. Shape (B, T). Defaults to None.
+
+        Returns:
+            embedding (torch.Tensor): The output feature embeddings of shape (B, D).
+
         """
         
         # Check if backbone is loaded

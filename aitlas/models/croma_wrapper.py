@@ -110,11 +110,11 @@ class CROMA(FoundationModel):
           
         Returns:
             embedding (dict[str, Tensor]): A dictionary wit the following keys:
-                - "SAR_encodings": output of the radar encoder, shape (B, number_of_patches, D)
+                - "SAR_encodings": output of the radar encoder, shape (B, N, D)
                 - "SAR_GAP": output of the radar FFN (after global average pooling (GAP)), shape (B, D)
-                - "optical_encodings": output of the optical encoder, shape (B, number_of_patches, D)
+                - "optical_encodings": output of the optical encoder, shape (B, N, D)
                 - "optical_GAP": output of the optical FFN (after global average pooling (GAP)), shape (B, D)
-                - "joint_encodings": output of the joint radar-optical encoder, shape (B, number_of_patches, D)
+                - "joint_encodings": output of the joint radar-optical encoder, shape (B, N, D)
                 - "joint_GAP": global averaging pooling the joint_encodings, shape (B, D)
         """
 

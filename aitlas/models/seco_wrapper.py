@@ -121,7 +121,11 @@ class SeCo(FoundationModel):
         """ Forward pass through the SeCo model to get feature embeddings.
         
         Args:
-            x (torch.Tensor): The input tensor of shape (N, C, H, W).
+            x (torch.Tensor): The input tensor of shape (B, 3, H, W).
+
+        Returns:
+            embedding (torch.Tensor): The output feature embeddings of shape (B, D).
+
         """
         
         # Check if backbone is loaded

@@ -110,6 +110,29 @@ class AnySat(FoundationModel):
     
     def forward_features(self, x, patch_size=None, output=None, **kwargs):
         """Extract features from the model.
+
+        Args:
+            x (dict[torch.Tensor]): The input dictionary of tensors
+                - "s1": Sentinel-1 input tensor of shape (B, T, C1, H, W). C1 = 2
+                - "s1-asc": Sentinel-1 ascending input tensor of shape (B, T, C1, H, W). C1 = 2
+                - "s2": Sentinel-2 input tensor of shape (B, T, C2, H, W). C2 = 10
+                - "s1_dates": Sentinel-1 dates tensor of shape (B, T)
+                - "s1-asc_dates": Sentinel-1 ascending dates tensor of shape (B, T)
+                - "s2_dates": Sentinel-2 dates tensor of shape (B, T)
+                - ...
+            patch_size (int, optional): Patch size to use during the forward pass.  
+                If None, uses the patch size defined in the backbone.
+            output (str, optional): Output mode to use during the forward pass. One of 'tile', 'patch', 'dense', 'all'.
+                If None, uses the output mode defined in the backbone ('patch').
+            **kwargs: Additional keyword arguments for the backbone forward method.
+
+        Returns:
+            embedding (torch.Tensor): The output feature embeddings.
+                - If output mode is 'tile': shape (B, D)
+                - If output mode is 'patch': shape (B, D, H', W')
+                - If output mode is 'dense': shape (B, 2*D, H', W')
+                - If output mode is 'all': shape (B, P+1, D)
+
         """
 
         # Check if backbone is loaded

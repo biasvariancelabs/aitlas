@@ -112,10 +112,13 @@ class GASSL(FoundationModel):
         This method handles both MoCo and MoCo_geo backbones.
         
         Args:
-            x (torch.Tensor): The input tensor of shape (N, C, H, W).
+            x (torch.Tensor): The input tensor of shape (B, 3, H, W).
             **kwargs: Can include `return_all_embeddings`.
                 return_all_embeddings=False (default): Returns 128-dim embedding from MLP head.
                 return_all_embeddings=True: Returns 2048-dim embedding from ResNet backbone.
+
+        Returns:
+            embedding (torch.Tensor): The output feature embeddings of shape (B, D).
         """
         
         # Check if backbone is loaded
