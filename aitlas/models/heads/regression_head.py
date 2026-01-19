@@ -46,8 +46,8 @@ class RegressionHead(nn.Module):
                 layer to be created. Defaults to None.
             batch_norm (bool, optional): Whether to apply batch norm. Defaults to True.
             dropout (float, optional): Dropout value to apply. Defaults to 0.
-
         """
+        
         super().__init__()
         
         self.learned_upscale_layers = learned_upscale_layers

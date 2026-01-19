@@ -58,8 +58,14 @@ class ScalarHead(nn.Module):
         )
 
     def forward(self, x: Tensor):
+        # Handle list input (standardized output from backbones)
+        if isinstance(x, (list, tuple)):
+            x = x[-1]
+
+        # Reshape and permute 
         x = x.reshape(x.shape[0], x.shape[1], -1).permute(0, 2, 1)
 
+        # Forward pass
         if self.linear_after_pool:
             x = x.mean(axis=1)
             out = self.head(x)

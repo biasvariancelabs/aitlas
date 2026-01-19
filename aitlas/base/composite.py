@@ -101,22 +101,25 @@ class CompositeModel(BaseModel):
             )
 
         # Guardrails for different tasks
-        task = self.config.task_type
+        self.task = self.config.task_type
         
         # Feature extraction (backbone only is allowed)
-        if task == "feature extraction":
+        if self.task == "feature extraction":
             pass 
 
-        # Prediction Tasks (head is mandatory)
-        elif task in ["classification", "segmentation", "object detection", "change detection"]:
+        # Prediction tasks (head is mandatory)
+        elif self.task in ["multiclass classification", "multilabel classification", "segmentation", "object detection", "change detection"]:
             if self.head is None:
                 raise ValueError(
-                    f"Task type is '{task}', but no 'head_name' was provided. "
-                    f"For {task}, a head is required to produce predictions. "
+                    f"Task type is '{self.task}', but no 'head_name' was provided. "
+                    f"For {self.task}, a head is required to produce predictions. "
                     f"Please specify a head in the config."
                 )
 
     def forward(self, x=None, **kwargs):
+        """Standard forward pass through the composite model.
+        """
+
         # Check for 'tim' in backbone self.config.backbone_name for TerraMind's Thinking in Modalities
         if "tim" in self.config.backbone_name:
             backbone_fn = self.backbone.thinking_in_modalities
@@ -172,7 +175,7 @@ class CompositeModel(BaseModel):
         print(f"Feature channels (head): {cur_channels}")
         
         # Standard segmentation upsampling
-        if self.config.task_type == "segmentation":
+        if self.task == "segmentation":
             # Upsample logits to match input image resolution (H, W)
             logits = self._upsample_logits(logits, x, kwargs)
              
@@ -181,7 +184,26 @@ class CompositeModel(BaseModel):
         print(f"Final output channels: {cur_channels}")
 
         return logits
-    
+
+    def predict(self, x=None, **kwargs):
+        """ Inference pass that returns probabilities/values instead of logits.
+        """
+
+        # Run standard forward pass to get logits
+        logits = self.forward(x, **kwargs)
+
+        # Apply task-specific activation
+        if self.task == "multiclass classification":
+            return torch.softmax(logits, dim=1)
+        
+        elif self.task == "multilabel classification":
+            return torch.sigmoid(logits)
+
+        elif self.task == "segmentation":
+            return torch.argmax(logits, dim=1)
+        
+        return logits
+
     def _get_feature_info(self, backbone):
         """
         Function to find output channels for any backbone.

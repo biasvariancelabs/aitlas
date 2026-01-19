@@ -20,6 +20,7 @@ class SegmentationHead(nn.Module):
                 layer to be created. Defaults to None.
             dropout (float, optional): Dropout value to apply. Defaults to 0.
         """
+        
         super().__init__()
         self.num_classes = num_classes
         if channel_list is None:

@@ -286,7 +286,7 @@ class CompositeModelSchema(BaseFoundationModelSchema):
     task_type = fields.String(
         required=True,
         description="Type of task for the composite model.",
-        validate=validate.OneOf(["classification", "segmentation", "object detection", "change detection", "feature extraction"]),
+        validate=validate.OneOf(["multiclass classification", "multilabel classification", "segmentation", "object detection", "change detection", "feature extraction"]),
         example="segmentation",
     )
     necks = fields.List(
