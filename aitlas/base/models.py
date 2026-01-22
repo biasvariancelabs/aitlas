@@ -500,7 +500,7 @@ class BaseModel(nn.Module, Configurable):
         if torch.is_tensor(image):
             inputs = image.unsqueeze(0).to(self.device)
         else:
-            inputs = torch.from_numpy(image).unsqueeze(0).to(self.device)
+            inputs = torch.from_numpy(image.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
         outputs = self(inputs)
         # check if outputs is OrderedDict for segmentation
         if isinstance(outputs, collections.abc.Mapping):

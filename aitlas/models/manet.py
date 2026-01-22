@@ -1,11 +1,11 @@
-"""MAnet model for segmentation"""
+"""MANet model for segmentation"""
 import segmentation_models_pytorch as smp
 
 from ..base import BaseSegmentationClassifier
 
 
-class MAnet(BaseSegmentationClassifier):
-    """MAnet segmentation model implementation.
+class MANet(BaseSegmentationClassifier):
+    """MANet segmentation model implementation.
 
     .. note:: Based on <https://github.com/qubvel/segmentation_models.pytorch>"""
 

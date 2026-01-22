@@ -194,23 +194,18 @@ class BaseChangeDetection(BaseModel):
 
         # Apply data transformations. Synchronized for both images.
         if data_transforms:
-            # Stack images to ensure same random transforms are applied
-            combined_images = np.concatenate([image1, image2], axis=-1)  # HxWxC -> HxWx(2C)
-            transformed_combined = data_transforms(combined_images)
-
-            # Split back into two images (C'xH'xW' -> (C'/2)xH'xW', (C'/2)xH'xW')
-            # Assuming original images are 3 channels and transforms make it C'xH'xW'
-            channels = image1.shape[2]  # original channel count
-            inputs1, inputs2 = torch.split(transformed_combined, channels, dim=0)
-
+            image1 = data_transforms(image1)
+            image2 = data_transforms(image2)
+        # check if tensor and convert to batch of size 1, otherwise convert to tensor and then to batch of size 1
+        if torch.is_tensor(image1):
+            inputs1 = image1.unsqueeze(0).to(self.device)
         else:
-            # If no transforms, convert to tensor and add batch dim
-            # Assuming HxWxC numpy array, convert to 1xCxHxW tensor
-            inputs1 = torch.from_numpy(image1.transpose(2, 0, 1)).unsqueeze(0)
-            inputs2 = torch.from_numpy(image2.transpose(2, 0, 1)).unsqueeze(0)
+            inputs1 = torch.from_numpy(image1.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
 
-        inputs1 = inputs1.to(self.device)
-        inputs2 = inputs2.to(self.device)
+        if torch.is_tensor(image2):
+            inputs2 = image2.unsqueeze(0).to(self.device)
+        else:
+            inputs2 = torch.from_numpy(image2.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
 
         outputs = self(inputs1, inputs2)  # Model inference with two images
 
