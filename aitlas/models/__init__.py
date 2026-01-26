@@ -16,6 +16,7 @@ from .efficientnet_v2 import EfficientNetV2
 from .swin_transformer import SwinTransformer, SwinTransformerMultilabel
 from .fasterrcnn import FasterRCNN
 from .fcn import FCN
+from .fcos import FCOS
 from .fpn import FPN
 from .hrnet import HRNet
 from .inceptiontime import InceptionTime
@@ -26,8 +27,11 @@ from .msresnet import MSResNet
 from .omniscalecnn import OmniScaleCNN
 from .pspnet import PSPNet
 from .resnet import ResNet50, ResNet50MultiLabel, ResNet152, ResNet152MultiLabel
+from .retinanet import RetinaNet
 from .segformer import SegFormer
 from .shallow import ShallowCNNNet, ShallowCNNNetMultilabel
+from .ssd import SSD
+from .ssdlite import SSDLite
 from .starrnn import StarRNN
 from .tempcnn import TempCNN
 from .transformer import TransformerModel
