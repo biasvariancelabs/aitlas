@@ -94,6 +94,8 @@ from .croma_wrapper import CROMA
 from .TerraFM import TerraFMModule, terrafm_base, terrafm_large
 from .terrafm_wrapper import TerraFM
 
+from .bit import BIT
+from .stanet import STANet
 from .unet_change_detection import UnetChangeDetection
 
 from .TerraMind import terramind_v1_tiny, terramind_v1_small, terramind_v1_base, terramind_v1_large
