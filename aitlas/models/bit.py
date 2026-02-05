@@ -210,13 +210,13 @@ class TransformerDecoder(nn.Module):
 class BITModel(nn.Module):
     """
     Implementation of BIT: Bitemporal Image Transformer
-    By default matches 'base_transformer_pos_s4' config from original repo.
+    Matches default 'base_transformer_pos_s4_dd8' config from original repo.
     Based on: https://github.com/justchenhao/BIT_CD
     Original paper: https://ieeexplore.ieee.org/document/9491802
     DOI: 10.1109/TGRS.2021.3095166
     """
     def __init__(self, in_channels=3, num_classes=2, pretrained=True, token_len=4,
-                 enc_depth=1, dec_depth=1, dim_head=64, decoder_dim_head=64):
+                 enc_depth=1, dec_depth=8, dim_head=64, decoder_dim_head=64):
         super(BITModel, self).__init__()
         
         # --- Backbone Configuration ---
