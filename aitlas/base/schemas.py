@@ -105,6 +105,12 @@ class BaseModelSchema(Schema):
     use_ddp = fields.Boolean(
         required=False, missing=False, description="Turn on distributed data processing"
     )
+    evaluate_train_every_n_epochs = fields.Int(
+        missing=1, 
+        description="Evaluate on training set every N epochs (default 1 means every epoch)", 
+        example=5,
+        validate=validate.Range(min=1)
+    )
 
 
 class BaseClassifierSchema(BaseModelSchema):

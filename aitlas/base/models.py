@@ -183,25 +183,29 @@ class BaseModel(nn.Module, Configurable):
                     model_directory, epoch, self.optimizer, loss, start, run_id
                 )
 
-            # evaluate against the train set
-            self.running_metrics.reset()
-            train_loss = self.evaluate_model(
-                train_loader,
-                criterion=self.criterion,
-                description="testing on train set",
-            )
-            self.log_metrics(
-                self.running_metrics.get_scores(self.metrics),
-                dataset.get_labels(),
-                "train",
-                self.writer,
-                epoch + 1,
-            )
+            # evaluate against the train set based on the specified frequency
+            if (epoch + 1) % self.config.evaluate_train_every_n_epochs == 0:
+                self.running_metrics.reset()
+                train_loss = self.evaluate_model(
+                    train_loader,
+                    criterion=self.criterion,
+                    description="testing on train set",
+                )
+                self.log_metrics(
+                    self.running_metrics.get_scores(self.metrics),
+                    dataset.get_labels(),
+                    "train",
+                    self.writer,
+                    epoch + 1,
+                )
 
-            # for object detection log the loss calculated during training, otherwise the loss calculated in eval mode
-            if train_loss:
-                train_losses.append(train_loss)
+                # for object detection log the loss calculated during training, otherwise the loss calculated in eval mode
+                if train_loss:
+                    train_losses.append(train_loss)
+                else:
+                    train_losses.append(loss)
             else:
+                # append the training loss from the training phase when not evaluating
                 train_losses.append(loss)
 
             # evaluate against a validation set if there is one
