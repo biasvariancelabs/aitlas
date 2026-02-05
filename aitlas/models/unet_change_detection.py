@@ -1,4 +1,4 @@
-"""Siamese UNet model for change detection (Faithful Implementation)"""
+"""Siamese UNet model for change detection"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
