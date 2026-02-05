@@ -362,6 +362,7 @@ class STANetModel(nn.Module):
     Implementation of STANet: A Spatio-Temporal Attention Network for Change Detection
     Based on: https://github.com/likyoo/change_detection.pytorch
     Original paper: https://www.mdpi.com/2072-4292/12/10/1662
+    DOI: 10.3390/rs12101662
     """
     def __init__(self, in_channels=3, num_classes=2, pretrained=True, return_distance_map=False):
         super().__init__()
