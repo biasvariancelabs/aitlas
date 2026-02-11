@@ -96,6 +96,7 @@ from .terrafm_wrapper import TerraFM
 
 from .bit import BIT
 from .changeformer_v6 import ChangeFormerV6
+from .changevit import ChangeViT
 from .stanet import STANet
 from .unet_change_detection import UnetChangeDetection
 
