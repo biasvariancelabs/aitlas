@@ -283,7 +283,7 @@ class OverlapPatchEmbed(nn.Module):
 
 
 # -----------------------------------------------------------------------------
-# Encoder & Decoder Classes
+# Encoder & Decoder Classes (from models/ChangeFormer.py)
 # -----------------------------------------------------------------------------
 
 class EncoderTransformer_v3(nn.Module):
@@ -580,7 +580,7 @@ class DecoderTransformer_v3(nn.Module):
 
 
 # -----------------------------------------------------------------------------
-# Main ChangeFormerV6 Class
+# Main ChangeFormerV6 Class (from models/ChangeFormer.py)
 # -----------------------------------------------------------------------------
 
 class ChangeFormerV6Model(nn.Module):
