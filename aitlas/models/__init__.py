@@ -95,6 +95,7 @@ from .TerraFM import TerraFMModule, terrafm_base, terrafm_large
 from .terrafm_wrapper import TerraFM
 
 from .bit import BIT
+from .cgnet import CGNet
 from .changeformer_v6 import ChangeFormerV6
 from .changemamba import ChangeMamba
 from .cssm import CSSM
