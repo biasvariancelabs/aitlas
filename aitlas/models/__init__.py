@@ -96,8 +96,12 @@ from .terrafm_wrapper import TerraFM
 
 from .bit import BIT
 from .changeformer_v6 import ChangeFormerV6
+from .changemamba import ChangeMamba
+from .cssm import CSSM
 from .changevit import ChangeViT
+from .siamcrnn import SiamCRNN
 from .stanet import STANet
+from .tinycd import TinyCD
 from .unet_change_detection import UnetChangeDetection
 
 from .TerraMind import terramind_v1_tiny, terramind_v1_small, terramind_v1_base, terramind_v1_large
