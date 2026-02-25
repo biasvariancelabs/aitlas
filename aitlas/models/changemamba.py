@@ -42,7 +42,7 @@ def selective_scan_chunk(us, dts, As, Bs, Cs, hprefix):
         ys.append(y)
     return torch.cat(ys, dim=0), h
 
-def selective_scan_easy(us, dts, As, Bs, Cs, Ds, delta_bias=None, delta_softplus=False, return_last_state=False, chunksize=64, **kwargs):
+def selective_scan_easy(us, dts, As, Bs, Cs, Ds, delta_bias=None, delta_softplus=False, chunksize=64):
     """
     Memory-efficient Pure PyTorch implementation of selective scan.
     Uses small chunks and sequential processing within chunks.
@@ -87,9 +87,7 @@ def selective_scan_easy(us, dts, As, Bs, Cs, Ds, delta_bias=None, delta_softplus
         oys = oys + Ds * us
 
     oys = oys.permute(1, 2, 3, 0).view(B, -1, L)
-    oys = oys.to(inp_dtype)
-
-    return oys if not return_last_state else (oys, hprefix.view(B, G * D, N))
+    return oys.to(inp_dtype)
 
 # -----------------------------------------------------------------------------
 # Utility Functions (from classification/models/vmamba.py)
@@ -310,14 +308,11 @@ class SS2D(nn.Module):
 
         # 3. Run Selective Scan
         out_y = self.selective_scan(
-            xs, dts, 
-            As, Bs, Cs, Ds, z=None,
+            xs, dts,
+            As, Bs, Cs, Ds,
             delta_bias=dt_projs_bias,
             delta_softplus=True,
-            return_last_state=False,
         ).view(B, K, -1, L)
-
-        assert out_y.dtype == torch.float
 
         # 4. Cross Merge: Combine the 4 scanned outputs back into an image
         inv_y = out_y.transpose(2, 3).reshape(B, K, L, -1)
@@ -480,7 +475,6 @@ class VSSM(nn.Module):
         self.num_classes = num_classes
         self.num_layers = len(depths)
         self.embed_dim = dims[0]
-        self.ape = False
         self.out_indices = out_indices
 
         # 1. Patch Embedding (Images -> Tokens)
@@ -676,21 +670,19 @@ class ChangeDecoder(nn.Module):
 
         # 2. Cross: Interleave columns (Even cols=Pre, Odd cols=Post)
         B, C, H, W = pre_feat_4.size()
-        ct_tensor_42 = torch.stack([pre_feat_4, post_feat_4], dim=-1).reshape(B, C, H, 2 * W) # stack and reshape is more efficient than empty and interleaving with indexing
-        p42 = self.st_block_42(ct_tensor_42)
+        p42 = self.st_block_42(torch.stack([pre_feat_4, post_feat_4], dim=-1).reshape(B, C, H, 2 * W))
 
         # 3. Parallel: Side-by-side concatenation (Left=Pre, Right=Post)
-        ct_tensor_43 = torch.cat([pre_feat_4, post_feat_4], dim=-1) # concatenating is more efficient than empty and interleaving with indexing
-        p43 = self.st_block_43(ct_tensor_43)
+        p43 = self.st_block_43(torch.cat([pre_feat_4, post_feat_4], dim=-1))
 
         # Fuse everything
         p4 = self.fuse_layer_4(
             torch.cat(
                 [
                     p41,
-                    p42[:, :, :, ::2], # Split back out the interleaved parts
+                    p42[:, :, :, ::2],  # Split back out the interleaved parts
                     p42[:, :, :, 1::2],
-                    p43[:, :, :, 0:W], # Split back out the parallel parts
+                    p43[:, :, :, 0:W],  # Split back out the parallel parts
                     p43[:, :, :, W:],
                 ],
                 dim=1,
@@ -703,11 +695,8 @@ class ChangeDecoder(nn.Module):
         p31 = self.st_block_31(torch.cat([pre_feat_3, post_feat_3], dim=1))
         B, C, H, W = pre_feat_3.size()
 
-        ct_tensor_32 = torch.stack([pre_feat_3, post_feat_3], dim=-1).reshape(B, C, H, 2 * W)
-        p32 = self.st_block_32(ct_tensor_32)
-
-        ct_tensor_33 = torch.cat([pre_feat_3, post_feat_3], dim=-1)
-        p33 = self.st_block_33(ct_tensor_33)
+        p32 = self.st_block_32(torch.stack([pre_feat_3, post_feat_3], dim=-1).reshape(B, C, H, 2 * W))
+        p33 = self.st_block_33(torch.cat([pre_feat_3, post_feat_3], dim=-1))
 
         p3 = self.fuse_layer_3(
             torch.cat([p31, p32[:, :, :, ::2], p32[:, :, :, 1::2], p33[:, :, :, 0:W], p33[:, :, :, W:]], dim=1)
@@ -723,11 +712,8 @@ class ChangeDecoder(nn.Module):
         p21 = self.st_block_21(torch.cat([pre_feat_2, post_feat_2], dim=1))
         B, C, H, W = pre_feat_2.size()
 
-        ct_tensor_22 = torch.stack([pre_feat_2, post_feat_2], dim=-1).reshape(B, C, H, 2 * W)
-        p22 = self.st_block_22(ct_tensor_22)
-
-        ct_tensor_23 = torch.cat([pre_feat_2, post_feat_2], dim=-1)
-        p23 = self.st_block_23(ct_tensor_23)
+        p22 = self.st_block_22(torch.stack([pre_feat_2, post_feat_2], dim=-1).reshape(B, C, H, 2 * W))
+        p23 = self.st_block_23(torch.cat([pre_feat_2, post_feat_2], dim=-1))
 
         p2 = self.fuse_layer_2(
             torch.cat([p21, p22[:, :, :, ::2], p22[:, :, :, 1::2], p23[:, :, :, 0:W], p23[:, :, :, W:]], dim=1)
@@ -741,11 +727,8 @@ class ChangeDecoder(nn.Module):
         p11 = self.st_block_11(torch.cat([pre_feat_1, post_feat_1], dim=1))
         B, C, H, W = pre_feat_1.size()
 
-        ct_tensor_12 = torch.stack([pre_feat_1, post_feat_1], dim=-1).reshape(B, C, H, 2 * W)
-        p12 = self.st_block_12(ct_tensor_12)
-
-        ct_tensor_13 = torch.cat([pre_feat_1, post_feat_1], dim=-1)
-        p13 = self.st_block_13(ct_tensor_13)
+        p12 = self.st_block_12(torch.stack([pre_feat_1, post_feat_1], dim=-1).reshape(B, C, H, 2 * W))
+        p13 = self.st_block_13(torch.cat([pre_feat_1, post_feat_1], dim=-1))
 
         p1 = self.fuse_layer_1(
             torch.cat([p11, p12[:, :, :, ::2], p12[:, :, :, 1::2], p13[:, :, :, 0:W], p13[:, :, :, W:]], dim=1)
@@ -817,9 +800,9 @@ class ChangeMamba(BaseChangeDetection):
             backbone_cfg = dict(
                 in_chans=in_channels,
                 dims=[96, 192, 384, 768],
-                depths=[2, 2, 9, 2],
-                d_state=16,
-                drop_path_rate=0.1,
+                depths=[2, 2, 4, 2],
+                d_state=1,
+                drop_path_rate=0.2,
                 use_checkpoint=True
             )
         elif model_type == 'small':
@@ -827,8 +810,8 @@ class ChangeMamba(BaseChangeDetection):
             backbone_cfg = dict(
                 in_chans=in_channels,
                 dims=[96, 192, 384, 768],
-                depths=[2, 2, 27, 2],
-                d_state=16,
+                depths=[2, 2, 15, 2],
+                d_state=1,
                 drop_path_rate=0.3,
                 use_checkpoint=True
             )
@@ -837,8 +820,8 @@ class ChangeMamba(BaseChangeDetection):
             backbone_cfg = dict(
                 in_chans=in_channels,
                 dims=[128, 256, 512, 1024],
-                depths=[2, 2, 27, 2],
-                d_state=16,
+                depths=[2, 2, 15, 2],
+                d_state=1,
                 drop_path_rate=0.6,
                 use_checkpoint=True
             )
