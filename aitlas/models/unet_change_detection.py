@@ -1,4 +1,4 @@
-"""Siamese UNet model for change detection (Faithful Implementation)"""
+"""Siamese UNet model for change detection"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -41,7 +41,7 @@ class SiameseUnet(nn.Module):
     Siamese U-Net for change detection.
     Based on: https://github.com/likyoo/change_detection.pytorch implementation of U-Net for change detection.
     """
-    def __init__(self, in_channels, num_classes, pretrained):
+    def __init__(self, in_channels=3, num_classes=2, pretrained=True):
         super().__init__()
         self.in_channels = in_channels
         self.num_classes = num_classes
@@ -50,9 +50,20 @@ class SiameseUnet(nn.Module):
         # Initialize standard model
         self.encoder = models.resnet50(pretrained=pretrained)
         
-        # Patch first layer if input is not RGB
-        if self.in_channels != 3:
-            self.encoder.conv1 = nn.Conv2d(self.in_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        # Patch first conv layer for arbitrary input channels
+        if in_channels != 3:
+            old_conv = self.encoder.conv1
+            new_conv = nn.Conv2d(
+                in_channels,
+                old_conv.out_channels,
+                kernel_size=old_conv.kernel_size,
+                stride=old_conv.stride,
+                padding=old_conv.padding,
+                bias=False
+            )
+
+            nn.init.kaiming_normal_(new_conv.weight, mode='fan_out', nonlinearity='relu')
+            self.encoder.conv1 = new_conv
         
         # Remove unused layers
         del self.encoder.fc
