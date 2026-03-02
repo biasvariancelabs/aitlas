@@ -96,6 +96,36 @@ class BaseModel(nn.Module, Configurable):
             else None
         )
 
+        # Auto-detect if AMP is beneficial
+        if self.config.automatic_mixed_precision:
+            if self._should_use_amp():
+                self.use_amp = True
+            else:
+                logging.info("AMP is enabled in config but not supported on this GPU - falling back to FP32")
+                self.use_amp = False
+        else:
+            self.use_amp = False
+
+        self.scaler = torch.amp.GradScaler("cuda") if self.use_amp else None
+    
+    def _should_use_amp(self):
+         """Check if GPU has Tensor Cores for meaningful AMP speedup"""
+         if not torch.cuda.is_available():
+            return False
+
+         device_name = torch.cuda.get_device_name(0)
+         compute_capability = torch.cuda.get_device_capability(0)
+
+         # Tensor Cores available in: Volta (7.0+), Turing (7.5), Ampere (8.x), Hopper (9.x)
+         has_tensor_cores = compute_capability[0] >= 7
+
+         if has_tensor_cores:
+            logging.info(f"GPU {device_name} has Tensor Cores - enabling AMP")
+            return True
+         else:
+            logging.info(f"GPU {device_name} lacks Tensor Cores - disabling AMP")
+            return False
+
     def prepare(self):
         """Prepare the model before using it. Loans loss criteria, optimizer, lr scheduler and early stopping."""
 
@@ -293,26 +323,46 @@ class BaseModel(nn.Module, Configurable):
             # zero the parameter gradients
             if isinstance(optimizer, tuple):
                 for opt in optimizer:
-                    opt.zero_grad()
+                    opt.zero_grad(set_to_none=True)
             else:
-                optimizer.zero_grad()
+                optimizer.zero_grad(set_to_none=True)
 
             # forward + backward + optimize
-            outputs = self(inputs)
+            if self.use_amp:
+                # AMP path
+                with torch.amp.autocast("cuda"):
+                    outputs = self(inputs)
 
-            # check if outputs is OrderedDict for segmentation
-            if isinstance(outputs, collections.abc.Mapping):
-                outputs = outputs["out"]
+                    # check if outputs is OrderedDict for segmentation
+                    if isinstance(outputs, collections.abc.Mapping):
+                        outputs = outputs["out"]
 
-            loss = criterion(outputs, labels)
-            loss.backward()
+                    loss = criterion(outputs, labels)
 
-            # perform a single optimization step
-            if isinstance(optimizer, tuple):
-                for opt in optimizer:
-                    opt.step()
+                self.scaler.scale(loss).backward()# perform a single optimization step
+                if isinstance(optimizer, tuple):
+                    for opt in optimizer:
+                        self.scaler.step(opt)
+                else:
+                    self.scaler.step(optimizer)
+                self.scaler.update()
             else:
-                optimizer.step()
+                # Standard FP32 path
+                outputs = self(inputs)
+
+                # check if outputs is OrderedDict for segmentation
+                if isinstance(outputs, collections.abc.Mapping):
+                    outputs = outputs["out"]
+
+                loss = criterion(outputs, labels)
+                loss.backward()
+
+                # perform a single optimization step
+                if isinstance(optimizer, tuple):
+                    for opt in optimizer:
+                        opt.step()
+                else:
+                    optimizer.step()
 
             # log statistics
             running_loss += loss.item() * inputs.size(0)
@@ -505,7 +555,10 @@ class BaseModel(nn.Module, Configurable):
             inputs = image.unsqueeze(0).to(self.device)
         else:
             inputs = torch.from_numpy(image.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
-        outputs = self(inputs)
+        
+        with torch.no_grad():
+            with torch.amp.autocast("cuda", enabled=self.use_amp):
+                outputs = self(inputs)
         # check if outputs is OrderedDict for segmentation
         if isinstance(outputs, collections.abc.Mapping):
             outputs = outputs["out"]
@@ -608,18 +661,19 @@ class BaseModel(nn.Module, Configurable):
 
         # run predictions
         with torch.no_grad():
-            for i, data in enumerate(tqdm(dataloader, desc=description)):
-                inputs, labels = data
-                inputs = inputs.to(self.device)
-                labels = labels.to(self.device)
+            with torch.amp.autocast("cuda", enabled=self.use_amp):
+                for i, data in enumerate(tqdm(dataloader, desc=description)):
+                    inputs, labels = data
+                    inputs = inputs.to(self.device)
+                    labels = labels.to(self.device)
 
-                outputs = self(inputs)
+                    outputs = self(inputs)
 
-                # check if outputs is OrderedDict for segmentation
-                if isinstance(outputs, collections.abc.Mapping):
-                    outputs = outputs["out"]
+                    # check if outputs is OrderedDict for segmentation
+                    if isinstance(outputs, collections.abc.Mapping):
+                        outputs = outputs["out"]
 
-                yield inputs, outputs, labels
+                    yield inputs, outputs, labels
 
     def forward(self, *input, **kwargs):
         """
