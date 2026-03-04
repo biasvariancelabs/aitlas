@@ -754,6 +754,12 @@ class BaseModel(nn.Module, Configurable):
                 "loss": loss,
                 "start": start,
                 "id": run_id,
+                "early_stopping": {
+                    "counter": self.early_stopping.counter,
+                    "best_loss": self.early_stopping.best_loss,
+                    "early_stop": self.early_stopping.early_stop,
+                },
+                "lr_scheduler": self.lr_scheduler.state_dict() if self.lr_scheduler else None,
             },
             checkpoint,
         )
@@ -795,6 +801,22 @@ class BaseModel(nn.Module, Configurable):
 
             if optimizer:
                 optimizer.load_state_dict(checkpoint["optimizer"])
+
+            # Load early stopping state
+            if "early_stopping" in checkpoint:
+                es_state = checkpoint["early_stopping"]
+                self.early_stopping.best_loss = es_state.get("best_loss", None)
+                self.early_stopping.early_stop = es_state.get("early_stop", False)
+                # Reset counter if early stopping was triggered, otherwise restore it
+                if es_state.get("early_stop", False):
+                    self.early_stopping.counter = 0
+                    logging.info("Early stopping was triggered in previous run - resetting counter")
+                else:
+                    self.early_stopping.counter = es_state.get("counter", 0)
+
+            # Load LR scheduler state
+            if "lr_scheduler" in checkpoint and checkpoint["lr_scheduler"] is not None and self.lr_scheduler:
+                self.lr_scheduler.load_state_dict(checkpoint["lr_scheduler"])
 
             logging.info(f"Loaded checkpoint {file_path} at epoch {start_epoch}")
             return (start_epoch, loss, start, run_id)
