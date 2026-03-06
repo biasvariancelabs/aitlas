@@ -111,6 +111,7 @@ class BaseModelSchema(Schema):
         example=5,
         validate=validate.Range(min=1)
     )
+    automatic_mixed_precision = fields.Bool(missing=False, description="Turn on automatic mixed precision")
 
 
 class BaseClassifierSchema(BaseModelSchema):

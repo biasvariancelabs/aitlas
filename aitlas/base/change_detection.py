@@ -61,6 +61,36 @@ class BaseChangeDetection(BaseModel):
         super().__init__(config)
         self.running_metrics = SegmentationRunningScore(self.num_classes, self.device)
 
+        # Auto-detect if AMP is beneficial
+        if self.config.automatic_mixed_precision:
+            if self._should_use_amp():
+                self.use_amp = True
+            else:
+                logging.info("AMP is enabled in config but not supported on this GPU - falling back to FP32")
+                self.use_amp = False
+        else:
+            self.use_amp = False
+
+        self.scaler = torch.amp.GradScaler("cuda") if self.use_amp else None
+    
+    def _should_use_amp(self):
+         """Check if GPU has Tensor Cores for meaningful AMP speedup"""
+         if not torch.cuda.is_available():
+            return False
+
+         device_name = torch.cuda.get_device_name(0)
+         compute_capability = torch.cuda.get_device_capability(0)
+
+         # Tensor Cores available in: Volta (7.0+), Turing (7.5), Ampere (8.x), Hopper (9.x)
+         has_tensor_cores = compute_capability[0] >= 7
+
+         if has_tensor_cores:
+            logging.info(f"GPU {device_name} has Tensor Cores - enabling AMP")
+            return True
+         else:
+            logging.info(f"GPU {device_name} lacks Tensor Cores - disabling AMP")
+            return False
+
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
         self.model.train()
         running_loss = 0.0
@@ -75,14 +105,24 @@ class BaseChangeDetection(BaseModel):
             labels = labels.to(self.device)
 
             # zero the parameter gradients
-            optimizer.zero_grad()
+            optimizer.zero_grad(set_to_none=True)
 
             # forward + backward + optimize
-            outputs = self(image1, image2)
+            if self.use_amp:
+                # AMP path
+                with torch.amp.autocast("cuda"):
+                    outputs = self(image1, image2)
+                    loss = criterion(outputs, labels)
 
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+                self.scaler.scale(loss).backward()
+                self.scaler.step(optimizer)
+                self.scaler.update()
+            else:
+                # Standard FP32 path
+                outputs = self(image1, image2)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
             # log statistics
             running_loss += loss.item() * image1.size(0)
@@ -105,19 +145,20 @@ class BaseChangeDetection(BaseModel):
         """Run predictions on a dataloader and return inputs, outputs, labels per batch"""
         self.model.eval()
         with torch.no_grad():
-            for i, data in enumerate(tqdm(dataloader, desc=description)):
-                inputs, labels = data
-                image1, image2 = inputs
-                image1 = image1.to(self.device)
-                image2 = image2.to(self.device)
-                labels = labels.to(self.device)
+            with torch.amp.autocast("cuda", enabled=self.use_amp):
+                for i, data in enumerate(tqdm(dataloader, desc=description)):
+                    inputs, labels = data
+                    image1, image2 = inputs
+                    image1 = image1.to(self.device)
+                    image2 = image2.to(self.device)
+                    labels = labels.to(self.device)
 
-                outputs = self(image1, image2)
+                    outputs = self(image1, image2)
 
-                if isinstance(outputs, collections.abc.Mapping):
-                    outputs = outputs["out"]
+                    if isinstance(outputs, collections.abc.Mapping):
+                        outputs = outputs["out"]
 
-                yield inputs, outputs, labels
+                    yield inputs, outputs, labels
 
     def evaluate_model(
         self,
@@ -207,7 +248,9 @@ class BaseChangeDetection(BaseModel):
         else:
             inputs2 = torch.from_numpy(image2.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
 
-        outputs = self(inputs1, inputs2)  # Model inference with two images
+        with torch.no_grad():
+            with torch.amp.autocast("cuda", enabled=self.use_amp):
+                outputs = self(inputs1, inputs2)  # Model inference with two images
 
         # Check if outputs is OrderedDict for segmentation (from BaseModel)
         if isinstance(outputs, collections.abc.Mapping):
