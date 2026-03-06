@@ -1,20 +1,19 @@
 import inspect
+import warnings
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from aitlas.base import BaseMulticlassClassifier, BaseMultilabelClassifier, BaseObjectDetection, BaseSegmentationClassifier, BaseChangeDetection, FoundationModel
 from .models import BaseModel
 from ..models.registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY
-from .schemas import CompositeModelSchema
+from .schemas import CompositeModelSchema, CompositeClassificationSchema, CompositeSegmentationSchema, CompositeObjectDetectionSchema
 from ..models.necks import NeckSequential
 
-class CompositeModel(BaseModel):
+class CompositeModelArchitectureMixin:
     """Composite model consisting of backbone, neck, decoder, and head.
     """
 
-    schema = CompositeModelSchema
-
-    def __init__(self, config):
-        super().__init__(config)
+    def setup_composite(self):
 
         # BACKBONE
         # Prepare backbone config
@@ -25,7 +24,14 @@ class CompositeModel(BaseModel):
             "task_type", 
             "necks",
             "decoder_name", "decoder_params", 
-            "head_name", "head_params"
+            "head_name", "head_params",
+            "freeze_modules",
+            "forward_params",
+            "backbone_setup_calls",
+            "learning_rate", "weight_decay", 
+            "threshold", "freeze",
+            "metrics", "mode",
+            "step_size", "gamma"
         ]
         
         for key in orchestrator_reserved_keys:
@@ -33,11 +39,30 @@ class CompositeModel(BaseModel):
 
         # Instantiate backbone
         backbone_cls = BACKBONE_REGISTRY.get(self.config.backbone_name)
-        self.backbone = backbone_cls(backbone_config)
+        self.model.backbone = backbone_cls(backbone_config)
+
+        # Get the list of possible methods to call, defaulting to an empty list if None
+        setup_calls = getattr(self.config, "backbone_setup_calls", []) or []
+        
+        for call_info in setup_calls:
+            method_name = call_info.get("method")
+            params = call_info.get("params", {})
+            
+            if not method_name:
+                continue # Skip if the user forgot to specify a method name
+                
+            # Verify the backbone actually has this method
+            if hasattr(self.model.backbone, method_name):
+                # Get the method from the backbone and execute it with the provided parameters
+                method = getattr(self.model.backbone, method_name)
+                method(**params) 
+            else:
+                # Raise a warning if the method is not found in the backbone
+                warnings.warn(f"Setup method '{method_name}' not found in backbone '{self.config.backbone_name}'. Skipping.") 
         
         # Ensure backbone reports its output indices and channels
-        self.out_indices = self.backbone.out_indices
-        self.current_channels = self._get_feature_info(self.backbone)
+        self.out_indices = self.model.backbone.out_indices
+        self.current_channels = self._get_feature_info(self.model.backbone)
 
         # Instatiate components
         # NECK(S)
@@ -72,28 +97,28 @@ class CompositeModel(BaseModel):
                     self.current_channels = neck_instance.out_channels
 
         # Create Sequential container for necks        
-        self.necks = NeckSequential(*layers)
+        self.model.necks = NeckSequential(*layers)
 
         # DECODER
-        self.decoder = None
+        self.model.decoder = None
         if self.config.decoder_name:
             decoder_cls = DECODER_REGISTRY.get(self.config.decoder_name)
             
-            self.decoder = self._instantiate_component(
+            self.model.decoder = self._instantiate_component(
                 decoder_cls, 
                 self.current_channels,
                 **self.config.decoder_params
             )
             
             # Update channels
-            if hasattr(self.decoder, "out_channels"):
-                self.current_channels = self.decoder.out_channels
+            if hasattr(self.model.decoder, "out_channels"):
+                self.current_channels = self.model.decoder.out_channels
 
         # HEAD
-        self.head = None
+        self.model.head = None
         if self.config.head_name:
             head_cls = HEAD_REGISTRY.get(self.config.head_name)
-            self.head = self._instantiate_component(
+            self.model.head = self._instantiate_component(
                 head_cls, 
                 self.current_channels, 
                 num_classes=self.config.num_classes, 
@@ -105,37 +130,58 @@ class CompositeModel(BaseModel):
         
         # Feature extraction (backbone only is allowed)
         if self.task == "feature extraction":
+            if len(self.model.necks) > 0 or self.model.decoder is not None or self.model.head is not None:
+                warnings.warn(
+                    f"Task is '{self.task}', but necks, decoder, or head were found in the config. "
+                    f"They are not used for pure feature extraction and will be ignored/removed."
+                )
+                # Force them to be empty/None
+                self.model.necks = NeckSequential() # Empty sequential, so that len() == 0 is safe
+                self.model.decoder = None
+                self.model.head = None
             pass 
 
         # Prediction tasks (head is mandatory)
         elif self.task in ["multiclass classification", "multilabel classification", "segmentation", "object detection", "change detection"]:
-            if self.head is None:
+            if self.model.head is None:
                 raise ValueError(
                     f"Task type is '{self.task}', but no 'head_name' was provided. "
                     f"For {self.task}, a head is required to produce predictions. "
                     f"Please specify a head in the config."
                 )
+            
+        # Freeze componenets listed in the config
+        self._apply_freezing()
 
     def forward(self, x=None, **kwargs):
         """Standard forward pass through the composite model.
         """
 
+        # Get the forward() params. If missing or None, default to an empty dict {}
+        raw_forward_params = getattr(self.config, "forward_params", {}) or {}
+        
+        # Copy to a new dictionary
+        static_forward_kwargs = dict(raw_forward_params)
+        
+        # Merge with any dynamic kwargs passed into the forward function
+        static_forward_kwargs.update(kwargs)
+
         # Check for 'tim' in backbone self.config.backbone_name for TerraMind's Thinking in Modalities
         if "tim" in self.config.backbone_name:
-            backbone_fn = self.backbone.thinking_in_modalities
+            backbone_fn = self.model.backbone.thinking_in_modalities
         else:
             # Standard forward method
-            backbone_fn = self.backbone
+            backbone_fn = self.model.backbone
         
         # Load backbone and get feature embeddings
         if x is not None:
-            features = backbone_fn(x, **kwargs)
+            features = backbone_fn(x, **static_forward_kwargs)
         else:
-            features = backbone_fn(**kwargs)
+            features = backbone_fn(**static_forward_kwargs)
 
         cur_shapes, cur_channels = self._get_feature_shape(features)
-        print(f"Feature shapes (backbone): {cur_shapes}")
-        print(f"Feature channels (backbone): {cur_channels}")
+        #print(f"Feature shapes (backbone): {cur_shapes}")
+        #print(f"Feature channels (backbone): {cur_channels}")
 
         # Standardize features -> List[Tensor]
         features = self._standardize_features(features)
@@ -147,32 +193,32 @@ class CompositeModel(BaseModel):
         kwargs = self._infer_image_size(x, kwargs)
         
         # Pass through the neck(s)
-        # Use len(self.necks) because it is an nn.Sequential object
-        if len(self.necks) > 0:
-            features = self.necks(features, **kwargs)
+        # Use len(self.model.necks) because it is an nn.Sequential object
+        if len(self.model.necks) > 0:
+            features = self.model.necks(features, **kwargs)
 
         cur_shapes, cur_channels = self._get_feature_shape(features)
-        print(f"Feature shapes (necks): {cur_shapes}")
-        print(f"Feature channels (necks): {cur_channels}")
+        #print(f"Feature shapes (necks): {cur_shapes}")
+        #print(f"Feature channels (necks): {cur_channels}")
         
         # Pass through the decoder, if it exists
-        if self.decoder is not None: 
-            features = self.decoder(features)
+        if self.model.decoder is not None: 
+            features = self.model.decoder(features)
 
         cur_shapes, cur_channels = self._get_feature_shape(features)
-        print(f"Feature shapes (decoder): {cur_shapes}")
-        print(f"Feature channels (decoder): {cur_channels}")
+        #print(f"Feature shapes (decoder): {cur_shapes}")
+        #print(f"Feature channels (decoder): {cur_channels}")
 
         # If no head, return the features directly
-        if self.head is None:
+        if self.model.head is None:
             return features    
 
         # Pass through head to get final predictions
-        logits = self.head(features)
+        logits = self.model.head(features)
 
         cur_shapes, cur_channels = self._get_feature_shape(logits)
-        print(f"Feature shapes (head): {cur_shapes}")
-        print(f"Feature channels (head): {cur_channels}")
+        #print(f"Feature shapes (head): {cur_shapes}")
+        #print(f"Feature channels (head): {cur_channels}")
         
         # Standard segmentation upsampling
         if self.task == "segmentation":
@@ -180,13 +226,13 @@ class CompositeModel(BaseModel):
             logits = self._upsample_logits(logits, x, kwargs)
              
         cur_shapes, cur_channels = self._get_feature_shape(logits)
-        print(f"Final output shapes: {cur_shapes}")
-        print(f"Final output channels: {cur_channels}")
+        #print(f"Final output shapes: {cur_shapes}")
+        #print(f"Final output channels: {cur_channels}")
 
         return logits
 
     def predict(self, x=None, **kwargs):
-        """ Inference pass that returns probabilities/values instead of logits.
+        """Inference pass that returns probabilities/values instead of logits.
         """
 
         # Run standard forward pass to get logits
@@ -200,13 +246,13 @@ class CompositeModel(BaseModel):
             return torch.sigmoid(logits)
 
         elif self.task == "segmentation":
-            return torch.argmax(logits, dim=1)
+            #return torch.argmax(logits, dim=1) # TODO: change back to argmax after testing
+            return torch.softmax(logits, dim=1)
         
         return logits
 
     def _get_feature_info(self, backbone):
-        """
-        Function to find output channels for any backbone.
+        """Function to find output channels for any backbone.
         """
         # Option 1: Check if backbone wrapper contains the attribute 
         # (not implemented at the moment, might be in the future)
@@ -352,8 +398,7 @@ class CompositeModel(BaseModel):
         )
     
     def _instantiate_component(self, cls, current_channels, **kwargs):
-        """
-        Smart helper to instantiate a component.
+        """Smart helper to instantiate a component.
         """
         try:
             sig = inspect.signature(cls.__init__)
@@ -406,8 +451,7 @@ class CompositeModel(BaseModel):
         return cls(**kwargs)
 
     def _get_feature_shape(self, features):
-            """
-            Helper to find feature shapes and channels from backbone output.
+            """Helper to find feature shapes and channels from backbone output.
             """
 
             # Option 1: Single dictionary (standard for some models)
@@ -480,9 +524,8 @@ class CompositeModel(BaseModel):
             return current_shapes, current_channels
 
     def _standardize_features(self, features) -> list[torch.Tensor]:
-        """
-        Standardizes the output of various backbones into a uniform List[Tensor] format
-        expected by Necks and Heads.
+        """Standardizes the output of various backbones into a uniform List[Tensor] format
+        expected by necks and heads.
         """
         
         # Option 1: Single Tensor (e.g., standard ViT with one output)
@@ -502,8 +545,8 @@ class CompositeModel(BaseModel):
         # Option 3: Dictionary (specific to CROMA)
         elif isinstance(features, dict):
             # Access the backbone modalities safely
-            if hasattr(self.backbone, 'backbone') and hasattr(self.backbone.backbone, 'modalities'):
-                modalities = self.backbone.backbone.modalities
+            if hasattr(self.model.backbone, 'backbone') and hasattr(self.model.backbone.backbone, 'modalities'):
+                modalities = self.model.backbone.backbone.modalities
             else:
                 # Fallback: if we can't find the attribute, assume it's the full joint model
                 modalities = ['optical', 'sar']
@@ -530,8 +573,7 @@ class CompositeModel(BaseModel):
             raise TypeError(f"Expected features to be a Tensor, tuple, dict, or list of Tensors, but got {type(features)}.")
 
     def _infer_image_size(self, x, kwargs: dict) -> dict:
-        """
-        Attempts to infer the spatial image size (H, W) from inputs 'x' or 'kwargs'
+        """Attempts to infer the spatial image size (H, W) from inputs 'x' or 'kwargs'
         and injects 'image_size' into kwargs if found.
         """
         # If 'image_size' is already provided explicitly, trust it and return early
@@ -577,8 +619,7 @@ class CompositeModel(BaseModel):
         return kwargs
     
     def _check_and_rebuild_components(self, features: list[torch.Tensor]):
-        """
-        Checks feature shapes and dynamically rebuilds necks, decoders, and heads if needed.
+        """Checks feature shapes and dynamically rebuilds necks, decoders, and heads if needed.
         """
         
         # Get current (temporary) feature shapes
@@ -586,6 +627,12 @@ class CompositeModel(BaseModel):
 
         # Compare with self.current_channels to see if rebuilding is needed
         if temp_channels != self.current_channels:
+
+            # Print a warning about dynamic rebuilding
+            warnings.warn(
+                "Detected change in feature channels from backbone output. "
+                "Dynamically rebuilding necks, decoder, and head to match new channels from {self.current_channels} to {temp_channels}. "
+            )
             
             # Update current channels
             self.current_channels = temp_channels
@@ -597,7 +644,7 @@ class CompositeModel(BaseModel):
             dtype = temp_tensor.dtype
 
             # Get the current mode (train/eval)
-            is_training_mode = self.training
+            is_training_mode = self.model.training
 
             # Rebuild NECK(S)
             layers = []
@@ -622,29 +669,29 @@ class CompositeModel(BaseModel):
                         self.current_channels = neck_instance.out_channels
             
             # Replace and move to device
-            self.necks = NeckSequential(*layers).to(device=device, dtype=dtype)
+            self.model.necks = NeckSequential(*layers).to(device=device, dtype=dtype)
             # Put back to original mode (train/eval)
-            self.necks.train(is_training_mode)
+            self.model.necks.train(is_training_mode)
 
             # Rebuild DECODER
             if self.config.decoder_name:
                 decoder_cls = DECODER_REGISTRY.get(self.config.decoder_name)
-                self.decoder = self._instantiate_component(
+                self.model.decoder = self._instantiate_component(
                     decoder_cls, 
                     self.current_channels,
                     **self.config.decoder_params
                 ).to(device=device, dtype=dtype)
                 
                 # Put back to original mode (train/eval)
-                self.decoder.train(is_training_mode)
+                self.model.decoder.train(is_training_mode)
 
-                if hasattr(self.decoder, "out_channels"):
-                    self.current_channels = self.decoder.out_channels
+                if hasattr(self.model.decoder, "out_channels"):
+                    self.current_channels = self.model.decoder.out_channels
             
             # Rebuild HEAD
             if self.config.head_name:
                 head_cls = HEAD_REGISTRY.get(self.config.head_name)
-                self.head = self._instantiate_component(
+                self.model.head = self._instantiate_component(
                     head_cls, 
                     self.current_channels, 
                     num_classes=self.config.num_classes, 
@@ -652,11 +699,10 @@ class CompositeModel(BaseModel):
                 ).to(device=device, dtype=dtype)
 
                 # Put back to original mode (train/eval)      
-                self.head.train(is_training_mode)     
+                self.model.head.train(is_training_mode)     
     
     def _validate_indices(self, neck_name: str, params: dict):
-        """
-        Internal helper to validate requested indices against available backbone features.
+        """Internal helper to validate requested indices against available backbone features.
         """
         num_indices = len(self.out_indices)
 
@@ -687,8 +733,7 @@ class CompositeModel(BaseModel):
             raise ValueError(f"Configuration error in neck '{neck_name}': Indices cannot be negative.")
     
     def _upsample_logits(self, logits, x, kwargs):
-        """
-        Helper to safely determine target size and upsample.
+        """Helper to safely determine target size and upsample.
         """
         target_size = None
 
@@ -727,3 +772,175 @@ class CompositeModel(BaseModel):
                 align_corners=False
             )
         return logits
+    
+    def _apply_freezing(self):
+        """Helper to freeze components (backbone, necks, decoder, head) based on the config.
+        """
+        
+        # Helper function to freeze a specific PyTorch module
+        def freeze_module(module):
+            if module is not None:
+                for param in module.parameters():
+                    param.requires_grad = False
+
+        # Handle legacy AiTLAS `freeze` boolean (if the user sets 'freeze: True', we assume they mean 'freeze backbone')
+        if getattr(self.config, "freeze", False):
+            freeze_module(self.model.backbone)
+            
+        # Handle `freeze_modules`
+        freeze_list = getattr(self.config, "freeze_modules", [])
+        
+        if "backbone" in freeze_list:
+            freeze_module(self.model.backbone)
+            
+        if "necks" in freeze_list:
+            freeze_module(self.model.necks)
+            
+        if "decoder" in freeze_list:
+            freeze_module(self.model.decoder)
+            
+        if "head" in freeze_list:
+            warnings.warn(
+                "You are freezing the prediction head! This is usually not recommended unless doing zero-shot evaluation.",
+                UserWarning
+            )
+            freeze_module(self.model.head)
+    
+
+# Task-specific composite models that inherit from the mixin and the appropriate base class for their task type
+class CompositeMultiClassificationModel(CompositeModelArchitectureMixin, BaseMulticlassClassifier):
+    """Composite model for multiclass classification tasks.
+    """
+
+    schema = CompositeClassificationSchema
+
+    def __init__(self, config):
+
+        # Initialize the mixin to set up the composite architecture
+        super().__init__(config)
+
+        # Build the specific backbone/neck/decoder/head pipeline based on the config
+        self.setup_composite()
+
+    pass
+
+class CompositeMultilabelClassificationModel(CompositeModelArchitectureMixin, BaseMultilabelClassifier):
+    """Composite model for multilabel classification tasks.
+    """
+
+    schema = CompositeClassificationSchema
+
+    def __init__(self, config):
+        
+        # Initialize the mixin to set up the composite architecture
+        super().__init__(config)
+
+        # Build the specific backbone/neck/decoder/head pipeline based on the config
+        self.setup_composite()
+
+    pass
+
+class CompositeSegmentationModel(CompositeModelArchitectureMixin, BaseSegmentationClassifier):
+    """Composite model for segmentation and change detection tasks.
+    """
+
+    schema = CompositeSegmentationSchema
+
+    def __init__(self, config):
+        
+        # Initialize the mixin to set up the composite architecture
+        super().__init__(config)
+
+        # Build the specific backbone/neck/decoder/head pipeline based on the config
+        self.setup_composite()
+
+    pass
+
+class CompositeObjectDetectionModel(CompositeModelArchitectureMixin, BaseObjectDetection):
+    """Composite model for object detection tasks.
+    """
+
+    schema = CompositeObjectDetectionSchema
+
+    def __init__(self, config):
+        
+        # Initialize the mixin to set up the composite architecture
+        super().__init__(config)
+
+        # Build the specific backbone/neck/decoder/head pipeline based on the config
+        self.setup_composite()
+
+    pass
+
+class CompositeChangeDetectionModel(CompositeModelArchitectureMixin, BaseChangeDetection):
+    """Composite model for change detection tasks.
+    """
+
+    schema = CompositeSegmentationSchema # Reuses the same schema as segmentation since change detection is a special case of segmentation
+
+    def __init__(self, config):
+        
+        # Initialize the mixin to set up the composite architecture
+        super().__init__(config)
+
+        # Build the specific backbone/neck/decoder/head pipeline based on the config
+        self.setup_composite()
+
+    pass
+
+class CompositeFeatureExtractionModel(CompositeModelArchitectureMixin, FoundationModel):
+    """
+    Lightweight model for raw feature extraction. 
+    Only requires a backbone. No head, no training loop.
+    """
+    
+    # Use the base schema without any task-specific classifier fields
+    schema = CompositeModelSchema 
+    
+    def __init__(self, config):
+        # Initialize the standard BaseModel
+        super().__init__(config)
+        
+        # Build the architecture (Backbone, Neck)
+        self.setup_composite()
+
+    def load_backbone(self):
+        """
+        Overrides the FoundationModel requirement.
+        We return None here because our Mixin handles instantiation 
+        inside setup_composite().
+        """
+        return None
+    
+    pass
+
+# Factory composite model that can be used for any task type based on the config
+class CompositeModel:
+    """Factory that returns the correct task-specific composite model.
+    """
+    
+    def __new__(cls, config):
+        
+        # Extract task_type from the config object/dict
+        task = getattr(config, "task_type", config.get("task_type", "")).lower()
+
+        if task == "feature extraction":
+            return CompositeFeatureExtractionModel(config)
+        
+        elif task == "multiclass classification":
+            return CompositeMultiClassificationModel(config)
+            
+        elif task == "multilabel classification":
+            return CompositeMultilabelClassificationModel(config)
+            
+        elif task == "segmentation":
+            return CompositeSegmentationModel(config)
+        
+        elif task == "object detection":
+            return CompositeObjectDetectionModel(config)
+        
+        elif task == "change detection":
+            return CompositeChangeDetectionModel(config)
+        
+        else:
+            raise ValueError(f"Task type '{task}' is not currently supported.")

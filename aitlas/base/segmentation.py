@@ -35,9 +35,17 @@ class CombinedFocalDiceLoss(nn.Module):
 
     def forward(self, y_pred, y_true):
         if self.focal_loss.mode == "multiclass":
-            # if y_true is one-hot, convert to class indices
-            if y_true.dim() == 4 and y_true.shape[1] > 1:
-                y_true = torch.argmax(y_true, dim=1)
+            # Handle 4D ground truth (B, C, H, W)
+            if y_true.dim() == 4:
+                # If it's B, 1, H, W (index-based but with channel dim)
+                if y_true.shape[1] == 1:
+                    y_true = y_true.squeeze(1)
+                # If it's B, N, H, W (one-hot encoded)
+                else:
+                    y_true = torch.argmax(y_true, dim=1)
+
+            # Ensure target is long (integers) for the CrossEntropy component
+            y_true = y_true.long()
         
         focal = self.focal_loss(y_pred, y_true)
         dice = self.dice_loss(y_pred, y_true)

@@ -260,7 +260,7 @@ class CompositeModelSchema(BaseFoundationModelSchema):
     """
     Schema for configuring composite models that combine a backbone, neck, decoder, and head.
     
-    :param task_type: Type of task for the composite model. Can be 'classification', 'segmentation', 'object detection', or 'change detection'.
+    :param task_type: Type of task for the composite model. Can be 'feature extraction', 'multiclass classification', 'multilabel classification', 'segmentation', 'object detection', or 'change detection'.
     :type task_type: str, required
 
     :param backbone_name: Name of the model to use as a backbone. Required.
@@ -284,6 +284,9 @@ class CompositeModelSchema(BaseFoundationModelSchema):
 
     :param head_params: Parameters passed to the head (e.g., {'dropout': 0.1}). Default is an empty dictionary.
     :type head_params: dict, optional
+
+    :param freeze_modules: List of components to freeze during training. Options include 'backbone', 'necks', 'decoder', and 'head'. Default is an empty list.
+    :type freeze_modules: list[str], optional
     """
 
     class Meta:
@@ -292,7 +295,7 @@ class CompositeModelSchema(BaseFoundationModelSchema):
     task_type = fields.String(
         required=True,
         description="Type of task for the composite model.",
-        validate=validate.OneOf(["multiclass classification", "multilabel classification", "segmentation", "object detection", "change detection", "feature extraction"]),
+        validate=validate.OneOf(["feature extraction", "multiclass classification", "multilabel classification", "segmentation", "object detection", "change detection"]),
         example="segmentation",
     )
     necks = fields.List(
@@ -322,6 +325,20 @@ class CompositeModelSchema(BaseFoundationModelSchema):
         missing={},
         description="Parameters passed to the head (e.g., {'dropout': 0.1})."
     )
+    freeze_modules = fields.List(
+        fields.String(),
+        missing=[],
+        description="List of components to freeze. Options: 'backbone', 'necks', 'decoder', 'head'."
+    )
+    backbone_setup_calls = fields.List(
+        fields.Dict(),
+        missing=list, 
+        description="List of dicts defining methods to call on the backbone after instantiation (e.g., [{'method': 'select_input_bands', 'params': {'bands': ...}}])."
+    )
+    forward_params = fields.Dict(
+        missing=dict,
+        description="Additional parameters to pass to the forward method (e.g., {'wave_list': [0.443, 0.490, 0.560]} for DOFA)."
+    )
     @pre_load
     def ensure_list(self, data, **kwargs):
         # Check if 'necks' exists and is a single dict (not a list of dicts)
@@ -330,4 +347,16 @@ class CompositeModelSchema(BaseFoundationModelSchema):
             data["necks"] = [data["necks"]]
         return data
 
+    pass
+
+class CompositeClassificationSchema(CompositeModelSchema, BaseClassifierSchema):
+    """Merges Composite architecture rules with classification (multiclass and multilabel) task rules."""
+    pass
+
+class CompositeSegmentationSchema(CompositeModelSchema, BaseSegmentationClassifierSchema):
+    """Merges Composite architecture rules with segmentation (and change detection) task rules."""
+    pass
+
+class CompositeObjectDetectionSchema(CompositeModelSchema, BaseObjectDetectionSchema):
+    """Merges Composite architecture rules with object detection task rules."""
     pass
