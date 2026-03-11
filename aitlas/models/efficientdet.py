@@ -596,7 +596,7 @@ class EfficientDet(BaseObjectDetection):
             in_channels=3, #self.config.in_channels,
             num_anchors=9, # self.config.num_anchors,
             num_classes=self.config.num_classes,
-            compound_coef=6, # self.config.compound_coef,
+            compound_coef=0, # self.config.compound_coef,
             pretrained=self.config.pretrained
         )
         self.model.to(self.device)
