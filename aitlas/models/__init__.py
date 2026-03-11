@@ -4,8 +4,12 @@ from .convnext import ConvNeXtTiny, ConvNeXtTinyMultiLabel
 from .deeplabv3 import DeepLabV3, DeepLabV3_13_bands
 from .deeplabv3plus import DeepLabV3Plus
 from .densenet import DenseNet161, DenseNet161MultiLabel
+from .atss import ATSS
+from .centernet import CenterNet
+from .deformable_detr import DeformableDETR
 from .detr import DETR
 from .efficientdet import EfficientDet
+from .sparsercnn import SparseRCNN
 from .efficientnet import (
     EfficientNetB0,
     EfficientNetB0MultiLabel,

@@ -40,5 +40,9 @@ cd tests
 #pytest -s --disable-warnings test_tinycd.py
 #pytest -s --disable-warnings test_unet_change_detection.py
 #pytest -s --disable-warnings test_change_detection.py
-pytest -s --disable-warnings test_detr.py
+pytest -s --disable-warnings test_atss.py
+#pytest -s --disable-warnings test_centernet.py
+#pytest -s --disable-warnings test_deformable_detr.py
+#pytest -s --disable-warnings test_detr.py
 #pytest -s --disable-warnings test_efficientdet.py
+#pytest -s --disable-warnings test_sparsercnn.py
