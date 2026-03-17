@@ -3,7 +3,7 @@ For semantic segmentation tasks the shape of the input is (N, 3, H, W);
 The shape of the output/mask is (N, num_classes, H, W), where N is the number of images"""
 
 import albumentations as A
-from torchvision import transforms
+from torchvision.transforms import v2
 import torch
 import numpy as np
 
@@ -75,9 +75,11 @@ class Pad(BaseTransforms):
         :return: padded tensor
         :rtype: tensor
         """
-        data_transforms = transforms.Compose(
-            [transforms.ToPILImage(), transforms.Pad(4), transforms.ToTensor()]
-        )
+        data_transforms = v2.Compose([
+            v2.ToImage(), # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.Pad(4)
+        ])
         return data_transforms(sample)
 
 
@@ -128,20 +130,18 @@ class ResizeToTensor(BaseTransforms):
         :type sample: tensor
         :return: resized tensor
         """
-        data_transforms = transforms.Compose(
-            [
-                transforms.ToPILImage(),
-                transforms.Resize((256, 256)),
-                transforms.ToTensor(),
-            ]
-        )
+        data_transforms = v2.Compose([
+            v2.ToImage(),  # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.Resize((256, 256), antialias=True),
+        ])
 
         return data_transforms(sample)
 
 
 class ResizePerChannelToTensor(BaseTransforms):
     def __call__(self, sample):
-        """Applies resize transformations per channel. This is useful for multichannel images.
+        """Applies resize transformations per channel. This is useful for multichannel images. In torchvision transforms v2, this is automatically handled, so this class is used for legacy support only.
 
         :param sample: input sample (channel, h, w)
         :type sample: tensor
@@ -149,18 +149,10 @@ class ResizePerChannelToTensor(BaseTransforms):
 
         """
 
-        data_transforms = transforms.Compose(
-            [
-                transforms.ToPILImage(),
-                transforms.Resize((256, 256)),
-                transforms.ToTensor(),
-            ]
-        )
+        data_transforms = v2.Compose([
+            v2.ToImage(),  # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.Resize((256, 256), antialias=True),
+        ])
 
-        x = []
-        # apply transformations to each channel
-        for ch in sample:
-            x.append(data_transforms(ch))
-
-        # this is the multichannel transformed image (a torch tensor)
-        return torch.cat(x)
+        return data_transforms(sample)

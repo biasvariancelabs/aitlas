@@ -1,7 +1,7 @@
 """Contains classes for image transformations specific for Big Earth Net dataset."""
 import torch
 
-from torchvision import transforms
+from torchvision.transforms import v2
 from ..base import BaseTransforms
 
 
@@ -36,11 +36,13 @@ class ResizeToTensorNormalizeRGB(BaseTransforms):
         :return: Transformed image
         :rtype: torch.Tensor
         """
-        data_transforms = transforms.Compose([
-            transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
-            transforms.Resize((224, 224)),
-            transforms.Normalize(self.bands10_mean, self.bands10_std)
+        data_transforms = v2.Compose([
+            v2.ToImage(),  # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.Resize((224, 224), antialias=True),
+            v2.Normalize(self.bands10_mean, self.bands10_std),
         ])
+
         return data_transforms(sample)
 
 
@@ -61,12 +63,13 @@ class ToTensorResizeRandomCropFlipHV(BaseTransforms):
         :return: Transformed image
         :rtype: torch.Tensor
         """
-        data_transforms = transforms.Compose([
-            transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
-            transforms.Resize((256, 256)),
-            transforms.RandomCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
+        data_transforms = v2.Compose([
+            v2.ToImage(),  # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.Resize((256, 256), antialias=True),
+            v2.RandomCrop(224),
+            v2.RandomHorizontalFlip(),
+            v2.RandomVerticalFlip(),
         ])
 
         return data_transforms(sample)
@@ -89,10 +92,11 @@ class ToTensorResizeCenterCrop(BaseTransforms):
         :return: Transformed image
         :rtype: torch.Tensor
         """
-        data_transforms = transforms.Compose([
-            transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
-            transforms.Resize((256, 256)),
-            transforms.CenterCrop(224),
+        data_transforms = v2.Compose([
+            v2.ToImage(),  # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.Resize((256, 256), antialias=True),
+            v2.CenterCrop(224),
         ])
 
         return data_transforms(sample)
@@ -115,10 +119,12 @@ class ToTensorResize(BaseTransforms):
         :return: Transformed image
         :rtype: torch.Tensor
         """
-        data_transforms = transforms.Compose([
-            transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
-            transforms.Resize((224, 224)),
+        data_transforms = v2.Compose([
+            v2.ToImage(),  # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.Resize((224, 224), antialias=True),
         ])
+
         return data_transforms(sample)
 
 

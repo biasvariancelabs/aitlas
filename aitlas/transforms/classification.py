@@ -4,7 +4,7 @@ import albumentations as A
 import torch
 import cv2
 
-from torchvision import transforms
+from torchvision.transforms import v2
 from ..base import BaseTransforms
 
 
@@ -22,13 +22,13 @@ class ResizeRandomCropFlipHVToTensor(BaseTransforms):
         :return: Transformed image
         :rtype: torch.Tensor
         """
-        data_transforms = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize(256),
-            transforms.RandomCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
-            transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
+        data_transforms = v2.Compose([
+            v2.ToImage(),  # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.Resize(256, antialias=True),
+            v2.RandomCrop(224),
+            v2.RandomHorizontalFlip(),
+            v2.RandomVerticalFlip(),
         ])
 
         return data_transforms(sample)
@@ -48,13 +48,13 @@ class ResizeCenterCropFlipHVToTensor(BaseTransforms):
         :return: Transformed image
         :rtype: torch.Tensor
         """
-        data_transforms = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
-            transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
+        data_transforms = v2.Compose([
+            v2.ToImage(),  # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.Resize(256, antialias=True),
+            v2.CenterCrop(224),
+            v2.RandomHorizontalFlip(),
+            v2.RandomVerticalFlip(),
         ])
 
         return data_transforms(sample)
@@ -74,11 +74,11 @@ class ResizeCenterCropToTensor(BaseTransforms):
         :return: Transformed image
         :rtype: torch.Tensor
         """
-        data_transforms = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
+        data_transforms = v2.Compose([
+            v2.ToImage(),  # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.Resize(256, antialias=True),
+            v2.CenterCrop(224),
         ])
 
         return data_transforms(sample)
@@ -90,10 +90,10 @@ class Resize1ToTensor(BaseTransforms):
     
     """
     def __call__(self, sample):
-        data_transforms = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
+        data_transforms = v2.Compose([
+            v2.ToImage(),  # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.Resize(224, antialias=True),
         ])
 
         return data_transforms(sample)
@@ -127,11 +127,11 @@ class ConvertToRGBResizeCenterCropToTensor(BaseTransforms):
         :rtype: torch.Tensor
         """
         sample = sample[:, :, :3]
-        data_transforms = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
+        data_transforms = v2.Compose([
+            v2.ToImage(),  # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.Resize(256, antialias=True),
+            v2.CenterCrop(224),
         ])
 
         return data_transforms(sample)
@@ -151,11 +151,11 @@ class RandomFlipHVToTensor(BaseTransforms):
         :return: Transformed image
         :rtype: torch.Tensor
         """
-        data_transforms = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
-            transforms.ToTensor(),  # transform the image from H x W x C to C x H x W
+        data_transforms = v2.Compose([
+            v2.ToImage(),  # Converts numpy array to tensor
+            v2.ToDtype(torch.float32, scale=False),
+            v2.RandomHorizontalFlip(),
+            v2.RandomVerticalFlip(),
         ])
 
         return data_transforms(sample)
@@ -216,8 +216,3 @@ class ComplexTransform(BaseTransforms):
         transformed = data_transforms(image=sample)
         transformed = torch.tensor(transformed["image"].transpose(2, 0, 1), dtype=torch.float32) / 255.0
         return transformed
-
-
-
-
-
