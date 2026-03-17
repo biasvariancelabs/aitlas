@@ -113,7 +113,7 @@ from .TerraMind import terramind_v1_tiny_tim, terramind_v1_small_tim, terramind_
 
 from .terramind_wrapper import TerraMind
 
-from .registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY
+from .registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY, ADAPTER_REGISTRY
 
 from .necks import (
     AddBottleneckLayer, 
@@ -146,4 +146,8 @@ from .heads import (
     RegressionHead,
     ScalarHead,
     SegmentationHead
+)
+
+from .adapters import(
+    CopernicusFMAdapter
 )

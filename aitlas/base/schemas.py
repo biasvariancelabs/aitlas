@@ -340,6 +340,20 @@ class CompositeModelSchema(BaseFoundationModelSchema):
         missing=dict,
         description="Additional parameters to pass to the forward method (e.g., {'wave_list': [0.443, 0.490, 0.560]} for DOFA)."
     )
+    '''selection = fields.List(
+        fields.String(), 
+        missing=None, 
+        description="Selection of images"
+    )
+    bands = fields.List(
+        fields.String(), 
+        missing=None, 
+        description="List of band names for Sentinel-1(e.g., ['VV', 'VH']), Sentinel-2 (e.g., ['B02', 'B03', 'B04', 'B05'])."
+    )'''
+    adapter_name = fields.String(
+        missing=None, 
+        description="Name of the model-specific adapter in the ADAPTER_REGISTRY (e.g., 'CopernicusFMAdapter')."
+    )
     @pre_load
     def ensure_list(self, data, **kwargs):
         # Check if 'necks' exists and is a single dict (not a list of dicts)

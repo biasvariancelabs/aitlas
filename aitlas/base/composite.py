@@ -3,9 +3,9 @@ import warnings
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from aitlas.base import BaseMulticlassClassifier, BaseMultilabelClassifier, BaseObjectDetection, BaseSegmentationClassifier, BaseChangeDetection, FoundationModel
+from aitlas.base import BaseMulticlassClassifier, BaseMultilabelClassifier, BaseObjectDetection, BaseSegmentationClassifier, BaseChangeDetection, FoundationModel, BaseInputAdapter
 from .models import BaseModel
-from ..models.registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY
+from ..models.registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY, ADAPTER_REGISTRY
 from .schemas import CompositeModelSchema, CompositeClassificationSchema, CompositeSegmentationSchema, CompositeObjectDetectionSchema
 from ..models.necks import NeckSequential
 
@@ -14,6 +14,14 @@ class CompositeModelArchitectureMixin:
     """
 
     def setup_composite(self):
+
+        # DATA-MODEL ADAPTER
+        adapter_name = getattr(self.config, "adapter_name", None)
+        if adapter_name:
+            adapter_cls = ADAPTER_REGISTRY.get(adapter_name)
+            self.input_adapter = adapter_cls(self.config)
+        else:
+            self.input_adapter = BaseInputAdapter(self.config)
 
         # BACKBONE
         # Prepare backbone config
@@ -31,7 +39,10 @@ class CompositeModelArchitectureMixin:
             "learning_rate", "weight_decay", 
             "threshold", "freeze",
             "metrics", "mode",
-            "step_size", "gamma"
+            "step_size", "gamma",
+            "adapter_name", "selection",
+            "bands", "bands_s1", 
+            "bands_s2", "bands_l8"
         ]
         
         for key in orchestrator_reserved_keys:
@@ -157,13 +168,19 @@ class CompositeModelArchitectureMixin:
         """Standard forward pass through the composite model.
         """
 
+        # Pass the input through the adapter if it exists, and get any dynamic kwargs it produces
+        dynamic_adapter_kwargs = {}
+        if x is not None and hasattr(self, "input_adapter"):
+            x, dynamic_adapter_kwargs = self.input_adapter(x)
+
         # Get the forward() params. If missing or None, default to an empty dict {}
         raw_forward_params = getattr(self.config, "forward_params", {}) or {}
         
         # Copy to a new dictionary
         static_forward_kwargs = dict(raw_forward_params)
         
-        # Merge with any dynamic kwargs passed into the forward function
+        # Merge with any dynamic kwargs passed into the adapter and forward function
+        static_forward_kwargs.update(dynamic_adapter_kwargs)
         static_forward_kwargs.update(kwargs)
 
         # Check for 'tim' in backbone self.config.backbone_name for TerraMind's Thinking in Modalities

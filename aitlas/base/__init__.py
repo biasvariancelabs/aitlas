@@ -1,3 +1,4 @@
+from .adapters import BaseInputAdapter
 from .classification import BaseMulticlassClassifier, BaseMultilabelClassifier
 from .config import Config, Configurable, ObjectConfig, RunConfig
 from .datasets import BaseDataset
