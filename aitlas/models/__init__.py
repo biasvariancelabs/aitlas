@@ -149,5 +149,13 @@ from .heads import (
 )
 
 from .adapters import(
-    CopernicusFMAdapter
+    AnySatAdapter,
+    CACoAdapter,
+    CopernicusFMAdapter,
+    DOFAAdapter,
+    GASSLAdapter,
+    SatMAEAdapter,
+    SatMAEPlusPlusAdapter,
+    SeCoAdapter,
+    TerraFMAdapter
 )
