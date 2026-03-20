@@ -152,10 +152,13 @@ from .adapters import(
     AnySatAdapter,
     CACoAdapter,
     CopernicusFMAdapter,
+    CROMAAdapter,
     DOFAAdapter,
     GASSLAdapter,
+    PrithviAdapter,
     SatMAEAdapter,
     SatMAEPlusPlusAdapter,
+    ScaleMAEAdapter,
     SeCoAdapter,
     TerraFMAdapter
 )
