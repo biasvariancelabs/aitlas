@@ -49,3 +49,19 @@ SENTINEL_1_RTC_INDICES = {
 
 # Made-up wavelengths for Sentinel-1 channels (used in DOFA, etc.)
 SENTINEL_1_WAVELENGTHS_MADE_UP = [3.75, 3.75] 
+
+# Sentinel-1 channel IDs for Panopticon
+SENTINEL_1_IDS = {
+    "VV": -1,
+    "VH": -2,
+    "HH": -3,
+    "HV": -4
+}
+
+
+# Landsat 8 data
+LANDSAT_8_WAVELENGTHS = {
+    'B01': 0.443, 'B02': 0.490, 'B03': 0.560, 'B04': 0.665,
+    'B05': 0.705, 'B06': 0.740, 'B07': 0.783, 'B08': 0.842,
+    'B09': 0.945, 'B10': 1.375, 'B11': 1.610
+}
