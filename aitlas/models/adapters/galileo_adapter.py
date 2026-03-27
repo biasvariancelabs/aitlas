@@ -2,6 +2,7 @@ import torch
 from aitlas.base.adapters import BaseInputAdapter
 from aitlas.models.registries import ADAPTER_REGISTRY
 
+
 @ADAPTER_REGISTRY.register("GalileoAdapter")
 class GalileoAdapter(BaseInputAdapter):
     def forward(self, x):
@@ -53,13 +54,11 @@ class GalileoAdapter(BaseInputAdapter):
             inputs_dict = {}
             
             if has_s1:
-                print(f"Config includes Sentinel-1 bands: {bands_s1}")
                 # Slice S1: (B, C_s1, H, W) -> unsqueeze -> (B, 1, C_s1, H, W) where T=1
                 x_s1 = x[:, :num_s1, ...]
                 inputs_dict["s1"] = x_s1.unsqueeze(1)
                 
             if has_s2:
-                print(f"Config includes Sentinel-2 bands: {bands_s2}")
                 # Slice S2: (B, C_s2, H, W) -> unsqueeze -> (B, 1, C_s2, H, W) where T=1
                 x_s2 = x[:, num_s1 : num_s1 + num_s2, ...]
                 inputs_dict["s2"] = x_s2.unsqueeze(1)

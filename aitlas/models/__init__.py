@@ -157,10 +157,12 @@ from .adapters import(
     GalileoAdapter,
     GASSLAdapter,
     PanopticonAdapter,
+    PrestoAdapter,
     PrithviAdapter,
     SatMAEAdapter,
     SatMAEPlusPlusAdapter,
     ScaleMAEAdapter,
     SeCoAdapter,
-    TerraFMAdapter
+    TerraFMAdapter,
+    TerraMindAdapter
 )

@@ -57,7 +57,6 @@ class AnySatAdapter(BaseInputAdapter):
             current_idx = 0
             
             if has_s1:
-                print(f"Config includes Sentinel-1 bands: {bands_s1}")
                 # Slice S1 -> Shape: (B, 2, H, W)
                 s1_tensor = x[:, current_idx : current_idx + num_s1, ...]
                 # Generate the 3rd channel (VV/VH)
@@ -71,27 +70,25 @@ class AnySatAdapter(BaseInputAdapter):
                 # Concatenate to create 3 channels: (B, 3, H, W)
                 s1_3d = torch.cat((s1_tensor, ratio_channel), dim=1)                
                 # Unsqueeze temporal dim -> Shape: (B, 1, 3, H, W)
-                x_dict["s1"] = s1_3d.unsqueeze(1)                
+                x_dict["s1"] = s1_3d.unsqueeze(1)    
                 # Complementary dates tensor -> Shape: (B, 1)
                 x_dict["s1_dates"] = torch.zeros((batch_size, 1), dtype=torch.float32, device=x.device)                
                 current_idx += num_s1
                 
             if has_s2:
-                print(f"Config includes Sentinel-2 bands: {bands_s2}")
                 # Slice -> unsqueeze temporal dim -> (B, 1, 10, H, W), where T=1
-                x_dict["s2"] = x[:, current_idx : current_idx + num_s2, ...].unsqueeze(1)
+                x_dict["s2"] = x[:, current_idx : current_idx + num_s2, ...].unsqueeze(1)    
                 # Complementary dates tensor -> Shape: (B, 1)
                 x_dict["s2_dates"] = torch.zeros((batch_size, 1), dtype=torch.float32, device=x.device)
                 current_idx += num_s2
 
             if has_l8:
-                print(f"Config includes Landsat 8 bands: {bands_l8}")
                 # Slice -> Unsqueeze temporal dim -> (B, 1, 11, H, W), where T=1
-                x_dict["l8"] = x[:, current_idx : current_idx + num_l8, ...].unsqueeze(1)
+                x_dict["l8"] = x[:, current_idx : current_idx + num_l8, ...].unsqueeze(1)    
                 # Complementary dates tensor -> Shape: (B, 1)
                 x_dict["l8_dates"] = torch.zeros((batch_size, 1), dtype=torch.float32, device=x.device)
                 
-            # Inject the dictionary directly into the kwargs payload matching 'x' in forward_features
+            # Inject the required keyword arguments for AnySat
             kwargs = {
                 "x": x_dict
             }
