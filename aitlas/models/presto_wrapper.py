@@ -26,7 +26,7 @@ class Presto(FoundationModel):
     BACKBONE_CHECKPOINTS = {
         'presto_default': [
             {
-                'filename': 'model-bfa691d3.pth',
+                'filename': 'model-f317d103.pth',
                 'repo_id': 'torchgeo/presto',
                 'description': 'Presto default model weights'
             }
