@@ -248,7 +248,7 @@ class CompositeModelArchitectureMixin:
 
         return logits
 
-    def predict(self, x=None, **kwargs):
+    def predict_proba(self, x=None, **kwargs):
         """Inference pass that returns probabilities/values instead of logits.
         """
 
