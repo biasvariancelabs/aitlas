@@ -519,11 +519,18 @@ class BaseModel(nn.Module, Configurable):
         fig = plt.figure(figsize=(16, 7))
         ax = plt.subplot(1, 2, 1)
         ax.axis("off")
-        ax.imshow(original_image)
 
+        # if the original image is a tensor, convert it to numpy and transpose it to (H, W, C)
+        if torch.is_tensor(original_image):
+            original_image = original_image.cpu().detach().numpy().transpose(1, 2, 0)
+        # If the original images has number of channels different than 3 or 4, take just a single channel and plot it as grayscale
+        if len(original_image.shape) == 3 and original_image.shape[2] not in [3, 4]:
+            original_image = original_image[:, :, 0]
+            
+        # Plot the original image
+        ax.imshow(original_image)
         # Set title to be the actual class
         ax.set_title("", size=20)
-
         ax = plt.subplot(1, 2, 2)
         # Plot a bar plot of predictions
         result.sort_values("p")["p"].plot.barh(color="blue", edgecolor="k", ax=ax)
