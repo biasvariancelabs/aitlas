@@ -5,7 +5,6 @@ affine==2.4.0
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.1
 aiosignal==1.4.0
-aitlas @ file:///home/dragik/tadej/aitlas
 alabaster==0.7.16
 albucore==0.0.24
 albumentations==2.0.8
@@ -71,7 +70,7 @@ fs==2.4.16
 fs-s3fs==1.1.1
 fsspec==2025.9.0
 fvcore==0.1.5.post20221221
-GDAL @ file:///croot/libgdal-core_1756231944783/work/build/swig/python
+GDAL==3.11.0
 geffnet==1.0.2
 geopandas==0.14.4
 gitdb==4.0.12
@@ -122,8 +121,6 @@ matplotlib-inline==0.1.7
 mccabe==0.7.0
 mistune==3.1.4
 mkl-service==2.4.0
-mkl_fft @ file:///io/mkl313/mkl_fft_1730824109137/work
-mkl_random @ file:///io/mkl313/mkl_random_1730823916628/work
 mlflow==3.5.1
 mlflow-skinny==3.5.1
 mlflow-tracing==3.5.1
