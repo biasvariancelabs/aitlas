@@ -1,6 +1,9 @@
 """CenterNet: Objects as Points"""
 
+import os
+import re
 import math
+import requests
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -209,6 +212,25 @@ class RegL1Loss(nn.Module):
 # Model (from src/lib/models/networks/msra_resnet.py)
 # -----------------------------------------------------------------------------
 
+class DCNConv(nn.Module):
+    """
+    DCNv2 convolution wrapper that matches CenterNet checkpoint structure.
+    Contains both the main conv weight and the offset_mask conv as submodules.
+    """
+    def __init__(self, in_channels, out_channels, kernel_size=3, padding=1):
+        super().__init__()
+        self.weight = nn.Parameter(torch.zeros(out_channels, in_channels, kernel_size, kernel_size))
+        # Bias for main conv (some checkpoints have it)
+        self.bias = nn.Parameter(torch.zeros(out_channels))
+        # Offset + mask conv: 3 * kernel_size^2 = 27 for 3x3
+        self.conv_offset_mask = nn.Conv2d(in_channels, 27, kernel_size=3, padding=1, bias=True)
+        
+    def forward(self, x):
+        # Standard conv forward (DCN requires custom CUDA kernel)
+        # For now, just use F.conv2d with the weight
+        return F.conv2d(x, self.weight, self.bias, padding=1)
+
+
 class PoseResNet(nn.Module):
     def __init__(self, backbone_name, heads, head_conv, pretrained=True, in_channels=3):
         super(PoseResNet, self).__init__()
@@ -217,9 +239,9 @@ class PoseResNet(nn.Module):
 
         # Load predefined ResNet architecture from torchvision
         backbone = getattr(models, backbone_name)(pretrained=pretrained)
-        
+
         self.conv1 = backbone.conv1
-        
+
         # Modify the first layer if in_channels is not 3
         if in_channels != 3:
             self.conv1 = nn.Conv2d(
@@ -244,10 +266,12 @@ class PoseResNet(nn.Module):
         else:
             self.inplanes = 2048
 
-        # Add 3 Deconv layers
+        # Add 3 Deconv layers matching CenterNet pretrained weights structure
+        # Each stage: DCNConv -> BN -> ReLU -> ConvTranspose -> BN -> ReLU
+        # Channels: 2048->256, 256->128, 128->64
         self.deconv_layers = self._make_deconv_layer(
             3,
-            [256, 256, 256],
+            [256, 128, 64],
             [4, 4, 4],
         )
 
@@ -255,15 +279,16 @@ class PoseResNet(nn.Module):
             num_output = self.heads[head]
             if head_conv > 0:
                 fc = nn.Sequential(
-                    nn.Conv2d(256, head_conv, kernel_size=3, padding=1, bias=True),
+                    nn.Conv2d(64, head_conv, kernel_size=3, padding=1, bias=True),
                     nn.ReLU(inplace=True),
                     nn.Conv2d(head_conv, num_output, kernel_size=1, stride=1, padding=0)
                 )
             else:
-                fc = nn.Conv2d(256, num_output, kernel_size=1, stride=1, padding=0)
+                fc = nn.Conv2d(64, num_output, kernel_size=1, stride=1, padding=0)
             self.__setattr__(head, fc)
-        
-        self._init_weights()
+
+        self._init_deconv_weights()
+        self._init_head_weights()
 
     def _get_deconv_cfg(self, deconv_kernel, index):
         if deconv_kernel == 4:
@@ -278,34 +303,69 @@ class PoseResNet(nn.Module):
         return deconv_kernel, padding, output_padding
 
     def _make_deconv_layer(self, num_layers, num_filters, num_kernels):
+        """
+        Create deconv layers matching CenterNet pretrained weights structure EXACTLY.
+        Structure per stage:
+          - DCNConv (contains .weight, .bias, .conv_offset_mask)
+          - BN
+          - ReLU
+          - ConvTranspose2d
+          - BN
+          - ReLU
+        """
         layers = []
+        in_channels = self.inplanes  # 2048 for ResNet50/101
+
         for i in range(num_layers):
-            kernel, padding, output_padding = self._get_deconv_cfg(num_kernels[i], i)
             planes = num_filters[i]
+            kernel, padding, output_padding = self._get_deconv_cfg(num_kernels[i], i)
+
+            # DCNConv (contains main conv + offset_mask) - index 0, 6, 12
+            layers.append(DCNConv(in_channels, planes, kernel_size=3, padding=1))
+            # BN - index 1, 7, 13
+            layers.append(nn.BatchNorm2d(planes, momentum=0.1))
+            # ReLU - index 2, 8, 14
+            layers.append(nn.ReLU(inplace=True))
+
+            # ConvTranspose2d for upsampling - index 3, 9, 15
             layers.append(
                 nn.ConvTranspose2d(
-                    in_channels=self.inplanes,
+                    in_channels=planes,
                     out_channels=planes,
                     kernel_size=kernel,
                     stride=2,
                     padding=padding,
                     output_padding=output_padding,
-                    bias=self.deconv_with_bias))
+                    bias=self.deconv_with_bias
+                )
+            )
+            # BN - index 4, 10, 16
             layers.append(nn.BatchNorm2d(planes, momentum=0.1))
+            # ReLU - index 5, 11, 17
             layers.append(nn.ReLU(inplace=True))
-            self.inplanes = planes
+
+            in_channels = planes
+
         return nn.Sequential(*layers)
 
-    def _init_weights(self):
-        for name, m in self.deconv_layers.named_modules():
-            if isinstance(m, nn.ConvTranspose2d):
+    def _init_deconv_weights(self):
+        """Initialize deconv layers matching CenterNet initialization."""
+        for i, m in enumerate(self.deconv_layers):
+            if isinstance(m, DCNConv):
                 nn.init.normal_(m.weight, std=0.001)
-                if self.deconv_with_bias:
+                nn.init.constant_(m.bias, 0)
+                nn.init.constant_(m.conv_offset_mask.weight, 0)
+                nn.init.constant_(m.conv_offset_mask.bias, 0)
+            elif isinstance(m, (nn.ConvTranspose2d, nn.Conv2d)):
+                nn.init.normal_(m.weight, std=0.001)
+                if hasattr(m, 'bias') and m.bias is not None and self.deconv_with_bias:
                     nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
-                
+
+    def _init_head_weights(self):
+        """Initialize head layers matching CenterNet initialization."""
         for head in self.heads:
             final_layer = self.__getattr__(head)
             for i, m in enumerate(final_layer.modules()):
@@ -349,32 +409,160 @@ class CenterNet(BaseObjectDetection):
     def __init__(self, config):
         super().__init__(config)
 
-        in_channels=3 #self.config.in_channels
-        pretrained=self.config.pretrained
+        in_channels = getattr(self.config, "in_channels", 3)
+        pretrained = self.config.pretrained
         self.num_classes = self.config.num_classes
         self.max_objs = 100
         self.down_ratio = 4
         self.hm_weight = 1.0
         self.wh_weight = 0.1
         self.off_weight = 1.0
-        
+
         heads = {'hm': self.num_classes, 'wh': 2, 'reg': 2}
-        backbone_name = 'resnet50'
+        backbone_name = 'resnet101'
         head_conv = 64
-        
+        model_url = "https://drive.google.com/file/d/1tKkSyzC3iWmM6XTYNJrC4XLCIToDmnHz/view"
+
+        # 1. Determine backbone initialization strategy
+        # We only download ImageNet weights if pretrained=True AND no custom weights are provided
+        load_backbone_pretrained = pretrained and not model_url
+
+        # Model now includes DCNv2 offset_mask layers to match pretrained weights
         self.model = PoseResNet(
-            backbone_name, 
-            heads, 
-            head_conv, 
-            pretrained=pretrained, 
+            backbone_name,
+            heads,
+            head_conv,
+            pretrained=load_backbone_pretrained,
             in_channels=in_channels
         )
         self.model.to(self.device)
+
+        # 2. Handle full weight loading if pretrained is True
+        if pretrained and model_url:
+            hub_dir = torch.hub.get_dir()
+            checkpoints_dir = os.path.join(hub_dir, 'checkpoints')
+            os.makedirs(checkpoints_dir, exist_ok=True)
+            
+            filename = "CenterNet_R_101.pth"
+            cached_file = os.path.join(checkpoints_dir, filename)
+
+            if "drive.google.com" in model_url:
+                parts = model_url.split('/')
+                file_id = parts[parts.index('d') + 1]
+                
+                if not os.path.exists(cached_file):
+                    print(f"Downloading weights to hub cache: {cached_file}")
+                    self.download_gdrive_to_file(file_id, cached_file)
+            
+            print(f"Loading weights from {cached_file}...")
+            self.load_centernet_weights(cached_file)
 
         # Loss Functions
         self.crit = FocalLoss()
         self.crit_reg = RegL1Loss()
         self.crit_wh = RegL1Loss()
+
+    def download_gdrive_to_file(self, file_id, destination):
+        """Bypasses Google Drive virus scan warning using a multi-step approach."""
+        url = "https://docs.google.com/uc?export=download"
+        
+        # 1. Spoof a real browser. Google Drive often blocks default python-requests headers.
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        
+        session = requests.Session()
+        session.headers.update(headers)
+        
+        # Step 1: Initial request
+        response = session.get(url, params={'id': file_id}, stream=True)
+        
+        token = None
+        # Method A: Check Cookies
+        for key, value in session.cookies.items():
+            if key.startswith('download_warning'):
+                token = value
+                break
+                
+        # Method B: Regex on HTML
+        if not token:
+            # Check for standard confirm token
+            match = re.search(r'confirm=([0-9A-Za-z_-]+)', response.text)
+            if match:
+                token = match.group(1)
+            else:
+                # Sometimes Google tucks it inside a <form action="...">
+                match = re.search(r'action="([^"]+)"', response.text)
+                if match and "confirm=" in match.group(1):
+                    redirect_url = match.group(1)
+                    if redirect_url.startswith('/'):
+                        redirect_url = "https://docs.google.com" + redirect_url
+                    response = session.get(redirect_url, stream=True)
+                    token = "already_handled"
+        
+        # Step 2: Second request with the token (if we found one)
+        if token and token != "already_handled":
+            response = session.get(url, params={'id': file_id, 'confirm': token}, stream=True)
+            
+        # Step 3: The modern User-Content Fallback
+        # If we are STILL getting HTML, try Google's newer direct-download format
+        if "text/html" in response.headers.get("Content-Type", ""):
+            fallback_url = f"https://drive.usercontent.google.com/download?id={file_id}&export=download&confirm=t"
+            response = session.get(fallback_url, stream=True)
+
+        # Final Verification
+        if "text/html" in response.headers.get("Content-Type", ""):
+            # Dump the HTML so we aren't flying blind
+            debug_file = "debug_gdrive_response.html"
+            with open(debug_file, "w", encoding="utf-8") as f:
+                f.write(response.text)
+            raise RuntimeError(f"Still returning HTML (Status {response.status_code}). Google may be serving a CAPTCHA or blocking the IP. Check '{debug_file}' to see the exact page.")
+
+        # Step 4: Write binary data to the destination
+        with open(destination, "wb") as f:
+            for chunk in response.iter_content(chunk_size=32768):
+                if chunk:
+                    f.write(chunk)
+                    
+        print(f"Successfully downloaded weights: {os.path.getsize(destination) / 1024**2:.2f} MB")
+
+    def load_centernet_weights(self, checkpoint_path):
+        """
+        Loads pretrained weights for CenterNet.
+        Now loads all weights including DCNv2 offset_mask layers.
+        """
+        state_dict = torch.load(checkpoint_path, map_location=self.device)
+
+        if "state_dict" in state_dict:
+            state_dict = state_dict["state_dict"]
+
+        new_state_dict = {}
+        in_channels = getattr(self.config, "in_channels", 3)
+
+        for k, v in state_dict.items():
+            # Strip 'module.' prefix if present (from DataParallel training)
+            name = k
+            if name.startswith("module."):
+                name = name[7:]
+
+            # Filter: Skip first conv if in_channels != 3
+            if in_channels != 3 and "conv1.weight" in name:
+                print(f"Skipping {k} due to input channel mismatch ({in_channels} vs 3)")
+                continue
+
+            # Filter: Skip class-specific weights if num_classes != 80 (COCO)
+            if self.num_classes != 80 and "hm" in name:
+                print(f"Skipping {k} due to class count mismatch ({self.num_classes} vs 80)")
+                continue
+
+            new_state_dict[name] = v
+
+        msg = self.model.load_state_dict(new_state_dict, strict=False)
+        print(f"Loaded pretrained CenterNet weights.")
+        if msg.missing_keys:
+            print(f"Missing keys ({len(msg.missing_keys)}): {msg.missing_keys[:10]}{'...' if len(msg.missing_keys) > 10 else ''}")
+        if msg.unexpected_keys:
+            print(f"Unexpected keys ({len(msg.unexpected_keys)}): {msg.unexpected_keys[:10]}{'...' if len(msg.unexpected_keys) > 10 else ''}")
 
     def generate_targets(self, targets, output_h, output_w, device):
         batch_size = len(targets)
