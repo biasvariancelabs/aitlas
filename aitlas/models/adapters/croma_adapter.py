@@ -7,7 +7,6 @@ from aitlas.models.registries import ADAPTER_REGISTRY
 @ADAPTER_REGISTRY.register("CROMAAdapter")
 class CROMAAdapter(BaseInputAdapter):
     def forward(self, x):
-
         kwargs = {}
         modalities = []
         
