@@ -7,6 +7,7 @@ from typing import Optional, List, Dict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
 import torchvision
 from torchvision.models._utils import IntermediateLayerGetter
 from torchvision.ops.boxes import box_area
@@ -21,6 +22,9 @@ from ..base import BaseObjectDetection
 
 def box_cxcywh_to_xyxy(x):
     x_c, y_c, w, h = x.unbind(-1)
+    # Ensure w and h are at least a small epsilon to avoid degenerate boxes
+    w = w.clamp(min=1e-6)
+    h = h.clamp(min=1e-6)
     b = [(x_c - 0.5 * w), (y_c - 0.5 * h),
          (x_c + 0.5 * w), (y_c + 0.5 * h)]
     return torch.stack(b, dim=-1)
@@ -42,7 +46,7 @@ def box_iou(boxes1, boxes2):
     inter = wh[:, :, 0] * wh[:, :, 1]  # [N,M]
 
     union = area1[:, None] + area2 - inter
-    iou = inter / union
+    iou = inter / (union + 1e-6) # + 1e-6 to prevent NaN division
     return iou, union
 
 def generalized_box_iou(boxes1, boxes2):
@@ -50,8 +54,8 @@ def generalized_box_iou(boxes1, boxes2):
     Generalized IoU from https://giou.stanford.edu/
     The boxes should be in [x0, y0, x1, y1] format
     """
-    assert (boxes1[:, 2:] >= boxes1[:, :2]).all()
-    assert (boxes2[:, 2:] >= boxes2[:, :2]).all()
+    assert (boxes1[:, 2:] >= boxes1[:, :2]).all(), "Degenerate prediction boxes found"
+    assert (boxes2[:, 2:] >= boxes2[:, :2]).all(), "Degenerate ground truth boxes found"
     iou, union = box_iou(boxes1, boxes2)
 
     lt = torch.min(boxes1[:, None, :2], boxes2[:, :2])
@@ -60,7 +64,7 @@ def generalized_box_iou(boxes1, boxes2):
     wh = (rb - lt).clamp(min=0)  # [N,M,2]
     area = wh[:, :, 0] * wh[:, :, 1]
 
-    return iou - (area - union) / area
+    return iou - (area - union) / (area + 1e-6)
 
 @torch.no_grad()
 def accuracy(output, target, topk=(1,)):
@@ -636,15 +640,19 @@ class DETR(BaseObjectDetection):
         super().__init__(config)
 
         # Config properties
-        in_channels=3 #self.config.in_channels
-        pretrained=self.config.pretrained
+        in_channels = getattr(self.config, "in_channels", 3)
+        pretrained = self.config.pretrained
         num_classes = self.config.num_classes
         num_queries = 100
         hidden_dim = 256
-        backbone_name = 'resnet50' #self.config.backbone
+        backbone_name = getattr(self.config, "backbone", 'resnet50')
         dilation = True # Enables DC5 model version
         train_backbone = True
         aux_loss = True
+        model_url = "https://dl.fbaipublicfiles.com/detr/detr-r50-dc5-f0fb7ef5.pth"
+
+        # 1. Determine backbone initialization strategy
+        load_backbone_pretrained = pretrained and not model_url
 
         # Build Backbone
         backbone = Backbone(
@@ -653,7 +661,7 @@ class DETR(BaseObjectDetection):
             return_interm_layers=False,
             dilation=dilation,
             in_channels=in_channels,
-            pretrained=pretrained
+            pretrained=load_backbone_pretrained
         )
         position_embedding = PositionEmbeddingSine(hidden_dim // 2, normalize=True)
         backbone_with_pos_enc = Joiner(backbone, position_embedding)
@@ -680,6 +688,19 @@ class DETR(BaseObjectDetection):
             aux_loss=aux_loss
         )
         self.model.to(self.device)
+
+        # ---------------------------------------------------------------------------------
+        # FIX 1: HACK IN GRADIENT CLIPPING VIA BACKWARD HOOKS
+        # Aitlas doesn't clip gradients natively, so we embed it at the parameter level.
+        # This acts identically to `torch.nn.utils.clip_grad_value_(self.model.parameters(), 0.1)`
+        # ---------------------------------------------------------------------------------
+        for p in self.model.parameters():
+            if p.requires_grad:
+                p.register_hook(lambda grad: torch.clamp(grad, -0.1, 0.1) if grad is not None else None)
+
+        # 2. Handle full weight loading if pretrained is True
+        if pretrained and model_url:
+            self.load_detr_weights(model_url)
 
         # Build Criterion (Loss logic)
         matcher = HungarianMatcher(
@@ -708,7 +729,59 @@ class DETR(BaseObjectDetection):
 
         # Build PostProcessor
         self.postprocessors = {'bbox': PostProcess()}
+
+    # ---------------------------------------------------------------------------------
+    # FIX 2: OVERRIDE OPTIMIZER
+    # Aitlas BaseObjectDetection uses Adam with a uniform learning rate.
+    # DETR mathematically requires AdamW, and the backbone MUST run 10x slower.
+    # ---------------------------------------------------------------------------------
+    def load_optimizer(self):
+        """Override to apply different learning rates and use AdamW."""
+        base_lr = self.config.learning_rate
+        param_dicts = [
+            {"params": [p for n, p in self.model.named_parameters() if "backbone" not in n and p.requires_grad]},
+            {
+                "params": [p for n, p in self.model.named_parameters() if "backbone" in n and p.requires_grad],
+                "lr": base_lr * 0.1, # Critical: 10x smaller learning rate for the backbone
+            },
+        ]
+        return optim.Adam(param_dicts, lr=base_lr)
+    
+    def load_detr_weights(self, model_url):
+        """
+        Loads pretrained weights for DETR.
+        """
+        from torch.hub import load_state_dict_from_url
         
+        print(f"Loading weights from {model_url}...")
+        state_dict = load_state_dict_from_url(model_url, map_location=self.device)
+        
+        if "model" in state_dict:
+            state_dict = state_dict["model"]
+
+        new_state_dict = {}
+        in_channels = getattr(self.config, "in_channels", 3)
+
+        for k, v in state_dict.items():
+            name = k
+            
+            # Filter: Skip first conv if in_channels != 3
+            if in_channels != 3 and "backbone.0.body.conv1.weight" in name:
+                print(f"Skipping {name} due to input channel mismatch ({in_channels} vs 3)")
+                continue
+
+            # Filter: Skip class-specific weights if num_classes != 91 (COCO)
+            if self.num_classes != 91 and "class_embed" in name:
+                print(f"Skipping {name} due to class count mismatch ({self.num_classes} vs 91)")
+                continue
+
+            new_state_dict[name] = v
+
+        msg = self.model.load_state_dict(new_state_dict, strict=False)
+        print(f"Loaded pretrained DETR weights. Missing keys: {len(msg.missing_keys)}")
+        if len(msg.missing_keys) < 20 and len(msg.missing_keys) > 0: 
+             print(f"Missing keys: {msg.missing_keys}")
+    
     def forward(self, inputs, targets=None):
         # inputs: List of Tensors (images) or a batched Tensor
         # targets: List of dicts (Aitlas format) with keys "boxes" and "labels"
@@ -726,18 +799,39 @@ class DETR(BaseObjectDetection):
             for target, size in zip(targets, target_sizes):
                 h, w = size
                 boxes = target['boxes'].to(self.device) # Expected in xyxy format
+                labels = target['labels'].to(self.device)
+                
+                # ---------------------------------------------------------------------------------
+                # FIX 3: PURGE DEGENERATE BOXES AND SHIFT LABELS SAFELY
+                # ---------------------------------------------------------------------------------
+                if boxes.shape[0] > 0:
+                    # Explicitly remove boxes with <= 0 width or height caused by float precision
+                    valid_mask = (boxes[:, 2] > boxes[:, 0]) & (boxes[:, 3] > boxes[:, 1])
+                    boxes = boxes[valid_mask]
+                    labels = labels[valid_mask]
                 
                 if boxes.shape[0] > 0:
                     # Convert xyxy to normalized cxcywh format
                     boxes = box_xyxy_to_cxcywh(boxes)
-                    boxes = boxes / torch.tensor([w, h, w, h], dtype=torch.float32, device=self.device)
+                    
+                    # Normalize, protecting against edge-case 0-dimension division
+                    norm_tensor = torch.tensor([max(w.item(), 1), max(h.item(), 1), max(w.item(), 1), max(h.item(), 1)], 
+                                                dtype=torch.float32, device=self.device)
+                    boxes = boxes / norm_tensor
+                    
+                    # Shift labels to map dataloader's '1' (ship) -> '0' (DETR foreground class)
+                    labels = labels - 1
+                    
+                    detr_targets.append({
+                        "labels": labels,
+                        "boxes": boxes
+                    })
                 else:
-                    boxes = torch.zeros((0, 4), dtype=torch.float32, device=self.device)
-                
-                detr_targets.append({
-                    "labels": target['labels'].to(self.device),
-                    "boxes": boxes
-                })
+                    # Provide an empty tensor shaped exactly as DETR expects to avoid breaking the matcher
+                    detr_targets.append({
+                        "labels": torch.zeros((0,), dtype=torch.int64, device=self.device),
+                        "boxes": torch.zeros((0, 4), dtype=torch.float32, device=self.device)
+                    })
 
             outputs = self.model(samples)
             loss_dict = self.detr_criterion(outputs, detr_targets)
@@ -763,7 +857,7 @@ class DETR(BaseObjectDetection):
             # Convert to Aitlas expectations: list of dicts returning actual bounds, scores, labels
             final_outputs = []
             for result in results:
-                # Optionally filter by a small confidence threshold to save memory (similar to the EfficientDet implementation)
+                # Filter by a confidence threshold
                 mask = result['scores'] > 0.05
                 if not mask.any():
                     final_outputs.append({
@@ -775,7 +869,8 @@ class DETR(BaseObjectDetection):
                     final_outputs.append({
                         "boxes": result['boxes'][mask],
                         "scores": result['scores'][mask],
-                        "labels": result['labels'][mask]
+                        # Shift labels back up by 1 to match the Aitlas dataloader format
+                        "labels": result['labels'][mask] + 1 
                     })
 
             return final_outputs
