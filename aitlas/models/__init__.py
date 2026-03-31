@@ -6,9 +6,10 @@ from .deeplabv3plus import DeepLabV3Plus
 from .densenet import DenseNet161, DenseNet161MultiLabel
 from .atss import ATSS
 from .centernet import CenterNet
-from .deformable_detr import DeformableDETR
 from .detr import DETR
 from .efficientdet import EfficientDet
+from .nanodet_plus import NanoDetPlus
+from .rtdetr_v2 import RTDETRv2
 from .sparsercnn import SparseRCNN
 from .efficientnet import (
     EfficientNetB0,
@@ -106,6 +107,7 @@ from .changeformer_v6 import ChangeFormerV6
 from .changemamba import ChangeMamba
 from .cssm import CSSM
 from .changevit import ChangeViT
+from .hrnet_change_detection import HRNetChangeDetection
 from .siamcrnn import SiamCRNN
 from .stanet import STANet
 from .tinycd import TinyCD

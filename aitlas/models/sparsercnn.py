@@ -11,6 +11,7 @@ from torchvision.ops.boxes import box_area
 from torchvision.ops import MultiScaleRoIAlign
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 from scipy.optimize import linear_sum_assignment
+from torch.hub import load_state_dict_from_url
 
 from ..base import BaseObjectDetection
 
@@ -563,9 +564,14 @@ class SparseRCNN(BaseObjectDetection):
         
         backbone_name = getattr(self.config, 'backbone', 'resnet50')
         pretrained = self.config.pretrained
+        model_url = "https://github.com/PeizeSun/SparseR-CNN/releases/download/v0.1/r50_300pro_3x_model.pth"
+
+        # 1. Determine backbone initialization strategy
+        # We only download ImageNet weights if pretrained=True AND no custom weights are provided
+        load_backbone_pretrained = pretrained and not model_url
 
         # 1. Build Backbone (using Torchvision standard FPN identical structurally)
-        backbone = resnet_fpn_backbone(backbone_name, pretrained=pretrained)
+        backbone = resnet_fpn_backbone(backbone_name, pretrained=load_backbone_pretrained)
 
         # 2. Initialize Main Sparse R-CNN Component
         self.model = SparseRCNNModel(
@@ -612,6 +618,92 @@ class SparseRCNN(BaseObjectDetection):
             losses=["labels", "boxes"]
         )
         self.sparsercnn_criterion.to(self.device)
+
+        # 4. Handle full weight loading if pretrained is True
+        if pretrained and model_url:
+            self.load_sparsercnn_weights(model_url)
+
+    def load_sparsercnn_weights(self, model_url):
+        """
+        Loads pretrained weights for Sparse R-CNN.
+        Includes mapping from Detectron2/Official format to SparseRCNNModel wrapper.
+        """        
+        print(f"Loading weights from {model_url}...")
+        state_dict = load_state_dict_from_url(model_url, map_location=self.device)
+        
+        if "model" in state_dict:
+            state_dict = state_dict["model"]
+
+        new_state_dict = {}
+        in_channels = getattr(self.config, "in_channels", 3)
+
+        for k, v in state_dict.items():
+            name = k
+            
+            # Map Backbone
+            if "backbone.bottom_up" in name:
+                # Detectron2 Backbone -> Torchvision FPN Backbone
+                name = name.replace("backbone.bottom_up.stem.conv1.weight", "backbone.body.conv1.weight")
+                name = name.replace("backbone.bottom_up.stem.conv1.norm", "backbone.body.bn1")
+
+                # Layers mapping: res2, res3, res4, res5 -> layer1, layer2, layer3, layer4
+                for i in range(2, 6):
+                    name = name.replace(f"backbone.bottom_up.res{i}.", f"backbone.body.layer{i-1}.")
+
+                # Detectron2 ResNet naming vs Torchvision
+                # Conv Norm mapping: conv1.norm -> bn1, conv2.norm -> bn2, conv3.norm -> bn3
+                name = name.replace(".conv1.norm.", ".bn1.")
+                name = name.replace(".conv2.norm.", ".bn2.")
+                name = name.replace(".conv3.norm.", ".bn3.")
+                
+                # Shortcut mapping
+                name = name.replace(".shortcut.weight", ".downsample.0.weight")
+                name = name.replace(".shortcut.norm.", ".downsample.1.")
+                
+            # Map FPN
+            if "backbone.fpn_" in name:
+                # Detectron2 FPN uses fpn_lateral (1x1 conv) and fpn_output (3x3 conv)
+                # Torchvision FPN uses inner_blocks (1x1 conv) and layer_blocks (3x3 conv)
+                # Note: Torchvision wraps Conv2d in Conv2dNormActivation, so we need .0.0 for weights
+                # Mapping: fpn_lateral -> inner_blocks.0.0, fpn_output -> layer_blocks.0.0
+
+                # fpn_lateral2,3,4,5 -> inner_blocks.0,1,2,3.0 (both are 1x1 convs)
+                name = name.replace("backbone.fpn_lateral2", "backbone.fpn.inner_blocks.0.0")
+                name = name.replace("backbone.fpn_lateral3", "backbone.fpn.inner_blocks.1.0")
+                name = name.replace("backbone.fpn_lateral4", "backbone.fpn.inner_blocks.2.0")
+                name = name.replace("backbone.fpn_lateral5", "backbone.fpn.inner_blocks.3.0")
+
+                # fpn_output2,3,4,5 -> layer_blocks.0,1,2,3.0 (both are 3x3 convs)
+                name = name.replace("backbone.fpn_output2", "backbone.fpn.layer_blocks.0.0")
+                name = name.replace("backbone.fpn_output3", "backbone.fpn.layer_blocks.1.0")
+                name = name.replace("backbone.fpn_output4", "backbone.fpn.layer_blocks.2.0")
+                name = name.replace("backbone.fpn_output5", "backbone.fpn.layer_blocks.3.0")
+
+                # Also handle fpn_inner* aliases (some checkpoints use this naming)
+                name = name.replace("backbone.fpn_inner2", "backbone.fpn.inner_blocks.0.0")
+                name = name.replace("backbone.fpn_inner3", "backbone.fpn.inner_blocks.1.0")
+                name = name.replace("backbone.fpn_inner4", "backbone.fpn.inner_blocks.2.0")
+                name = name.replace("backbone.fpn_inner5", "backbone.fpn.inner_blocks.3.0")
+
+            # Map Heads - checkpoint already has "head." prefix, no mapping needed
+            # The checkpoint uses: head.head_series.X.* which matches our structure
+
+            # Filter: Skip first conv if in_channels != 3
+            if in_channels != 3 and "backbone.body.conv1.weight" in name:
+                print(f"Skipping {name} due to input channel mismatch ({in_channels} vs 3)")
+                continue
+
+            # Filter: Skip class-specific weights if num_classes != 80 (COCO)
+            if self.num_classes != 80 and "class_logits" in name:
+                print(f"Skipping {name} due to class count mismatch ({self.num_classes} vs 80)")
+                continue
+
+            new_state_dict[name] = v
+
+        msg = self.model.load_state_dict(new_state_dict, strict=False)
+        print(f"Loaded pretrained Sparse R-CNN weights. Missing keys: {len(msg.missing_keys)}")
+        if len(msg.missing_keys) < 20 and len(msg.missing_keys) > 0: 
+             print(f"Missing keys: {msg.missing_keys}")
         
     def forward(self, inputs, targets=None):
         # 1. Standardize Inputs 
