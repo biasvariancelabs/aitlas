@@ -3,6 +3,7 @@ import warnings
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from tqdm import tqdm
 from aitlas.base import BaseMulticlassClassifier, BaseMultilabelClassifier, BaseObjectDetection, BaseSegmentationClassifier, BaseChangeDetection, FoundationModel, BaseInputAdapter
 from .models import BaseModel
 from ..models.registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY, ADAPTER_REGISTRY
@@ -139,17 +140,15 @@ class CompositeModelArchitectureMixin:
         # Guardrails for different tasks
         self.task = self.config.task_type
         
-        # Feature extraction (backbone only is allowed)
+        # Feature extraction
         if self.task == "feature extraction":
+            # Check if any downstream model components exist in the config
             if len(self.model.necks) > 0 or self.model.decoder is not None or self.model.head is not None:
                 warnings.warn(
-                    f"Task is '{self.task}', but necks, decoder, or head were found in the config. "
-                    f"They are not used for pure feature extraction and will be ignored/removed."
+                    f"Task is '{self.task}', but necks, a decoder, or a head were found in the config. "
+                    f"Their weights will be safely loaded to match the checkpoint, but they will be "
+                    f"completely bypassed during extraction to return raw backbone features."
                 )
-                # Force them to be empty/None
-                self.model.necks = NeckSequential() # Empty sequential, so that len() == 0 is safe
-                self.model.decoder = None
-                self.model.head = None
             pass 
 
         # Prediction tasks (head is mandatory)
@@ -197,8 +196,6 @@ class CompositeModelArchitectureMixin:
             features = backbone_fn(**static_forward_kwargs)
 
         cur_shapes, cur_channels = self._get_feature_shape(features)
-        #print(f"Feature shapes (backbone): {cur_shapes}")
-        #print(f"Feature channels (backbone): {cur_channels}")
 
         # Standardize features -> List[Tensor]
         features = self._standardize_features(features)
@@ -215,16 +212,12 @@ class CompositeModelArchitectureMixin:
             features = self.model.necks(features, **kwargs)
 
         cur_shapes, cur_channels = self._get_feature_shape(features)
-        #print(f"Feature shapes (necks): {cur_shapes}")
-        #print(f"Feature channels (necks): {cur_channels}")
         
         # Pass through the decoder, if it exists
         if self.model.decoder is not None: 
             features = self.model.decoder(features)
 
         cur_shapes, cur_channels = self._get_feature_shape(features)
-        #print(f"Feature shapes (decoder): {cur_shapes}")
-        #print(f"Feature channels (decoder): {cur_channels}")
 
         # If no head, return the features directly
         if self.model.head is None:
@@ -234,8 +227,6 @@ class CompositeModelArchitectureMixin:
         logits = self.model.head(features)
 
         cur_shapes, cur_channels = self._get_feature_shape(logits)
-        #print(f"Feature shapes (head): {cur_shapes}")
-        #print(f"Feature channels (head): {cur_channels}")
         
         # Standard segmentation upsampling
         if self.task == "segmentation":
@@ -243,8 +234,6 @@ class CompositeModelArchitectureMixin:
             logits = self._upsample_logits(logits, x, kwargs)
              
         cur_shapes, cur_channels = self._get_feature_shape(logits)
-        #print(f"Final output shapes: {cur_shapes}")
-        #print(f"Final output channels: {cur_channels}")
 
         return logits
 
@@ -267,6 +256,70 @@ class CompositeModelArchitectureMixin:
             return torch.softmax(logits, dim=1)
         
         return logits
+    
+    def extract_features(self, dataset):
+        """
+        Extracts raw backbone feature embeddings for an entire dataset.
+        Returns a tuple of (Labels Tensor, List of Feature Tensors) on their original device.
+        """
+        self.model.eval()
+        all_features = None
+        all_labels = []
+
+        dataloader = dataset.dataloader()
+        
+        with torch.no_grad():
+            # Wrap the dataloader in tqdm to use the description for the progress bar
+            description="Extracting raw backbone features"
+            for batch in tqdm(dataloader, desc=description):
+                inputs = batch[0].to(self.device)
+                labels = batch[-1].to(self.device)
+
+                # Run the Backbone
+                features = self.model.backbone(inputs)
+                
+                # Standardize the output (returns List[Tensor])
+                features = self._standardize_features(features)
+
+                # Initialize accumulator lists on the first batch
+                if all_features is None:
+                    all_features = [[] for _ in range(len(features))]
+
+                # Append features for each batch to the list
+                for i, f in enumerate(features):
+                    all_features[i].append(f)
+
+                all_labels.append(labels)
+
+        # Concatenate all batches along the batch dimension (dim=0)
+        final_features = [torch.cat(f_list, dim=0) for f_list in all_features]
+        final_labels = torch.cat(all_labels, dim=0)
+
+        return final_features, final_labels
+    
+    def extract_image_features(self, image, data_transforms=None):
+        """
+        Extracts the raw backbone feature vector(s) for a single image.
+        Returns a List of PyTorch Tensors.
+        """
+        self.model.eval()
+
+        if data_transforms:
+            image = data_transforms(image)
+
+        if torch.is_tensor(image):
+            inputs = image.unsqueeze(0).to(self.device)
+        else:
+            inputs = torch.from_numpy(image).unsqueeze(0).to(self.device)
+
+        with torch.no_grad():
+            # Run the backbone
+            features = self.model.backbone(inputs)
+            
+            # Standardize the output (returns List[Tensor])
+            features = self._standardize_features(features)
+
+        return features
 
     def _get_feature_info(self, backbone):
         """Function to find output channels for any backbone.
@@ -908,28 +961,43 @@ class CompositeChangeDetectionModel(CompositeModelArchitectureMixin, BaseChangeD
 class CompositeFeatureExtractionModel(CompositeModelArchitectureMixin, FoundationModel):
     """
     Lightweight model for raw feature extraction. 
-    Only requires a backbone. No head, no training loop.
+    Bypasses decoders and heads to return embeddings directly.
     """
     
-    # Use the base schema without any task-specific classifier fields
     schema = CompositeModelSchema 
     
     def __init__(self, config):
-        # Initialize the standard BaseModel
         super().__init__(config)
         
-        # Build the architecture (Backbone, Neck)
+        # Pacify the load_model method from BaseModel
+        self.criterion = None
+        self.optimizer = None
+        self.lr_scheduler = None
+        
+        class DummyEarlyStopping: 
+            pass
+        self.early_stopping = DummyEarlyStopping()
+        
         self.setup_composite()
 
     def load_backbone(self):
-        """
-        Overrides the FoundationModel requirement.
-        We return None here because our Mixin handles instantiation 
-        inside setup_composite().
-        """
+        """Overrides FoundationModel requirement."""
         return None
+
+    def predict(self, dataset=None, description="Extracting dataset features"):
+        """
+        Delegates dataset feature extraction to the universal Mixin method.
+        Returns: tuple of (labels, embeddings)
+        """
+        return self.extract_features(dataset, description)
+
+    def predict_image(self, image=None, labels=None, data_transforms=None, description="Extracting single image features"):
+        """
+        Delegates single image feature extraction to the universal Mixin method.
+        Returns: embedding vector
+        """
+        return self.extract_image_features(image, data_transforms)
     
-    pass
 
 # Factory composite model that can be used for any task type based on the config
 class CompositeModel:
