@@ -9,7 +9,6 @@ from .centernet import CenterNet
 from .detr import DETR
 from .efficientdet import EfficientDet
 from .nanodet_plus import NanoDetPlus
-from .rtdetr_v2 import RTDETRv2
 from .sparsercnn import SparseRCNN
 from .efficientnet import (
     EfficientNetB0,
