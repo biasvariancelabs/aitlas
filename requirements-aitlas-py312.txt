@@ -9,6 +9,7 @@ pytorch-lightning>=2.5.0
 timm>=1.0.0
 segmentation-models-pytorch>=0.5.0
 huggingface-hub>=0.28.0
+tensorboard>=2.14.0
 einops>=0.8.0
 safetensors>=0.5.0
 tokenizers>=0.20.0
