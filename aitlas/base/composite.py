@@ -43,7 +43,7 @@ class CompositeModelArchitectureMixin:
             "step_size", "gamma",
             "adapter_name", "selection",
             "bands", "bands_s1", 
-            "bands_s2", "bands_l8"
+            "bands_s2", "bands_l8", "bands_dem"
         ]
         
         for key in orchestrator_reserved_keys:
