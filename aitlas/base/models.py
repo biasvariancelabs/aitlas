@@ -46,6 +46,12 @@ class EarlyStopping:
         self.early_stop = False
 
     def __call__(self, val_loss):
+        # Immediate termination on NaN
+        if np.isnan(val_loss):
+            logging.warning("INFO: NaN loss detected. Terminating training.")
+            self.early_stop = True
+            return
+        
         if self.best_loss is None:
             self.best_loss = val_loss
         elif self.best_loss - val_loss > self.min_delta:
