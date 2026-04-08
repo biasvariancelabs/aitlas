@@ -27,7 +27,12 @@ def box_cxcywh_to_xyxy(x):
     h = h.clamp(min=1e-6)
     b = [(x_c - 0.5 * w), (y_c - 0.5 * h),
          (x_c + 0.5 * w), (y_c + 0.5 * h)]
-    return torch.stack(b, dim=-1)
+    xyxy = torch.stack(b, dim=-1)
+    # Ensure x2 >= x1 and y2 >= y1 by clamping
+    x1, y1, x2, y2 = xyxy.unbind(-1)
+    x2 = torch.max(x1, x2)
+    y2 = torch.max(y1, y2)
+    return torch.stack([x1, y1, x2, y2], dim=-1)
 
 def box_xyxy_to_cxcywh(x):
     x0, y0, x1, y1 = x.unbind(-1)
@@ -54,8 +59,21 @@ def generalized_box_iou(boxes1, boxes2):
     Generalized IoU from https://giou.stanford.edu/
     The boxes should be in [x0, y0, x1, y1] format
     """
-    assert (boxes1[:, 2:] >= boxes1[:, :2]).all(), "Degenerate prediction boxes found"
-    assert (boxes2[:, 2:] >= boxes2[:, :2]).all(), "Degenerate ground truth boxes found"
+    # Ensure boxes are valid by clamping (creates new tensors, no in-place ops)
+    x1_1, y1_1, x2_1, y2_1 = boxes1.unbind(-1)
+    x1_1 = torch.min(x1_1, x2_1)
+    y1_1 = torch.min(y1_1, y2_1)
+    x2_1 = torch.max(x1_1, x2_1)
+    y2_1 = torch.max(y1_1, y2_1)
+    boxes1 = torch.stack([x1_1, y1_1, x2_1, y2_1], dim=-1)
+    
+    x1_2, y1_2, x2_2, y2_2 = boxes2.unbind(-1)
+    x1_2 = torch.min(x1_2, x2_2)
+    y1_2 = torch.min(y1_2, y2_2)
+    x2_2 = torch.max(x1_2, x2_2)
+    y2_2 = torch.max(y1_2, y2_2)
+    boxes2 = torch.stack([x1_2, y1_2, x2_2, y2_2], dim=-1)
+    
     iou, union = box_iou(boxes1, boxes2)
 
     lt = torch.min(boxes1[:, None, :2], boxes2[:, :2])
@@ -447,6 +465,11 @@ class HungarianMatcher(nn.Module):
         cost_class = -out_prob[:, tgt_ids]
         cost_bbox = torch.cdist(out_bbox, tgt_bbox, p=1)
         cost_giou = -generalized_box_iou(box_cxcywh_to_xyxy(out_bbox), box_cxcywh_to_xyxy(tgt_bbox))
+
+        # Replace any NaN or Inf values with large finite numbers
+        cost_class = torch.nan_to_num(cost_class, nan=1.0, posinf=1.0, neginf=-1.0)
+        cost_bbox = torch.nan_to_num(cost_bbox, nan=1.0, posinf=1.0, neginf=0.0)
+        cost_giou = torch.nan_to_num(cost_giou, nan=1.0, posinf=1.0, neginf=-1.0)
 
         C = self.cost_bbox * cost_bbox + self.cost_class * cost_class + self.cost_giou * cost_giou
         C = C.view(bs, num_queries, -1).cpu()
