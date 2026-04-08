@@ -1,6 +1,7 @@
 """SSDLite model for object detection"""
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from functools import partial
 from torchvision.ops.misc import Conv2dNormActivation
 from torchvision.models.detection import (
@@ -8,6 +9,36 @@ from torchvision.models.detection import (
     ssdlite320_mobilenet_v3_large,
 )
 from ..base import BaseObjectDetection
+
+
+class SafeBatchNorm2d(nn.BatchNorm2d):
+    """BatchNorm2d that handles batch size 1 by falling back to running statistics"""
+    def forward(self, x):
+        if self.training and x.size(0) <= 1:
+            # Use running statistics when batch size is 1
+            return F.batch_norm(
+                x, self.running_mean, self.running_var,
+                self.weight, self.bias, training=False, momentum=0.0, eps=self.eps
+            )
+        return super().forward(x)
+
+
+def replace_batchnorm_with_safe(model):
+    """Recursively replace all BatchNorm2d layers with SafeBatchNorm2d"""
+    for name, module in model.named_children():
+        if isinstance(module, nn.BatchNorm2d):
+            # Create SafeBatchNorm2d with same parameters
+            safe_bn = SafeBatchNorm2d(
+                module.num_features,
+                eps=module.eps,
+                momentum=module.momentum,
+                affine=module.affine,
+                track_running_stats=module.track_running_stats
+            )
+            safe_bn.load_state_dict(module.state_dict())
+            setattr(model, name, safe_bn)
+        else:
+            replace_batchnorm_with_safe(module)
 
 # Helper function to reconstruct the prediction block 
 def create_prediction_block(in_channels, out_channels, kernel_size, norm_layer):
@@ -80,6 +111,9 @@ class SSDLite(BaseObjectDetection):
             # Replace the internal module list and update the class count attribute
             cls_head.module_list = new_cls_layers
             cls_head.num_columns = self.config.num_classes
+
+        # Replace all BatchNorm2d layers with SafeBatchNorm2d to handle batch size 1
+        replace_batchnorm_with_safe(self.model)
 
     def forward(self, inputs, targets=None):
         return self.model.forward(inputs, targets)
