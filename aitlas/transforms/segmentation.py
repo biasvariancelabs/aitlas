@@ -12,19 +12,29 @@ from ..base import BaseTransforms
 
 class MinMaxNormTranspose(BaseTransforms):
     """
-    MinMax Normalization and transposing a given sample.
+    Per-channel MinMax Normalization and transposing a given sample.
     """
 
     def __call__(self, sample):
         """
-        MinMax Normalization and transposing a given sample.
-
-        :param sample: input sample
-        :type sample: tensor
-        :return: normalized and transposed tensor
-        :rtype: tensor
+        Per-channel MinMax Normalization and transposing a given sample.
+        :param sample: numpy array with shape (H, W, C)
+        :return: normalized and transposed tensor with shape (C, H, W)
         """
-        return torch.tensor(sample.transpose(2, 0, 1), dtype=torch.float32) / 255
+        # Calculate min and max for each channel
+        min_val = np.min(sample, axis=(0, 1))
+        max_val = np.max(sample, axis=(0, 1))
+
+        # Per-channel min-max normalization
+        # Add a small epsilon to avoid division by zero
+        denominator = max_val - min_val
+        normalized_sample = (sample - min_val) / (denominator + 1e-7)
+
+        # Handle channels where max_val equals min_val
+        normalized_sample[..., denominator == 0] = 0
+
+        # Transpose from (H, W, C) to (C, H, W) and convert to a tensor
+        return torch.tensor(normalized_sample.transpose(2, 0, 1), dtype=torch.float32)
 
 
 class Transpose(BaseTransforms):
@@ -58,7 +68,20 @@ class MinMaxNorm(BaseTransforms):
         :return: normalized and transposed tensor
         :rtype: tensor
         """
-        return torch.tensor(sample, dtype=torch.float32) / 255
+
+        # Calculate min and max for each channel
+        min_val = np.min(sample, axis=(0, 1))
+        max_val = np.max(sample, axis=(0, 1))
+
+        # Per-channel min-max normalization
+        # Add a small epsilon to avoid division by zero
+        denominator = max_val - min_val
+        normalized_sample = (sample - min_val) / (denominator + 1e-7)
+
+        # Handle channels where max_val equals min_val
+        normalized_sample[..., denominator == 0] = 0
+
+        return torch.tensor(normalized_sample, dtype=torch.float32)
 
 
 class Pad(BaseTransforms):
@@ -164,3 +187,95 @@ class ResizePerChannelToTensor(BaseTransforms):
 
         # this is the multichannel transformed image (a torch tensor)
         return torch.cat(x)
+
+
+class RobustZScoreNormTranspose(BaseTransforms):
+    """
+    Applies robust Z-score normalization to each channel, clips to 1st and 99th percentiles,
+    and transposes the sample.
+    """
+
+    def __call__(self, sample):
+        """
+        Applies robust Z-score normalization and transposes the sample.
+        :param sample: numpy array with shape (H, W, C)
+        :return: torch tensor with shape (C, H, W)
+        """
+        # Calculate percentiles along H and W axes for each channel
+        min_val, max_val = np.percentile(sample, [0.5, 99.5], axis=(0, 1))
+
+        # Clip the sample to the calculated percentile values
+        clipped_sample = np.clip(sample, min_val, max_val)
+
+        # Calculate mean and std deviation for each channel of the clipped sample
+        mean = np.mean(clipped_sample, axis=(0, 1))
+        std = np.std(clipped_sample, axis=(0, 1))
+
+        # Apply Z-score normalization
+        # Add a small epsilon to std to avoid division by zero
+        normalized_sample = (clipped_sample - mean) / (std + 1e-8)
+
+        # Transpose from (H, W, C) to (C, H, W) and convert to a tensor
+        return torch.tensor(normalized_sample.transpose(2, 0, 1), dtype=torch.float32)
+
+class RobustMinMaxNormTranspose(BaseTransforms):
+    """
+    Applies robust per-channel MinMax normalization with clipping and transposes the sample.
+    """
+
+    def __call__(self, sample):
+        """
+        Applies robust per-channel MinMax normalization and transposes the sample.
+        :param sample: numpy array with shape (H, W, C)
+        :return: torch tensor with shape (C, H, W)
+        """
+        # Calculate 0.5 and 99.5 percentiles for each channel
+        min_val, max_val = np.percentile(sample, [0.5, 99.5], axis=(0, 1))
+
+        # Clip the sample to the calculated percentile values
+        clipped_sample = np.clip(sample, min_val, max_val)
+
+        # Calculate min and max of the clipped data for each channel
+        clipped_min = np.min(clipped_sample, axis=(0, 1))
+        clipped_max = np.max(clipped_sample, axis=(0, 1))
+
+        # Per-channel min-max normalization on the clipped data
+        # Add a small epsilon to avoid division by zero
+        denominator = clipped_max - clipped_min
+        normalized_sample = (clipped_sample - clipped_min) / (denominator + 1e-7)
+        
+        # Handle channels where max_val equals min_val
+        normalized_sample[..., denominator == 0] = 0
+
+        # Transpose from (H, W, C) to (C, H, W) and convert to a tensor
+        return torch.tensor(normalized_sample.transpose(2, 0, 1), dtype=torch.float32)
+    
+
+class RobustMedianScalerTranspose(BaseTransforms):
+    """
+    1. Clips outliers (0.5% and 99.5%).
+    2. Applies Robust Scaling (Median/IQR) on the clipped data.
+    3. Transposes to (C, H, W).
+    """
+
+    def __call__(self, sample):
+        """
+        :param sample: numpy array with shape (H, W, C)
+        :return: torch tensor with shape (C, H, W)
+        """
+        # Calculate 0.5 and 99.5 percentiles for each channel
+        min_val, max_val = np.percentile(sample, [0.5, 99.5], axis=(0, 1))
+
+        # Clip the sample to the calculated percentile values
+        clipped_sample = np.clip(sample, min_val, max_val)
+
+        # Calculate median and IQR for each channel of the clipped sample
+        median = np.median(clipped_sample, axis=(0, 1))
+        q25, q75 = np.percentile(clipped_sample, [25, 75], axis=(0, 1))
+        iqr = q75 - q25
+
+        # Normalize using the median and IQR, adding a small epsilon to avoid division by zero
+        normalized_sample = (clipped_sample - median) / (iqr + 1e-7)
+
+        # 4. TRANSPOSE
+        return torch.tensor(normalized_sample.transpose(2, 0, 1), dtype=torch.float32)
