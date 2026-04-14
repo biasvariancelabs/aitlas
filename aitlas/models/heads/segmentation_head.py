@@ -49,4 +49,8 @@ class SegmentationHead(nn.Module):
         )
 
     def forward(self, x):
+        # Handle list input (standardized output from backbones)
+        if isinstance(x, (list, tuple)):
+            x = x[0]
+
         return self.head(x)

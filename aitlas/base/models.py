@@ -578,6 +578,13 @@ class BaseModel(nn.Module, Configurable):
         # Show the image
         fig = plt.figure(figsize=(10, 10))
 
+        # if the original image is a tensor, convert it to numpy and transpose it to (H, W, C)
+        if torch.is_tensor(original_image):
+            original_image = original_image.cpu().detach().numpy().transpose(1, 2, 0)
+        # If the original images has number of channels different than 3 or 4, take just a single channel and plot it as grayscale
+        if len(original_image.shape) == 3 and original_image.shape[2] not in [3, 4]:
+            original_image = original_image[:, :, 0]
+
         # plot image
         plt.subplot(1, len(labels) + 1, 1)
         plt.imshow(original_image)
@@ -776,7 +783,7 @@ class BaseModel(nn.Module, Configurable):
 
     def extract_features(self, *input, **kwargs):
         """
-        Abstract for trim the model to extract feature. Extending classes should override this method.
+        Abstract to trim the model to extract features. Extending classes should override this method.
 
         :return: Instance of the model architecture
         :rtype: nn.Module

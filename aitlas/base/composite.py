@@ -252,8 +252,7 @@ class CompositeModelArchitectureMixin:
             return torch.sigmoid(logits)
 
         elif self.task == "segmentation":
-            #return torch.argmax(logits, dim=1) # TODO: change back to argmax after testing
-            return torch.softmax(logits, dim=1)
+            return torch.argmax(logits, dim=1)
         
         return logits
     
@@ -691,6 +690,9 @@ class CompositeModelArchitectureMixin:
     def _check_and_rebuild_components(self, features: list[torch.Tensor]):
         """Checks feature shapes and dynamically rebuilds necks, decoders, and heads if needed.
         """
+
+        if getattr(self, "task", "") in ["multiclass classification", "multilabel classification", "feature extraction"]:
+            return
         
         # Get current (temporary) feature shapes
         _, temp_channels = self._get_feature_shape(features)
@@ -769,7 +771,26 @@ class CompositeModelArchitectureMixin:
                 ).to(device=device, dtype=dtype)
 
                 # Put back to original mode (train/eval)      
-                self.model.head.train(is_training_mode)     
+                self.model.head.train(is_training_mode)
+            
+            # Reset current_channels back to the backbone's true output
+            self.current_channels = temp_channels
+
+            # Update the optimizer to track the newly built layers without breaking the object reference
+            if hasattr(self, 'optimizer') and self.optimizer is not None:
+                # Generate a temporary optimizer that natively maps to the newly built layers
+                new_opts = self.load_optimizer()
+                
+                # Format as tuples for consistency
+                opts = self.optimizer if isinstance(self.optimizer, tuple) else (self.optimizer,)
+                new_opts = new_opts if isinstance(new_opts, tuple) else (new_opts,)
+                
+                for opt, new_opt in zip(opts, new_opts):
+                    # Surgically replace the param_groups list in the existing optimizer.
+                    opt.param_groups = new_opt.param_groups
+                    
+                    # Clear old momentum/Adam stats since the layer shapes changed
+                    opt.state.clear()
     
     def _validate_indices(self, neck_name: str, params: dict):
         """Internal helper to validate requested indices against available backbone features.
