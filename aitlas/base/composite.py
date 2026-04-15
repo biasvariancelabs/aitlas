@@ -691,6 +691,11 @@ class CompositeModelArchitectureMixin:
         """Checks feature shapes and dynamically rebuilds necks, decoders, and heads if needed.
         """
 
+        # Never dynamically destroy and rebuild the architecture during evaluation
+        # This protects loaded checkpoint weights from being overwritten by random noise.
+        if not self.model.training:
+            return
+
         if getattr(self, "task", "") in ["multiclass classification", "multilabel classification", "feature extraction"]:
             return
         
