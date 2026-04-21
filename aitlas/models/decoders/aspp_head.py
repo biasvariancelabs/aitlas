@@ -87,6 +87,7 @@ class ASPPHead(nn.Module):
         self.in_channels = in_channels
         self.channels = channels
         self.out_dim = out_dim
+        self.out_channels = channels
 
         self.align_corners = align_corners
         self.input_transform = input_transform

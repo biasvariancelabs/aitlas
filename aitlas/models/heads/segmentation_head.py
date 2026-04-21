@@ -1,6 +1,7 @@
 # Copyright contributors to the Terratorch project
 
 import torch.nn as nn
+import torch.nn.functional as F
 from aitlas.models.registries import HEAD_REGISTRY
 
 
@@ -9,7 +10,7 @@ class SegmentationHead(nn.Module):
     """Segmentation head"""
 
     def __init__(
-        self, in_channels: int, num_classes: int, channel_list: list[int] | None = None, dropout: float = 0
+        self, in_channels: int, num_classes: int, channel_list: list[int] | None = None, dropout: float = 0, upsample: int = 1
     ) -> None:
         """Constructor
 
@@ -19,10 +20,12 @@ class SegmentationHead(nn.Module):
             channel_list (list[int] | None, optional):  List with number of channels for each Conv
                 layer to be created. Defaults to None.
             dropout (float, optional): Dropout value to apply. Defaults to 0.
+            upsample (int, optional): Upsampling factor to apply at the end of the head. Defaults to 1.
         """
         
         super().__init__()
         self.num_classes = num_classes
+        self.upsample = upsample
         if channel_list is None:
             pre_head = nn.Identity()
         else:
@@ -53,4 +56,10 @@ class SegmentationHead(nn.Module):
         if isinstance(x, (list, tuple)):
             x = x[0]
 
-        return self.head(x)
+        out = self.head(x)
+
+        # Upsample if needed (e.g. if the head is used with a backbone that outputs a lower resolution than the input image)
+        if self.upsample > 1:
+                    out = F.interpolate(out, scale_factor=self.upsample, mode='bilinear', align_corners=False)
+
+        return out
