@@ -130,7 +130,7 @@ class AnySat(FoundationModel):
             embedding (torch.Tensor): The output feature embeddings.
                 - If output mode is 'tile': shape (B, D)
                 - If output mode is 'patch': shape (B, D, H', W')
-                - If output mode is 'dense': shape (B, 2*D, H', W')
+                - If output mode is 'dense': shape (B, 2*D, H, W)
                 - If output mode is 'all': shape (B, P+1, D)
 
         """
