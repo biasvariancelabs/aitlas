@@ -8,6 +8,7 @@ import numpy as np
 import tifffile
 import torch
 import subprocess
+import imageio.v3 as iio
 
 from PIL import Image, ImageOps
 
@@ -37,6 +38,24 @@ def tiff_loader(file):
     return tifffile.imread(file)
 
 
+def iio_loader(file):
+    """Opens a jp2 image from disk"""
+    return iio.imread(file)
+
+
+def cv2_loader(file, convert_to_grayscale=False):
+    """Opens an image from disk"""
+    flags = cv2.IMREAD_GRAYSCALE if convert_to_grayscale else cv2.IMREAD_UNCHANGED
+    img = cv2.imread(file, flags)
+
+    if not convert_to_grayscale and len(img.shape) == 3:
+        if img.shape[2] == 4:
+            img = cv2.cvtColor(img, cv2.COLOR_BGRA2RGBA)
+        else:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    return img
+
+
 def image_loader(file_path, convert_to_grayscale=False):
     """
     Opens an image from disk
@@ -47,14 +66,17 @@ def image_loader(file_path, convert_to_grayscale=False):
     :type convert_to_grayscale: bool
 
     """
-    filename, file_extension = os.path.splitext(file_path)
-    if file_extension in [".jpg", ".png", ".bmp", ".jpeg", ".JPG", ".PNG", ".BMP", ".JPEG"]:
-        return pil_loader(file_path, convert_to_grayscale)
-    elif file_extension in [".tif", ".tiff", ".TIF", ".TIFF"]:
+    _, file_extension = os.path.splitext(file_path)
+    file_extension = file_extension.lower()
+    if file_extension == ".jp2":
+        return iio_loader(file_path)
+    elif file_extension in [".jpg", ".jpeg", ".png", ".bmp"]:
+        return cv2_loader(file_path, convert_to_grayscale)
+    elif file_extension in [".tif", ".tiff"]:
         return tiff_loader(file_path)
     else:
         raise ValueError(
-            "Invalid image. It should be `.jpg, .png, .bmp, .tif, .tiff, .jpeg`"
+            "Invalid image. It should be `.jpg, .jpeg, .png, .bmp, .tif, .tiff, .jp2`"
         )
 
 
