@@ -280,21 +280,231 @@ class ConvBlock(nn.Module):
 # EfficientNet Encoder (using torchvision)
 # -----------------------------------------------------------------------------
 
+def _map_original_to_torchvision_key(orig_key):
+    """
+    Map original efficientnet-pytorch backbone keys to torchvision EfficientNet keys.
+    
+    Original structure (efficientnet-pytorch):
+        backbone_net.model._conv_stem.weight
+        backbone_net.model._bn0.*
+        backbone_net.model._blocks.{0-15}._{component}.*
+        e.g., backbone_net.model._blocks.0._depthwise_conv.weight
+    
+    Torchvision structure:
+        features.0.0.weight  (stem conv)
+        features.0.1.*       (stem BN)
+        features.{1-7}.{block_idx}.block.{sub_idx}.{param}
+        e.g., features.1.0.block.0.0.weight
+    
+    Block mapping:
+        _blocks.0  -> features.1.0.block
+        _blocks.1  -> features.2.0.block
+        _blocks.2  -> features.2.1.block
+        _blocks.3  -> features.3.0.block
+        _blocks.4  -> features.3.1.block
+        _blocks.5  -> features.4.0.block
+        _blocks.6  -> features.4.1.block
+        _blocks.7  -> features.4.2.block
+        _blocks.8  -> features.5.0.block
+        _blocks.9  -> features.5.1.block
+        _blocks.10 -> features.5.2.block
+        _blocks.11 -> features.6.0.block
+        _blocks.12 -> features.6.1.block
+        _blocks.13 -> features.6.2.block
+        _blocks.14 -> features.6.3.block
+        _blocks.15 -> features.7.0.block
+    
+    Component mapping within each block:
+        _depthwise_conv.weight -> block.X.0.0.weight
+        _bn1.*                 -> block.X.0.1.*
+        _se_reduce.*           -> block.X.1.fc1.*
+        _se_expand.*           -> block.X.1.fc2.*
+        _project_conv.weight   -> block.X.2.0.weight
+        _bn2.*                 -> block.X.2.1.*
+        _expand_conv.weight    -> block.X.3.0.weight
+        _bn0.*                 -> block.X.3.1.*
+    """
+    # Remove 'backbone_net.' prefix if present
+    if orig_key.startswith('backbone_net.'):
+        orig_key = orig_key.replace('backbone_net.', '')
+    
+    # Stem conv: model._conv_stem.weight -> features.0.0.weight
+    if 'model._conv_stem' in orig_key:
+        return 'features.0.0.' + orig_key.split('model._conv_stem.')[-1]
+    
+    # Stem BN: model._bn0.* -> features.0.1.*
+    if 'model._bn0' in orig_key:
+        suffix = orig_key.split('model._bn0.')[-1]
+        return f'features.0.1.{suffix}'
+    
+    # Block mapping: model._blocks.{idx}._{component}.{param}
+    if 'model._blocks.' in orig_key:
+        # Extract parts after 'model._blocks.'
+        parts = orig_key.split('model._blocks.')
+        if len(parts) < 2:
+            return None
+        
+        rest = parts[1]  # e.g., "0._depthwise_conv.weight"
+        rest_parts = rest.split('.', 2)  # Split into at most 3 parts
+        if len(rest_parts) < 3:
+            return None
+        
+        block_idx = int(rest_parts[0])  # e.g., 0
+        component = rest_parts[1]  # e.g., "_depthwise_conv" (already has underscore)
+        param = rest_parts[2]  # e.g., "weight"
+        
+        # Map block index to (features_idx, block_in_features_idx)
+        block_mapping = {
+            0: (1, 0),
+            1: (2, 0),
+            2: (2, 1),
+            3: (3, 0),
+            4: (3, 1),
+            5: (4, 0),
+            6: (4, 1),
+            7: (4, 2),
+            8: (5, 0),
+            9: (5, 1),
+            10: (5, 2),
+            11: (6, 0),
+            12: (6, 1),
+            13: (6, 2),
+            14: (6, 3),
+            15: (7, 0),
+        }
+        
+        if block_idx not in block_mapping:
+            return None
+        
+        feat_idx, blk_idx = block_mapping[block_idx]
+        
+        # Map component to torchvision sub-block indices
+        # Torchvision MBConv structure differs from efficientnet-pytorch:
+        #
+        # For blocks WITHOUT skip connection (block 0):
+        #   Original: depthwise → BN1 → project → BN2 → SE
+        #   Torchvision: depthwise → BN → SE → project → BN
+        #   - block.0.* = depthwise conv + BN
+        #   - block.1.* = SE (fc1, fc2)
+        #   - block.2.* = project conv + BN
+        #
+        # For blocks WITH skip connection (blocks 1-15):
+        #   Original: expand → BN0 → depthwise → BN1 → SE → project → BN2
+        #   Torchvision: expand → BN → depthwise → BN → SE → project → BN
+        #   - block.0.* = expand conv + BN
+        #   - block.1.* = depthwise conv + BN
+        #   - block.2.* = SE (fc1, fc2)
+        #   - block.3.* = project conv + BN
+        
+        # Determine if this block has skip connection (blocks 1-15 have it)
+        has_skip = block_idx > 0
+        
+        if has_skip:
+            # Blocks with skip connection (1-15)
+            component_map = {
+                '_expand_conv': (0, 0, 'weight'),    # -> block.X.0.0.weight
+                '_bn0': (0, 1, param),                # -> block.X.0.1.{param}
+                '_depthwise_conv': (1, 0, 'weight'),  # -> block.X.1.0.weight
+                '_bn1': (1, 1, param),                # -> block.X.1.1.{param}
+                '_se_reduce': (2, 'fc1', param),      # -> block.X.2.fc1.{param}
+                '_se_expand': (2, 'fc2', param),      # -> block.X.2.fc2.{param}
+                '_project_conv': (3, 0, 'weight'),    # -> block.X.3.0.weight
+                '_bn2': (3, 1, param),                # -> block.X.3.1.{param}
+            }
+        else:
+            # Block 0 (no skip connection)
+            component_map = {
+                '_depthwise_conv': (0, 0, 'weight'),  # -> block.X.0.0.weight
+                '_bn1': (0, 1, param),                 # -> block.X.0.1.{param}
+                '_se_reduce': (1, 'fc1', param),       # -> block.X.1.fc1.{param}
+                '_se_expand': (1, 'fc2', param),       # -> block.X.1.fc2.{param}
+                '_project_conv': (2, 0, 'weight'),     # -> block.X.2.0.weight
+                '_bn2': (2, 1, param),                 # -> block.X.2.1.{param}
+            }
+        
+        if component not in component_map:
+            return None
+        
+        sub_idx, sub_comp, sub_param = component_map[component]
+        
+        return f'features.{feat_idx}.{blk_idx}.block.{sub_idx}.{sub_comp}.{sub_param}'
+    
+    return None
+
+
+def _load_original_weights_to_torchvision(tv_model, state_dict, verbose=True):
+    """
+    Load original efficientnet-pytorch weights into torchvision EfficientNet model.
+    
+    Args:
+        tv_model: torchvision EfficientNet model
+        state_dict: state dict from original efficientnet-pytorch model
+        verbose: print loading progress
+    
+    Returns:
+        dict with statistics about loaded weights
+    """
+    tv_state = tv_model.state_dict()
+    new_state = {}
+    
+    matched = 0
+    skipped = 0
+    missing_original = []
+    
+    # Map original keys to torchvision keys
+    for orig_key, orig_value in state_dict.items():
+        if not orig_key.startswith('backbone_net.'):
+            continue
+        
+        tv_key = _map_original_to_torchvision_key(orig_key)
+        
+        if tv_key is None:
+            if verbose:
+                print(f"  Could not map: {orig_key}")
+            skipped += 1
+            continue
+        
+        if tv_key in tv_state and tv_state[tv_key].shape == orig_value.shape:
+            new_state[tv_key] = orig_value
+            matched += 1
+        else:
+            if tv_key not in tv_state:
+                missing_original.append(tv_key)
+                if verbose:
+                    print(f"  Key not in torchvision: {tv_key} (from {orig_key})")
+            elif tv_state[tv_key].shape != orig_value.shape:
+                if verbose:
+                    print(f"  Shape mismatch: {tv_key} {tv_state[tv_key].shape} vs {orig_value.shape}")
+                skipped += 1
+    
+    # Load into model
+    tv_state.update(new_state)
+    tv_model.load_state_dict(tv_state)
+    
+    return {
+        'matched': matched,
+        'skipped': skipped,
+        'missing_in_torchvision': missing_original,
+    }
+
+
 class EfficientNetEncoder(nn.Module):
     def __init__(self, compound_coef=0, in_channels=3, pretrained=True):
         super(EfficientNetEncoder, self).__init__()
-        
+
         # Map compound_coef to the corresponding EfficientNet variant (B0-B7)
         backbone_fns = [
             models.efficientnet_b0, models.efficientnet_b1, models.efficientnet_b2,
             models.efficientnet_b3, models.efficientnet_b4, models.efficientnet_b5,
             models.efficientnet_b6, models.efficientnet_b7
         ]
-        
+
         # Clamp to available versions
         compound_coef = max(0, min(compound_coef, 7))
-        model = backbone_fns[compound_coef](pretrained=pretrained)
         
+        # Load with ImageNet weights initially (we'll replace them if needed)
+        model = backbone_fns[compound_coef](weights='IMAGENET1K_V1' if pretrained else None)
+
         # Patch first conv layer if input channels != 3
         if in_channels != 3:
             old_conv = model.features[0][0]
@@ -306,15 +516,20 @@ class EfficientNetEncoder(nn.Module):
                 padding=old_conv.padding,
                 bias=old_conv.bias
             )
-            nn.init.kaiming_normal_(new_conv.weight, mode='fan_out', nonlinearity='relu')
+            # Copy weights if we have them
+            if pretrained and in_channels == 3:
+                new_conv.weight.data = old_conv.weight.data[:, :in_channels, :, :]
+            else:
+                nn.init.kaiming_normal_(new_conv.weight, mode='fan_out', nonlinearity='relu')
             model.features[0][0] = new_conv
-            
-        # Truncate at index 7 to exclude the final 1280-channel head layers
-        self.features = model.features[:7]
+
+        # Truncate at index 8 to include all blocks (features[1] through features[7])
+        # features[8] is the final head we don't need
+        self.features = model.features[:8]
 
     def forward(self, x):
         """
-        Extracts P3, P4, P5 features. 
+        Extracts P3, P4, P5 features.
         Matches src/model.py by extracting after the first block of each stage.
         """
         feature_maps = []
@@ -475,10 +690,12 @@ class EfficientDetModel(nn.Module):
         super(EfficientDetModel, self).__init__()
         self.compound_coef = max(0, min(compound_coef, 7))
 
-        # Config mapping from paper: [D0, D1, D2, D3, D4, D5, D6, D7]
+        # Config mapping from original src/model.py:
+        # D_bifpn = 2 + compound_coef
+        # D_class = 3 + compound_coef // 3
         W_bifpn = [64, 88, 112, 160, 224, 288, 384, 384]
-        D_bifpn = [3, 4, 5, 6, 7, 7, 8, 8]
-        D_class = [3, 3, 3, 4, 4, 4, 5, 5]
+        D_bifpn = [2, 3, 4, 5, 6, 7, 8, 8] # Matches 2 + compound_coef logic
+        D_class = [3, 3, 3, 4, 4, 4, 5, 5] # Matches 3 + compound_coef // 3 logic
 
         # Backbone output channels (P3, P4, P5) for torchvision EfficientNet B0-B7
         # Note: Verified in environment to match 'start-of-stage' extraction
@@ -592,14 +809,166 @@ class EfficientDet(BaseObjectDetection):
     def __init__(self, config):
         super().__init__(config)
         
+        in_channels = getattr(self.config, "in_channels", 3)
+        num_classes = self.config.num_classes
+        compound_coef = getattr(self.config, "compound_coef", 0)
+        pretrained = self.config.pretrained
+        model_url = "https://raw.githubusercontent.com/signatrix/efficientdet/master/trained_models/signatrix_efficientdet_coco.pth"
+
+        # 1. Determine backbone initialization strategy
+        # We only download ImageNet weights if pretrained=True AND no custom weights are provided
+        load_backbone_pretrained = pretrained and not model_url
+
         self.model = EfficientDetModel(
-            in_channels=3, #self.config.in_channels,
-            num_anchors=9, # self.config.num_anchors,
-            num_classes=self.config.num_classes,
-            compound_coef=6, # self.config.compound_coef,
-            pretrained=self.config.pretrained
+            in_channels=in_channels,
+            num_anchors=9,
+            num_classes=num_classes,
+            compound_coef=compound_coef,
+            pretrained=load_backbone_pretrained
         )
         self.model.to(self.device)
+
+        # 2. Handle full weight loading if pretrained is True
+        if pretrained and model_url:
+            self.load_efficientdet_weights(model_url)
+
+    def load_efficientdet_weights(self, model_url):
+        """
+        Loads pretrained weights for EfficientDet.
+        Handles full model objects saved with DataParallel by injecting fake 'src' 
+        modules into sys.modules to redirect unpickling to local classes.
+        """
+        import os
+        import sys
+        from types import ModuleType
+        from torch.hub import download_url_to_file, get_dir
+
+        # 1. Prepare download path (mimic load_state_dict_from_url)
+        hub_dir = get_dir()
+        checkpoints_dir = os.path.join(hub_dir, 'checkpoints')
+        os.makedirs(checkpoints_dir, exist_ok=True)
+        
+        filename = os.path.basename(model_url)
+        cached_file = os.path.join(checkpoints_dir, filename)
+
+        # 2. Download if not exists
+        if not os.path.exists(cached_file):
+            print(f"Downloading weights from {model_url} to {cached_file}...")
+            download_url_to_file(model_url, cached_file)
+        
+        # 3. Inject fake modules into sys.modules to satisfy torch.load
+        # This redirects 'src.model.EfficientDet' etc. to our local classes
+        fake_modules = {}
+        try:
+            class MockModule(ModuleType):
+                def __init__(self, name):
+                    super().__init__(name)
+                    self.__path__ = []
+
+                def __getattr__(self, name):
+                    # Return local classes if we have them
+                    if name in globals():
+                        return globals()[name]
+                    # Specific mappings for known name differences
+                    if name == 'EfficientDet':
+                        return EfficientDetModel
+                    if name == 'EfficientNet':
+                        return EfficientNetEncoder
+                    # Fallback to a dummy class for everything else
+                    class Dummy(nn.Module):
+                        def __init__(self, *args, **kwargs):
+                            super().__init__()
+                        def forward(self, x): return x
+                    return Dummy
+
+            # Inject all modules we might need
+            for mod_name in ['src', 'src.model', 'src.utils', 'src.loss', 
+                            'efficientnet_pytorch', 'efficientnet_pytorch.model', 
+                            'efficientnet_pytorch.utils']:
+                if mod_name not in sys.modules:
+                    fake_modules[mod_name] = sys.modules.get(mod_name)
+                    sys.modules[mod_name] = MockModule(mod_name)
+            
+            print(f"Loading weights from {cached_file}...")
+            # We MUST use weights_only=False because the file contains full model objects
+            data = torch.load(cached_file, map_location=self.device, weights_only=False)
+            
+        finally:
+            # Clean up fake modules to avoid side effects
+            for mod_name in fake_modules:
+                if fake_modules[mod_name] is None:
+                    del sys.modules[mod_name]
+                else:
+                    sys.modules[mod_name] = fake_modules[mod_name]
+        
+        # Extract state_dict from the loaded data
+        if isinstance(data, dict):
+            state_dict = data
+        elif hasattr(data, 'module'):
+            # It's a DataParallel object
+            state_dict = data.module.state_dict()
+        else:
+            # It's a full model object
+            state_dict = data.state_dict()
+
+        in_channels = getattr(self.config, "in_channels", 3)
+
+        print(f"Loading pretrained EfficientDet weights...")
+        print(f"  Target: {self.num_classes} classes, {in_channels} input channels")
+        
+        # 1. Load BiFPN and head weights (non-backbone) directly
+        # These have the same structure in both implementations
+        new_state_dict = {}
+        skipped_classifier = 0
+        skipped_stem = 0
+        
+        for k, v in state_dict.items():
+            # Skip backbone keys - we'll handle them separately with mapping
+            if k.startswith('backbone_net.'):
+                continue
+            
+            # Skip classifier header if num_classes doesn't match
+            if self.num_classes != 80 and "classifier.header" in k:
+                skipped_classifier += 1
+                continue
+            
+            # Skip stem conv if in_channels doesn't match
+            if in_channels != 3 and "backbone_net.features.0.0.weight" in k:
+                skipped_stem += 1
+                continue
+            
+            new_state_dict[k] = v
+        
+        # 2. Load backbone weights using the mapping function
+        print(f"\nMapping backbone weights from efficientnet-pytorch to torchvision...")
+        backbone_stats = _load_original_weights_to_torchvision(
+            self.model.backbone_net, 
+            state_dict, 
+            verbose=False
+        )
+        
+        # Load BiFPN and head weights
+        msg = self.model.load_state_dict(new_state_dict, strict=False)
+        
+        # Collect statistics
+        matched_non_backbone = len(new_state_dict) - len(msg.unexpected_keys)
+        
+        print(f"\nPretrained weights loaded.")
+        print(f"  Non-backbone matched: {matched_non_backbone}")
+        print(f"  Backbone matched: {backbone_stats['matched']}")
+        print(f"  Backbone skipped: {backbone_stats['skipped']}")
+        if skipped_classifier > 0:
+            print(f"  Skipped classifier keys: {skipped_classifier} (num_classes mismatch)")
+        if skipped_stem > 0:
+            print(f"  Skipped stem conv: {skipped_stem} (in_channels mismatch)")
+        
+        # Report any missing keys in non-backbone
+        other_missing = [k for k in msg.missing_keys 
+                        if 'backbone_net' not in k 
+                        and not any(x in k for x in ['anchors', 'regressBoxes', 'clipBoxes', 'focalLoss'])]
+        
+        if other_missing:
+            print(f"  Other missing keys: {other_missing}")
 
     def forward(self, inputs, targets=None):
         # Aitlas provides inputs as a list of images and targets as a list of dicts.

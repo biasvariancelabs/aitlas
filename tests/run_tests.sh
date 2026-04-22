@@ -35,10 +35,15 @@ cd tests
 #pytest -s --disable-warnings test_changemamba.py
 #pytest -s --disable-warnings test_changevit.py
 #pytest -s --disable-warnings test_cssm.py
+pytest -s --disable-warnings test_hrnet_change_detection.py
 #pytest -s --disable-warnings test_siamcrnn.py
 #pytest -s --disable-warnings test_stanet.py
 #pytest -s --disable-warnings test_tinycd.py
 #pytest -s --disable-warnings test_unet_change_detection.py
 #pytest -s --disable-warnings test_change_detection.py
-pytest -s --disable-warnings test_detr.py
+#pytest -s --disable-warnings test_atss.py
+#pytest -s --disable-warnings test_centernet.py
+#pytest -s --disable-warnings test_detr.py
 #pytest -s --disable-warnings test_efficientdet.py
+#pytest -s --disable-warnings test_nanodet_plus.py
+#pytest -s --disable-warnings test_sparsercnn.py

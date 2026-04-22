@@ -4,8 +4,12 @@ from .convnext import ConvNeXtTiny, ConvNeXtTinyMultiLabel
 from .deeplabv3 import DeepLabV3, DeepLabV3_13_bands
 from .deeplabv3plus import DeepLabV3Plus
 from .densenet import DenseNet161, DenseNet161MultiLabel
+from .atss import ATSS
+from .centernet import CenterNet
 from .detr import DETR
 from .efficientdet import EfficientDet
+from .nanodet_plus import NanoDetPlus
+from .sparsercnn import SparseRCNN
 from .efficientnet import (
     EfficientNetB0,
     EfficientNetB0MultiLabel,
@@ -41,7 +45,6 @@ from .unet import Unet
 from .unet_plusplus import UnetPlusPlus
 from .upernet import UPerNet
 
-from .unet_efficientnet import UNetEfficientNet
 from .vgg import VGG16, VGG19, VGG16MultiLabel, VGG19MultiLabel
 from .vision_transformer import VisionTransformer, VisionTransformerMultilabel
 
@@ -102,6 +105,7 @@ from .changeformer_v6 import ChangeFormerV6
 from .changemamba import ChangeMamba
 from .cssm import CSSM
 from .changevit import ChangeViT
+from .hrnet_change_detection import HRNetChangeDetection
 from .siamcrnn import SiamCRNN
 from .stanet import STANet
 from .tinycd import TinyCD
