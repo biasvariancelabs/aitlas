@@ -1,4 +1,5 @@
 """HRNet model for segmentation"""
+
 import timm
 import torch
 import torch.nn as nn

@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import os
 import warnings
+
 import torch
-import logging
 from huggingface_hub import hf_hub_download
+
 
 logger = logging.getLogger("terramind")
 
 try:
     from .vqvae_backbone import VQBackbone
+
     vqvae_available = True
     import_error = None
 except Exception as e:
@@ -67,6 +70,7 @@ pretrained_weights = {
     },
 }
 
+
 def checkpoint_filter_fn(state_dict) -> dict:
     """Manually filter pre-trained weights for tokenizer backbone to enable strict weight loading."""
 
@@ -76,15 +80,19 @@ def checkpoint_filter_fn(state_dict) -> dict:
 
     return state_dict
 
+
 def build_vqvae(
-        variant: str = None,
-        pretrained: bool = False,
-        ckpt_path: str | None = None,
-        **kwargs):
+    variant: str = None,
+    pretrained: bool = False,
+    ckpt_path: str | None = None,
+    **kwargs,
+):
 
     if not vqvae_available:
-        warnings.warn(f"Cannot import VQBackbone from terramind. "
-                      f"\nMake sure to install `pip install diffusers==0.30.0`.")
+        warnings.warn(
+            f"Cannot import VQBackbone from terramind. "
+            f"\nMake sure to install `pip install diffusers==0.30.0`."
+        )
         raise import_error
 
     model = VQBackbone(**kwargs)
@@ -95,14 +103,20 @@ def build_vqvae(
         state_dict = checkpoint_filter_fn(state_dict)
         loaded_keys = model.load_state_dict(state_dict, strict=False)
         if loaded_keys.missing_keys:
-            logger.warning(f"Missing keys in ckpt_path {ckpt_path}: {loaded_keys.missing_keys}")
+            logger.warning(
+                f"Missing keys in ckpt_path {ckpt_path}: {loaded_keys.missing_keys}"
+            )
         if loaded_keys.unexpected_keys:
-            logger.warning(f"Missing keys in ckpt_path {ckpt_path}: {loaded_keys.missing_keys}")
+            logger.warning(
+                f"Missing keys in ckpt_path {ckpt_path}: {loaded_keys.missing_keys}"
+            )
 
     elif pretrained:
         # Load model from Hugging Face
-        state_dict_file = hf_hub_download(repo_id=pretrained_weights[variant]["hf_hub_id"],
-                                          filename=pretrained_weights[variant]["hf_hub_filename"])
+        state_dict_file = hf_hub_download(
+            repo_id=pretrained_weights[variant]["hf_hub_id"],
+            filename=pretrained_weights[variant]["hf_hub_filename"],
+        )
         state_dict = torch.load(state_dict_file, map_location="cpu", weights_only=True)
         state_dict = checkpoint_filter_fn(state_dict)
         model.load_state_dict(state_dict, strict=True)
@@ -128,7 +142,7 @@ def terramind_v1_tokenizer_s2l2a(**kwargs):
         codebook_size="8-8-8-6-5",
         latent_dim=5,
         clip_sample=True,
-        **kwargs
+        **kwargs,
     )
 
     return tokenizer
@@ -138,7 +152,7 @@ def terramind_v1_tokenizer_s1rtc(**kwargs):
     """
     Backbone from the S1RTC Tokenizer for TerraMind v1.
     """
-    
+
     tokenizer = build_vqvae(
         variant="terramind_v1_tokenizer_s1rtc",
         image_size=256,
@@ -153,7 +167,7 @@ def terramind_v1_tokenizer_s1rtc(**kwargs):
         codebook_size="8-8-8-6-5",
         latent_dim=5,
         clip_sample=True,
-        **kwargs
+        **kwargs,
     )
 
     return tokenizer
@@ -163,7 +177,7 @@ def terramind_v1_tokenizer_s1grd(**kwargs):
     """
     Backbone from the S1GRD Tokenizer for TerraMind v1.
     """
-    
+
     tokenizer = build_vqvae(
         variant="terramind_v1_tokenizer_s1grd",
         image_size=256,
@@ -178,7 +192,7 @@ def terramind_v1_tokenizer_s1grd(**kwargs):
         codebook_size="8-8-8-6-5",
         latent_dim=5,
         clip_sample=True,
-        **kwargs
+        **kwargs,
     )
 
     return tokenizer
@@ -188,7 +202,7 @@ def terramind_v1_tokenizer_dem(**kwargs):
     """
     Backbone from the DEM Tokenizer for TerraMind v1.
     """
-    
+
     tokenizer = build_vqvae(
         variant="terramind_v1_tokenizer_dem",
         image_size=256,
@@ -203,7 +217,7 @@ def terramind_v1_tokenizer_dem(**kwargs):
         codebook_size="8-8-8-6-5",
         latent_dim=5,
         clip_sample=True,
-        **kwargs
+        **kwargs,
     )
 
     return tokenizer
@@ -226,7 +240,7 @@ def terramind_v1_tokenizer_lulc(**kwargs):
         quant_type="fsq",
         codebook_size="7-5-5-5-5",
         latent_dim=5,
-        **kwargs
+        **kwargs,
     )
 
     return tokenizer
@@ -251,7 +265,7 @@ def terramind_v1_tokenizer_ndvi(**kwargs):
         codebook_size="8-8-8-6-5",
         latent_dim=5,
         clip_sample=True,
-        **kwargs
+        **kwargs,
     )
 
     return tokenizer

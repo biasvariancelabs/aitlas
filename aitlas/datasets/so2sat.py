@@ -1,5 +1,6 @@
 import logging
 import random
+
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -36,12 +37,12 @@ LABELS = [
 
 class So2SatDataset(BaseDataset):
     """
-        So2Sat dataset version 2 (contains train, validation and test splits)
+    So2Sat dataset version 2 (contains train, validation and test splits)
 
-        So2Sat LCZ42 is a dataset consisting of corresponding synthetic aperture radar and multispectral optical image
-        data acquired by the Sentinel-1 and Sentinel-2 remote sensing satellites, and a corresponding local climate
-        zones (LCZ) label. The dataset is distributed over 42 cities across different continents and cultural regions
-        of the world, and comes with a split into fully independent, non-overlapping training, validation, and test sets.
+    So2Sat LCZ42 is a dataset consisting of corresponding synthetic aperture radar and multispectral optical image
+    data acquired by the Sentinel-1 and Sentinel-2 remote sensing satellites, and a corresponding local climate
+    zones (LCZ) label. The dataset is distributed over 42 cities across different continents and cultural regions
+    of the world, and comes with a split into fully independent, non-overlapping training, validation, and test sets.
     """
 
     url = "https://github.com/zhu-xlab/So2Sat-LCZ42"
@@ -97,7 +98,9 @@ class So2SatDataset(BaseDataset):
         if size % 5:
             raise ValueError("The provided size should be divided by 5!")
         image_indices = random.sample(range(0, len(self.data["sen2"])), size)
-        figure, ax = plt.subplots(int(size / 5), 5, figsize=(13.75, 2.8*int(size/5)))
+        figure, ax = plt.subplots(
+            int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5))
+        )
         if show_title:
             figure.suptitle(
                 "Example images with labels from {}".format(self.get_name()),

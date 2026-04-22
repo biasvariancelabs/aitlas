@@ -16,4 +16,3 @@ aitlas.metrics.segmentation module
    :members:
    :undoc-members:
    :show-inheritance:
-

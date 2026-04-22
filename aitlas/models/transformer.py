@@ -1,9 +1,9 @@
 """
 Transformer model
-   
+
 .. note::
     Adapted from: https://github.com/dl4sits/BreizhCrops
-    
+
     Original implementation of Transformer model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/TransformerModel.py
 
 """

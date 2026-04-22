@@ -1,24 +1,34 @@
 """SSDLite model for object detection"""
+
+from functools import partial
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from functools import partial
-from torchvision.ops.misc import Conv2dNormActivation
 from torchvision.models.detection import (
     SSDLite320_MobileNet_V3_Large_Weights,
     ssdlite320_mobilenet_v3_large,
 )
+from torchvision.ops.misc import Conv2dNormActivation
+
 from ..base import BaseObjectDetection
 
 
 class SafeBatchNorm2d(nn.BatchNorm2d):
     """BatchNorm2d that handles batch size 1 by falling back to running statistics"""
+
     def forward(self, x):
         if self.training and x.size(0) <= 1:
             # Use running statistics when batch size is 1
             return F.batch_norm(
-                x, self.running_mean, self.running_var,
-                self.weight, self.bias, training=False, momentum=0.0, eps=self.eps
+                x,
+                self.running_mean,
+                self.running_var,
+                self.weight,
+                self.bias,
+                training=False,
+                momentum=0.0,
+                eps=self.eps,
             )
         return super().forward(x)
 
@@ -33,14 +43,15 @@ def replace_batchnorm_with_safe(model):
                 eps=module.eps,
                 momentum=module.momentum,
                 affine=module.affine,
-                track_running_stats=module.track_running_stats
+                track_running_stats=module.track_running_stats,
             )
             safe_bn.load_state_dict(module.state_dict())
             setattr(model, name, safe_bn)
         else:
             replace_batchnorm_with_safe(module)
 
-# Helper function to reconstruct the prediction block 
+
+# Helper function to reconstruct the prediction block
 def create_prediction_block(in_channels, out_channels, kernel_size, norm_layer):
     return nn.Sequential(
         # 3x3 depthwise with stride 1 and padding 1
@@ -56,6 +67,7 @@ def create_prediction_block(in_channels, out_channels, kernel_size, norm_layer):
         nn.Conv2d(in_channels, out_channels, 1),
     )
 
+
 class SSDLite(BaseObjectDetection):
     """SSDLite model implementation
 
@@ -68,9 +80,11 @@ class SSDLite(BaseObjectDetection):
 
         # Load an object detection model pre-trained on COCO
         self.model = ssdlite320_mobilenet_v3_large(
-            weights=SSDLite320_MobileNet_V3_Large_Weights.COCO_V1
-            if self.config.pretrained
-            else None
+            weights=(
+                SSDLite320_MobileNet_V3_Large_Weights.COCO_V1
+                if self.config.pretrained
+                else None
+            )
         )
 
         # Access the classification head
@@ -78,10 +92,10 @@ class SSDLite(BaseObjectDetection):
 
         # Check if we need to replace the head
         if cls_head.num_columns != self.config.num_classes:
-            
+
             # Create a new list of predictors
             new_cls_layers = nn.ModuleList()
-            
+
             # Define the normalization layer used in SSDLite (BatchNorm with specific params)
             norm_layer = partial(nn.BatchNorm2d, eps=0.001, momentum=0.03)
 
@@ -94,10 +108,10 @@ class SSDLite(BaseObjectDetection):
                 in_channels = layer[0][0].in_channels
                 # Create the new prediction block (output channels = num_anchors * new_num_classes)
                 new_layer = create_prediction_block(
-                    in_channels, 
-                    existing_num_anchors * self.config.num_classes, 
-                    kernel_size=3, 
-                    norm_layer=norm_layer
+                    in_channels,
+                    existing_num_anchors * self.config.num_classes,
+                    kernel_size=3,
+                    norm_layer=norm_layer,
                 )
                 # Apply initialization (Normal)
                 for module in new_layer.modules():

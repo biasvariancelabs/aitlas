@@ -1,10 +1,9 @@
 """SSD model for object detection"""
+
 import torch
 import torch.nn as nn
-from torchvision.models.detection import (
-    SSD300_VGG16_Weights,
-    ssd300_vgg16,
-)
+from torchvision.models.detection import SSD300_VGG16_Weights, ssd300_vgg16
+
 from ..base import BaseObjectDetection
 
 
@@ -20,20 +19,18 @@ class SSD(BaseObjectDetection):
 
         # Load an object detection model pre-trained on COCO
         self.model = ssd300_vgg16(
-            weights=SSD300_VGG16_Weights.COCO_V1
-            if self.config.pretrained
-            else None
+            weights=SSD300_VGG16_Weights.COCO_V1 if self.config.pretrained else None
         )
 
         # Access the classification head (can be multiple layers stored in ModuleList)
         cls_head = self.model.head.classification_head
 
         # Check if we need to replace the head
-        if cls_head.num_columns != self.config.num_classes:         
-            
+        if cls_head.num_columns != self.config.num_classes:
+
             # Create a new list of predictors
             new_cls_layers = nn.ModuleList()
-            
+
             # Iterate over the existing layers to create replacements
             for layer in cls_head.module_list:
                 # We need to deduce the number of anchors for this specific layer (num_anchors = output_channels // old_num_classes)
@@ -43,8 +40,8 @@ class SSD(BaseObjectDetection):
                     in_channels=layer.in_channels,
                     out_channels=existing_num_anchors * self.config.num_classes,
                     kernel_size=3,
-                    padding=1
-                )      
+                    padding=1,
+                )
                 # Apply specific initialization (Xavier Uniform)
                 torch.nn.init.xavier_uniform_(new_layer.weight)
                 if new_layer.bias is not None:

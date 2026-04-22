@@ -1,10 +1,11 @@
 import logging
-import numpy as np
 import math
 
+import numpy as np
 from sklearn.model_selection import train_test_split
 from skmultilearn.model_selection import iterative_train_test_split
 from torch.utils.data import random_split
+
 from ..base import BaseModel, BaseTask
 from ..utils import (
     load_aitlas_format_dataset,
@@ -101,7 +102,9 @@ class BaseSplitTask(BaseTask):
             with open(csv_file, "rb") as f:
                 self.header = f.readline().decode("utf-8").strip().split("\t")
 
-        except TypeError:  # it's not in VOC format, then let's try aitlas (CSV) internal one
+        except (
+            TypeError
+        ):  # it's not in VOC format, then let's try aitlas (CSV) internal one
             if csv_file is not None:
                 images = load_aitlas_format_dataset(csv_file)
             else:

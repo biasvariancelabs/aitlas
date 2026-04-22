@@ -1,9 +1,10 @@
 """Contains classes for image transformations specific for BreizhCrops dataset."""
 
-import torch
 import numpy as np
+import torch
 
 from ..base import BaseTransforms
+
 
 BANDS = {
     "L1C": [

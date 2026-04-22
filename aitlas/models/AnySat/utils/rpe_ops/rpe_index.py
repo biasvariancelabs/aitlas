@@ -1,18 +1,20 @@
-import torch
 import rpe_index_cpp
+import torch
 
 
 EXPECTED_VERSION = "1.2.0"
-assert rpe_index_cpp.version() == EXPECTED_VERSION, \
-        f"""Unmatched `rpe_index_cpp` version: {rpe_index_cpp.version()}, expected version: {EXPECTED_VERSION}
+assert (
+    rpe_index_cpp.version() == EXPECTED_VERSION
+), f"""Unmatched `rpe_index_cpp` version: {rpe_index_cpp.version()}, expected version: {EXPECTED_VERSION}
 Please re-build the package `rpe_ops`."""
 
 
 class RPEIndexFunction(torch.autograd.Function):
-    '''Y[b, h, i, j] = input[b, h, i, index[i, j]]'''
+    """Y[b, h, i, j] = input[b, h, i, index[i, j]]"""
+
     @staticmethod
     def forward(ctx, input, index):
-        '''
+        """
         Y[b, h, i, j] = input[b, h, i, index[i, j]]
 
         Parameters
@@ -28,37 +30,45 @@ class RPEIndexFunction(torch.autograd.Function):
         -------
         Y: torch.Tensor, float32
             The shape is (B, H, L_query, L_key)
-        '''
+        """
 
         num_buckets = input.size(-1)
         ctx.save_for_backward(index)
         ctx.input_shape = input.shape
-        forward_fn = rpe_index_cpp.forward_cpu if \
-            input.device.type == 'cpu' else rpe_index_cpp.forward_gpu
+        forward_fn = (
+            rpe_index_cpp.forward_cpu
+            if input.device.type == "cpu"
+            else rpe_index_cpp.forward_gpu
+        )
         output = forward_fn(input, index)
         return output
 
     @staticmethod
     def backward(ctx, grad_output):
-        '''
-          - Inputs
-              grad_output: float32 (B, H, L_query, L_key)
-          - Outputs
-              grad_input: float32 (B, H, L_query, num_buckets)
-        '''
+        """
+        - Inputs
+            grad_output: float32 (B, H, L_query, L_key)
+        - Outputs
+            grad_input: float32 (B, H, L_query, num_buckets)
+        """
         index = ctx.saved_tensors[0]
         if ctx.needs_input_grad[0]:
             grad_input = grad_output.new_zeros(ctx.input_shape)
-            backward_fn = rpe_index_cpp.backward_cpu if \
-                grad_output.device.type == 'cpu' else rpe_index_cpp.backward_gpu
+            backward_fn = (
+                rpe_index_cpp.backward_cpu
+                if grad_output.device.type == "cpu"
+                else rpe_index_cpp.backward_gpu
+            )
             backward_fn(grad_input, grad_output, index)
             return grad_input, None
         return None, None
 
 
-if __name__ == '__main__':
-    import numpy as np
+if __name__ == "__main__":
     import time
+
+    import numpy as np
+
     B = 128
     H = 32
     L_query = 50
@@ -79,11 +89,13 @@ if __name__ == '__main__':
         x2.requires_grad = True
 
         y = RPEIndexFunction.apply(x1, index)
-        gt_y = x2.flatten(2)[:, :, (index + offset).flatten()
-                             ].view(B, H, L_query, L_key)
+        gt_y = x2.flatten(2)[:, :, (index + offset).flatten()].view(
+            B, H, L_query, L_key
+        )
 
         np.testing.assert_almost_equal(
-            gt_y.detach().cpu().numpy(), y.detach().cpu().numpy())
+            gt_y.detach().cpu().numpy(), y.detach().cpu().numpy()
+        )
 
         mask = torch.randn(gt_y.shape, device=x.device)
         (gt_y * mask).sum().backward()
@@ -92,9 +104,11 @@ if __name__ == '__main__':
         print("X1:", x1.grad.cpu().numpy().flatten().sum())
         print("X2:", x2.grad.cpu().numpy().flatten().sum())
         np.testing.assert_almost_equal(
-            x1.grad.cpu().numpy(), x2.grad.cpu().numpy(), decimal=5)
+            x1.grad.cpu().numpy(), x2.grad.cpu().numpy(), decimal=5
+        )
         print("Test over", x.device)
         print("Cost:", time.time() - tic)
+
     test(x, index, offset)
     if torch.cuda.is_available():
         test(x.cuda(), index.cuda(), offset.cuda())

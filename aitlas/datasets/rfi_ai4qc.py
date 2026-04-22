@@ -1,32 +1,33 @@
 import json
 import os
-import cv2 
 from xml.etree import ElementTree as et
 
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import torch
 
-from aitlas.utils import image_loader
+from aitlas.datasets.object_detection import BaseObjectDetectionDataset
 from aitlas.datasets.schemas import (
     ObjectDetectionPascalDatasetSchema,
-    ObjectDetectionRfiCocoDatasetSchema
+    ObjectDetectionRfiCocoDatasetSchema,
 )
-from aitlas.datasets.object_detection import BaseObjectDetectionDataset
+from aitlas.utils import image_loader
 
 
-'''
-The RFI_AI4QC dataset contains a set of labeled RFIs (radio frequency interferences), in 3940 images. 
-These interferences are caused by man-made sources and can lead to an artefact in the satellite image, 
-typically a bright rectangular pattern. Bounding boxes were defined around RFI artefacts in Sentinel-1 
-quick-looks (png images). This dataset can be used to train object detection algorithms to automatically 
+"""
+The RFI_AI4QC dataset contains a set of labeled RFIs (radio frequency interferences), in 3940 images.
+These interferences are caused by man-made sources and can lead to an artefact in the satellite image,
+typically a bright rectangular pattern. Bounding boxes were defined around RFI artefacts in Sentinel-1
+quick-looks (png images). This dataset can be used to train object detection algorithms to automatically
 detect these RFIs in a satellite image.
-'''
+"""
 
 url = "https://zenodo.org/records/13757181"
 name = "RFI_AI4QC"
+
 
 class ObjectDetectionRfiPascalDataset(BaseObjectDetectionDataset):
     schema = ObjectDetectionPascalDatasetSchema
@@ -44,7 +45,9 @@ class ObjectDetectionRfiPascalDataset(BaseObjectDetectionDataset):
 
     def __getitem__(self, index):
         img_name = self.data[index]
-        image = image_loader(os.path.join(self.image_dir, f"{img_name}.SAFE.png")) / 255.0
+        image = (
+            image_loader(os.path.join(self.image_dir, f"{img_name}.SAFE.png")) / 255.0
+        )
 
         # annotation file
         annot_file_path = os.path.join(self.annotations_dir, f"{img_name}_LABEL.xml")
@@ -109,7 +112,7 @@ class ObjectDetectionRfiPascalDataset(BaseObjectDetectionDataset):
         labels = list(sorted(set(labels)))
 
         for img in os.listdir(data_dir):
-            name = img[: img.rfind('_LABEL.xml')]
+            name = img[: img.rfind("_LABEL.xml")]
             data.append(name)
 
         return labels, annotations, data
@@ -117,7 +120,7 @@ class ObjectDetectionRfiPascalDataset(BaseObjectDetectionDataset):
     def data_distribution_table(self):
         df = pd.DataFrame(self.annotations)
         df_count = df.groupby("label").count()
-        df_count = df_count.iloc[::-1,:].reset_index()
+        df_count = df_count.iloc[::-1, :].reset_index()
         df_count.columns = ["Label", "Count"]
         return df_count
 
@@ -129,7 +132,7 @@ class ObjectDetectionRfiPascalDataset(BaseObjectDetectionDataset):
             "Number of instances for {}".format(self.get_name()), pad=20, fontsize=18
         )
         return fig
-    
+
 
 class ObjectDetectionRfiCocoDataset(BaseObjectDetectionDataset):
     """This is a skeleton object detection dataset following the Coco format"""
@@ -162,20 +165,20 @@ class ObjectDetectionRfiCocoDataset(BaseObjectDetectionDataset):
         img_data = self.file_names[index]
 
         # reading the images and converting them to correct size and color
-        image = image_loader(os.path.join(self.data_dir, img_data+'.png')) / 255.0
+        image = image_loader(os.path.join(self.data_dir, img_data + ".png")) / 255.0
 
         # annotation file
-        name = img_data[: img_data.rfind('.SAFE')]
-        annotations_file_path = os.path.join(self.annotation_dir,name+'_LABEL.json')
+        name = img_data[: img_data.rfind(".SAFE")]
+        annotations_file_path = os.path.join(self.annotation_dir, name + "_LABEL.json")
         annotations = json.load(open(annotations_file_path, "r"))
-        
+
         boxes = []
         labels = []
         image_id = []
 
         # box coordinates for json files are extracted
         for annotation in annotations["annotations"]:
-            labels.append(annotation["category_id"]) 
+            labels.append(annotation["category_id"])
             image_id.append(annotation["image_id"])
 
             bbox = annotation["bbox"]
@@ -214,14 +217,14 @@ class ObjectDetectionRfiCocoDataset(BaseObjectDetectionDataset):
         target["image_id"] = torch.tensor(image_id)
 
         return self.apply_transformations(image, target)
-        
+
     def load_dataset(self, data_dir=None, annotation_dir=None):
         labels = []
         annotations = []
         data = []
         file_names = []
         for json_file in os.listdir(annotation_dir):
-            coco = json.load(open(annotation_dir+json_file, "r"))
+            coco = json.load(open(annotation_dir + json_file, "r"))
 
             # read labels
             labels += [
@@ -257,15 +260,15 @@ class ObjectDetectionRfiCocoDataset(BaseObjectDetectionDataset):
 
     def data_distribution_table(self):
         df = pd.DataFrame(self.annotations)
-        df = df.drop(['image_id', 'bbox'], axis=1)
+        df = df.drop(["image_id", "bbox"], axis=1)
         df_label = pd.DataFrame(self.labels)
-        
+
         df_count = df.groupby("category_id").count()
         df_count = df_count.join(df_label)
         df_count = df_count.iloc[:, ::-1].reset_index()
-        df_count = df_count.drop(['category_id'], axis=1)
+        df_count = df_count.drop(["category_id"], axis=1)
         df_count.columns = ["Label", "Count"]
-        
+
         return df_count
 
     def data_distribution_barchart(self):
@@ -280,7 +283,7 @@ class ObjectDetectionRfiCocoDataset(BaseObjectDetectionDataset):
     def show_samples(self):
         df = pd.DataFrame(self.annotations)
         return df.head(20)
-    
+
 
 class ObjectDetectionRfiYoloDataset(BaseObjectDetectionDataset):
     schema = ObjectDetectionRfiCocoDatasetSchema
@@ -298,7 +301,9 @@ class ObjectDetectionRfiYoloDataset(BaseObjectDetectionDataset):
 
     def __getitem__(self, index):
         img_name = self.data[index]
-        image = image_loader(os.path.join(self.data_dir, f"{img_name}.SAFE.png")) / 255.0
+        image = (
+            image_loader(os.path.join(self.data_dir, f"{img_name}.SAFE.png")) / 255.0
+        )
         img_h, img_w = image.shape[:2]
 
         # annotation file
@@ -310,14 +315,14 @@ class ObjectDetectionRfiYoloDataset(BaseObjectDetectionDataset):
 
         # box coordinates for txt files are extracted
         for annotation in annot:
-            lines = annotation[:-1] #removes /n
+            lines = annotation[:-1]  # removes /n
             elements = lines.split()
             # bounding box
-            xmin = round((float(elements[1])-(float(elements[3])/2))*img_w)
-            xmax = round((float(elements[1])+(float(elements[3])/2))*img_w)
+            xmin = round((float(elements[1]) - (float(elements[3]) / 2)) * img_w)
+            xmax = round((float(elements[1]) + (float(elements[3]) / 2)) * img_w)
 
-            ymin = round((float(elements[2])-(float(elements[4])/2))*img_h)
-            ymax = round((float(elements[2])+(float(elements[4])/2))*img_h)
+            ymin = round((float(elements[2]) - (float(elements[4]) / 2)) * img_h)
+            ymax = round((float(elements[2]) + (float(elements[4]) / 2)) * img_h)
 
             if xmax > xmin and ymax > ymin:
                 labels.append(int(elements[0]))
@@ -331,7 +336,7 @@ class ObjectDetectionRfiYoloDataset(BaseObjectDetectionDataset):
 
         labels = torch.as_tensor(labels, dtype=torch.int64)
 
-        target = {"boxes": boxes, "labels": labels, "iscrowd": iscrowd} 
+        target = {"boxes": boxes, "labels": labels, "iscrowd": iscrowd}
         # image_id
         image_id = torch.tensor([index])
         target["image_id"] = image_id
@@ -343,35 +348,35 @@ class ObjectDetectionRfiYoloDataset(BaseObjectDetectionDataset):
         annotations = []
         data = []
         for img in os.listdir(annotation_dir):
-            annot_file_path = os.path.join(annotation_dir, img) 
+            annot_file_path = os.path.join(annotation_dir, img)
             annot = open(annot_file_path, "r")
             annot = annot.readlines()
-            
-            img_name = img[: img.rfind('_LABEL')]
+
+            img_name = img[: img.rfind("_LABEL")]
             image_file_path = os.path.join(data_dir, f"{img_name}.SAFE.png")
             image = cv2.imread(image_file_path)
             img_h, img_w = image.shape[:2]
 
-            labels = ["RFI","Other Anomaly"]
-            
+            labels = ["RFI", "Other Anomaly"]
+
             # box coordinates for txt files are extracted
-            
+
             for annotation in annot:
 
-                lines = annotation[:-1] #removes /n
+                lines = annotation[:-1]  # removes /n
                 elements = lines.split(" ")
                 # bounding box
-                xmin = round((float(elements[1])-(float(elements[3])/2))*img_w)
-                xmax = round((float(elements[1])+(float(elements[3])/2))*img_w)
-    
-                ymin = round((float(elements[2])-(float(elements[4])/2))*img_h)
-                ymax = round((float(elements[2])+(float(elements[4])/2))*img_h)
+                xmin = round((float(elements[1]) - (float(elements[3]) / 2)) * img_w)
+                xmax = round((float(elements[1]) + (float(elements[3]) / 2)) * img_w)
+
+                ymin = round((float(elements[2]) - (float(elements[4]) / 2)) * img_h)
+                ymax = round((float(elements[2]) + (float(elements[4]) / 2)) * img_h)
 
                 if xmax > xmin and ymax > ymin:
                     annotations.append({"label": int(elements[0])})
 
         for img in os.listdir(data_dir):
-            name = img[: img.rfind('.SAFE.png')]
+            name = img[: img.rfind(".SAFE.png")]
             data.append(name)
 
         return labels, annotations, data
@@ -380,10 +385,10 @@ class ObjectDetectionRfiYoloDataset(BaseObjectDetectionDataset):
         df = pd.DataFrame(self.annotations)
         df_count = df.groupby("label").value_counts()
         df_count = pd.DataFrame(df_count).reset_index()
-        df_count = df_count.drop(['label'], axis=1)
-        df_count.insert(0, "Label", ["RFI","Other Anomaly"], True)
+        df_count = df_count.drop(["label"], axis=1)
+        df_count.insert(0, "Label", ["RFI", "Other Anomaly"], True)
         df_count.columns = ["Label", "Count"]
-        
+
         return df_count
 
     def data_distribution_barchart(self, show_title=True):

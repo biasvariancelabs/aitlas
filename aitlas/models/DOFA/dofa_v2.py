@@ -9,28 +9,39 @@
 # DeiT: https://github.com/facebookresearch/deit
 # --------------------------------------------------------
 
-from functools import partial
+import json
+import math
+import pdb
+from functools import partial, reduce
 from operator import mul
-from torch.nn.modules.utils import _pair
-from torch.nn import Conv2d, Dropout
-import numpy as np
 
+import numpy as np
 import torch
 import torch.nn as nn
-import pdb
-import math
-from functools import reduce
-import json
+from timm.models.vision_transformer import Block, PatchEmbed
+from torch.nn import Conv2d, Dropout
+from torch.nn.modules.utils import _pair
 
-from timm.models.vision_transformer import PatchEmbed, Block
 from .wave_dynamic_layer import Dynamic_MLP_OFA
 
+
 class OFAViT(nn.Module):
-    """ Masked Autoencoder with VisionTransformer backbone
-    """
-    def __init__(self, img_size=224, patch_size=16, drop_rate=0.,
-                 embed_dim=1024, depth=24, num_heads=16, wv_planes=128, num_classes=45,
-                 global_pool=True, mlp_ratio=4., norm_layer=nn.LayerNorm):
+    """Masked Autoencoder with VisionTransformer backbone"""
+
+    def __init__(
+        self,
+        img_size=224,
+        patch_size=16,
+        drop_rate=0.0,
+        embed_dim=1024,
+        depth=24,
+        num_heads=16,
+        wv_planes=128,
+        num_classes=45,
+        global_pool=True,
+        mlp_ratio=4.0,
+        norm_layer=nn.LayerNorm,
+    ):
         super().__init__()
 
         self.wv_planes = wv_planes
@@ -42,18 +53,32 @@ class OFAViT(nn.Module):
         else:
             self.norm = norm_layer(embed_dim)
 
-        self.patch_embed = Dynamic_MLP_OFA(wv_planes=128, inter_dim=128, kernel_size=patch_size, embed_dim=embed_dim)
+        self.patch_embed = Dynamic_MLP_OFA(
+            wv_planes=128, inter_dim=128, kernel_size=patch_size, embed_dim=embed_dim
+        )
         self.num_patches = (img_size // patch_size) ** 2
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.pos_embed = nn.Parameter(torch.zeros(1, self.num_patches + 1, embed_dim), requires_grad=False)  # fixed sin-cos embedding
+        self.pos_embed = nn.Parameter(
+            torch.zeros(1, self.num_patches + 1, embed_dim), requires_grad=False
+        )  # fixed sin-cos embedding
 
-        self.blocks = nn.ModuleList([
-            Block(embed_dim, num_heads, mlp_ratio, qkv_bias=True, norm_layer=norm_layer)
-            for i in range(depth)])
+        self.blocks = nn.ModuleList(
+            [
+                Block(
+                    embed_dim,
+                    num_heads,
+                    mlp_ratio,
+                    qkv_bias=True,
+                    norm_layer=norm_layer,
+                )
+                for i in range(depth)
+            ]
+        )
 
         self.head_drop = nn.Dropout(drop_rate)
-        self.head = nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
-
+        self.head = (
+            nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
+        )
 
     def forward_features(self, x, wave_list):
         # embed patches
@@ -92,24 +117,51 @@ class OFAViT(nn.Module):
 
 def dofa_v1_vit_base_patch16(**kwargs):
     model = OFAViT(
-        patch_size=16, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+        patch_size=16,
+        embed_dim=768,
+        depth=12,
+        num_heads=12,
+        mlp_ratio=4,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6),
+        **kwargs
+    )
     return model
+
 
 def dofa_v1_vit_large_patch16(**kwargs):
     model = OFAViT(
-        patch_size=16, embed_dim=1024, depth=24, num_heads=16, mlp_ratio=4,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+        patch_size=16,
+        embed_dim=1024,
+        depth=24,
+        num_heads=16,
+        mlp_ratio=4,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6),
+        **kwargs
+    )
     return model
+
 
 def dofa_v2_vit_base_patch14(**kwargs):
     model = OFAViT(
-        patch_size=14, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+        patch_size=14,
+        embed_dim=768,
+        depth=12,
+        num_heads=12,
+        mlp_ratio=4,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6),
+        **kwargs
+    )
     return model
+
 
 def dofa_v2_vit_large_patch14(**kwargs):
     model = OFAViT(
-        patch_size=14, embed_dim=1024, depth=24, num_heads=16, mlp_ratio=4,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+        patch_size=14,
+        embed_dim=1024,
+        depth=24,
+        num_heads=16,
+        mlp_ratio=4,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6),
+        **kwargs
+    )
     return model

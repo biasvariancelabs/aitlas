@@ -41,11 +41,7 @@ class VisualizeTask(BaseTask):
         name = (
             train_name
             if train_name
-            else test_name
-            if test_name
-            else val_name
-            if val_name
-            else ""
+            else test_name if test_name else val_name if val_name else ""
         )
 
         label_count = pd.concat([train, val, test])

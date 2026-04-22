@@ -1,7 +1,9 @@
-import torch
-from torch import Tensor
-import torch.nn.functional as F
 from typing import overload
+
+import torch
+import torch.nn.functional as F
+from torch import Tensor
+
 
 @overload
 def _to_tuple(value: tuple[int, int] | int) -> tuple[int, int]: ...
@@ -31,7 +33,7 @@ def resize_abs_pos_embed(
     new_size: int | tuple[int, int],
     old_size: int | tuple[int, int],
     num_prefix_tokens: int = 1,
-    interpolation: str = 'bicubic',
+    interpolation: str = "bicubic",
     antialias: bool = True,
 ) -> Tensor:
     """Resize absolute position embeddings to a target resolution via interpolation.

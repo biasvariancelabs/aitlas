@@ -35,10 +35,10 @@ conda create -n aitlas python=3.12 gdal fiona rasterio -c conda-forge -y
 ```bash
 conda activate aitlas
 ```
-- Before installing `aitlas` on Windows it is recommended to install the following packages 
+- Before installing `aitlas` on Windows it is recommended to install the following packages
 from [Unofficial Windows wheels repository](https://github.com/Vineg/python-wheels):
 ```bash
-pip install GDAL-3.4.2-cp38-cp38-win_amd64.whl 
+pip install GDAL-3.4.2-cp38-cp38-win_amd64.whl
 pip install Fiona-1.8.21-cp38-cp38-win_amd64.whl
 pip install rasterio-1.2.10-cp38-cp38-win_amd64.whl
 ```
@@ -92,7 +92,3 @@ An open-source benchmark framework for evaluating state-of-the-art deep learning
 ## Semantic Data Catalog of Earth Observation (EO) datasets (beta)
 
 A novel semantic data catalog of numerous EO datasets, pertaining to various different EO and ML tasks. The catalog, that includes properties of different datasets and provides further details for their use, is available [here](https://eodata.bvlabs.ai/ai4eo)
-
-
-
-

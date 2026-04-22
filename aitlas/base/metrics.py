@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from ignite.metrics import confusion_matrix
 from ignite.metrics.multilabel_confusion_matrix import MultiLabelConfusionMatrix
-from sklearn.metrics import average_precision_score, roc_auc_score, hamming_loss
+from sklearn.metrics import average_precision_score, hamming_loss, roc_auc_score
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
 
@@ -93,7 +93,7 @@ class RunningScore(object):
 
 
 class MultiClassRunningScore(RunningScore):
-    """Calculates confusion matrix for multi-class data. This class contains metrics that are averaged over batches. """
+    """Calculates confusion matrix for multi-class data. This class contains metrics that are averaged over batches."""
 
     def __init__(self, num_classes, device):
         super().__init__(num_classes, device)
@@ -172,12 +172,13 @@ class MultiClassRunningScore(RunningScore):
 
 
 class MultiLabelRunningScore(RunningScore):
-    """Calculates a confusion matrix for multi-labelled, multi-class data in addition to the """
+    """Calculates a confusion matrix for multi-labelled, multi-class data in addition to the"""
 
     def __init__(self, num_classes, device):
         super().__init__(num_classes, device)
         self.confusion_matrix = MultiLabelConfusionMatrix(
-            num_classes=self.num_classes, device=self.device,
+            num_classes=self.num_classes,
+            device=self.device,
         )
         self.list_y_prob = []
         self.list_y_true = []
@@ -317,9 +318,7 @@ class ObjectDetectionRunningScore(object):
     def __init__(self, num_classes, device):
         self.num_classes = num_classes
         self.device = device
-        self.metric = MeanAveragePrecision(
-            iou_type="bbox", class_metrics=True
-        )
+        self.metric = MeanAveragePrecision(iou_type="bbox", class_metrics=True)
 
     def update(self, preds, target):
         """Updates stats on each batch"""

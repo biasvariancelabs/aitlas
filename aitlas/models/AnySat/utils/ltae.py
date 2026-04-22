@@ -42,7 +42,7 @@ class LTAE2d(nn.Module):
         d_k=4,
         mlp=[256, 128],
         dropout=0.2,
-        mlp_in = [10, 32, 128],
+        mlp_in=[10, 32, 128],
         T=1000,
         in_norm=True,
         return_att=False,
@@ -80,14 +80,14 @@ class LTAE2d(nn.Module):
                 layers.extend(
                     [
                         nn.Linear(mlp_in[i], mlp_in[i + 1]),
-                        #nn.BatchNorm1d(mlp_in[i + 1]),
+                        # nn.BatchNorm1d(mlp_in[i + 1]),
                         nn.GroupNorm(4, mlp_in[i + 1]),
                         nn.ReLU(),
                         nn.Dropout(dropout),
                     ]
                 )
 
-            self.inconv  = nn.Sequential(*layers)
+            self.inconv = nn.Sequential(*layers)
         else:
             self.d_model = in_channels
             self.inconv = None
@@ -104,7 +104,7 @@ class LTAE2d(nn.Module):
         self.attention_heads = MultiHeadAttention(
             n_head=n_head, d_k=d_k, d_in=self.d_model
         )
-        
+
         if in_norm:
             self.in_norm = nn.GroupNorm(
                 num_groups=n_head,
@@ -112,18 +112,18 @@ class LTAE2d(nn.Module):
             )
         else:
             self.in_norm = nn.Identity()
-        
+
         self.out_norm = nn.GroupNorm(
             num_groups=n_head,
             num_channels=mlp[-1],
         )
-        
+
         layers = []
         for i in range(len(self.mlp) - 1):
             layers.extend(
                 [
                     nn.Linear(self.mlp[i], self.mlp[i + 1]),
-                    #nn.BatchNorm1d(self.mlp[i + 1]),
+                    # nn.BatchNorm1d(self.mlp[i + 1]),
                     nn.GroupNorm(4, self.mlp[i + 1]),
                     nn.ReLU(),
                 ]
@@ -264,28 +264,37 @@ class ScaledDotProductAttention(nn.Module):
             return output, attn, comp
         else:
             return output, attn
-  
-    
+
+
 class PatchLTAE(nn.Module):
     def __init__(
-            self,
-            in_channels=128,
-            n_head=16,
-            d_k=4,
-            mlp=[256, 128],
-            dropout=0.2,
-            mlp_in = [10, 32, 128],
-            T=1000,
-            in_norm=True,
-            return_att=False,
-            positional_encoding=True,
-            scale: int = 1,
-            ):
+        self,
+        in_channels=128,
+        n_head=16,
+        d_k=4,
+        mlp=[256, 128],
+        dropout=0.2,
+        mlp_in=[10, 32, 128],
+        T=1000,
+        in_norm=True,
+        return_att=False,
+        positional_encoding=True,
+        scale: int = 1,
+    ):
         super().__init__()
         self.scale = scale
-        self.patch_embed = LTAE2d(in_channels=in_channels, n_head=n_head, d_k=d_k, mlp=mlp, dropout=dropout, 
-                                  mlp_in=mlp_in, T=T, in_norm=in_norm, return_att=return_att, 
-                                  positional_encoding=positional_encoding)
+        self.patch_embed = LTAE2d(
+            in_channels=in_channels,
+            n_head=n_head,
+            d_k=d_k,
+            mlp=mlp,
+            dropout=dropout,
+            mlp_in=mlp_in,
+            T=T,
+            in_norm=in_norm,
+            return_att=return_att,
+            positional_encoding=positional_encoding,
+        )
         self.pad_parameter = nn.Parameter(torch.tensor(0.0), requires_grad=False)
 
     def forward(self, x, dates, mask=None):
@@ -293,31 +302,41 @@ class PatchLTAE(nn.Module):
             self.pad_parameter.requires_grad = True
             x = x.masked_fill(torch.logical_not(mask.bool()), self.pad_parameter)
         x = self.patch_embed(x, dates)
-        B, E, _, _= x.shape
+        B, E, _, _ = x.shape
         x = x.unfold(2, self.scale, self.scale).unfold(3, self.scale, self.scale)
         x = x.flatten(2, 3).flatten(3, 4).permute(0, 2, 3, 1)
-        x = x.flatten(0,1)
+        x = x.flatten(0, 1)
         return x
-    
+
+
 class PatchLTAEMulti(nn.Module):
     def __init__(
-            self,
-            in_channels=128,
-            n_head=16,
-            d_k=4,
-            mlp=[256, 128],
-            dropout=0.2,
-            mlp_in = [10, 32, 128],
-            T=1000,
-            in_norm=True,
-            return_att=False,
-            positional_encoding=True,
-            reduce_scale = 1,
-            ):
+        self,
+        in_channels=128,
+        n_head=16,
+        d_k=4,
+        mlp=[256, 128],
+        dropout=0.2,
+        mlp_in=[10, 32, 128],
+        T=1000,
+        in_norm=True,
+        return_att=False,
+        positional_encoding=True,
+        reduce_scale=1,
+    ):
         super().__init__()
-        self.patch_embed = LTAE2d(in_channels=in_channels, n_head=n_head, d_k=d_k, mlp=mlp, dropout=dropout, 
-                                  mlp_in=mlp_in, T=T, in_norm=in_norm, return_att=return_att, 
-                                  positional_encoding=positional_encoding)
+        self.patch_embed = LTAE2d(
+            in_channels=in_channels,
+            n_head=n_head,
+            d_k=d_k,
+            mlp=mlp,
+            dropout=dropout,
+            mlp_in=mlp_in,
+            T=T,
+            in_norm=in_norm,
+            return_att=return_att,
+            positional_encoding=positional_encoding,
+        )
         self.reduce_scale = reduce_scale
         self.pad_parameter = nn.Parameter(torch.tensor(0.0), requires_grad=False)
 
@@ -330,8 +349,8 @@ class PatchLTAEMulti(nn.Module):
             x = x.masked_fill(torch.logical_not(mask.bool()), self.pad_parameter)
             self.pad_parameter.requires_grad = False
         x = self.patch_embed(x, dates)
-        B, E, _, _= x.shape
+        B, E, _, _ = x.shape
         x = x.unfold(2, scale, scale).unfold(3, scale, scale)
         x = x.flatten(2, 3).flatten(3, 4).permute(0, 2, 3, 1)
-        x = x.flatten(0,1)
+        x = x.flatten(0, 1)
         return x

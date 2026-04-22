@@ -7,8 +7,11 @@ class MatDatasetSchema(BaseDatasetSchema):
     """
     Schema for configuring a classification dataset given as mat file.
     """
+
     mat_file = fields.String(
-        missing=None, description="mat file on disk", example="./data/dataset.mat",
+        missing=None,
+        description="mat file on disk",
+        example="./data/dataset.mat",
     )
     mode = fields.String(
         missing="train",
@@ -16,7 +19,9 @@ class MatDatasetSchema(BaseDatasetSchema):
         example="train",
     )
     csv_file = fields.String(
-        missing=None, description="CSV file on disk", example="./data/train.csv",
+        missing=None,
+        description="CSV file on disk",
+        example="./data/train.csv",
     )
     download = fields.Bool(
         missing=False, description="Whether to download the dataset", example=True
@@ -27,8 +32,11 @@ class NPZDatasetSchema(BaseDatasetSchema):
     """
     Schema for configuring a classification dataset given as npz file.
     """
+
     npz_file = fields.String(
-        missing=None, description="npz file on disk", example="./data/dataset.npz",
+        missing=None,
+        description="npz file on disk",
+        example="./data/dataset.npz",
     )
     mode = fields.String(
         missing="train",
@@ -47,11 +55,14 @@ class ClassificationDatasetSchema(BaseDatasetSchema):
     """
     Schema for configuring a classification dataset.
     """
+
     data_dir = fields.String(
         missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
     )
     csv_file = fields.String(
-        missing=None, description="CSV file on disk", example="./data/train.csv",
+        missing=None,
+        description="CSV file on disk",
+        example="./data/train.csv",
     )
 
 
@@ -59,11 +70,14 @@ class SegmentationDatasetSchema(BaseDatasetSchema):
     """
     Schema for configuring a segmentation dataset.
     """
+
     data_dir = fields.String(
         missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
     )
     csv_file = fields.String(
-        missing=None, description="CSV file on disk", example="./data/train.csv",
+        missing=None,
+        description="CSV file on disk",
+        example="./data/train.csv",
     )
 
 
@@ -71,6 +85,7 @@ class ObjectDetectionPascalDatasetSchema(BaseDatasetSchema):
     """
     Schema for configuring an object detection dataset given in PASCAL VOC format.
     """
+
     imageset_file = fields.String(
         missing="/",
         description="File with the image ids in the set",
@@ -90,6 +105,7 @@ class ObjectDetectionCocoDatasetSchema(BaseDatasetSchema):
     """
     Schema for configuring an object detection dataset given in COCO format.
     """
+
     data_dir = fields.String(
         missing="/", description="Dataset path on disk", example="./data/DIOR/"
     )
@@ -102,23 +118,27 @@ class ObjectDetectionCocoDatasetSchema(BaseDatasetSchema):
         missing=True, description="Do we need to hardcode the background as a class?"
     )
 
+
 class ObjectDetectionRfiCocoDatasetSchema(BaseDatasetSchema):
     """
     Schema for configuring an object detection dataset given in COCO format.
     """
+
     data_dir = fields.String(
         missing="/", description="Dataset path on disk", example="./data/DIOR/"
     )
     annotation_dir = fields.String(
-        missing='/',
+        missing="/",
         description="JSON Coco files path on disk",
-        example="./data/annotations/"
+        example="./data/annotations/",
     )
+
 
 class BigEarthNetSchema(BaseDatasetSchema):
     """
     Schema for configuring the BigEarthNet dataset.
     """
+
     csv_file = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv"
     )
@@ -155,6 +175,7 @@ class SpaceNet6DatasetSchema(BaseDatasetSchema):
     """
     Schema for configuring the SpaceNet6 dataset.
     """
+
     orients = fields.String(
         required=False,
         example="path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.csv",
@@ -250,6 +271,7 @@ class BreizhCropsSchema(BaseDatasetSchema):
     """
     Schema for configuring the BreizhCrops dataset for crop type prediction.
     """
+
     regions = fields.List(
         fields.String,
         required=True,
@@ -284,6 +306,7 @@ class CropsDatasetSchema(BaseDatasetSchema):
     """
     Schema for configuring dataset for crop type prediction.
     """
+
     csv_file_path = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv"
     )
@@ -309,14 +332,17 @@ class So2SatDatasetSchema(BaseDatasetSchema):
     """
     Schema for configuring the So2Sat dataset.
     """
+
     h5_file = fields.String(
         required=True, description="H5 file on disk", example="./data/train.h5"
     )
+
 
 class CloudDatasets_AI4QCSchema(BaseDatasetSchema):
     """
     Schema for configuring Cloud AI4QC datasets.
     """
+
     csv_file = fields.String(
         missing=None, description="CSV file on disk", example="./data/train.csv"
     )
@@ -327,14 +353,17 @@ class CloudDatasets_AI4QCSchema(BaseDatasetSchema):
         missing="rgb", description="Read RGB channels or 13 channels", example="all/rgb"
     )
 
+
 class ClusteringDatasetSchema(BaseDatasetSchema):
     """
     Schema for configuring a clustering dataset.
     """
+
     data_dir = fields.String(
         missing="/", description="Dataset path on disk", example="./data/New_anomalies/"
     )
     csv_file = fields.String(
-        missing=None, description="CSV file on disk", example="./data/train.csv",
+        missing=None,
+        description="CSV file on disk",
+        example="./data/train.csv",
     )
-

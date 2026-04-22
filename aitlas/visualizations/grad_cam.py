@@ -5,11 +5,12 @@ Classes and methods for GRAD-CAM visualizations, used for classification tasks.
     Based on the implementation at: https://github.com/jacobgil/pytorch-grad-cam
 """
 
+from typing import Callable, List, Tuple
+
+import cv2
 import numpy as np
 import torch
 import ttach as tta
-import cv2
-from typing import Callable, List, Tuple
 
 
 class ActivationsAndGradients:

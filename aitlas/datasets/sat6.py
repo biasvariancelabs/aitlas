@@ -1,5 +1,5 @@
-import random
 import csv
+import random
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -112,7 +112,9 @@ class SAT6Dataset(BaseDataset):
         if size % 5:
             raise ValueError("The provided size should be divided by 5!")
         image_indices = random.sample(range(0, len(self.data)), size)
-        figure, ax = plt.subplots(int(size / 5), 5, figsize=(13.75, 2.8*int(size/5)))
+        figure, ax = plt.subplots(
+            int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5))
+        )
         if show_title:
             figure.suptitle(
                 "Example images with labels from {}".format(self.get_name()),

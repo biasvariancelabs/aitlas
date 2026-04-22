@@ -1,16 +1,29 @@
-from typing import Dict, List, Optional, Tuple
 from collections import OrderedDict
+from typing import Dict, List, Optional, Tuple
+
 import torch
 
 
-# Constants 
+# Constants
 PRESTO_S1_BANDS = ["vv", "vh"]
 _PRESTO_S2_BANDS_ALL = [
-    "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B09", "B11", "B12"
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B06",
+    "B07",
+    "B08",
+    "B8A",
+    "B09",
+    "B11",
+    "B12",
 ]
 ERA5_BANDS = ["temperature_2m", "total_precipitation"]
 SRTM_BANDS = ["elevation", "slope"]
-_PRESTO_BANDS_ALL = PRESTO_S1_BANDS + _PRESTO_S2_BANDS_ALL + ERA5_BANDS + SRTM_BANDS + ["NDVI"]
+_PRESTO_BANDS_ALL = (
+    PRESTO_S1_BANDS + _PRESTO_S2_BANDS_ALL + ERA5_BANDS + SRTM_BANDS + ["NDVI"]
+)
 
 # The actual bands used by the model (B09 is excluded)
 INPUT_PRESTO_S2_BANDS = [b for b in _PRESTO_S2_BANDS_ALL if b != "B09"]
@@ -20,14 +33,44 @@ NUM_DYNAMIC_WORLD_CLASSES = 9
 # For normalization
 PRESTO_ADD_BY = torch.Tensor(
     [
-        25.0, 25.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        -272.15, 0.0, 0.0, 0.0, 0.0,
+        25.0,
+        25.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -272.15,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
     ]
 )
 PRESTO_DIV_BY = torch.Tensor(
     [
-        25.0, 25.0, 1e4, 1e4, 1e4, 1e4, 1e4, 1e4, 1e4, 1e4, 1e4, 1e4,
-        35.0, 0.03, 2000.0, 50.0, 1.0,
+        25.0,
+        25.0,
+        1e4,
+        1e4,
+        1e4,
+        1e4,
+        1e4,
+        1e4,
+        1e4,
+        1e4,
+        1e4,
+        1e4,
+        35.0,
+        0.03,
+        2000.0,
+        50.0,
+        1.0,
     ]
 )
 
@@ -44,6 +87,7 @@ BANDS_GROUPS_IDX = OrderedDict(
         ("NDVI", [16]),
     ]
 )
+
 
 def prepare_presto_input(
     s1: Optional[torch.Tensor] = None,
@@ -81,7 +125,10 @@ def prepare_presto_input(
     x = torch.zeros(b, t, len(INPUT_PRESTO_BANDS), h, w, device=device)
 
     band_mappings = [
-        (s1, PRESTO_S1_BANDS), (s2, s2_bands), (era5, ERA5_BANDS), (srtm, SRTM_BANDS)
+        (s1, PRESTO_S1_BANDS),
+        (s2, s2_bands),
+        (era5, ERA5_BANDS),
+        (srtm, SRTM_BANDS),
     ]
     for data, input_bands in band_mappings:
         if data is not None:
@@ -106,20 +153,24 @@ def prepare_presto_input(
 
     # Prepare `dynamic_world`
     if dynamic_world is None:
-        dynamic_world = torch.full((b, t, h, w), NUM_DYNAMIC_WORLD_CLASSES, device=device)
+        dynamic_world = torch.full(
+            (b, t, h, w), NUM_DYNAMIC_WORLD_CLASSES, device=device
+        )
 
     # Prepare `months`
     final_months: torch.Tensor
     if months is None:
         # Create sequence from default start month for the whole batch
-        month_sequence = torch.fmod(torch.arange(default_month, default_month + t, dtype=torch.long), 12)
+        month_sequence = torch.fmod(
+            torch.arange(default_month, default_month + t, dtype=torch.long), 12
+        )
         final_months = month_sequence.expand(b, t).to(device)
-    elif len(months.shape) == 1: # (B,) of start months
+    elif len(months.shape) == 1:  # (B,) of start months
         # Create a unique sequence for each sample in the batch
-        final_months = torch.stack([
-            torch.fmod(torch.arange(m, m + t, dtype=torch.long), 12) for m in months
-        ]).to(device)
-    else: # Assumes months is already (B, T)
+        final_months = torch.stack(
+            [torch.fmod(torch.arange(m, m + t, dtype=torch.long), 12) for m in months]
+        ).to(device)
+    else:  # Assumes months is already (B, T)
         final_months = months.to(device)
 
     # Pass latlons through without modification

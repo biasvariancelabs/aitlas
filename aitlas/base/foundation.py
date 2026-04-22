@@ -1,10 +1,11 @@
 import torch.nn as nn
+
 from .models import BaseModel
 from .schemas import BaseFoundationModelSchema
 
+
 class FoundationModel(BaseModel):
-    """Base class for foundation models.
-    """
+    """Base class for foundation models."""
 
     schema = BaseFoundationModelSchema
 
@@ -25,7 +26,9 @@ class FoundationModel(BaseModel):
         :return: The backbone model
         :rtype: torch.nn.Module
         """
-        raise NotImplementedError("Each foundation model should implement 'load_backbone' to load its backbone.")
+        raise NotImplementedError(
+            "Each foundation model should implement 'load_backbone' to load its backbone."
+        )
 
     def forward_features(self, x, **kwargs):
         """Forward pass through the model to get the feature embeddings.
@@ -38,10 +41,12 @@ class FoundationModel(BaseModel):
         :return: Output feature embeddings or predictions
         :rtype: torch.Tensor
         """
-        raise NotImplementedError("Each foundation model should implement 'forward_features' to define its forward pass to get the feature embaddings.")
+        raise NotImplementedError(
+            "Each foundation model should implement 'forward_features' to define its forward pass to get the feature embaddings."
+        )
 
     def forward(self, x=None, **kwargs):
-        """ Standard forward pass. 
+        """Standard forward pass.
         If x is provided (standard models), it passes it as a positional arg.
         If x is None (CROMA), it relies entirely on kwargs.
         """

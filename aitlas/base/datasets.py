@@ -1,6 +1,6 @@
 """Dataset base class.
 
-This is the base class for all datasets. All datasets should subclass it. 
+This is the base class for all datasets. All datasets should subclass it.
 """
 
 import torch

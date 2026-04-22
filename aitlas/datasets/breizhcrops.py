@@ -5,6 +5,7 @@ BreizhCrops - a crop type classification dataset
     Original implementation of BreizhCrops dataset: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/datasets/breizhcrops.py
 
 """
+
 import logging
 import os
 import tarfile
@@ -16,8 +17,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from aitlas.datasets.crops_classification import CropsDataset
 from tqdm import tqdm
+
+from aitlas.datasets.crops_classification import CropsDataset
 
 from ..base import BaseDataset
 from .schemas import BreizhCropsSchema
@@ -555,6 +557,8 @@ class BreizhCropsDataset(CropsDataset):
                 cld_index = SELECTED_BANDS["L1C"].index("QA60")
             elif self.config.level == "L2A":
                 cld_index = SELECTED_BANDS["L2A"].index("CLD")
+            else:
+                raise ValueError(f"Unknown level: {self.config.level}")
 
             X = self.load(os.path.join(self.csvfolder, csv_file))
             culturecode, id = self.load_culturecode_and_id(

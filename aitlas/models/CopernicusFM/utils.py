@@ -1,9 +1,11 @@
-import torch
-from torch import Tensor, vmap
-import torch.nn.functional as F
-import numpy as np
 from typing import overload
+
+import numpy as np
+import torch
+import torch.nn.functional as F
 from einops import rearrange
+from torch import Tensor, vmap
+
 
 @overload
 def _to_tuple(value: tuple[int, int] | int) -> tuple[int, int]: ...
@@ -33,7 +35,7 @@ def resize_abs_pos_embed(
     new_size: int | tuple[int, int],
     old_size: int | tuple[int, int],
     num_prefix_tokens: int = 1,
-    interpolation: str = 'bicubic',
+    interpolation: str = "bicubic",
     antialias: bool = True,
 ) -> Tensor:
     """Resize absolute position embeddings to a target resolution via interpolation.
@@ -84,7 +86,7 @@ def resize_abs_pos_embed(
 def pi_resize_patch_embed(
     patch_embed: Tensor,
     new_patch_size: tuple[int, int],
-    interpolation: str = 'bicubic',
+    interpolation: str = "bicubic",
     antialias: bool = True,
 ) -> Tensor:
     """Resample patch embeddings to a target resolution via pseudo-inverse resizing.
@@ -100,8 +102,8 @@ def pi_resize_patch_embed(
     Returns:
         Resized pos_embed of size [d, c h', w']
     """
-    assert len(patch_embed.shape) == 4, 'Patch embed kernel should be a 4D tensor'
-    assert len(new_patch_size) == 2, 'New patch size should only be (height, width)'
+    assert len(patch_embed.shape) == 4, "Patch embed kernel should be a 4D tensor"
+    assert len(new_patch_size) == 2, "New patch size should only be (height, width)"
 
     _, _, h, w = patch_embed.shape
     old_patch_size = (h, w)
@@ -135,7 +137,7 @@ def pi_resize_patch_embed(
     def resample_patch_embed(patch_embed: Tensor) -> Tensor:
         h, w = new_patch_size
         resampled_kernel = resize_matrix_pinv @ patch_embed.reshape(-1)
-        return rearrange(resampled_kernel, '(h w) -> h w', h=h, w=w)
+        return rearrange(resampled_kernel, "(h w) -> h w", h=h, w=w)
 
     v_resample_patch_embed = vmap(vmap(resample_patch_embed, 0, 0), 1, 1)
 

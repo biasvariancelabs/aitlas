@@ -72,4 +72,3 @@ aitlas.tasks.visualize module
    :members:
    :undoc-members:
    :show-inheritance:
-

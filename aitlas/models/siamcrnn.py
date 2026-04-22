@@ -9,9 +9,11 @@ from torchvision import models
 
 from ..base import BaseChangeDetection
 
+
 # -----------------------------------------------------------------------------
 # ConvLSTM Components (from FCN_version/deep_networks/SiamCRNN.py)
 # -----------------------------------------------------------------------------
+
 
 class ConvLSTMCell(nn.Module):
     def __init__(self, input_dim, hidden_dim, kernel_size, bias):
@@ -27,11 +29,13 @@ class ConvLSTMCell(nn.Module):
         self.padding = kernel_size[0] // 2, kernel_size[1] // 2
         self.bias = bias
 
-        self.conv = nn.Conv2d(in_channels=self.input_dim + self.hidden_dim,
-                              out_channels=4 * self.hidden_dim,
-                              kernel_size=self.kernel_size,
-                              padding=self.padding,
-                              bias=self.bias)
+        self.conv = nn.Conv2d(
+            in_channels=self.input_dim + self.hidden_dim,
+            out_channels=4 * self.hidden_dim,
+            kernel_size=self.kernel_size,
+            padding=self.padding,
+            bias=self.bias,
+        )
 
     def forward(self, input_tensor, cur_state):
         h_cur, c_cur = cur_state
@@ -53,8 +57,22 @@ class ConvLSTMCell(nn.Module):
 
     def init_hidden(self, batch_size, image_size):
         height, width = image_size
-        return (torch.zeros(batch_size, self.hidden_dim, height, width, device=self.conv.weight.device),
-                torch.zeros(batch_size, self.hidden_dim, height, width, device=self.conv.weight.device))
+        return (
+            torch.zeros(
+                batch_size,
+                self.hidden_dim,
+                height,
+                width,
+                device=self.conv.weight.device,
+            ),
+            torch.zeros(
+                batch_size,
+                self.hidden_dim,
+                height,
+                width,
+                device=self.conv.weight.device,
+            ),
+        )
 
 
 class ConvLSTM(nn.Module):
@@ -62,8 +80,16 @@ class ConvLSTM(nn.Module):
     A multi-layer Convolutional LSTM module.
     """
 
-    def __init__(self, input_dim, hidden_dim=128, kernel_size=(3, 3), num_layers=1,
-                 batch_first=True, bias=True, return_all_layers=False):
+    def __init__(
+        self,
+        input_dim,
+        hidden_dim=128,
+        kernel_size=(3, 3),
+        num_layers=1,
+        batch_first=True,
+        bias=True,
+        return_all_layers=False,
+    ):
         super(ConvLSTM, self).__init__()
 
         self._check_kernel_size_consistency(kernel_size)
@@ -72,7 +98,7 @@ class ConvLSTM(nn.Module):
         kernel_size = self._extend_for_multilayer(kernel_size, num_layers)
         hidden_dim = self._extend_for_multilayer(hidden_dim, num_layers)
         if not len(kernel_size) == len(hidden_dim) == num_layers:
-            raise ValueError('Inconsistent list length.')
+            raise ValueError("Inconsistent list length.")
 
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
@@ -86,10 +112,14 @@ class ConvLSTM(nn.Module):
         for i in range(0, self.num_layers):
             cur_input_dim = self.input_dim if i == 0 else self.hidden_dim[i - 1]
 
-            cell_list.append(ConvLSTMCell(input_dim=cur_input_dim,
-                                          hidden_dim=self.hidden_dim[i],
-                                          kernel_size=self.kernel_size[i],
-                                          bias=self.bias))
+            cell_list.append(
+                ConvLSTMCell(
+                    input_dim=cur_input_dim,
+                    hidden_dim=self.hidden_dim[i],
+                    kernel_size=self.kernel_size[i],
+                    bias=self.bias,
+                )
+            )
 
         self.cell_list = nn.ModuleList(cell_list)
 
@@ -113,8 +143,9 @@ class ConvLSTM(nn.Module):
             h, c = hidden_state[layer_idx]
             output_inner = []
             for t in range(seq_len):
-                h, c = self.cell_list[layer_idx](input_tensor=cur_layer_input[:, t, :, :, :],
-                                                 cur_state=[h, c])
+                h, c = self.cell_list[layer_idx](
+                    input_tensor=cur_layer_input[:, t, :, :, :], cur_state=[h, c]
+                )
                 output_inner.append(h)
 
             layer_output = torch.stack(output_inner, dim=1)
@@ -137,9 +168,14 @@ class ConvLSTM(nn.Module):
 
     @staticmethod
     def _check_kernel_size_consistency(kernel_size):
-        if not (isinstance(kernel_size, tuple) or
-                (isinstance(kernel_size, list) and all([isinstance(elem, tuple) for elem in kernel_size]))):
-            raise ValueError('`kernel_size` must be tuple or list of tuples')
+        if not (
+            isinstance(kernel_size, tuple)
+            or (
+                isinstance(kernel_size, list)
+                and all([isinstance(elem, tuple) for elem in kernel_size])
+            )
+        ):
+            raise ValueError("`kernel_size` must be tuple or list of tuples")
 
     @staticmethod
     def _extend_for_multilayer(param, num_layers):
@@ -152,22 +188,24 @@ class ConvLSTM(nn.Module):
 # Main SiamCRNN Model (from FCN_version/deep_networks/SiamCRNN.py)
 # -----------------------------------------------------------------------------
 
+
 class SiamCRNNModel(nn.Module):
     """
-    Implementation of SiamCRNN: Change Detection in Multisource VHR Images via 
+    Implementation of SiamCRNN: Change Detection in Multisource VHR Images via
     Deep Siamese Convolutional Multiple-Layers Recurrent Neural Network (FCN Version)
-    
+
     Based on: https://github.com/ChenHongruixuan/SiamCRNN
     Original paper: https://ieeexplore.ieee.org/document/8937755
     DOI: 10.1109/TGRS.2019.2956756
     """
+
     def __init__(self, in_channels=3, num_classes=2, pretrained=True):
         super(SiamCRNNModel, self).__init__()
-        
+
         # --- Encoder: ResNet34 ---
         resnet = models.resnet34(pretrained=pretrained)
         resnet = self._convert_resnet_to_output_stride_16(resnet)
-        
+
         # Handle input channels != 3
         if in_channels != 3:
             old_conv = resnet.conv1
@@ -177,9 +215,11 @@ class SiamCRNNModel(nn.Module):
                 kernel_size=old_conv.kernel_size,
                 stride=old_conv.stride,
                 padding=old_conv.padding,
-                bias=old_conv.bias
+                bias=old_conv.bias,
             )
-            nn.init.kaiming_normal_(new_conv.weight, mode='fan_out', nonlinearity='relu')
+            nn.init.kaiming_normal_(
+                new_conv.weight, mode="fan_out", nonlinearity="relu"
+            )
             resnet.conv1 = new_conv
 
         # Decompose ResNet to access intermediate layers
@@ -187,49 +227,51 @@ class SiamCRNNModel(nn.Module):
         self.encoder_bn1 = resnet.bn1
         self.encoder_relu = resnet.relu
         self.encoder_maxpool = resnet.maxpool
-        self.encoder_layer1 = resnet.layer1 # 64 channels
-        self.encoder_layer2 = resnet.layer2 # 128 channels
-        self.encoder_layer3 = resnet.layer3 # 256 channels
-        self.encoder_layer4 = resnet.layer4 # 512 channels
-        
+        self.encoder_layer1 = resnet.layer1  # 64 channels
+        self.encoder_layer2 = resnet.layer2  # 128 channels
+        self.encoder_layer3 = resnet.layer3  # 256 channels
+        self.encoder_layer4 = resnet.layer4  # 512 channels
+
         # --- Decoder: Stacked ConvLSTMs ---
         # ConvLSTM layers for each stage (4, 3, 2, 1)
         self.convlstm_4 = ConvLSTM(input_dim=512)
         self.convlstm_3 = ConvLSTM(input_dim=256)
         self.convlstm_2 = ConvLSTM(input_dim=128)
         self.convlstm_1 = ConvLSTM(input_dim=64)
-        
+
         # --- Smooth Layers (Fusion) ---
         self.smooth_layer_3 = self._make_smooth_layer(128)
         self.smooth_layer_2 = self._make_smooth_layer(128)
         self.smooth_layer_1 = self._make_smooth_layer(128)
 
         # --- Classifier ---
-        self.main_clf_1 = nn.Conv2d(in_channels=128, out_channels=num_classes, kernel_size=1)
+        self.main_clf_1 = nn.Conv2d(
+            in_channels=128, out_channels=num_classes, kernel_size=1
+        )
 
     def _convert_resnet_to_output_stride_16(self, resnet):
         # Modify layer3: stride=1, dilation=2
         for n, m in resnet.layer3.named_modules():
-            if 'conv1' in n:
+            if "conv1" in n:
                 m.dilation = (2, 2)
                 m.padding = (2, 2)
                 m.stride = (1, 1)
-            elif 'conv2' in n:
+            elif "conv2" in n:
                 m.dilation = (2, 2)
                 m.padding = (2, 2)
-            elif 'downsample.0' in n:
+            elif "downsample.0" in n:
                 m.stride = (1, 1)
 
         # Modify layer4: stride=1, dilation=4
         for n, m in resnet.layer4.named_modules():
-            if 'conv1' in n:
+            if "conv1" in n:
                 m.dilation = (4, 4)
                 m.padding = (4, 4)
                 m.stride = (1, 1)
-            elif 'conv2' in n:
+            elif "conv2" in n:
                 m.dilation = (4, 4)
                 m.padding = (4, 4)
-            elif 'downsample.0' in n:
+            elif "downsample.0" in n:
                 m.stride = (1, 1)
 
         return resnet
@@ -251,13 +293,13 @@ class SiamCRNNModel(nn.Module):
         l2 = self.encoder_layer2(l1)
         l3 = self.encoder_layer3(l2)
         l4 = self.encoder_layer4(l3)
-        
+
         return l1, l2, l3, l4
 
     def _upsample_add(self, x, y):
         """Upsample x to match y's size and add"""
         _, _, H, W = y.size()
-        return F.interpolate(x, size=(H, W), mode='bilinear') + y
+        return F.interpolate(x, size=(H, W), mode="bilinear") + y
 
     def forward(self, pre_data, post_data):
         # 1. Extract Features (Siamese)
@@ -269,7 +311,7 @@ class SiamCRNNModel(nn.Module):
         combined_4 = torch.stack([pre_l4, post_l4], dim=1)
         _, last_state_list_4 = self.convlstm_4(combined_4)
         # Take the hidden state (h) of the first (and only) layer
-        p4 = last_state_list_4[0][0] 
+        p4 = last_state_list_4[0][0]
 
         # 3. Stage 3 Processing
         combined_3 = torch.stack([pre_l3, post_l3], dim=1)
@@ -296,8 +338,8 @@ class SiamCRNNModel(nn.Module):
         # 6. Classification
         output = self.main_clf_1(p1)
         # Restore to original image size
-        output = F.interpolate(output, size=pre_data.size()[-2:], mode='bilinear')
-        
+        output = F.interpolate(output, size=pre_data.size()[-2:], mode="bilinear")
+
         return output
 
 
@@ -305,17 +347,19 @@ class SiamCRNNModel(nn.Module):
 # Aitlas Wrapper
 # -----------------------------------------------------------------------------
 
+
 class SiamCRNN(BaseChangeDetection):
     """
     Wrapper for SiamCRNN
     """
+
     def __init__(self, config):
         super().__init__(config)
-        
+
         self.model = SiamCRNNModel(
-            in_channels=3, #self.config.in_channels
+            in_channels=3,  # self.config.in_channels
             num_classes=self.config.num_classes,
-            pretrained=self.config.pretrained
+            pretrained=self.config.pretrained,
         )
 
     def forward(self, x1, x2):

@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
 
+
 random_seed = 1234
 torch.manual_seed(random_seed)
 
@@ -27,6 +28,7 @@ def get_1d_sincos_pos_embed_from_grid_torch(embed_dim, pos):
 
     emb = torch.cat([emb_sin, emb_cos], dim=1)  # (M, D)
     return emb
+
 
 class TransformerWeightGenerator(nn.Module):
     def __init__(self, input_dim, output_dim, embed_dim, num_heads=4, num_layers=1):
@@ -154,6 +156,7 @@ class Dynamic_MLP_Decoder(nn.Module):
         x = dynamic_out
         return x
 
+
 class Dynamic_MLP_OFA(nn.Module):
     """
     Input: channels of wavelength (normalized): List -> List
@@ -206,10 +209,12 @@ class Dynamic_MLP_OFA(nn.Module):
         waves = self.fclayer(waves)
         weight, bias = self._get_weights(waves)  # 3x3x3
 
-        # Fix bug        
-        dynamic_weight = weight.view(inplanes, self.kernel_size, self.kernel_size, self.embed_dim)
-        dynamic_weight = dynamic_weight.permute([3,0,1,2])
-        
+        # Fix bug
+        dynamic_weight = weight.view(
+            inplanes, self.kernel_size, self.kernel_size, self.embed_dim
+        )
+        dynamic_weight = dynamic_weight.permute([3, 0, 1, 2])
+
         if bias is not None:
             bias = bias.view([self.embed_dim]) * self.scaler
 
@@ -223,4 +228,3 @@ class Dynamic_MLP_OFA(nn.Module):
         x = x.flatten(2).transpose(1, 2)
 
         return x, waves
-

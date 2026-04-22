@@ -18,8 +18,8 @@ from timm.models.vision_transformer import Block
 from torch import Tensor
 from torchvision.models._api import Weights, WeightsEnum
 
-from .utils import resize_abs_pos_embed, pi_resize_patch_embed
 from ..DOFA import FCResLayer, TransformerWeightGenerator
+from .utils import pi_resize_patch_embed, resize_abs_pos_embed
 
 
 class FourierExpansion(nn.Module):
@@ -69,13 +69,13 @@ class FourierExpansion(nn.Module):
         in_range_or_zero = torch.all(torch.logical_or(in_range, x == 0))
         if self.assert_range and not in_range_or_zero:
             raise AssertionError(
-                f'The input tensor is not within the configured range'
-                f' `[{self.lower}, {self.upper}]`.'
+                f"The input tensor is not within the configured range"
+                f" `[{self.lower}, {self.upper}]`."
             )
 
         # We will use half of the dimensionality for `sin` and the other half for `cos`.
         if not (d % 2 == 0):
-            raise ValueError('The dimensionality must be a multiple of two.')
+            raise ValueError("The dimensionality must be a multiple of two.")
 
         # Always perform the expansion with `float64`s to avoid numerical accuracy shenanigans.
         x = x.double()
@@ -88,7 +88,7 @@ class FourierExpansion(nn.Module):
             device=x.device,
             dtype=x.dtype,
         )
-        prod = torch.einsum('...i,j->...ij', x, 2 * np.pi / wavelengths)
+        prod = torch.einsum("...i,j->...ij", x, 2 * np.pi / wavelengths)
         encoding = torch.cat((torch.sin(prod), torch.cos(prod)), dim=-1)
 
         return encoding.float()  # Cast to `float32` to avoid incompatibilities.
@@ -105,7 +105,7 @@ class DynamicPatchEmbed(nn.Module):
         hyper_dim: int = 128,
         kernel_size: int = 16,
         embed_dim: int = 1024,
-        input_mode: Literal['spectral', 'variable'] = 'spectral',
+        input_mode: Literal["spectral", "variable"] = "spectral",
     ) -> None:
         """Initialize a new DynamicPatchEmbed instance.
 
@@ -126,7 +126,7 @@ class DynamicPatchEmbed(nn.Module):
         self.patch_size = (kernel_size, kernel_size)
         self.num_patches = -1
 
-        if self.input_mode == 'spectral':
+        if self.input_mode == "spectral":
             # Spectral hypernetwork: Fourier encoding for wavelength and bandwidth.
             # min wavelength: ultraviolet light (100 nm)
             # max wavelength: radio waves (1 m)
@@ -134,7 +134,7 @@ class DynamicPatchEmbed(nn.Module):
             # max bandwidth: s1 ~ 1 m
             self.spectrum_central_expansion = FourierExpansion(100, 1e9)
             self.spectrum_bandwidth_expansion = FourierExpansion(1, 1e9)
-        elif self.input_mode == 'variable':
+        elif self.input_mode == "variable":
             # Variable hypernetwork: Language embedding for variable names.
             self.language_proj = nn.Linear(2048, self.hyper_dim)
 
@@ -201,9 +201,9 @@ class DynamicPatchEmbed(nn.Module):
             ValueError: When *input_mode=='spectral'* and *wavelengths* or *bandwidths* is missing,
                 or when *input_mode=='variable'* and *language_embed* is missing.
         """
-        if self.input_mode == 'spectral':
+        if self.input_mode == "spectral":
             if wavelengths is None or bandwidths is None:
-                msg = 'For spectral hypernet, wavelengths and bandwidths must be provided.'
+                msg = "For spectral hypernet, wavelengths and bandwidths must be provided."
                 raise ValueError(msg)
 
             emb_central = self.spectrum_central_expansion(wavelengths, self.hyper_dim)
@@ -211,13 +211,18 @@ class DynamicPatchEmbed(nn.Module):
                 bandwidths, self.hyper_dim
             )
             waves = emb_central + emb_bandwidth
-        elif self.input_mode == 'variable':
+        elif self.input_mode == "variable":
             if language_embed is None:
-                msg = 'For variable hypernet, language_embed must be provided.'
+                msg = "For variable hypernet, language_embed must be provided."
                 raise ValueError(msg)
 
             # Expand dims to match batch size.
             waves = self.language_proj(language_embed.unsqueeze(0))
+
+        else:
+            raise ValueError(
+                f"Invalid input_mode: {self.input_mode}. Expected 'spectral' or 'variable'."
+            )
 
         waves = self.fclayer(waves)
         weight, bias = self._get_weights(waves)
@@ -320,13 +325,13 @@ class CopernicusFMModule(nn.Module):
             hyper_dim=hyper_dim,
             kernel_size=patch_size,
             embed_dim=embed_dim,
-            input_mode='spectral',
+            input_mode="spectral",
         )
         self.patch_embed_variable = DynamicPatchEmbed(
             hyper_dim=hyper_dim,
             kernel_size=patch_size,
             embed_dim=embed_dim,
-            input_mode='variable',
+            input_mode="variable",
         )
 
         self.num_patches = (img_size // patch_size) ** 2
@@ -434,7 +439,7 @@ class CopernicusFMModule(nn.Module):
         wavelengths: Sequence[float] | None = None,
         bandwidths: Sequence[float] | None = None,
         language_embed: Tensor | None = None,
-        input_mode: Literal['spectral', 'variable'] = 'spectral',
+        input_mode: Literal["spectral", "variable"] = "spectral",
         kernel_size: int | None = None,
     ) -> Tensor:
         """Forward pass of the feature embedding layer.
@@ -457,13 +462,13 @@ class CopernicusFMModule(nn.Module):
         Returns:
             Output mini-batch.
         """
-        if input_mode == 'spectral':
+        if input_mode == "spectral":
             wvs = torch.tensor(wavelengths, device=x.device).float()
             bws = torch.tensor(bandwidths, device=x.device).float()
             x = self.patch_embed_spectral(
                 x, wavelengths=wvs, bandwidths=bws, kernel_size=kernel_size
             )
-        elif input_mode == 'variable':
+        elif input_mode == "variable":
             x = self.patch_embed_variable(
                 x, language_embed=language_embed, kernel_size=kernel_size
             )
@@ -544,7 +549,7 @@ class CopernicusFMModule(nn.Module):
         wavelengths: Sequence[float] | None = None,
         bandwidths: Sequence[float] | None = None,
         language_embed: Tensor | None = None,
-        input_mode: Literal['spectral', 'variable'] = 'spectral',
+        input_mode: Literal["spectral", "variable"] = "spectral",
         kernel_size: int | None = None,
     ) -> Tensor:
         """Forward pass of the model.
@@ -584,14 +589,14 @@ class CopernicusFM_Base_Weights(WeightsEnum):  # type: ignore[misc]
     """Copernicus-FM-base weights."""
 
     CopernicusFM_ViT = Weights(
-        url='https://huggingface.co/torchgeo/copernicus-fm/resolve/f395812cc990ba25a451dbb9c9e6d95c8482947e/CopernicusFM_ViT_base_varlang-085350e4.pth',
+        url="https://huggingface.co/torchgeo/copernicus-fm/resolve/f395812cc990ba25a451dbb9c9e6d95c8482947e/CopernicusFM_ViT_base_varlang-085350e4.pth",
         transforms=None,
         meta={
-            'dataset': 'Copernicus-Pretrain',
-            'model': 'copernicusfm_base',
-            'publication': 'https://arxiv.org/abs/2503.11849',
-            'repo': 'https://github.com/zhu-xlab/Copernicus-FM',
-            'ssl_method': 'mae+distill',
+            "dataset": "Copernicus-Pretrain",
+            "model": "copernicusfm_base",
+            "publication": "https://arxiv.org/abs/2503.11849",
+            "repo": "https://github.com/zhu-xlab/Copernicus-FM",
+            "ssl_method": "mae+distill",
         },
     )
 
@@ -600,14 +605,14 @@ class CopernicusFM_Large_Weights(WeightsEnum):  # type: ignore[misc]
     """Copernicus-FM-large weights."""
 
     CopernicusFM_ViT = Weights(
-        url='https://huggingface.co/wangyi111/Copernicus-FM/resolve/main/CopernicusFM_ViT_base_varlang_e100.pth',
+        url="https://huggingface.co/wangyi111/Copernicus-FM/resolve/main/CopernicusFM_ViT_base_varlang_e100.pth",
         transforms=None,
         meta={
-            'dataset': 'Copernicus-Pretrain',
-            'model': 'copernicusfm_large',
-            'publication': 'https://arxiv.org/abs/2503.11849',
-            'repo': 'https://github.com/zhu-xlab/Copernicus-FM',
-            'ssl_method': 'mae+distill',
+            "dataset": "Copernicus-Pretrain",
+            "model": "copernicusfm_large",
+            "publication": "https://arxiv.org/abs/2503.11849",
+            "repo": "https://github.com/zhu-xlab/Copernicus-FM",
+            "ssl_method": "mae+distill",
         },
     )
 
@@ -631,7 +636,7 @@ def copernicusfm_base(
     Returns:
         A CopernicusFM base model.
     """
-    kwargs |= {'embed_dim': 768, 'depth': 12, 'num_heads': 12}
+    kwargs |= {"embed_dim": 768, "depth": 12, "num_heads": 12}
     model = CopernicusFMModule(*args, **kwargs)
 
     if weights:
@@ -641,10 +646,10 @@ def copernicusfm_base(
 
         # Both fc_norm and head are generated dynamically
         assert set(missing_keys) <= {
-            'fc_norm.weight',
-            'fc_norm.bias',
-            'head.weight',
-            'head.bias',
+            "fc_norm.weight",
+            "fc_norm.bias",
+            "head.weight",
+            "head.bias",
         }
         assert not unexpected_keys
 
@@ -670,7 +675,7 @@ def copernicusfm_large(
     Returns:
         A CopernicusFM large model.
     """
-    kwargs |= {'embed_dim': 1024, 'depth': 24, 'num_heads': 16}
+    kwargs |= {"embed_dim": 1024, "depth": 24, "num_heads": 16}
     model = CopernicusFMModule(*args, **kwargs)
 
     if weights:
@@ -680,10 +685,10 @@ def copernicusfm_large(
 
         # Both fc_norm and head are generated dynamically
         assert set(missing_keys) <= {
-            'fc_norm.weight',
-            'fc_norm.bias',
-            'head.weight',
-            'head.bias',
+            "fc_norm.weight",
+            "fc_norm.bias",
+            "head.weight",
+            "head.bias",
         }
         assert not unexpected_keys
 

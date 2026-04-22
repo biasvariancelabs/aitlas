@@ -22,15 +22,23 @@
 # https://github.com/pesser/pytorch_diffusion and https://github.com/hojonathanho/diffusion
 
 
+from dataclasses import dataclass
+
 import numpy as np
 import torch
-from dataclasses import dataclass
 from diffusers.configuration_utils import ConfigMixin, register_to_config
+from diffusers.schedulers.scheduling_utils import (
+    KarrasDiffusionSchedulers,
+    SchedulerMixin,
+)
 from diffusers.utils import BaseOutput
 from diffusers.utils.torch_utils import randn_tensor
-from diffusers.schedulers.scheduling_utils import KarrasDiffusionSchedulers, SchedulerMixin
 
-from .scheduling_utils import enforce_zero_terminal_snr, betas_for_alpha_bar, scaled_cosine_alphas
+from .scheduling_utils import (
+    betas_for_alpha_bar,
+    enforce_zero_terminal_snr,
+    scaled_cosine_alphas,
+)
 
 
 @dataclass
@@ -121,26 +129,36 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
         sample_max_value: float = 1.0,
         zero_terminal_snr: bool = True,
     ):
-        if 'shifted_cosine:' in beta_schedule:
+        if "shifted_cosine:" in beta_schedule:
             # Syntax is "shifted_cosine:{noise_shift}"
-            noise_shift = float(beta_schedule.split(':')[1])
+            noise_shift = float(beta_schedule.split(":")[1])
             self.alphas_cumprod = scaled_cosine_alphas(num_train_timesteps, noise_shift)
         else:
             if trained_betas is not None:
                 self.betas = torch.tensor(trained_betas, dtype=torch.float)
             elif beta_schedule == "linear":
-                self.betas = torch.linspace(beta_start, beta_end, num_train_timesteps, dtype=torch.float)
+                self.betas = torch.linspace(
+                    beta_start, beta_end, num_train_timesteps, dtype=torch.float
+                )
             elif beta_schedule == "scaled_linear":
                 # this schedule is very specific to the latent diffusion model.
                 self.betas = (
-                    torch.linspace(beta_start**0.5, beta_end**0.5, num_train_timesteps, dtype=torch.float) ** 2
+                    torch.linspace(
+                        beta_start**0.5,
+                        beta_end**0.5,
+                        num_train_timesteps,
+                        dtype=torch.float,
+                    )
+                    ** 2
                 )
             elif beta_schedule == "squaredcos_cap_v2":
                 # Glide cosine schedule
                 self.betas = betas_for_alpha_bar(num_train_timesteps)
             else:
-                raise NotImplementedError(f"{beta_schedule} does is not implemented for {self.__class__}")
-            
+                raise NotImplementedError(
+                    f"{beta_schedule} does is not implemented for {self.__class__}"
+                )
+
             if zero_terminal_snr:
                 self.betas = enforce_zero_terminal_snr(self.betas)
 
@@ -151,16 +169,22 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
         # For the final step, there is no previous alphas_cumprod because we are already at 0
         # `set_alpha_to_one` decides whether we set this parameter simply to one or
         # whether we use the final alpha of the "non-previous" one.
-        self.final_alpha_cumprod = torch.tensor(1.0) if set_alpha_to_one else self.alphas_cumprod[0]
+        self.final_alpha_cumprod = (
+            torch.tensor(1.0) if set_alpha_to_one else self.alphas_cumprod[0]
+        )
 
         # standard deviation of the initial noise distribution
         self.init_noise_sigma = 1.0
 
         # setable values
         self.num_inference_steps = None
-        self.timesteps = torch.from_numpy(np.arange(0, num_train_timesteps)[::-1].copy().astype(np.int64))
+        self.timesteps = torch.from_numpy(
+            np.arange(0, num_train_timesteps)[::-1].copy().astype(np.int64)
+        )
 
-    def scale_model_input(self, sample: torch.FloatTensor, timestep: int | None = None) -> torch.FloatTensor:
+    def scale_model_input(
+        self, sample: torch.FloatTensor, timestep: int | None = None
+    ) -> torch.FloatTensor:
         """
         Ensures interchangeability with schedulers that need to scale the denoising model input depending on the
         current timestep.
@@ -176,11 +200,17 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
 
     def _get_variance(self, timestep, prev_timestep):
         alpha_prod_t = self.alphas_cumprod[timestep]
-        alpha_prod_t_prev = self.alphas_cumprod[prev_timestep] if prev_timestep >= 0 else self.final_alpha_cumprod
+        alpha_prod_t_prev = (
+            self.alphas_cumprod[prev_timestep]
+            if prev_timestep >= 0
+            else self.final_alpha_cumprod
+        )
         beta_prod_t = 1 - alpha_prod_t
         beta_prod_t_prev = 1 - alpha_prod_t_prev
 
-        variance = (beta_prod_t_prev / beta_prod_t) * (1 - alpha_prod_t / alpha_prod_t_prev)
+        variance = (beta_prod_t_prev / beta_prod_t) * (
+            1 - alpha_prod_t / alpha_prod_t_prev
+        )
 
         return variance
 
@@ -199,7 +229,9 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
         batch_size, channels, height, width = sample.shape
 
         if dtype not in (torch.float, torch.float64):
-            sample = sample.float()  # upcast for quantile calculation, and clamp not implemented for cpu half
+            sample = (
+                sample.float()
+            )  # upcast for quantile calculation, and clamp not implemented for cpu half
 
         # Flatten sample for doing quantile calculation along each image
         sample = sample.reshape(batch_size, channels * height * width)
@@ -212,14 +244,21 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
         )  # When clamped to min=1, equivalent to standard clipping to [-1, 1]
 
         s = s.unsqueeze(1)  # (batch_size, 1) because clamp will broadcast along dim=0
-        sample = torch.clamp(sample, -s, s) / s  # "we threshold xt0 to the range [-s, s] and then divide by s"
+        sample = (
+            torch.clamp(sample, -s, s) / s
+        )  # "we threshold xt0 to the range [-s, s] and then divide by s"
 
         sample = sample.reshape(batch_size, channels, height, width)
         sample = sample.to(dtype)
 
         return sample
 
-    def set_timesteps(self, num_inference_steps: int, device: str | torch.device = None, mode='trailing'):
+    def set_timesteps(
+        self,
+        num_inference_steps: int,
+        device: str | torch.device = None,
+        mode="trailing",
+    ):
         """
         Sets the discrete timesteps used for the diffusion chain. Supporting function to be run before inference.
 
@@ -239,18 +278,36 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
 
         self.num_inference_steps = num_inference_steps
         step_ratio = self.config.num_train_timesteps // self.num_inference_steps
-        if mode == 'leading':
+        if mode == "leading":
             # creates integer timesteps by multiplying by ratio
             # casting to int to avoid issues when num_inference_step is power of 3
-            timesteps = (np.arange(0, num_inference_steps) * step_ratio).round()[::-1].copy().astype(np.int64)
-        elif mode == 'trailing':
-            timesteps = np.arange(self.config.num_train_timesteps, 0, -step_ratio).round().astype(np.int64) - 1
-        elif mode == 'linspace':
-            timesteps = np.linspace(self.config.num_train_timesteps, 1, self.num_inference_steps).round().astype(np.int64) - 1
+            timesteps = (
+                (np.arange(0, num_inference_steps) * step_ratio)
+                .round()[::-1]
+                .copy()
+                .astype(np.int64)
+            )
+        elif mode == "trailing":
+            timesteps = (
+                np.arange(self.config.num_train_timesteps, 0, -step_ratio)
+                .round()
+                .astype(np.int64)
+                - 1
+            )
+        elif mode == "linspace":
+            timesteps = (
+                np.linspace(
+                    self.config.num_train_timesteps, 1, self.num_inference_steps
+                )
+                .round()
+                .astype(np.int64)
+                - 1
+            )
         else:
             raise NotImplementedError
         self.timesteps = torch.from_numpy(timesteps).to(device)
-        self.timesteps += self.config.steps_offset
+        steps_offset = self.config.get("steps_offset", 0)
+        self.timesteps += steps_offset
 
     def step(
         self,
@@ -306,25 +363,39 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
         # - pred_prev_sample -> "x_t-1"
 
         # 1. get previous step value (=t-1)
-        prev_timestep = timestep - self.config.num_train_timesteps // self.num_inference_steps
+        prev_timestep = (
+            timestep - self.config.num_train_timesteps // self.num_inference_steps
+        )
 
         # 2. compute alphas, betas
         alpha_prod_t = self.alphas_cumprod[timestep]
-        alpha_prod_t_prev = self.alphas_cumprod[prev_timestep] if prev_timestep >= 0 else self.final_alpha_cumprod
+        alpha_prod_t_prev = (
+            self.alphas_cumprod[prev_timestep]
+            if prev_timestep >= 0
+            else self.final_alpha_cumprod
+        )
 
         beta_prod_t = 1 - alpha_prod_t
 
         # 3. compute predicted original sample from predicted noise also called
         # "predicted x_0" of formula (12) from https://arxiv.org/pdf/2010.02502.pdf
         if self.config.prediction_type == "epsilon":
-            pred_original_sample = (sample - beta_prod_t ** (0.5) * model_output) / alpha_prod_t ** (0.5)
+            pred_original_sample = (
+                sample - beta_prod_t ** (0.5) * model_output
+            ) / alpha_prod_t ** (0.5)
             pred_epsilon = model_output
         elif self.config.prediction_type == "sample":
             pred_original_sample = model_output
-            pred_epsilon = (sample - alpha_prod_t ** (0.5) * pred_original_sample) / beta_prod_t ** (0.5)
+            pred_epsilon = (
+                sample - alpha_prod_t ** (0.5) * pred_original_sample
+            ) / beta_prod_t ** (0.5)
         elif self.config.prediction_type == "v_prediction":
-            pred_original_sample = (alpha_prod_t**0.5) * sample - (beta_prod_t**0.5) * model_output
-            pred_epsilon = (alpha_prod_t**0.5) * model_output + (beta_prod_t**0.5) * sample
+            pred_original_sample = (alpha_prod_t**0.5) * sample - (
+                beta_prod_t**0.5
+            ) * model_output
+            pred_epsilon = (alpha_prod_t**0.5) * model_output + (
+                beta_prod_t**0.5
+            ) * sample
         else:
             raise ValueError(
                 f"prediction_type given as {self.config.prediction_type} must be one of `epsilon`, `sample`, or"
@@ -346,13 +417,19 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
 
         if use_clipped_model_output:
             # the pred_epsilon is always re-derived from the clipped x_0 in Glide
-            pred_epsilon = (sample - alpha_prod_t ** (0.5) * pred_original_sample) / beta_prod_t ** (0.5)
+            pred_epsilon = (
+                sample - alpha_prod_t ** (0.5) * pred_original_sample
+            ) / beta_prod_t ** (0.5)
 
         # 6. compute "direction pointing to x_t" of formula (12) from https://arxiv.org/pdf/2010.02502.pdf
-        pred_sample_direction = (1 - alpha_prod_t_prev - std_dev_t**2) ** (0.5) * pred_epsilon
+        pred_sample_direction = (1 - alpha_prod_t_prev - std_dev_t**2) ** (
+            0.5
+        ) * pred_epsilon
 
         # 7. compute x_t without "random noise" of formula (12) from https://arxiv.org/pdf/2010.02502.pdf
-        prev_sample = alpha_prod_t_prev ** (0.5) * pred_original_sample + pred_sample_direction
+        prev_sample = (
+            alpha_prod_t_prev ** (0.5) * pred_original_sample + pred_sample_direction
+        )
 
         if eta > 0:
             if variance_noise is not None and generator is not None:
@@ -363,7 +440,10 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
 
             if variance_noise is None:
                 variance_noise = randn_tensor(
-                    model_output.shape, generator=generator, device=model_output.device, dtype=model_output.dtype
+                    model_output.shape,
+                    generator=generator,
+                    device=model_output.device,
+                    dtype=model_output.dtype,
                 )
             variance = std_dev_t * variance_noise
 
@@ -372,9 +452,13 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
         if not return_dict:
             return (prev_sample,)
 
-        return DDIMSchedulerOutput(prev_sample=prev_sample, pred_original_sample=pred_original_sample)
-    
-    def get_alpha_sigma_sqrts(self, timesteps, device, dtype, shape) -> torch.FloatTensor:
+        return DDIMSchedulerOutput(
+            prev_sample=prev_sample, pred_original_sample=pred_original_sample
+        )
+
+    def get_alpha_sigma_sqrts(
+        self, timesteps, device, dtype, shape
+    ) -> torch.FloatTensor:
         # Make sure alphas_cumprod and timestep have same device and dtype as original_samples
         alphas_cumprod = self.alphas_cumprod.to(device=device, dtype=dtype)
         timesteps = timesteps.to(device)
@@ -388,27 +472,47 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
         sqrt_one_minus_alpha_prod = sqrt_one_minus_alpha_prod.flatten()
         while len(sqrt_one_minus_alpha_prod.shape) < len(shape):
             sqrt_one_minus_alpha_prod = sqrt_one_minus_alpha_prod.unsqueeze(-1)
-        
+
         return sqrt_alpha_prod, sqrt_one_minus_alpha_prod
-    
+
     def add_noise(
-        self, original_samples: torch.FloatTensor, noise: torch.FloatTensor, timesteps: torch.IntTensor,
+        self,
+        original_samples: torch.FloatTensor,
+        noise: torch.FloatTensor,
+        timesteps: torch.IntTensor,
     ) -> torch.FloatTensor:
-        sqrt_alpha_prod, sqrt_one_minus_alpha_prod = self.get_alpha_sigma_sqrts(timesteps, original_samples.device, original_samples.dtype, original_samples.shape)
-        noisy_samples = sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
+        sqrt_alpha_prod, sqrt_one_minus_alpha_prod = self.get_alpha_sigma_sqrts(
+            timesteps,
+            original_samples.device,
+            original_samples.dtype,
+            original_samples.shape,
+        )
+        noisy_samples = (
+            sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
+        )
         return noisy_samples
 
     def get_velocity(
-        self, sample: torch.FloatTensor, noise: torch.FloatTensor, timesteps: torch.IntTensor
+        self,
+        sample: torch.FloatTensor,
+        noise: torch.FloatTensor,
+        timesteps: torch.IntTensor,
     ) -> torch.FloatTensor:
-        sqrt_alpha_prod, sqrt_one_minus_alpha_prod = self.get_alpha_sigma_sqrts(timesteps, sample.device, sample.dtype, sample.shape)
+        sqrt_alpha_prod, sqrt_one_minus_alpha_prod = self.get_alpha_sigma_sqrts(
+            timesteps, sample.device, sample.dtype, sample.shape
+        )
         velocity = sqrt_alpha_prod * noise - sqrt_one_minus_alpha_prod * sample
         return velocity
-    
+
     def get_noise(
-        self, sample: torch.FloatTensor, velocity: torch.FloatTensor, timesteps: torch.IntTensor
+        self,
+        sample: torch.FloatTensor,
+        velocity: torch.FloatTensor,
+        timesteps: torch.IntTensor,
     ) -> torch.FloatTensor:
-        sqrt_alpha_prod, sqrt_one_minus_alpha_prod = self.get_alpha_sigma_sqrts(timesteps, sample.device, sample.dtype, sample.shape)
+        sqrt_alpha_prod, sqrt_one_minus_alpha_prod = self.get_alpha_sigma_sqrts(
+            timesteps, sample.device, sample.dtype, sample.shape
+        )
         noise = sqrt_alpha_prod * velocity + sqrt_one_minus_alpha_prod * sample
         return noise
 

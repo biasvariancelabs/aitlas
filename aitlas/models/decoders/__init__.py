@@ -1,4 +1,4 @@
-from .aspp_head import ASPPModule, ASPPHead, ASPPSegmentationHead, ASPPRegressionHead
+from .aspp_head import ASPPHead, ASPPModule, ASPPRegressionHead, ASPPSegmentationHead
 from .fcn_decoder import FCNDecoder
 from .identity_decoder import IdentityDecoder
 from .linear_decoder import LinearDecoder

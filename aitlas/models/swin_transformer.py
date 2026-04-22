@@ -1,4 +1,5 @@
 """Swin Transformer V2 model for multi-class and multi-label classification tasks."""
+
 import torch.nn as nn
 import torchvision.models as models
 
@@ -24,9 +25,11 @@ class SwinTransformer(BaseMulticlassClassifier):
         super().__init__(config)
 
         self.model = models.swin_v2_s(
-            weights=models.Swin_V2_S_Weights.IMAGENET1K_V1
-            if self.config.pretrained
-            else None,
+            weights=(
+                models.Swin_V2_S_Weights.IMAGENET1K_V1
+                if self.config.pretrained
+                else None
+            ),
             progress=False,
         )
         self.model.head = nn.Linear(
@@ -78,9 +81,11 @@ class SwinTransformerMultilabel(BaseMultilabelClassifier):
         super().__init__(config)
 
         self.model = models.swin_v2_s(
-            weights=models.Swin_V2_S_Weights.IMAGENET1K_V1
-            if self.config.pretrained
-            else None,
+            weights=(
+                models.Swin_V2_S_Weights.IMAGENET1K_V1
+                if self.config.pretrained
+                else None
+            ),
             progress=False,
         )
         self.model.head = nn.Linear(

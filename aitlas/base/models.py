@@ -1,6 +1,7 @@
 """Models base class.
-This is the base class for all models. All models should subclass it. 
+This is the base class for all models. All models should subclass it.
 """
+
 import collections
 import copy
 import logging
@@ -51,7 +52,7 @@ class EarlyStopping:
             logging.warning("INFO: NaN loss detected. Terminating training.")
             self.early_stop = True
             return
-        
+
         if self.best_loss is None:
             self.best_loss = val_loss
         elif self.best_loss - val_loss > self.min_delta:
@@ -107,28 +108,30 @@ class BaseModel(nn.Module, Configurable):
             if self._should_use_amp():
                 self.use_amp = True
             else:
-                logging.info("AMP is enabled in config but not supported on this GPU - falling back to FP32")
+                logging.info(
+                    "AMP is enabled in config but not supported on this GPU - falling back to FP32"
+                )
                 self.use_amp = False
         else:
             self.use_amp = False
 
         self.scaler = torch.amp.GradScaler("cuda") if self.use_amp else None
-    
+
     def _should_use_amp(self):
-         """Check if GPU has Tensor Cores for meaningful AMP speedup"""
-         if not torch.cuda.is_available():
+        """Check if GPU has Tensor Cores for meaningful AMP speedup"""
+        if not torch.cuda.is_available():
             return False
 
-         device_name = torch.cuda.get_device_name(0)
-         compute_capability = torch.cuda.get_device_capability(0)
+        device_name = torch.cuda.get_device_name(0)
+        compute_capability = torch.cuda.get_device_capability(0)
 
-         # Tensor Cores available in: Volta (7.0+), Turing (7.5), Ampere (8.x), Hopper (9.x)
-         has_tensor_cores = compute_capability[0] >= 7
+        # Tensor Cores available in: Volta (7.0+), Turing (7.5), Ampere (8.x), Hopper (9.x)
+        has_tensor_cores = compute_capability[0] >= 7
 
-         if has_tensor_cores:
+        if has_tensor_cores:
             logging.info(f"GPU {device_name} has Tensor Cores - enabling AMP")
             return True
-         else:
+        else:
             logging.info(f"GPU {device_name} lacks Tensor Cores - disabling AMP")
             return False
 
@@ -345,7 +348,7 @@ class BaseModel(nn.Module, Configurable):
 
                     loss = criterion(outputs, labels)
 
-                self.scaler.scale(loss).backward()# perform a single optimization step
+                self.scaler.scale(loss).backward()  # perform a single optimization step
                 if isinstance(optimizer, tuple):
                     for opt in optimizer:
                         self.scaler.step(opt)
@@ -532,7 +535,7 @@ class BaseModel(nn.Module, Configurable):
         # If the original images has number of channels different than 3 or 4, take just a single channel and plot it as grayscale
         if len(original_image.shape) == 3 and original_image.shape[2] not in [3, 4]:
             original_image = original_image[:, :, 0]
-            
+
         # Plot the original image
         ax.imshow(original_image)
         # Set title to be the actual class
@@ -567,8 +570,10 @@ class BaseModel(nn.Module, Configurable):
         if torch.is_tensor(image):
             inputs = image.unsqueeze(0).to(self.device)
         else:
-            inputs = torch.from_numpy(image.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
-        
+            inputs = (
+                torch.from_numpy(image.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
+            )
+
         with torch.no_grad():
             with torch.amp.autocast("cuda", enabled=self.use_amp):
                 outputs = self(inputs)
@@ -624,11 +629,11 @@ class BaseModel(nn.Module, Configurable):
         :rtype: matplotlib.figure.Figure
         """
         # load the image and apply transformations
+        original_image = copy.deepcopy(image)
         image = image / 255
         self.model.eval()
         if data_transforms:
             image = data_transforms(image)
-            original_image = copy.deepcopy(image)
             image = image.transpose(2, 0, 1)
         # check if tensor and convert to batch of size 1, otherwise convert to tensor and then to batch of size 1
         if torch.is_tensor(image):
@@ -779,7 +784,9 @@ class BaseModel(nn.Module, Configurable):
                     "best_loss": self.early_stopping.best_loss,
                     "early_stop": self.early_stopping.early_stop,
                 },
-                "lr_scheduler": self.lr_scheduler.state_dict() if self.lr_scheduler else None,
+                "lr_scheduler": (
+                    self.lr_scheduler.state_dict() if self.lr_scheduler else None
+                ),
             },
             checkpoint,
         )
@@ -800,7 +807,9 @@ class BaseModel(nn.Module, Configurable):
         """Loads a model from a checkpoint"""
         if os.path.isfile(file_path):
             logging.info(f"Loading checkpoint {file_path}")
-            checkpoint = torch.load(file_path, map_location=self.device) # Can be either CPU or GPU
+            checkpoint = torch.load(
+                file_path, map_location=self.device
+            )  # Can be either CPU or GPU
 
             if "state_dict" in checkpoint:
                 self.model.load_state_dict(checkpoint["state_dict"], strict=False)
@@ -830,12 +839,18 @@ class BaseModel(nn.Module, Configurable):
                 # Reset counter if early stopping was triggered, otherwise restore it
                 if es_state.get("early_stop", False):
                     self.early_stopping.counter = 0
-                    logging.info("Early stopping was triggered in previous run - resetting counter")
+                    logging.info(
+                        "Early stopping was triggered in previous run - resetting counter"
+                    )
                 else:
                     self.early_stopping.counter = es_state.get("counter", 0)
 
             # Load LR scheduler state
-            if "lr_scheduler" in checkpoint and checkpoint["lr_scheduler"] is not None and self.lr_scheduler:
+            if (
+                "lr_scheduler" in checkpoint
+                and checkpoint["lr_scheduler"] is not None
+                and self.lr_scheduler
+            ):
                 self.lr_scheduler.load_state_dict(checkpoint["lr_scheduler"])
 
             logging.info(f"Loaded checkpoint {file_path} at epoch {start_epoch}")

@@ -4,11 +4,13 @@
 """Panopticon Foundation Model."""
 
 from typing import Any
+
 import timm
 import torch
 import torch.nn as nn
 from torch import Tensor
 from torchvision.models._api import Weights, WeightsEnum
+
 from .utils import _to_tuple, resize_abs_pos_embed
 
 
@@ -52,9 +54,9 @@ class PanopticonPE(nn.Module):
         Returns:
             Output of shape (B, num_patches, embed_dim).
         """
-        x: Tensor = x_dict['imgs']
-        chn_ids = x_dict['chn_ids']
-        mask = x_dict.get('spec_masks', None)
+        x: Tensor = x_dict["imgs"]
+        chn_ids = x_dict["chn_ids"]
+        mask = x_dict.get("spec_masks", None)
 
         x, _, _ = self.conv3d(x)
 
@@ -169,14 +171,16 @@ class ChnAttn(nn.Module):
             mask = mask.unsqueeze(1).expand(-1, L, -1).flatten(0, 1)  # BL,C
 
         query = self.query.expand(x.shape[0], -1, -1)  # BL,1,D
-        assert query.shape == (x.shape[0], 1, x.shape[-1]), (
-            f'Expected query to have shape: {x.shape[0], 1, x.shape[-1]}, but got shape: {query.shape}'
-        )
+        assert query.shape == (
+            x.shape[0],
+            1,
+            x.shape[-1],
+        ), f"Expected query to have shape: {x.shape[0], 1, x.shape[-1]}, but got shape: {query.shape}"
 
         x = self.xattn(query, x, x, key_padding_mask=mask)
         x = x.reshape(B, L, D)
 
-        if hasattr(self, 'layer_norm'):
+        if hasattr(self, "layer_norm"):
             x = self.layer_norm(x)
 
         return x
@@ -226,6 +230,9 @@ class ChnEmb(torch.nn.Module):
             mus = input
         elif input.ndim == 3:  # B,C,2 (mus, sigmas)
             mus = input[:, :, 0]
+        else:
+            raise ValueError(f"Expected input with 2 or 3 dims, got {input.ndim}")
+
         sar_indices = mus < 0
         opt_indices = torch.logical_not(sar_indices)
         device = mus.device
@@ -286,7 +293,7 @@ class CrossAttnNoQueryProj(nn.Module):
         super().__init__()
         self.num_heads = num_heads
         head_dim = dim // num_heads
-        assert dim % num_heads == 0, 'dim must be divisible by num_heads'
+        assert dim % num_heads == 0, "dim must be divisible by num_heads"
         self.scale = head_dim**-0.5
 
         self.inproj_q = nn.Identity()  # no projection since query is a parameter itself
@@ -332,7 +339,7 @@ class CrossAttnNoQueryProj(nn.Module):
             key_padding_mask = key_padding_mask.unsqueeze(1).unsqueeze(
                 2
             )  # (B, 1, 1, Nkv)
-            attn = attn.masked_fill(key_padding_mask, float('-inf'))
+            attn = attn.masked_fill(key_padding_mask, float("-inf"))
 
         attn = attn.softmax(dim=-1)
 
@@ -429,7 +436,7 @@ class PanopticonModule(torch.nn.Module):
                 For the published weights, this is 224.
         """
         super().__init__()
-        dinov2_vit = timm.create_model('vit_base_patch14_dinov2')
+        dinov2_vit = timm.create_model("vit_base_patch14_dinov2")
         patch_size = 14
 
         dinov2_vit.patch_embed = PanopticonPE(
@@ -437,7 +444,7 @@ class PanopticonModule(torch.nn.Module):
             embed_dim=embed_dim,
             patch_size=patch_size,
             img_size=img_size,
-            chnfus_cfg={'attn_cfg': {'num_heads': 16}},
+            chnfus_cfg={"attn_cfg": {"num_heads": 16}},
         )
         dinov2_vit.pos_embed = torch.nn.Parameter(
             torch.randn(1, 1 + (img_size // patch_size) ** 2, embed_dim)
@@ -445,7 +452,9 @@ class PanopticonModule(torch.nn.Module):
 
         self.model: nn.Module = dinov2_vit
 
-    def forward(self, x_dict: dict[str, Tensor], dense_features: bool = False) -> Tensor:
+    def forward(
+        self, x_dict: dict[str, Tensor], dense_features: bool = False
+    ) -> Tensor:
         """Forward pass of the model including forward pass through the head.
 
         Args:
@@ -465,7 +474,7 @@ class PanopticonModule(torch.nn.Module):
         else:
             # Forward pass to get pooled features
             out: Tensor = self.model.forward(x_dict)
-        
+
         return out
 
 
@@ -476,13 +485,13 @@ class Panopticon_Weights(WeightsEnum):  # type: ignore[misc]
     """
 
     VIT_BASE14 = Weights(
-        url='https://hf.co/lewaldm/panopticon/resolve/c8c2bb9555819e8b2bcedf5b3b00e3bf531554e7/panopticon_vitb14_teacher.pth',
+        url="https://hf.co/lewaldm/panopticon/resolve/c8c2bb9555819e8b2bcedf5b3b00e3bf531554e7/panopticon_vitb14_teacher.pth",
         transforms=None,
         meta={
-            'model': 'panopticon_vitb14',
-            'publication': 'https://arxiv.org/abs/2503.10845',
-            'repo': 'https://github.com/Panopticon-FM/panopticon',
-            'ssl_method': 'dinov2+spectral_progressive_pretraining',
+            "model": "panopticon_vitb14",
+            "publication": "https://arxiv.org/abs/2503.10845",
+            "repo": "https://github.com/Panopticon-FM/panopticon",
+            "ssl_method": "dinov2+spectral_progressive_pretraining",
         },
     )
 
@@ -512,11 +521,11 @@ def panopticon_base(
 
     if weights:
         state_dict = weights.get_state_dict(progress=True)
-        state_dict.pop('mask_token')
+        state_dict.pop("mask_token")
 
         # interpolate positional embeddings (timm==0.9.2) does not support this yet
-        state_dict['pos_embed'] = resize_abs_pos_embed(
-            state_dict['pos_embed'], img_size // patch_size, 518 // patch_size
+        state_dict["pos_embed"] = resize_abs_pos_embed(
+            state_dict["pos_embed"], img_size // patch_size, 518 // patch_size
         )
 
         missing_keys, unexpected_keys = model.model.load_state_dict(

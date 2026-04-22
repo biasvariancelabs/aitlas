@@ -9,19 +9,17 @@
 # DeiT: https://github.com/facebookresearch/deit
 # --------------------------------------------------------
 
-#import imp
+# import imp
 from functools import partial
 
 import torch
 import torch.nn as nn
+from timm.models.vision_transformer import Block, PatchEmbed
+
 from .fpn import FCNHead, FPNHead
 from .gpt import Block as GPTBlock
+from .pos_embed import get_2d_sincos_pos_embed, get_2d_sincos_pos_embed_with_resolution
 from .transformer import MAEDecoder
-from timm.models.vision_transformer import Block, PatchEmbed
-from .pos_embed import (
-    get_2d_sincos_pos_embed,
-    get_2d_sincos_pos_embed_with_resolution,
-)
 
 
 class PatchEmbedUnSafe(PatchEmbed):
@@ -693,5 +691,7 @@ def mae_vit_huge_patch14_dec512d8b(**kwargs):
 
 # set recommended archs
 scalemae_vit_base_patch16 = mae_vit_base_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
-scalemae_vit_large_patch16 = mae_vit_large_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
+scalemae_vit_large_patch16 = (
+    mae_vit_large_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
+)
 scalemae_vit_huge_patch14 = mae_vit_huge_patch14_dec512d8b  # decoder: 512 dim, 8 blocks

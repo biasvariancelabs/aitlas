@@ -224,4 +224,3 @@ aitlas.models.vision\_transformer module
    :members:
    :undoc-members:
    :show-inheritance:
-

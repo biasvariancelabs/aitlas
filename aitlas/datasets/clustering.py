@@ -1,4 +1,5 @@
 import random
+
 import matplotlib.pyplot as plt
 import torch
 
@@ -35,7 +36,7 @@ class ClusteringDataset(BaseDataset):
         if self.transform:
             image = self.transform(image)
         return image
-    
+
     def show_image(self, index, show_title=False):
         # plot the image
         img = self[index]

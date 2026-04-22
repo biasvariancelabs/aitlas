@@ -1,4 +1,5 @@
 """EfficientNetB0 (V1) for image classification"""
+
 import torch.nn as nn
 import torchvision.models as models
 

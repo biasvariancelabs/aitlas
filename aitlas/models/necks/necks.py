@@ -5,12 +5,14 @@ import pdb
 import warnings
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+
 import numpy as np
 import torch
 import torch.nn.functional as F
 from einops import rearrange
 from torch import nn
 from torchvision.ops import FeaturePyramidNetwork
+
 from aitlas.models.registries import NECK_REGISTRY
 
 
@@ -29,7 +31,9 @@ class Neck(ABC, nn.Module):
         return channel_list
 
     @abstractmethod
-    def forward(self, channel_list: list[torch.Tensor], **kwargs) -> list[torch.Tensor]: ...
+    def forward(
+        self, channel_list: list[torch.Tensor], **kwargs
+    ) -> list[torch.Tensor]: ...
 
 
 class NeckSequential(nn.Sequential):
@@ -83,8 +87,10 @@ class AggregateTokens(Neck):
         """
         super().__init__(channel_list)
 
-        self.indices = indices or index # If indices is not set, use deprecated index, which defaults to -1.
-        if isinstance(self.indices, int): # Wrap int index/ indices to be list.
+        self.indices = (
+            indices or index
+        )  # If indices is not set, use deprecated index, which defaults to -1.
+        if isinstance(self.indices, int):  # Wrap int index/ indices to be list.
             self.indices = [self.indices]
 
         self.pooling = pooling.lower()
@@ -102,13 +108,15 @@ class AggregateTokens(Neck):
 
             if feat.dim() == 3:
                 # Assuming spatial grid, flattening spatial dimension
-                B  = feat.shape[0]
+                B = feat.shape[0]
                 feat = feat.reshape(B, -1, self.latent_dim[i])
 
             elif feat.dim() == 5:
                 # Assuming spatiotemporal grid, flattening spatial dimension
                 B = feat.shape[0]
-                T = feat.shape[2] # TODO: Verify this is correct, as it is probably feat.shape[1] for AiTLAS
+                T = feat.shape[
+                    2
+                ]  # TODO: Verify this is correct, as it is probably feat.shape[1] for AiTLAS
                 feat = feat.reshape(B, -1, T, self.latent_dim[i])
 
             if self.drop_cls:
@@ -156,7 +164,9 @@ class PermuteDims(Neck):
 
 @NECK_REGISTRY.register("InterpolateToPyramidal")
 class InterpolateToPyramidal(Neck):
-    def __init__(self, channel_list: list[int], scale_factor: int = 2, mode: str = "nearest"):
+    def __init__(
+        self, channel_list: list[int], scale_factor: int = 2, mode: str = "nearest"
+    ):
         """Spatially interpolate embeddings so that embedding[i - 1] is scale_factor times larger than embedding[i]
 
         Useful to make non-pyramidal backbones compatible with hierarachical ones
@@ -172,7 +182,11 @@ class InterpolateToPyramidal(Neck):
         out = []
         scale_exponents = list(range(len(features), 0, -1))
         for x, exponent in zip(features, scale_exponents, strict=True):
-            out.append(F.interpolate(x, scale_factor=self.scale_factor**exponent, mode=self.mode))
+            out.append(
+                F.interpolate(
+                    x, scale_factor=self.scale_factor**exponent, mode=self.mode
+                )
+            )
 
         return out
 
@@ -210,7 +224,11 @@ class MaxpoolToPyramidal(Neck):
 @NECK_REGISTRY.register("ReshapeTokensToImage")
 class ReshapeTokensToImage(Neck):
     def __init__(
-        self, channel_list: list[int], remove_cls_token=True, effective_time_dim: int = 1, h: int | None = None
+        self,
+        channel_list: list[int],
+        remove_cls_token=True,
+        effective_time_dim: int = 1,
+        h: int | None = None,
     ):
         """Reshape output of transformer encoder so it can be passed to a conv net.
 
@@ -237,14 +255,18 @@ class ReshapeTokensToImage(Neck):
         self.effective_time_dim = effective_time_dim
         self.h = h
 
-    def forward(self, features: list[torch.Tensor], image_size=None, **kwargs) -> list[torch.Tensor]:
+    def forward(
+        self, features: list[torch.Tensor], image_size=None, **kwargs
+    ) -> list[torch.Tensor]:
         out = []
         for x in features:
             if x.dim() >= 4:
                 out.append(x)
                 continue
             elif x.dim() != 3:
-                raise ValueError(f"Expected token tensor (B,N,C) or image tensor (B,C,H,W). Got shape={tuple(x.shape)}")
+                raise ValueError(
+                    f"Expected token tensor (B,N,C) or image tensor (B,C,H,W). Got shape={tuple(x.shape)}"
+                )
             else:
                 x_no_token = x[:, 1:, :] if self.remove_cls_token else x
                 x_no_token = x_no_token.reshape(x.shape[0], -1, x.shape[-1])
@@ -256,19 +278,25 @@ class ReshapeTokensToImage(Neck):
                 if h - int(h) == 0:
                     h = int(h)
                 else:
-                    assert image_size is not None, "image_size is not provided for neck ReshapeTokensToImage."
+                    assert (
+                        image_size is not None
+                    ), "image_size is not provided for neck ReshapeTokensToImage."
                     # Handle non-square images
                     patch_size = (np.prod(image_size) / tokens_per_timestep) ** 0.5
                     if patch_size % 1:
                         if self.remove_cls_token:
-                            warnings.warn(f"Cannot infer grid shape from input tokens ({x.shape[1]}), assuming a cls_token "
-                                          f"(default setting). Retry ReshapeTokensToImage with remove_cls_token to False. "
-                                          "Silence this warning with remove_cls_token=False for neck ReshapeTokensToImage.")
+                            warnings.warn(
+                                f"Cannot infer grid shape from input tokens ({x.shape[1]}), assuming a cls_token "
+                                f"(default setting). Retry ReshapeTokensToImage with remove_cls_token to False. "
+                                "Silence this warning with remove_cls_token=False for neck ReshapeTokensToImage."
+                            )
                             self.remove_cls_token = False
                             return self.forward(features, image_size, **kwargs)
                         else:
-                            raise ValueError(f"Cannot infer grid shape from from input tokens ({x.shape[1]}) with "
-                                             f"image_size = {image_size} in neck ReshapeTokensToImage. ")
+                            raise ValueError(
+                                f"Cannot infer grid shape from from input tokens ({x.shape[1]}) with "
+                                f"image_size = {image_size} in neck ReshapeTokensToImage. "
+                            )
                     h = int(image_size[0] // patch_size)
 
                 encoded = rearrange(
@@ -295,7 +323,9 @@ class AddBottleneckLayer(Neck):
 
     def __init__(self, channel_list: list[int]):
         super().__init__(channel_list)
-        self.bottleneck = nn.Conv2d(channel_list[-1], channel_list[-1] // 2, kernel_size=1)
+        self.bottleneck = nn.Conv2d(
+            channel_list[-1], channel_list[-1] // 2, kernel_size=1
+        )
 
     def forward(self, features: list[torch.Tensor], **kwargs) -> list[torch.Tensor]:
         new_embedding = self.bottleneck(features[-1])
@@ -324,10 +354,17 @@ class LearnedInterpolateToPyramidal(Neck):
             nn.GELU(),
             nn.ConvTranspose2d(channel_list[0] // 2, channel_list[0] // 4, 2, 2),
         )
-        self.fpn2 = nn.Sequential(nn.ConvTranspose2d(channel_list[1], channel_list[1] // 2, 2, 2))
+        self.fpn2 = nn.Sequential(
+            nn.ConvTranspose2d(channel_list[1], channel_list[1] // 2, 2, 2)
+        )
         self.fpn3 = nn.Sequential(nn.Identity())
         self.fpn4 = nn.Sequential(nn.MaxPool2d(kernel_size=2, stride=2))
-        self.embedding_dim = [channel_list[0] // 4, channel_list[1] // 2, channel_list[2], channel_list[3]]
+        self.embedding_dim = [
+            channel_list[0] // 4,
+            channel_list[1] // 2,
+            channel_list[2],
+            channel_list[3],
+        ]
 
     def forward(self, features: list[torch.Tensor], **kwargs) -> list[torch.Tensor]:
         scaled_inputs = []
@@ -338,14 +375,24 @@ class LearnedInterpolateToPyramidal(Neck):
         return scaled_inputs
 
     def process_channel_list(self, channel_list: list[int] = None) -> list[int]:
-        return [channel_list[0] // 4, channel_list[1] // 2, channel_list[2], channel_list[3]]
+        return [
+            channel_list[0] // 4,
+            channel_list[1] // 2,
+            channel_list[2],
+            channel_list[3],
+        ]
 
 
 @NECK_REGISTRY.register("FeaturePyramidNetworkNeck")
 class FeaturePyramidNetworkNeck(Neck):
     """Uses feature pyramid network from torchvision"""
 
-    def __init__(self, channel_list: list[int], out_channel: int = 256, output_ordered_dict: bool = True):
+    def __init__(
+        self,
+        channel_list: list[int],
+        out_channel: int = 256,
+        output_ordered_dict: bool = True,
+    ):
         super().__init__(channel_list)
         self.out_channel = out_channel
         self.fpn = FeaturePyramidNetwork(self.channel_list, self.out_channel)
@@ -366,13 +413,15 @@ class FeaturePyramidNetworkNeck(Neck):
     def process_channel_list(self, channel_list: list[int]) -> list[int]:
         channel_list = len(channel_list) * [self.out_channel]
         return channel_list
-    
+
 
 @NECK_REGISTRY.register("ExpandToFeatureMap")
 class ExpandToFeatureMap(Neck):
-    def __init__(self, channel_list: list[int], target_size: tuple[int, int] = (224, 224)):
+    def __init__(
+        self, channel_list: list[int], target_size: tuple[int, int] = (224, 224)
+    ):
         """Expands a (B, D) vector into a (B, D, H, W) feature map by broadcasting.
-        
+
         Args:
             target_size (tuple[int, int]): The spatial resolution (H, W) to expand to.
         """
@@ -388,7 +437,7 @@ class ExpandToFeatureMap(Neck):
                 x = x.view(x.shape[0], x.shape[1], 1, 1)
                 # Expand to (B, D, H, W) - this is just repeating the value
                 x = x.expand(-1, -1, self.target_size[0], self.target_size[1])
-                out.append(x)     
+                out.append(x)
             else:
                 # If already spatial, do nothing
                 out.append(x)
@@ -403,7 +452,7 @@ class ExpandToFeatureMap(Neck):
 class DuplicateFeatures(Neck):
     def __init__(self, channel_list: list[int], num_duplicates: int = 4):
         """Duplicates the input feature list N times.
-        
+
         Useful when adapting a single-output backbone (like an expanded vector)
         to a multi-input neck (like LearnedInterpolateToPyramidal).
         """
@@ -415,7 +464,7 @@ class DuplicateFeatures(Neck):
         # This is memory efficient (just new references to the same data)
         if len(features) == 1:
             return [features[0] for _ in range(self.num_duplicates)]
-        
+
         # If we already have a list, we repeat the whole list
         return features * self.num_duplicates
 

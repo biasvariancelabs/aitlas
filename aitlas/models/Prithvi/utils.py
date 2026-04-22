@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Any
 
+
 class HLSBands(Enum):
     COASTAL_AEROSOL = "COASTAL_AEROSOL"
     BLUE = "BLUE"
@@ -24,6 +25,7 @@ class HLSBands(Enum):
             return cls(x)
         except ValueError:
             return x
+
 
 PRETRAINED_BANDS = [
     HLSBands.BLUE,

@@ -1,14 +1,18 @@
 from marshmallow import Schema, fields, validate
-from ..base.schemas import BaseModelSchema
-from ..base.schemas import BaseClassifierSchema
-from ..base.schemas import BaseSegmentationClassifierSchema
-from ..base.schemas import BaseFoundationModelSchema
+
+from ..base.schemas import (
+    BaseClassifierSchema,
+    BaseFoundationModelSchema,
+    BaseModelSchema,
+    BaseSegmentationClassifierSchema,
+)
 
 
 class TransformerModelSchema(BaseClassifierSchema):
     """
     Schema for configuring a transformer model.
     """
+
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -40,6 +44,7 @@ class InceptionTimeSchema(BaseClassifierSchema):
     """
     Schema for configuring a InceptionTime model.
     """
+
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -63,6 +68,7 @@ class LSTMSchema(BaseClassifierSchema):
     """
     Schema for configuring a LSTM model.
     """
+
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -92,6 +98,7 @@ class MSResNetSchema(BaseClassifierSchema):
     """
     Schema for configuring a MSResNet model.
     """
+
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -115,6 +122,7 @@ class TempCNNSchema(BaseClassifierSchema):
     """
     Schema for configuring a TempCNN model.
     """
+
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -142,6 +150,7 @@ class StarRNNSchema(BaseClassifierSchema):
     """
     Schema for configuring a StarRNN model.
     """
+
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -171,6 +180,7 @@ class OmniScaleCNNSchema(BaseClassifierSchema):
     """
     Schema for configuring a OmniScaleCNN model.
     """
+
     input_dim = fields.Int(
         required=True,
         description="Number of bands (13 for L1C, 10 for L2A), 11 for eopatch slovenia",
@@ -248,6 +258,7 @@ class CNNRNNModelSchema(BaseModelSchema):
         required=False, missing=0.5, description="Label probability threshold."
     )
 
+
 class DeepLabV3ModelSchema(BaseSegmentationClassifierSchema):
     input_dim = fields.Int(
         required=True,
@@ -255,23 +266,24 @@ class DeepLabV3ModelSchema(BaseSegmentationClassifierSchema):
         validate=validate.OneOf([13, 10, 11]),
     )
 
-class AnySatSchema(BaseFoundationModelSchema):   
+
+class AnySatSchema(BaseFoundationModelSchema):
     patch_size = fields.Integer(
-        missing=16,
-        description="Patch size for the model input processing."
+        missing=16, description="Patch size for the model input processing."
     )
-    
+
     output = fields.String(
         missing="patch",
         validate=validate.OneOf(["patch", "tile", "dense", "all"]),
-        description="Output format: 'patch' (tokens), 'dense' (segmentation map),'tile' (classification vector) or all."
+        description="Output format: 'patch' (tokens), 'dense' (segmentation map),'tile' (classification vector) or all.",
     )
+
 
 class PrestoSchema(BaseFoundationModelSchema):
     pixel_batch_size = fields.Int(
         required=False,
         load_default=64,
-        description="Batch size for pixel-wise processing."
+        description="Batch size for pixel-wise processing.",
     )
     month = fields.Int(
         required=False,
@@ -279,29 +291,30 @@ class PrestoSchema(BaseFoundationModelSchema):
         description="Default starting month (0-11) for time-series encoding if not provided in the input sample.",
     )
 
+
 class TerraMindSchema(BaseFoundationModelSchema):
     modalities = fields.List(
         fields.String,
         missing=None,
         description="List of modalities to be used as input.",
-        example=['S2L2A', 'S2L1C', 'RGB', 'S1GRD', 'S1RTC', 'DEM']
+        example=["S2L2A", "S2L1C", "RGB", "S1GRD", "S1RTC", "DEM"],
     )
     output_modalities = fields.List(
         fields.String,
         missing=None,
         description="List of modalities to be used as output.",
-        example=['S2L2A', 'S2L1C', 'RGB', 'S1GRD', 'S1RTC', 'DEM']
+        example=["S2L2A", "S2L1C", "RGB", "S1GRD", "S1RTC", "DEM"],
     )
     tim_modalities = fields.List(
         fields.String,
         missing=None,
         description="List of modalities to be used in Thinking in Modalities (TiM) setting.",
-        example=['S2L2A', 'S2L1C', 'S1GRD', 'S1RTC', 'DEM']
+        example=["S2L2A", "S2L1C", "S1GRD", "S1RTC", "DEM"],
     )
     merge_method = fields.String(
         missing="mean",
         allow_none=True,
         validate=validate.OneOf(["mean", "max", "concat", "dict", None]),
         example="mean",
-        description="Method to merge output for further processing."
+        description="Method to merge output for further processing.",
     )

@@ -1,12 +1,13 @@
 import os
 
 from ..utils import image_loader
+from .clustering import ClusteringDataset
 from .schemas import ClusteringDatasetSchema
-from .clustering import ClusteringDataset 
+
 
 """
-This dataset was used in the AI4QC project (Artificial Intelligence for Quality Control), in the context of the 
-detection of new anomalies through unsupervised learning (unlabeled data). It consists of 6344 Sentinel-1 images 
+This dataset was used in the AI4QC project (Artificial Intelligence for Quality Control), in the context of the
+detection of new anomalies through unsupervised learning (unlabeled data). It consists of 6344 Sentinel-1 images
 (quick-looks in png format).
 """
 
@@ -34,10 +35,9 @@ class S1NewAnomaliesDataset(ClusteringDataset):
         # load image
         image = image_loader(self.images[index])
         images = self.apply_transformations(image)
-        return images 
+        return images
 
     def load_dataset(self, data_dir, csv_file=None):
         ids = os.listdir(data_dir)
         self.images = [os.path.join(data_dir, image_id) for image_id in ids]
         return self.images
-    

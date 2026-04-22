@@ -1,6 +1,8 @@
 import pytest
 import torch
+
 from aitlas.models import NanoDetPlus
+
 
 @pytest.fixture(scope="module")
 def nanodet_plus_model():
@@ -18,6 +20,7 @@ def nanodet_plus_model():
     except Exception as e:
         pytest.fail(f"Failed to instantiate NanoDetPlus: {e}")
 
+
 def test_nanodet_plus_eval_forward_pass(nanodet_plus_model):
     """
     Test the forward pass of the NanoDetPlus model in evaluation mode.
@@ -34,18 +37,21 @@ def test_nanodet_plus_eval_forward_pass(nanodet_plus_model):
     try:
         # In eval mode, it should return a list of dictionaries
         outputs = nanodet_plus_model(inputs)
-        
+
         assert isinstance(outputs, list), "Output should be a list"
-        assert len(outputs) == batch_size, f"Expected {batch_size} outputs, got {len(outputs)}"
-        
+        assert (
+            len(outputs) == batch_size
+        ), f"Expected {batch_size} outputs, got {len(outputs)}"
+
         for output in outputs:
             assert isinstance(output, dict), "Each output should be a dictionary"
             assert "boxes" in output
             assert "scores" in output
             assert "labels" in output
-            
+
     except Exception as e:
         pytest.fail(f"Eval forward pass failed: {e}")
+
 
 def test_nanodet_plus_train_forward_pass(nanodet_plus_model):
     """
@@ -59,33 +65,35 @@ def test_nanodet_plus_train_forward_pass(nanodet_plus_model):
 
     # Create dummy input images as a list (Aitlas format)
     inputs = [torch.rand(channels, height, width) for _ in range(batch_size)]
-    
+
     # Create dummy targets (Aitlas format: list of dicts with 'boxes' and 'labels')
     targets = []
     for _ in range(batch_size):
         num_objs = 3
-        boxes = torch.tensor([
-            [10, 10, 50, 50],
-            [100, 100, 150, 150],
-            [200, 200, 300, 300]
-        ], dtype=torch.float32)
+        boxes = torch.tensor(
+            [[10, 10, 50, 50], [100, 100, 150, 150], [200, 200, 300, 300]],
+            dtype=torch.float32,
+        )
         labels = torch.randint(0, 20, (num_objs,))
-        targets.append({
-            "boxes": boxes,
-            "labels": labels
-        })
+        targets.append({"boxes": boxes, "labels": labels})
 
     try:
         # In training mode, it should return a dictionary of losses
         outputs = nanodet_plus_model(inputs, targets)
-        
+
         assert isinstance(outputs, dict), "Output should be a dictionary of losses"
         assert "classification_loss" in outputs
         assert "regression_loss" in outputs
-        
+
         # Check if losses are scalars
-        assert outputs["classification_loss"].dim() == 0 or (outputs["classification_loss"].dim() == 1 and outputs["classification_loss"].shape[0] == 1)
-        assert outputs["regression_loss"].dim() == 0 or (outputs["regression_loss"].dim() == 1 and outputs["regression_loss"].shape[0] == 1)
-            
+        assert outputs["classification_loss"].dim() == 0 or (
+            outputs["classification_loss"].dim() == 1
+            and outputs["classification_loss"].shape[0] == 1
+        )
+        assert outputs["regression_loss"].dim() == 0 or (
+            outputs["regression_loss"].dim() == 1
+            and outputs["regression_loss"].shape[0] == 1
+        )
+
     except Exception as e:
         pytest.fail(f"Training forward pass failed: {e}")

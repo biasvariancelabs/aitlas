@@ -88,4 +88,3 @@ aitlas.base.visualizations module
    :members:
    :undoc-members:
    :show-inheritance:
-

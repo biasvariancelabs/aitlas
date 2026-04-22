@@ -1,10 +1,12 @@
 import os
+
 import matplotlib.pyplot as plt
 import numpy as np
-
 from matplotlib.patches import Patch
+
 from ..utils import image_invert, image_loader
 from .semantic_segmentation import SemanticSegmentationDataset
+
 
 """
 For the Chactun dataset there is a seperate mask for each label
@@ -68,8 +70,14 @@ class ChactunDataset(SemanticSegmentationDataset):
         #        fontsize=16,
         #        y=1.006,
         #    )
-        fig.legend(handles=legend_elements, bbox_to_anchor=(0.3, 1.0, 0.4, 0.2), ncol=3, mode='expand',
-                   loc='lower left', prop={'size': 12})
+        fig.legend(
+            handles=legend_elements,
+            bbox_to_anchor=(0.3, 1.0, 0.4, 0.2),
+            ncol=3,
+            mode="expand",
+            loc="lower left",
+            prop={"size": 12},
+        )
         plt.subplot(2, 2, 1)
         plt.imshow(img)
         plt.axis("off")

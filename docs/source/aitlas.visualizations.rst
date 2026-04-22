@@ -32,4 +32,3 @@ aitlas.visualizations.segmentation module
    :members:
    :undoc-members:
    :show-inheritance:
-

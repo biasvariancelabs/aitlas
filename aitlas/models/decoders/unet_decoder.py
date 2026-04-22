@@ -1,8 +1,10 @@
 from typing import Any
+
 import torch
 from segmentation_models_pytorch.base.initialization import initialize_decoder
 from segmentation_models_pytorch.decoders.unet.decoder import UnetDecoder
 from torch import nn
+
 from aitlas.models.registries import DECODER_REGISTRY
 
 

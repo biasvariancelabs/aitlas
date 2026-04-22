@@ -1,12 +1,12 @@
 from .necks import (
-    AddBottleneckLayer, 
-    AggregateTokens, 
-    FeaturePyramidNetworkNeck, 
-    InterpolateToPyramidal, 
-    LearnedInterpolateToPyramidal, 
+    AddBottleneckLayer,
+    AggregateTokens,
+    FeaturePyramidNetworkNeck,
+    InterpolateToPyramidal,
+    LearnedInterpolateToPyramidal,
     MaxpoolToPyramidal,
-    NeckSequential, 
-    PermuteDims, 
-    ReshapeTokensToImage, 
-    SelectIndices
+    NeckSequential,
+    PermuteDims,
+    ReshapeTokensToImage,
+    SelectIndices,
 )

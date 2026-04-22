@@ -1,16 +1,17 @@
 """ChangeViT: Unleashing Plain Vision Transformers for Change Detection"""
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.nn.init import trunc_normal_
 import math
 import warnings
 from functools import partial
-from typing import Callable, Optional, Sequence, Tuple, Union, List, Any, Dict
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from einops import rearrange
-from torchvision import models
 from torch.hub import load_state_dict_from_url
+from torch.nn.init import trunc_normal_
+from torchvision import models
 
 # Assuming BaseChangeDetection is available in your environment
 from ..base import BaseChangeDetection
@@ -20,11 +21,12 @@ from ..base import BaseChangeDetection
 # Utils & Helper Functions
 # -----------------------------------------------------------------------------
 
+
 def weight_init(module):
     """Initialize weights for the decoder modules"""
     for n, m in module.named_children():
         if isinstance(m, nn.Conv2d):
-            nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='relu')
+            nn.init.kaiming_normal_(m.weight, mode="fan_in", nonlinearity="relu")
             if m.bias is not None:
                 nn.init.zeros_(m.bias)
         elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
@@ -32,11 +34,12 @@ def weight_init(module):
             if m.bias is not None:
                 nn.init.zeros_(m.bias)
         elif isinstance(m, nn.Linear):
-            nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='relu')
+            nn.init.kaiming_normal_(m.weight, mode="fan_in", nonlinearity="relu")
             if m.bias is not None:
                 nn.init.zeros_(m.bias)
         elif isinstance(m, nn.Sequential):
             weight_init(m)
+
 
 def make_2tuple(x):
     if isinstance(x, tuple):
@@ -45,24 +48,28 @@ def make_2tuple(x):
     assert isinstance(x, int)
     return (x, x)
 
+
 def init_weights_vit_timm(module: nn.Module, name: str = ""):
     if isinstance(module, nn.Linear):
         trunc_normal_(module.weight, std=0.02)
         if module.bias is not None:
             nn.init.zeros_(module.bias)
 
+
 # -----------------------------------------------------------------------------
 # Layers (from model/layers)
 # -----------------------------------------------------------------------------
 
+
 class DropPath(nn.Module):
     """Drop paths (Stochastic Depth) per sample."""
+
     def __init__(self, drop_prob=None):
         super(DropPath, self).__init__()
         self.drop_prob = drop_prob
 
     def forward(self, x):
-        if self.drop_prob == 0.:
+        if self.drop_prob == 0.0:
             return x
         keep_prob = 1 - self.drop_prob
         shape = (x.shape[0],) + (1,) * (x.ndim - 1)
@@ -71,9 +78,19 @@ class DropPath(nn.Module):
             random_tensor.div_(keep_prob)
         return x * random_tensor
 
+
 class Mlp(nn.Module):
     """MLP as used in Vision Transformer, MLP-Mixer and related networks"""
-    def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0., bias=True):
+
+    def __init__(
+        self,
+        in_features,
+        hidden_features=None,
+        out_features=None,
+        act_layer=nn.GELU,
+        drop=0.0,
+        bias=True,
+    ):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -90,8 +107,14 @@ class Mlp(nn.Module):
         x = self.drop(x)
         return x
 
+
 class LayerScale(nn.Module):
-    def __init__(self, dim: int, init_values: Union[float, torch.Tensor] = 1e-5, inplace: bool = False):
+    def __init__(
+        self,
+        dim: int,
+        init_values: Union[float, torch.Tensor] = 1e-5,
+        inplace: bool = False,
+    ):
         super().__init__()
         self.inplace = inplace
         self.gamma = nn.Parameter(init_values * torch.ones(dim))
@@ -99,9 +122,19 @@ class LayerScale(nn.Module):
     def forward(self, x):
         return x.mul_(self.gamma) if self.inplace else x * self.gamma
 
+
 class PatchEmbed(nn.Module):
     """2D image to patch embedding"""
-    def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768, norm_layer=None, flatten_embedding=True):
+
+    def __init__(
+        self,
+        img_size=224,
+        patch_size=16,
+        in_chans=3,
+        embed_dim=768,
+        norm_layer=None,
+        flatten_embedding=True,
+    ):
         super().__init__()
         image_HW = make_2tuple(img_size)
         patch_HW = make_2tuple(patch_size)
@@ -115,7 +148,9 @@ class PatchEmbed(nn.Module):
         self.embed_dim = embed_dim
         self.flatten_embedding = flatten_embedding
 
-        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_HW, stride=patch_HW)
+        self.proj = nn.Conv2d(
+            in_chans, embed_dim, kernel_size=patch_HW, stride=patch_HW
+        )
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
 
     def forward(self, x):
@@ -127,9 +162,19 @@ class PatchEmbed(nn.Module):
             x = x.reshape(-1, H, W, self.embed_dim)
         return x
 
+
 class SwiGLUFFNFused(nn.Module):
     """SwiGLU FFN (Simplified version without xformers dependency for portability)"""
-    def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=None, drop=0., bias=True):
+
+    def __init__(
+        self,
+        in_features,
+        hidden_features=None,
+        out_features=None,
+        act_layer=None,
+        drop=0.0,
+        bias=True,
+    ):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -144,8 +189,17 @@ class SwiGLUFFNFused(nn.Module):
         hidden = F.silu(x1) * x2
         return self.w3(hidden)
 
+
 class Attention(nn.Module):
-    def __init__(self, dim, num_heads=8, qkv_bias=False, proj_bias=True, attn_drop=0., proj_drop=0.):
+    def __init__(
+        self,
+        dim,
+        num_heads=8,
+        qkv_bias=False,
+        proj_bias=True,
+        attn_drop=0.0,
+        proj_drop=0.0,
+    ):
         super().__init__()
         self.num_heads = num_heads
         head_dim = dim // num_heads
@@ -158,7 +212,11 @@ class Attention(nn.Module):
 
     def forward(self, x):
         B, N, C = x.shape
-        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        qkv = (
+            self.qkv(x)
+            .reshape(B, N, 3, self.num_heads, C // self.num_heads)
+            .permute(2, 0, 3, 1, 4)
+        )
         q, k, v = qkv[0] * self.scale, qkv[1], qkv[2]
         attn = (q @ k.transpose(-2, -1)).softmax(dim=-1)
         attn = self.attn_drop(attn)
@@ -167,41 +225,90 @@ class Attention(nn.Module):
         x = self.proj_drop(x)
         return x
 
+
 class ViTBlock(nn.Module):
     """Vision Transformer Block"""
+
     def __init__(
-        self, dim, num_heads, mlp_ratio=4., qkv_bias=False, proj_bias=True, ffn_bias=True,
-        drop=0., attn_drop=0., init_values=None, drop_path=0., act_layer=nn.GELU,
-        norm_layer=nn.LayerNorm, attn_class=Attention, ffn_layer=Mlp
+        self,
+        dim,
+        num_heads,
+        mlp_ratio=4.0,
+        qkv_bias=False,
+        proj_bias=True,
+        ffn_bias=True,
+        drop=0.0,
+        attn_drop=0.0,
+        init_values=None,
+        drop_path=0.0,
+        act_layer=nn.GELU,
+        norm_layer=nn.LayerNorm,
+        attn_class=Attention,
+        ffn_layer=Mlp,
     ):
         super().__init__()
         self.norm1 = norm_layer(dim)
-        self.attn = attn_class(dim, num_heads=num_heads, qkv_bias=qkv_bias, proj_bias=proj_bias, attn_drop=attn_drop, proj_drop=drop)
-        self.ls1 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
-        self.drop_path1 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        self.attn = attn_class(
+            dim,
+            num_heads=num_heads,
+            qkv_bias=qkv_bias,
+            proj_bias=proj_bias,
+            attn_drop=attn_drop,
+            proj_drop=drop,
+        )
+        self.ls1 = (
+            LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
+        )
+        self.drop_path1 = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = ffn_layer(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop, bias=ffn_bias)
-        self.ls2 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
-        self.drop_path2 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        self.mlp = ffn_layer(
+            in_features=dim,
+            hidden_features=mlp_hidden_dim,
+            act_layer=act_layer,
+            drop=drop,
+            bias=ffn_bias,
+        )
+        self.ls2 = (
+            LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
+        )
+        self.drop_path2 = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
     def forward(self, x):
         x = x + self.drop_path1(self.ls1(self.attn(self.norm1(x))))
         x = x + self.drop_path2(self.ls2(self.mlp(self.norm2(x))))
         return x
 
+
 # -----------------------------------------------------------------------------
 # DINO Vision Transformer - Encoder (from model/encoder.py)
 # -----------------------------------------------------------------------------
 
+
 class DinoVisionTransformer(nn.Module):
     def __init__(
-        self, img_size=224, patch_size=16, in_chans=3, embed_dim=768, depth=12,
-        num_heads=12, mlp_ratio=4.0, qkv_bias=True, ffn_bias=True, proj_bias=True,
-        drop_path_rate=0.0, drop_path_uniform=False, init_values=None,
-        embed_layer=PatchEmbed, act_layer=nn.GELU, block_fn=ViTBlock, ffn_layer="mlp",
-        num_register_tokens=0, interpolate_antialias=False, interpolate_offset=0.1,
+        self,
+        img_size=224,
+        patch_size=16,
+        in_chans=3,
+        embed_dim=768,
+        depth=12,
+        num_heads=12,
+        mlp_ratio=4.0,
+        qkv_bias=True,
+        ffn_bias=True,
+        proj_bias=True,
+        drop_path_rate=0.0,
+        drop_path_uniform=False,
+        init_values=None,
+        embed_layer=PatchEmbed,
+        act_layer=nn.GELU,
+        block_fn=ViTBlock,
+        ffn_layer="mlp",
+        num_register_tokens=0,
+        interpolate_antialias=False,
+        interpolate_offset=0.1,
     ):
         super().__init__()
         norm_layer = partial(nn.LayerNorm, eps=1e-6)
@@ -211,16 +318,27 @@ class DinoVisionTransformer(nn.Module):
         self.interpolate_antialias = interpolate_antialias
         self.interpolate_offset = interpolate_offset
 
-        self.patch_embed = embed_layer(img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim)
+        self.patch_embed = embed_layer(
+            img_size=img_size,
+            patch_size=patch_size,
+            in_chans=in_chans,
+            embed_dim=embed_dim,
+        )
         num_patches = self.patch_embed.num_patches
 
         self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim))
-        self.register_tokens = nn.Parameter(torch.zeros(1, num_register_tokens, embed_dim)) if num_register_tokens else None
+        self.register_tokens = (
+            nn.Parameter(torch.zeros(1, num_register_tokens, embed_dim))
+            if num_register_tokens
+            else None
+        )
 
         if drop_path_uniform:
             dpr = [drop_path_rate] * depth
         else:
-            dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
+            dpr = [
+                x.item() for x in torch.linspace(0, drop_path_rate, depth)
+            ]  # stochastic depth decay rule
 
         if ffn_layer == "mlp":
             ffn_layer_cls = Mlp
@@ -229,14 +347,24 @@ class DinoVisionTransformer(nn.Module):
         else:
             ffn_layer_cls = Mlp
 
-        self.blocks = nn.ModuleList([
-            block_fn(
-                dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio,
-                qkv_bias=qkv_bias, proj_bias=proj_bias, ffn_bias=ffn_bias,
-                drop_path=dpr[i], norm_layer=norm_layer, act_layer=act_layer,
-                ffn_layer=ffn_layer_cls, init_values=init_values
-            ) for i in range(depth)
-        ])
+        self.blocks = nn.ModuleList(
+            [
+                block_fn(
+                    dim=embed_dim,
+                    num_heads=num_heads,
+                    mlp_ratio=mlp_ratio,
+                    qkv_bias=qkv_bias,
+                    proj_bias=proj_bias,
+                    ffn_bias=ffn_bias,
+                    drop_path=dpr[i],
+                    norm_layer=norm_layer,
+                    act_layer=act_layer,
+                    ffn_layer=ffn_layer_cls,
+                    init_values=init_values,
+                )
+                for i in range(depth)
+            ]
+        )
 
         self.norm = norm_layer(embed_dim)
         self.mask_token = nn.Parameter(torch.zeros(1, embed_dim))
@@ -262,8 +390,12 @@ class DinoVisionTransformer(nn.Module):
         sqrt_N = math.sqrt(N)
         sx, sy = float(w0) / sqrt_N, float(h0) / sqrt_N
         patch_pos_embed = F.interpolate(
-            patch_pos_embed.reshape(1, int(sqrt_N), int(sqrt_N), dim).permute(0, 3, 1, 2),
-            scale_factor=(sx, sy), mode="bicubic", antialias=self.interpolate_antialias
+            patch_pos_embed.reshape(1, int(sqrt_N), int(sqrt_N), dim).permute(
+                0, 3, 1, 2
+            ),
+            scale_factor=(sx, sy),
+            mode="bicubic",
+            antialias=self.interpolate_antialias,
         )
         patch_pos_embed = patch_pos_embed.permute(0, 2, 3, 1).view(1, -1, dim)
         return patch_pos_embed.to(previous_dtype)
@@ -273,7 +405,10 @@ class DinoVisionTransformer(nn.Module):
         x = self.patch_embed(x)
         x = x + self.interpolate_pos_encoding(x, w, h)
         if self.register_tokens is not None:
-            x = torch.cat((x[:, :1], self.register_tokens.expand(x.shape[0], -1, -1), x[:, 1:]), dim=1)
+            x = torch.cat(
+                (x[:, :1], self.register_tokens.expand(x.shape[0], -1, -1), x[:, 1:]),
+                dim=1,
+            )
         return x
 
     def forward(self, x):
@@ -283,8 +418,16 @@ class DinoVisionTransformer(nn.Module):
         x_norm = self.norm(x)
         return x_norm
 
+
 class ChangeViTEncoder(nn.Module):
-    def __init__(self, in_channels=3, model_type='tiny', pretrained=False, embed_dim=192, img_size=256):
+    def __init__(
+        self,
+        in_channels=3,
+        model_type="tiny",
+        pretrained=False,
+        embed_dim=192,
+        img_size=256,
+    ):
         super().__init__()
 
         # Initialize the ViT backbone
@@ -297,49 +440,61 @@ class ChangeViTEncoder(nn.Module):
             num_heads=6,
             mlp_ratio=4,
             block_fn=partial(ViTBlock, attn_class=Attention),
-            num_register_tokens=0
+            num_register_tokens=0,
         )
 
         # NOTE: Weight Source Explanation
         # The original ChangeViT paper/implementation employs a hybrid approach for pretrained weights:
-        # 1. 'Tiny': Uses DeiT (Data-efficient Image Transformer) weights. 
+        # 1. 'Tiny': Uses DeiT (Data-efficient Image Transformer) weights.
         #    These are supervised/distilled weights trained on ImageNet-1k.
-        # 2. 'Small': Uses DINOv2 weights. 
+        # 2. 'Small': Uses DINOv2 weights.
         #    These are self-supervised weights, often superior for dense prediction tasks like change detection.
         # We strictly adhere to these specific sources to match the official implementation's performance.
         # We selected 'Tiny' as default for consistency with other models which also have pretrained weights on ImageNet-1k.
         if pretrained:
             state_dict = None
-            if model_type == 'tiny':
+            if model_type == "tiny":
                 url = "https://dl.fbaipublicfiles.com/deit/deit_tiny_patch16_224-a1311bcf.pth"
                 print(f"Loading DeiT-Tiny weights from {url}...")
-                checkpoint = load_state_dict_from_url(url, map_location='cpu', check_hash=True)
+                checkpoint = load_state_dict_from_url(
+                    url, map_location="cpu", check_hash=True
+                )
                 # DeiT checkpoints usually have the state dict under 'model'
                 state_dict = checkpoint["model"]
-            elif model_type == 'small':
+            elif model_type == "small":
                 url = "https://dl.fbaipublicfiles.com/dinov2/dinov2_vits14/dinov2_vits14_pretrain.pth"
                 print(f"Loading DINOv2-Small weights from {url}...")
-                checkpoint = load_state_dict_from_url(url, map_location='cpu', check_hash=True)
+                checkpoint = load_state_dict_from_url(
+                    url, map_location="cpu", check_hash=True
+                )
                 # DINOv2 checkpoints often contain the state dict directly at the root level
                 state_dict = checkpoint
-            
+
             if state_dict is not None:
                 # Remove keys that cause shape mismatches (Pos Embed & Patch Embed)
-                # The original authors remove these to handle the resolution difference 
+                # The original authors remove these to handle the resolution difference
                 # between pretrained weights (224x224) and model input (256x256).
-                for k in ['pos_embed', 'patch_embed.proj.weight', 'patch_embed.proj.bias']:
+                for k in [
+                    "pos_embed",
+                    "patch_embed.proj.weight",
+                    "patch_embed.proj.bias",
+                ]:
                     if k in state_dict:
-                        print(f"Removing key {k} from pretrained weights to avoid shape mismatch.")
+                        print(
+                            f"Removing key {k} from pretrained weights to avoid shape mismatch."
+                        )
                         del state_dict[k]
-                
+
                 # Load the remaining weights
                 msg = self.vit.load_state_dict(state_dict, strict=False)
-                print(f"Loaded pretrained {model_type} weights. Missing keys: {msg.missing_keys}")
+                print(
+                    f"Loaded pretrained {model_type} weights. Missing keys: {msg.missing_keys}"
+                )
 
         # ResNet Backbone for Detail Capture (Standard ImageNet pretrained if True)
         self.resnet = models.resnet18(pretrained=pretrained)
 
-         # Patch first conv layer of ResNet for arbitrary input channels
+        # Patch first conv layer of ResNet for arbitrary input channels
         if in_channels != 3:
             old_conv = self.resnet.conv1
             new_conv = nn.Conv2d(
@@ -348,12 +503,14 @@ class ChangeViTEncoder(nn.Module):
                 kernel_size=old_conv.kernel_size,
                 stride=old_conv.stride,
                 padding=old_conv.padding,
-                bias=old_conv.bias
+                bias=old_conv.bias,
             )
-            
-            nn.init.kaiming_normal_(new_conv.weight, mode='fan_out', nonlinearity='relu')
+
+            nn.init.kaiming_normal_(
+                new_conv.weight, mode="fan_out", nonlinearity="relu"
+            )
             self.resnet.conv1 = new_conv
-        
+
         self.drop = nn.Dropout(p=0.01)
 
     def detail_capture(self, x):
@@ -361,9 +518,9 @@ class ChangeViTEncoder(nn.Module):
         x = self.resnet.bn1(x)
         x = self.resnet.relu(x)
 
-        x2 = self.drop(self.resnet.layer1(x)) # 1/4
-        x3 = self.resnet.layer2(x2)           # 1/8
-        x4 = self.resnet.layer3(x3)           # 1/16
+        x2 = self.drop(self.resnet.layer1(x))  # 1/4
+        x3 = self.resnet.layer2(x2)  # 1/8
+        x4 = self.resnet.layer3(x3)  # 1/16
         return [x2, x3, x4]
 
     def forward(self, x, y):
@@ -374,8 +531,8 @@ class ChangeViTEncoder(nn.Module):
         # Reshape ViT output (B, N, C) -> (B, C, H, W)
         # Assuming 256x256 input and patch_size 16 -> 16x16 feature map
         H, W = x.shape[2] // 16, x.shape[3] // 16
-        v_x = rearrange(v_x, 'b (h w) c -> b c h w', h=H, w=W)
-        v_y = rearrange(v_y, 'b (h w) c -> b c h w', h=H, w=W)
+        v_x = rearrange(v_x, "b (h w) c -> b c h w", h=H, w=W)
+        v_y = rearrange(v_y, "b (h w) c -> b c h w", h=H, w=W)
 
         # ResNet Branch
         c_x = self.detail_capture(x)
@@ -389,12 +546,15 @@ class ChangeViTEncoder(nn.Module):
 # Decoder (from model/decoder.py)
 # -----------------------------------------------------------------------------
 
+
 class CrossAttention(nn.Module):
-    def __init__(self, dim1, dim2, num_heads=8, qkv_bias=False, attn_drop=0., proj_drop=0.):
+    def __init__(
+        self, dim1, dim2, num_heads=8, qkv_bias=False, attn_drop=0.0, proj_drop=0.0
+    ):
         super().__init__()
         self.num_heads = num_heads
         head_dim = dim1 // num_heads
-        self.scale = head_dim ** -0.5
+        self.scale = head_dim**-0.5
 
         self.q = nn.Linear(dim1, dim1, bias=qkv_bias)
         self.kv = nn.Linear(dim2, dim1 * 2, bias=qkv_bias)
@@ -407,8 +567,16 @@ class CrossAttention(nn.Module):
         B1, N1, C1 = x.shape
         B2, N2, C2 = y.shape
 
-        q = self.q(x).reshape(B1, N1, self.num_heads, C1 // self.num_heads).permute(0, 2, 1, 3)
-        kv = self.kv(y).reshape(B2, N2, 2, self.num_heads, C1 // self.num_heads).permute(2, 0, 3, 1, 4)
+        q = (
+            self.q(x)
+            .reshape(B1, N1, self.num_heads, C1 // self.num_heads)
+            .permute(0, 2, 1, 3)
+        )
+        kv = (
+            self.kv(y)
+            .reshape(B2, N2, 2, self.num_heads, C1 // self.num_heads)
+            .permute(2, 0, 3, 1, 4)
+        )
         k, v = kv[0], kv[1]
 
         attn = (q @ k.transpose(-2, -1)) * self.scale
@@ -420,43 +588,113 @@ class CrossAttention(nn.Module):
         x = self.proj_drop(x)
         return x
 
+
 class DecoderBlock(nn.Module):
     """Block for FeatureInjector (Cross Attention + MLP)"""
-    def __init__(self, dim1, dim2, num_heads, mlp_ratio=4., qkv_bias=False, drop=0., attn_drop=0.,
-                 drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm):
+
+    def __init__(
+        self,
+        dim1,
+        dim2,
+        num_heads,
+        mlp_ratio=4.0,
+        qkv_bias=False,
+        drop=0.0,
+        attn_drop=0.0,
+        drop_path=0.0,
+        act_layer=nn.GELU,
+        norm_layer=nn.LayerNorm,
+    ):
         super().__init__()
         self.norm1 = norm_layer(dim1)
         self.norm2 = norm_layer(dim2)
-        self.attn = CrossAttention(dim1, dim2, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=drop)
-        self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        self.attn = CrossAttention(
+            dim1,
+            dim2,
+            num_heads=num_heads,
+            qkv_bias=qkv_bias,
+            attn_drop=attn_drop,
+            proj_drop=drop,
+        )
+        self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
         self.norm3 = norm_layer(dim1)
         mlp_hidden_dim = int(dim1 * mlp_ratio)
-        self.mlp = Mlp(in_features=dim1, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
+        self.mlp = Mlp(
+            in_features=dim1,
+            hidden_features=mlp_hidden_dim,
+            act_layer=act_layer,
+            drop=drop,
+        )
 
     def forward(self, x, y):
         x = x + self.drop_path(self.attn(self.norm1(x), self.norm2(y)))
         x = x + self.drop_path(self.mlp(self.norm3(x)))
         return x
 
+
 class FeatureInjector(nn.Module):
-    def __init__(self, dim1=384, dim2=[64, 128, 256], num_heads=8, mlp_ratio=4., qkv_bias=False, drop=0., attn_drop=0.,
-                    drop_path=0., act_layer=nn.ReLU, norm_layer=nn.LayerNorm):
+    def __init__(
+        self,
+        dim1=384,
+        dim2=[64, 128, 256],
+        num_heads=8,
+        mlp_ratio=4.0,
+        qkv_bias=False,
+        drop=0.0,
+        attn_drop=0.0,
+        drop_path=0.0,
+        act_layer=nn.ReLU,
+        norm_layer=nn.LayerNorm,
+    ):
         super().__init__()
         # dim1 is ViT dim (e.g. 384), dim2 is ResNet dims (64, 128, 256)
-        self.c2_c5 = DecoderBlock(dim1, dim2[0], num_heads, mlp_ratio, qkv_bias, drop, attn_drop, drop_path, act_layer, norm_layer)
-        self.c3_c5 = DecoderBlock(dim1, dim2[1], num_heads, mlp_ratio, qkv_bias, drop, attn_drop, drop_path, act_layer, norm_layer)
-        self.c4_c5 = DecoderBlock(dim1, dim2[2], num_heads, mlp_ratio, qkv_bias, drop, attn_drop, drop_path, act_layer, norm_layer)
+        self.c2_c5 = DecoderBlock(
+            dim1,
+            dim2[0],
+            num_heads,
+            mlp_ratio,
+            qkv_bias,
+            drop,
+            attn_drop,
+            drop_path,
+            act_layer,
+            norm_layer,
+        )
+        self.c3_c5 = DecoderBlock(
+            dim1,
+            dim2[1],
+            num_heads,
+            mlp_ratio,
+            qkv_bias,
+            drop,
+            attn_drop,
+            drop_path,
+            act_layer,
+            norm_layer,
+        )
+        self.c4_c5 = DecoderBlock(
+            dim1,
+            dim2[2],
+            num_heads,
+            mlp_ratio,
+            qkv_bias,
+            drop,
+            attn_drop,
+            drop_path,
+            act_layer,
+            norm_layer,
+        )
 
-        self.fuse = nn.Conv2d(dim1*3, dim1, 1, bias=False)
+        self.fuse = nn.Conv2d(dim1 * 3, dim1, 1, bias=False)
         weight_init(self)
 
     def base_forward(self, c2, c3, c4, c5):
         H, W = c5.shape[2:]
         # Flatten spatial dims for Transformer
-        c2 = rearrange(c2, 'b c h w -> b (h w) c')
-        c3 = rearrange(c3, 'b c h w -> b (h w) c')
-        c4 = rearrange(c4, 'b c h w -> b (h w) c')
-        c5 = rearrange(c5, 'b c h w -> b (h w) c')
+        c2 = rearrange(c2, "b c h w -> b (h w) c")
+        c3 = rearrange(c3, "b c h w -> b (h w) c")
+        c4 = rearrange(c4, "b c h w -> b (h w) c")
+        c5 = rearrange(c5, "b c h w -> b (h w) c")
 
         # Inject c5 (High level) into low level features using CrossAttention
         # Note: In DecoderBlock(dim1, dim2), x is dim1 (c5), y is dim2 (cx).
@@ -464,13 +702,13 @@ class FeatureInjector(nn.Module):
         # The original code calls: _c2 = self.c2_c5(c5, c2).
         # This effectively uses c5 as Query and c2 as Key/Value, updating c5 with details from c2.
         _c2 = self.c2_c5(c5, c2)
-        _c2 = rearrange(_c2, 'b (h w) c -> b c h w', h=H, w=W)
+        _c2 = rearrange(_c2, "b (h w) c -> b c h w", h=H, w=W)
 
         _c3 = self.c3_c5(c5, c3)
-        _c3 = rearrange(_c3, 'b (h w) c -> b c h w', h=H, w=W)
+        _c3 = rearrange(_c3, "b (h w) c -> b c h w", h=H, w=W)
 
         _c4 = self.c4_c5(c5, c4)
-        _c4 = rearrange(_c4, 'b (h w) c -> b c h w', h=H, w=W)
+        _c4 = rearrange(_c4, "b (h w) c -> b c h w", h=H, w=W)
 
         # Fuse the enriched high-level features
         _c5 = self.fuse(torch.cat([_c2, _c3, _c4], dim=1))
@@ -482,6 +720,7 @@ class FeatureInjector(nn.Module):
         _c5y = self.base_forward(fy[0], fy[1], fy[2], fy[3])
         return _c5x, _c5y
 
+
 class ChangeViTDecoder(nn.Module):
     def __init__(self, in_dim=[64, 128, 256, 192], decay=4, num_classes=2):
         super().__init__()
@@ -491,38 +730,49 @@ class ChangeViTDecoder(nn.Module):
 
         self.up_c5 = nn.Sequential(
             nn.Conv2d(c5_channel, c4_channel, 1, bias=False),
-            nn.ConvTranspose2d(c4_channel, c4_channel, kernel_size=4, stride=2, padding=1)
+            nn.ConvTranspose2d(
+                c4_channel, c4_channel, kernel_size=4, stride=2, padding=1
+            ),
         )
         self.up_c4 = nn.Sequential(
             nn.Conv2d(c4_channel, c3_channel, 1, bias=False),
-            nn.ConvTranspose2d(c3_channel, c3_channel, kernel_size=4, stride=2, padding=1)
+            nn.ConvTranspose2d(
+                c3_channel, c3_channel, kernel_size=4, stride=2, padding=1
+            ),
         )
         self.up_c3 = nn.Sequential(
             nn.Conv2d(c3_channel, c2_channel, 1, bias=False),
-            nn.ConvTranspose2d(c2_channel, c2_channel, kernel_size=4, stride=2, padding=1)
+            nn.ConvTranspose2d(
+                c2_channel, c2_channel, kernel_size=4, stride=2, padding=1
+            ),
         )
 
         self.classifier = nn.Sequential(
-            nn.ConvTranspose2d(c2_channel, c2_channel, kernel_size=4, stride=2, padding=1),
-            nn.Conv2d(c2_channel, num_classes, 3, 1, padding=1, bias=False)
+            nn.ConvTranspose2d(
+                c2_channel, c2_channel, kernel_size=4, stride=2, padding=1
+            ),
+            nn.Conv2d(c2_channel, num_classes, 3, 1, padding=1, bias=False),
         )
 
-        self.mlp = nn.ModuleList([
-            nn.Sequential(
-                nn.Conv2d(dim*3, dim//decay, 1, bias=False),
-                nn.BatchNorm2d(dim//decay),
-                nn.ReLU(),
-                nn.Conv2d(dim//decay, dim//decay, 3, 1, padding=1, bias=False),
-                nn.ReLU(),
-                nn.Conv2d(dim//decay, dim//decay, 3, 1, padding=1, bias=False),
-                nn.ReLU(),
-                nn.Conv2d(dim//decay, dim, 3, 1, padding=1, bias=False)
-            ) for dim in in_dim
-        ])
+        self.mlp = nn.ModuleList(
+            [
+                nn.Sequential(
+                    nn.Conv2d(dim * 3, dim // decay, 1, bias=False),
+                    nn.BatchNorm2d(dim // decay),
+                    nn.ReLU(),
+                    nn.Conv2d(dim // decay, dim // decay, 3, 1, padding=1, bias=False),
+                    nn.ReLU(),
+                    nn.Conv2d(dim // decay, dim // decay, 3, 1, padding=1, bias=False),
+                    nn.ReLU(),
+                    nn.Conv2d(dim // decay, dim, 3, 1, padding=1, bias=False),
+                )
+                for dim in in_dim
+            ]
+        )
         weight_init(self)
 
     def difference_modeling(self, x, y, block):
-        f = torch.cat([x, y, torch.abs(x-y)], dim=1)
+        f = torch.cat([x, y, torch.abs(x - y)], dim=1)
         f = block(f)
         return f
 
@@ -547,9 +797,11 @@ class ChangeViTDecoder(nn.Module):
         pred = self.classifier(c2f)
         return pred
 
+
 # -----------------------------------------------------------------------------
 # Main ChangeViT Model Class (from model/trainer.py)
 # -----------------------------------------------------------------------------
+
 
 class ChangeViTModel(nn.Module):
     """
@@ -558,40 +810,59 @@ class ChangeViTModel(nn.Module):
     Original paper: https://arxiv.org/abs/2406.12847
     DOI: 10.48550/arXiv.2406.12847
     """
-    def __init__(self, in_channels=3, num_classes=2, pretrained=True, model_type='tiny', img_size=256):
+
+    def __init__(
+        self,
+        in_channels=3,
+        num_classes=2,
+        pretrained=True,
+        model_type="tiny",
+        img_size=256,
+    ):
         super().__init__()
-        if model_type == 'tiny':
+        if model_type == "tiny":
             embed_dim = 192
-        elif model_type == 'small':
+        elif model_type == "small":
             embed_dim = 384
         else:
             raise ValueError(f"Unsupported model_type: {model_type}")
 
-        self.encoder = ChangeViTEncoder(in_channels, model_type, pretrained=pretrained, embed_dim=embed_dim, img_size=img_size)
-        self.decoder = ChangeViTDecoder(in_dim=[64, 128, 256, embed_dim], num_classes=num_classes)
+        self.encoder = ChangeViTEncoder(
+            in_channels,
+            model_type,
+            pretrained=pretrained,
+            embed_dim=embed_dim,
+            img_size=img_size,
+        )
+        self.decoder = ChangeViTDecoder(
+            in_dim=[64, 128, 256, embed_dim], num_classes=num_classes
+        )
 
     def forward(self, x1, x2):
         fx, fy = self.encoder(x1, x2)
         pred = self.decoder(fx, fy)
         return pred.contiguous()
 
+
 # -----------------------------------------------------------------------------
 # Aitlas Wrapper
 # -----------------------------------------------------------------------------
+
 
 class ChangeViT(BaseChangeDetection):
     """
     Wrapper for ChangeViT
     """
+
     def __init__(self, config):
         super().__init__(config)
-        
+
         self.model = ChangeViTModel(
-            in_channels=3, #self.config.in_channels,
+            in_channels=3,  # self.config.in_channels,
             num_classes=self.config.num_classes,
             pretrained=self.config.pretrained,
-            model_type='tiny', # self.config.model_type,
-            img_size=256 #self.config.img_size
+            model_type="tiny",  # self.config.model_type,
+            img_size=256,  # self.config.img_size
         )
 
     def forward(self, x1, x2):

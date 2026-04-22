@@ -1,7 +1,8 @@
 import numpy as np
 
-from .semantic_segmentation import SemanticSegmentationDataset
 from ..utils import image_loader
+from .semantic_segmentation import SemanticSegmentationDataset
+
 
 """
 This dataset contains 1171 aerial images, along with their respective maps.

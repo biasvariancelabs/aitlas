@@ -1,4 +1,5 @@
 """FasterRCNN model for object detection"""
+
 from torchvision.models.detection import (
     FasterRCNN_ResNet50_FPN_V2_Weights,
     fasterrcnn_resnet50_fpn_v2,
@@ -20,9 +21,11 @@ class FasterRCNN(BaseObjectDetection):
 
         # load an object detection model pre-trained on COCO
         self.model = fasterrcnn_resnet50_fpn_v2(
-            weights=FasterRCNN_ResNet50_FPN_V2_Weights.COCO_V1
-            if self.config.pretrained
-            else None
+            weights=(
+                FasterRCNN_ResNet50_FPN_V2_Weights.COCO_V1
+                if self.config.pretrained
+                else None
+            )
         )
 
         # get number of input features for the classifier

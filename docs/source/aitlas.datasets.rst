@@ -320,4 +320,3 @@ aitlas.datasets.whu\_rs19 module
    :members:
    :undoc-members:
    :show-inheritance:
-

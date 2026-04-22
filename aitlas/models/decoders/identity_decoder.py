@@ -4,6 +4,7 @@
 """
 
 from torch import Tensor, nn
+
 from aitlas.models.registries import DECODER_REGISTRY
 
 

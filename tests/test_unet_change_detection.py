@@ -3,18 +3,19 @@ import torch
 
 from aitlas.models import UnetChangeDetection
 
+
 @pytest.fixture(scope="module")
 def unet_cd_model():
     """
     A pytest fixture that instantiates the UNetChangeDetection once per test module.
-    
+
     Using `scope="module"` is efficient as it prevents reloading the model
     for every single test function.
     """
     mock_config = {
         "pretrained": True,
         "num_classes": 2,
-        #"in_channels": 3 not implemented yet (would have to add the field to the schema)
+        # "in_channels": 3 not implemented yet (would have to add the field to the schema)
     }
     try:
         model = UnetChangeDetection(mock_config)
@@ -22,6 +23,7 @@ def unet_cd_model():
         return model
     except Exception as e:
         pytest.fail(f"Failed to instantiate UNetChangeDetection: {e}")
+
 
 def test_unet_cd_forward_pass(unet_cd_model):
     """
@@ -38,8 +40,11 @@ def test_unet_cd_forward_pass(unet_cd_model):
 
     try:
         outputs = unet_cd_model(img1, img2)
-        assert outputs.shape == (batch_size, unet_cd_model.num_classes, height, width), \
-            f"Expected output shape {(batch_size, unet_cd_model.num_classes, height, width)}, but got {outputs.shape}"
+        assert outputs.shape == (
+            batch_size,
+            unet_cd_model.num_classes,
+            height,
+            width,
+        ), f"Expected output shape {(batch_size, unet_cd_model.num_classes, height, width)}, but got {outputs.shape}"
     except Exception as e:
         pytest.fail(f"Forward pass failed: {e}")
-

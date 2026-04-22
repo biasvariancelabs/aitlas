@@ -6,11 +6,12 @@ import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from aitlas.datasets.crops_classification import CropsDataset
 from eolearn.core import EOPatch, FeatureType
 from eolearn.geometry import VectorToRasterTask
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
+
+from aitlas.datasets.crops_classification import CropsDataset
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

@@ -1,4 +1,5 @@
 """Loss functions for image segmentation"""
+
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -50,6 +51,7 @@ class FocalLoss(nn.Module):
 
         return focal_loss
 
+
 class BCL(nn.Module):
     """
     batch-balanced contrastive loss for change detection (for STANet)
@@ -62,15 +64,21 @@ class BCL(nn.Module):
         self.margin = margin
 
     def forward(self, distance, label):
-        label[label==255] = 1
+        label[label == 255] = 1
         mask = (label != 255).float()
         distance = distance * mask
-        pos_num = torch.sum((label==1).float())+0.0001
-        neg_num = torch.sum((label==-1).float())+0.0001
+        pos_num = torch.sum((label == 1).float()) + 0.0001
+        neg_num = torch.sum((label == -1).float()) + 0.0001
 
-        loss_1 = torch.sum((1+label) / 2 * torch.pow(distance, 2)) /pos_num
-        loss_2 = torch.sum((1-label) / 2 * mask *
-            torch.pow(torch.clamp(self.margin - distance, min=0.0), 2)
-        ) / neg_num
+        loss_1 = torch.sum((1 + label) / 2 * torch.pow(distance, 2)) / pos_num
+        loss_2 = (
+            torch.sum(
+                (1 - label)
+                / 2
+                * mask
+                * torch.pow(torch.clamp(self.margin - distance, min=0.0), 2)
+            )
+            / neg_num
+        )
         loss = loss_1 + loss_2
         return loss

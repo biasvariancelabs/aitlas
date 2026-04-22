@@ -2,6 +2,7 @@
 .. note:: Based on the implementation at: https://github.com/SpaceNetChallenge/SpaceNet_SAR_Buildings_Solutions/blob/master/1-zbigniewwojna/main.py#L412
 
 """
+
 import glob
 import math
 import os
@@ -10,6 +11,7 @@ from functools import partial
 from multiprocessing import Pool
 
 import cv2
+
 
 try:
     import gdal
@@ -242,9 +244,6 @@ class SpaceNet6Dataset(BaseDataset):
             for x in df[df["fold"] == (fold % 10)]["sar"].values
         ]
         self.mask_paths = None
-
-    def labels(self):
-        pass
 
     def prepare(self):
         """

@@ -1,12 +1,14 @@
 import torch
 import torch.nn as nn
 
+
 class BaseInputAdapter(nn.Module):
     """
     Base class for model-specific input adapters.
-    Routes pure dataloader tensors into the specific formats 
+    Routes pure dataloader tensors into the specific formats
     and kwargs expected by foundation models.
     """
+
     def __init__(self, config):
         super().__init__()
         self.config = config

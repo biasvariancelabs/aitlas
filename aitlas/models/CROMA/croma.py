@@ -28,11 +28,11 @@ class CROMAModule(nn.Module):
     * https://arxiv.org/abs/2311.00566
     """
 
-    valid_modalities = ('sar', 'optical')
+    valid_modalities = ("sar", "optical")
 
     def __init__(
         self,
-        modalities: Sequence[str] = ['sar', 'optical'],
+        modalities: Sequence[str] = ["sar", "optical"],
         encoder_dim: int = 768,
         encoder_depth: int = 12,
         num_heads: int = 16,
@@ -56,12 +56,12 @@ class CROMAModule(nn.Module):
         """
         super().__init__()
         for modality in modalities:
-            assert modality in self.valid_modalities, (
-                f'{modality} is not a valid modality'
-            )
+            assert (
+                modality in self.valid_modalities
+            ), f"{modality} is not a valid modality"
 
-        assert image_size % 8 == 0, 'image_size must be a multiple of 8'
-        assert num_heads % 2 == 0, 'num_heads must be a power of 2'
+        assert image_size % 8 == 0, "image_size must be a multiple of 8"
+        assert num_heads % 2 == 0, "num_heads must be a power of 2"
 
         self.modalities = modalities
         self.encoder_dim = encoder_dim
@@ -100,15 +100,15 @@ class CROMAModule(nn.Module):
             )
             return encoder, gap_ffn
 
-        if 'sar' in modalities:
+        if "sar" in modalities:
             self.s1_encoder, self.s1_GAP_FFN = initialize_encoder(
                 encoder_dim, int(encoder_depth / 2), self.s1_channels
             )
-        if 'optical' in modalities:
+        if "optical" in modalities:
             self.s2_encoder, self.s2_GAP_FFN = initialize_encoder(
                 encoder_dim, encoder_depth, self.s2_channels
             )
-        if set(self.modalities) == {'sar', 'optical'}:
+        if set(self.modalities) == {"sar", "optical"}:
             self.joint_encoder = BaseTransformerCrossAttn(
                 dim=encoder_dim, depth=int(encoder_depth / 2), num_heads=num_heads
             )
@@ -124,29 +124,29 @@ class CROMAModule(nn.Module):
         """
         return_dict: dict[str, Tensor] = {}
 
-        if 'sar' in self.modalities and x_sar is not None:
+        if "sar" in self.modalities and x_sar is not None:
             sar_encodings = self.s1_encoder(imgs=x_sar, attn_bias=self.attn_bias)
             sar_GAP = self.s1_GAP_FFN(sar_encodings.mean(dim=1))
-            return_dict['sar_encodings'] = sar_encodings
-            return_dict['sar_GAP'] = sar_GAP
+            return_dict["sar_encodings"] = sar_encodings
+            return_dict["sar_GAP"] = sar_GAP
 
-        if 'optical' in self.modalities and x_optical is not None:
+        if "optical" in self.modalities and x_optical is not None:
             optical_encodings = self.s2_encoder(
                 imgs=x_optical, attn_bias=self.attn_bias
             )
             optical_GAP = self.s2_GAP_FFN(optical_encodings.mean(dim=1))
-            return_dict['optical_encodings'] = optical_encodings
-            return_dict['optical_GAP'] = optical_GAP
+            return_dict["optical_encodings"] = optical_encodings
+            return_dict["optical_GAP"] = optical_GAP
 
-        if set(self.modalities) == {'sar', 'optical'}:
+        if set(self.modalities) == {"sar", "optical"}:
             joint_encodings = self.joint_encoder(
                 x=sar_encodings,
                 context=optical_encodings,
                 relative_position_bias=self.attn_bias,
             )
             joint_GAP = joint_encodings.mean(dim=1)
-            return_dict['joint_encodings'] = joint_encodings
-            return_dict['joint_GAP'] = joint_GAP
+            return_dict["joint_encodings"] = joint_encodings
+            return_dict["joint_GAP"] = joint_GAP
 
         return return_dict
 
@@ -180,7 +180,9 @@ def get_2dalibi(num_heads: int, num_patches: int) -> Tensor:
             dist = math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
             idxs.append(dist * slopes * -1)
     all_bias = torch.cat(idxs, dim=1)
-    return nn.Parameter(all_bias.view(1, num_heads, num_patches, num_patches), requires_grad=False)
+    return nn.Parameter(
+        all_bias.view(1, num_heads, num_patches, num_patches), requires_grad=False
+    )
 
 
 class FFN(nn.Module):
@@ -232,7 +234,7 @@ class Attention(nn.Module):
         """
         super().__init__()
         self.num_heads = num_heads
-        assert dim % num_heads == 0, 'dim must be evenly divisible by num_heads'
+        assert dim % num_heads == 0, "dim must be evenly divisible by num_heads"
         dim_head = int(dim / num_heads)
         self.scale = dim_head**-0.5
 
@@ -254,17 +256,17 @@ class Attention(nn.Module):
         x = self.input_norm(x)
         q, k, v = self.to_qkv(x).chunk(3, dim=-1)
         q, k, v = map(
-            lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.num_heads), (q, k, v)
+            lambda t: rearrange(t, "b n (h d) -> b h n d", h=self.num_heads), (q, k, v)
         )
 
-        attention_scores = einsum('b h i d, b h j d -> b h i j', q, k) * self.scale
+        attention_scores = einsum("b h i d, b h j d -> b h i j", q, k) * self.scale
         attention_scores = attention_scores + relative_position_bias
 
         attn = attention_scores.softmax(dim=-1)
         attn = self.dropout(attn)
 
-        x = einsum('b h i j, b h j d -> b h i d', attn, v)
-        x = rearrange(x, 'b h n d -> b n (h d)')
+        x = einsum("b h i j, b h j d -> b h i d", attn, v)
+        x = rearrange(x, "b h n d -> b n (h d)")
         x = self.to_out(x)
         return x
 
@@ -285,7 +287,7 @@ class CrossAttention(nn.Module):
         """
         super().__init__()
         self.num_heads = num_heads
-        assert dim % num_heads == 0, 'dim must be evenly divisible by num_heads'
+        assert dim % num_heads == 0, "dim must be evenly divisible by num_heads"
         dim_head = int(dim / num_heads)
         self.scale = dim_head**-0.5
 
@@ -318,17 +320,17 @@ class CrossAttention(nn.Module):
         v = self.to_v(context)
 
         q, k, v = map(
-            lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.num_heads), (q, k, v)
+            lambda t: rearrange(t, "b n (h d) -> b h n d", h=self.num_heads), (q, k, v)
         )
 
-        attention_scores = einsum('b h i d, b h j d -> b h i j', q, k) * self.scale
+        attention_scores = einsum("b h i d, b h j d -> b h i j", q, k) * self.scale
         attention_scores = attention_scores + relative_position_bias
 
         attn = attention_scores.softmax(dim=-1)
         attn = self.dropout(attn)
 
-        x = einsum('b h i j, b h j d -> b h i d', attn, v)
-        x = rearrange(x, 'b h n d -> b n (h d)')
+        x = einsum("b h i j, b h j d -> b h i d", attn, v)
+        x = rearrange(x, "b h n d -> b n (h d)")
         x = self.to_out(x)
         return x
 
@@ -485,7 +487,7 @@ class ViT(nn.Module):
         """
         imgs = rearrange(
             imgs,
-            'b c (h i) (w j) -> b (h w) (c i j)',
+            "b c (h i) (w j) -> b (h w) (c i j)",
             i=self.patch_size,
             j=self.patch_size,
         )
@@ -503,14 +505,14 @@ class CROMABase_Weights(WeightsEnum):  # type: ignore[misc]
     """
 
     CROMA_VIT = Weights(
-        url='https://hf.co/torchgeo/croma/resolve/387883f08af79d777167519c57cd826eda89a16f/CROMA_base-0238d814.pt',
+        url="https://hf.co/torchgeo/croma/resolve/387883f08af79d777167519c57cd826eda89a16f/CROMA_base-0238d814.pt",
         transforms=None,
         meta={
-            'dataset': 'SSL4EO',
-            'model': 'vit',
-            'publication': 'https://arxiv.org/abs/2311.00566',
-            'repo': 'https://github.com/antofuller/CROMA',
-            'ssl_method': 'croma',
+            "dataset": "SSL4EO",
+            "model": "vit",
+            "publication": "https://arxiv.org/abs/2311.00566",
+            "repo": "https://github.com/antofuller/CROMA",
+            "ssl_method": "croma",
         },
     )
 
@@ -522,14 +524,14 @@ class CROMALarge_Weights(WeightsEnum):  # type: ignore[misc]
     """
 
     CROMA_VIT = Weights(
-        url='https://huggingface.co/torchgeo/croma/resolve/92cb1a0f4e34c6c01558baf070197c01255382f6/CROMA_large-921e69ad.pt',
+        url="https://huggingface.co/torchgeo/croma/resolve/92cb1a0f4e34c6c01558baf070197c01255382f6/CROMA_large-921e69ad.pt",
         transforms=None,
         meta={
-            'dataset': 'SSL4EO',
-            'model': 'vit',
-            'publication': 'https://arxiv.org/abs/2311.00566',
-            'repo': 'https://github.com/antofuller/CROMA',
-            'ssl_method': 'croma',
+            "dataset": "SSL4EO",
+            "model": "vit",
+            "publication": "https://arxiv.org/abs/2311.00566",
+            "repo": "https://github.com/antofuller/CROMA",
+            "ssl_method": "croma",
         },
     )
 
@@ -547,39 +549,39 @@ def load_weights(model: CROMAModule, weights: WeightsEnum) -> None:
     state_dict = weights.get_state_dict(progress=True)
     missing_keys, unexpected_keys = [], []
 
-    if 'sar' in model.modalities:
+    if "sar" in model.modalities:
         miss_key, unexp_key = model.s1_encoder.load_state_dict(
-            state_dict['s1_encoder'], strict=False
+            state_dict["s1_encoder"], strict=False
         )
         missing_keys.extend(miss_key)
         unexpected_keys.extend(unexp_key)
         miss_key, unexp_key = model.s1_GAP_FFN.load_state_dict(
-            state_dict['s1_GAP_FFN'], strict=False
+            state_dict["s1_GAP_FFN"], strict=False
         )
         missing_keys.extend(miss_key)
         unexpected_keys.extend(unexp_key)
 
-    if 'optical' in model.modalities:
+    if "optical" in model.modalities:
         miss_key, unexp_key = model.s2_encoder.load_state_dict(
-            state_dict['s2_encoder'], strict=False
+            state_dict["s2_encoder"], strict=False
         )
         missing_keys.extend(miss_key)
         unexpected_keys.extend(unexp_key)
         miss_key, unexp_key = model.s2_GAP_FFN.load_state_dict(
-            state_dict['s2_GAP_FFN'], strict=False
+            state_dict["s2_GAP_FFN"], strict=False
         )
         missing_keys.extend(miss_key)
         unexpected_keys.extend(unexp_key)
 
-    if set(model.modalities) == {'sar', 'optical'}:
+    if set(model.modalities) == {"sar", "optical"}:
         miss_key, unexp_key = model.joint_encoder.load_state_dict(
-            state_dict['joint_encoder'], strict=False
+            state_dict["joint_encoder"], strict=False
         )
         missing_keys.extend(miss_key)
         unexpected_keys.extend(unexp_key)
 
-    assert not missing_keys, f'Missing keys: {missing_keys}'
-    assert not unexpected_keys, f'Unexpected keys: {unexpected_keys}'
+    assert not missing_keys, f"Missing keys: {missing_keys}"
+    assert not unexpected_keys, f"Unexpected keys: {unexpected_keys}"
 
 
 def croma_base(
@@ -602,10 +604,10 @@ def croma_base(
         CROMA base model.
     """
     kwargs |= {
-        'encoder_dim': 768,
-        'encoder_depth': 12,
-        'num_heads': 16,
-        'patch_size': 8,
+        "encoder_dim": 768,
+        "encoder_depth": 12,
+        "num_heads": 16,
+        "patch_size": 8,
     }
     model = CROMAModule(*args, **kwargs)
     if weights:
@@ -633,10 +635,10 @@ def croma_large(
         CROMA large model.
     """
     kwargs |= {
-        'encoder_dim': 1024,
-        'encoder_depth': 24,
-        'num_heads': 16,
-        'patch_size': 8,
+        "encoder_dim": 1024,
+        "encoder_depth": 24,
+        "num_heads": 16,
+        "patch_size": 8,
     }
     model = CROMAModule(*args, **kwargs)
     if weights:

@@ -1,6 +1,6 @@
 """
 InceptionTime model
-    
+
     .. note:: Original implementation of InceptionTime model https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/InceptionTime.py
 
 """

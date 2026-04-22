@@ -83,13 +83,3 @@ EO patch data analysis (Breizhcrops example)
 
     examples/breizhcrops_eopatch_data_analysis.ipynb
     examples/breizhcrops_evaluation_aitlas.ipynb
-
-
-
-
-
-
-
-
-
-

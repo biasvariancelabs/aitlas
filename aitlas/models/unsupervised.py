@@ -1,5 +1,7 @@
 """DeepCluster model"""
+
 import math
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -105,10 +107,11 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
 def compute_features(dataloader, model, N, batch, device):
     """Compute features for images"""
     model.eval()
+    features = None
 
     # discard the label information in the dataloader
     for i, (input_tensor, _) in enumerate(dataloader):
-        input_var = torch.autograd.Variable(input_tensor.to(device), volatile=True)
+        input_var = input_tensor.to(device)
         aux = model(input_var).data.cpu().numpy()
 
         if i == 0:

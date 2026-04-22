@@ -1,9 +1,11 @@
 """Classes and methods for visualizations for segmentation tasks."""
+
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image, ImageOps
+
 from ..base import BaseDetailedVisualization
 from ..utils import pil_loader
-from PIL import Image, ImageOps
 
 
 class ImageMaskPredictionVisualization(BaseDetailedVisualization):

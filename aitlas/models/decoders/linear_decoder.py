@@ -1,6 +1,7 @@
 # Copyright contributors to the Terratorch project
 
 from torch import Tensor, nn
+
 from aitlas.models.registries import DECODER_REGISTRY
 
 
@@ -9,9 +10,16 @@ class LinearDecoder(nn.Module):
     """
     A linear decoder using a transposed convolution layer for upsampling.
     """
+
     includes_head: bool = True
 
-    def __init__(self, embed_dim: list[int], num_classes: int, upsampling_size: int, in_index: int = -1) -> None:
+    def __init__(
+        self,
+        embed_dim: list[int],
+        num_classes: int,
+        upsampling_size: int,
+        in_index: int = -1,
+    ) -> None:
         """Constructor
 
         Args:

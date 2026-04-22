@@ -1,4 +1,5 @@
 """PSPNet model for segmentation"""
+
 import segmentation_models_pytorch as smp
 
 from ..base import BaseSegmentationClassifier
@@ -14,9 +15,9 @@ class PSPNet(BaseSegmentationClassifier):
 
         self.model = smp.PSPNet(
             encoder_name="resnet50",
-            encoder_weights="imagenet"
-            if self.config.pretrained
-            else None,  # set pretrained weights for encoder
+            encoder_weights=(
+                "imagenet" if self.config.pretrained else None
+            ),  # set pretrained weights for encoder
             classes=self.config.num_classes,
         )
 

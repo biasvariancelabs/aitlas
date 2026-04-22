@@ -57,7 +57,8 @@ class ExtractFeaturesTask(BaseTask):
                         feats = feats.cpu()
 
                     np.savetxt(
-                        os.path.join(self.output_dir, f"{fname}.feat"), feats.numpy().flatten(),
+                        os.path.join(self.output_dir, f"{fname}.feat"),
+                        feats.numpy().flatten(),
                     )
 
         logging.info(f"And that's it! The features are in {self.output_dir}")

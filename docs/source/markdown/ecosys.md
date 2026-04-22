@@ -13,8 +13,3 @@ An open-source benchmark framework for evaluating state-of-the-art deep learning
 ## AiTLAS Semantic Data Catalog of Earth Observation (EO) datasets (beta)
 
 A novel semantic data catalog of numerous EO datasets, pertaining to various different EO and ML tasks. The catalog, that includes properties of different datasets and provides further details for their use, is available at [eodata.bvlabs.ai](http://eodata.bvlabs.ai)
-
-
-
-
-

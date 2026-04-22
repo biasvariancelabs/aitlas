@@ -56,4 +56,3 @@ aitlas.transforms.spacenet6 module
    :members:
    :undoc-members:
    :show-inheritance:
-

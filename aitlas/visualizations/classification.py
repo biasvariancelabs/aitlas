@@ -1,10 +1,11 @@
 """Classes and methods for visualizations for classification tasks."""
 
+import math
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import sklearn.metrics as skmetrics
-import math
 
 from ..base import BaseDetailedVisualization, BaseVisualization
 from ..utils import pil_loader

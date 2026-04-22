@@ -22,15 +22,23 @@
 # and https://github.com/ermongroup/ddim
 
 
+from dataclasses import dataclass
+
 import numpy as np
 import torch
-from dataclasses import dataclass
 from diffusers.configuration_utils import ConfigMixin, register_to_config
+from diffusers.schedulers.scheduling_utils import (
+    KarrasDiffusionSchedulers,
+    SchedulerMixin,
+)
 from diffusers.utils import BaseOutput
 from diffusers.utils.torch_utils import randn_tensor
-from diffusers.schedulers.scheduling_utils import KarrasDiffusionSchedulers, SchedulerMixin
 
-from .scheduling_utils import enforce_zero_terminal_snr, betas_for_alpha_bar, scaled_cosine_alphas
+from .scheduling_utils import (
+    betas_for_alpha_bar,
+    enforce_zero_terminal_snr,
+    scaled_cosine_alphas,
+)
 
 
 @dataclass
@@ -49,6 +57,7 @@ class DDPMSchedulerOutput(BaseOutput):
 
     prev_sample: torch.FloatTensor
     pred_original_sample: torch.FloatTensor | None = None
+
 
 class DDPMScheduler(SchedulerMixin, ConfigMixin):
     """
@@ -113,19 +122,27 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
         sample_max_value: float = 1.0,
         zero_terminal_snr: bool = True,
     ):
-        if 'shifted_cosine:' in beta_schedule:
+        if "shifted_cosine:" in beta_schedule:
             # Syntax is "shifted_cosine:{noise_shift}"
-            noise_shift = float(beta_schedule.split(':')[1])
+            noise_shift = float(beta_schedule.split(":")[1])
             self.alphas_cumprod = scaled_cosine_alphas(num_train_timesteps, noise_shift)
         else:
             if trained_betas is not None:
                 self.betas = torch.tensor(trained_betas, dtype=torch.float)
             elif beta_schedule == "linear":
-                self.betas = torch.linspace(beta_start, beta_end, num_train_timesteps, dtype=torch.float)
+                self.betas = torch.linspace(
+                    beta_start, beta_end, num_train_timesteps, dtype=torch.float
+                )
             elif beta_schedule == "scaled_linear":
                 # this schedule is very specific to the latent diffusion model.
                 self.betas = (
-                    torch.linspace(beta_start**0.5, beta_end**0.5, num_train_timesteps, dtype=torch.float) ** 2
+                    torch.linspace(
+                        beta_start**0.5,
+                        beta_end**0.5,
+                        num_train_timesteps,
+                        dtype=torch.float,
+                    )
+                    ** 2
                 )
             elif beta_schedule == "squaredcos_cap_v2":
                 # Glide cosine schedule
@@ -135,8 +152,10 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
                 betas = torch.linspace(-6, 6, num_train_timesteps)
                 self.betas = torch.sigmoid(betas) * (beta_end - beta_start) + beta_start
             else:
-                raise NotImplementedError(f"{beta_schedule} does is not implemented for {self.__class__}")
-            
+                raise NotImplementedError(
+                    f"{beta_schedule} does is not implemented for {self.__class__}"
+                )
+
             if zero_terminal_snr:
                 self.betas = enforce_zero_terminal_snr(self.betas)
 
@@ -151,11 +170,15 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
         # setable values
         self.custom_timesteps = False
         self.num_inference_steps = None
-        self.timesteps = torch.from_numpy(np.arange(0, num_train_timesteps)[::-1].copy())
+        self.timesteps = torch.from_numpy(
+            np.arange(0, num_train_timesteps)[::-1].copy()
+        )
 
         self.variance_type = variance_type
 
-    def scale_model_input(self, sample: torch.FloatTensor, timestep: int | None = None) -> torch.FloatTensor:
+    def scale_model_input(
+        self, sample: torch.FloatTensor, timestep: int | None = None
+    ) -> torch.FloatTensor:
         """
         Ensures interchangeability with schedulers that need to scale the denoising model input depending on the
         current timestep.
@@ -192,7 +215,9 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
 
         """
         if num_inference_steps is not None and timesteps is not None:
-            raise ValueError("Can only pass one of `num_inference_steps` or `custom_timesteps`.")
+            raise ValueError(
+                "Can only pass one of `num_inference_steps` or `custom_timesteps`."
+            )
 
         if timesteps is not None:
             for i in range(1, len(timesteps)):
@@ -218,7 +243,12 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
             self.num_inference_steps = num_inference_steps
 
             step_ratio = self.config.num_train_timesteps // self.num_inference_steps
-            timesteps = (np.arange(0, num_inference_steps) * step_ratio).round()[::-1].copy().astype(np.int64)
+            timesteps = (
+                (np.arange(0, num_inference_steps) * step_ratio)
+                .round()[::-1]
+                .copy()
+                .astype(np.int64)
+            )
             self.custom_timesteps = False
 
         self.timesteps = torch.from_numpy(timesteps).to(device)
@@ -277,7 +307,9 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
         batch_size, channels, height, width = sample.shape
 
         if dtype not in (torch.float, torch.float64):
-            sample = sample.float()  # upcast for quantile calculation, and clamp not implemented for cpu half
+            sample = (
+                sample.float()
+            )  # upcast for quantile calculation, and clamp not implemented for cpu half
 
         # Flatten sample for doing quantile calculation along each image
         sample = sample.reshape(batch_size, channels * height * width)
@@ -290,7 +322,9 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
         )  # When clamped to min=1, equivalent to standard clipping to [-1, 1]
 
         s = s.unsqueeze(1)  # (batch_size, 1) because clamp will broadcast along dim=0
-        sample = torch.clamp(sample, -s, s) / s  # "we threshold xt0 to the range [-s, s] and then divide by s"
+        sample = (
+            torch.clamp(sample, -s, s) / s
+        )  # "we threshold xt0 to the range [-s, s] and then divide by s"
 
         sample = sample.reshape(batch_size, channels, height, width)
         sample = sample.to(dtype)
@@ -327,8 +361,13 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
 
         prev_t = self.previous_timestep(t)
 
-        if model_output.shape[1] == sample.shape[1] * 2 and self.variance_type in ["learned", "learned_range"]:
-            model_output, predicted_variance = torch.split(model_output, sample.shape[1], dim=1)
+        if model_output.shape[1] == sample.shape[1] * 2 and self.variance_type in [
+            "learned",
+            "learned_range",
+        ]:
+            model_output, predicted_variance = torch.split(
+                model_output, sample.shape[1], dim=1
+            )
         else:
             predicted_variance = None
 
@@ -343,11 +382,15 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
         # 2. compute predicted original sample from predicted noise also called
         # "predicted x_0" of formula (15) from https://arxiv.org/pdf/2006.11239.pdf
         if self.config.prediction_type == "epsilon":
-            pred_original_sample = (sample - beta_prod_t ** (0.5) * model_output) / alpha_prod_t ** (0.5)
+            pred_original_sample = (
+                sample - beta_prod_t ** (0.5) * model_output
+            ) / alpha_prod_t ** (0.5)
         elif self.config.prediction_type == "sample":
             pred_original_sample = model_output
         elif self.config.prediction_type == "v_prediction":
-            pred_original_sample = (alpha_prod_t**0.5) * sample - (beta_prod_t**0.5) * model_output
+            pred_original_sample = (alpha_prod_t**0.5) * sample - (
+                beta_prod_t**0.5
+            ) * model_output
         else:
             raise ValueError(
                 f"prediction_type given as {self.config.prediction_type} must be one of `epsilon`, `sample` or"
@@ -364,36 +407,53 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
 
         # 4. Compute coefficients for pred_original_sample x_0 and current sample x_t
         # See formula (7) from https://arxiv.org/pdf/2006.11239.pdf
-        pred_original_sample_coeff = (alpha_prod_t_prev ** (0.5) * current_beta_t) / beta_prod_t
+        pred_original_sample_coeff = (
+            alpha_prod_t_prev ** (0.5) * current_beta_t
+        ) / beta_prod_t
         current_sample_coeff = current_alpha_t ** (0.5) * beta_prod_t_prev / beta_prod_t
 
         # 5. Compute predicted previous sample µ_t
         # See formula (7) from https://arxiv.org/pdf/2006.11239.pdf
-        pred_prev_sample = pred_original_sample_coeff * pred_original_sample + current_sample_coeff * sample
+        pred_prev_sample = (
+            pred_original_sample_coeff * pred_original_sample
+            + current_sample_coeff * sample
+        )
 
         # 6. Add noise
         variance = 0
         if t > 0:
             device = model_output.device
             variance_noise = randn_tensor(
-                model_output.shape, generator=generator, device=device, dtype=model_output.dtype
+                model_output.shape,
+                generator=generator,
+                device=device,
+                dtype=model_output.dtype,
             )
             if self.variance_type == "fixed_small_log":
-                variance = self._get_variance(t, predicted_variance=predicted_variance) * variance_noise
+                variance = (
+                    self._get_variance(t, predicted_variance=predicted_variance)
+                    * variance_noise
+                )
             elif self.variance_type == "learned_range":
                 variance = self._get_variance(t, predicted_variance=predicted_variance)
                 variance = torch.exp(0.5 * variance) * variance_noise
             else:
-                variance = (self._get_variance(t, predicted_variance=predicted_variance) ** 0.5) * variance_noise
+                variance = (
+                    self._get_variance(t, predicted_variance=predicted_variance) ** 0.5
+                ) * variance_noise
 
         pred_prev_sample = pred_prev_sample + variance
 
         if not return_dict:
             return (pred_prev_sample,)
 
-        return DDPMSchedulerOutput(prev_sample=pred_prev_sample, pred_original_sample=pred_original_sample)
-    
-    def get_alpha_sigma_sqrts(self, timesteps, device, dtype, shape) -> torch.FloatTensor:
+        return DDPMSchedulerOutput(
+            prev_sample=pred_prev_sample, pred_original_sample=pred_original_sample
+        )
+
+    def get_alpha_sigma_sqrts(
+        self, timesteps, device, dtype, shape
+    ) -> torch.FloatTensor:
         # Make sure alphas_cumprod and timestep have same device and dtype as original_samples
         alphas_cumprod = self.alphas_cumprod.to(device=device, dtype=dtype)
         timesteps = timesteps.to(device)
@@ -407,27 +467,47 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
         sqrt_one_minus_alpha_prod = sqrt_one_minus_alpha_prod.flatten()
         while len(sqrt_one_minus_alpha_prod.shape) < len(shape):
             sqrt_one_minus_alpha_prod = sqrt_one_minus_alpha_prod.unsqueeze(-1)
-        
+
         return sqrt_alpha_prod, sqrt_one_minus_alpha_prod
 
     def add_noise(
-        self, original_samples: torch.FloatTensor, noise: torch.FloatTensor, timesteps: torch.IntTensor,
+        self,
+        original_samples: torch.FloatTensor,
+        noise: torch.FloatTensor,
+        timesteps: torch.IntTensor,
     ) -> torch.FloatTensor:
-        sqrt_alpha_prod, sqrt_one_minus_alpha_prod = self.get_alpha_sigma_sqrts(timesteps, original_samples.device, original_samples.dtype, original_samples.shape)
-        noisy_samples = sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
+        sqrt_alpha_prod, sqrt_one_minus_alpha_prod = self.get_alpha_sigma_sqrts(
+            timesteps,
+            original_samples.device,
+            original_samples.dtype,
+            original_samples.shape,
+        )
+        noisy_samples = (
+            sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
+        )
         return noisy_samples
 
     def get_velocity(
-        self, sample: torch.FloatTensor, noise: torch.FloatTensor, timesteps: torch.IntTensor
+        self,
+        sample: torch.FloatTensor,
+        noise: torch.FloatTensor,
+        timesteps: torch.IntTensor,
     ) -> torch.FloatTensor:
-        sqrt_alpha_prod, sqrt_one_minus_alpha_prod = self.get_alpha_sigma_sqrts(timesteps, sample.device, sample.dtype, sample.shape)
+        sqrt_alpha_prod, sqrt_one_minus_alpha_prod = self.get_alpha_sigma_sqrts(
+            timesteps, sample.device, sample.dtype, sample.shape
+        )
         velocity = sqrt_alpha_prod * noise - sqrt_one_minus_alpha_prod * sample
         return velocity
-    
+
     def get_noise(
-        self, sample: torch.FloatTensor, velocity: torch.FloatTensor, timesteps: torch.IntTensor
+        self,
+        sample: torch.FloatTensor,
+        velocity: torch.FloatTensor,
+        timesteps: torch.IntTensor,
     ) -> torch.FloatTensor:
-        sqrt_alpha_prod, sqrt_one_minus_alpha_prod = self.get_alpha_sigma_sqrts(timesteps, sample.device, sample.dtype, sample.shape)
+        sqrt_alpha_prod, sqrt_one_minus_alpha_prod = self.get_alpha_sigma_sqrts(
+            timesteps, sample.device, sample.dtype, sample.shape
+        )
         noise = sqrt_alpha_prod * velocity + sqrt_one_minus_alpha_prod * sample
         return noise
 
@@ -443,7 +523,9 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
                 prev_t = self.timesteps[index + 1]
         else:
             num_inference_steps = (
-                self.num_inference_steps if self.num_inference_steps else self.config.num_train_timesteps
+                self.num_inference_steps
+                if self.num_inference_steps
+                else self.config.num_train_timesteps
             )
             prev_t = timestep - self.config.num_train_timesteps // num_inference_steps
 

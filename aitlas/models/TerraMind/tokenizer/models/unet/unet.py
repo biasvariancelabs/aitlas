@@ -20,31 +20,36 @@
 
 
 import math
+from abc import abstractmethod
+
 import numpy as np
 import torch
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-from abc import abstractmethod
-from einops import rearrange
-
 from diffusers.configuration_utils import ConfigMixin
 from diffusers.models.modeling_utils import ModelMixin
+from einops import rearrange
 
-from .fp16_util import convert_module_to_f16, convert_module_to_f32, convert_module_to_bf16
+from .fp16_util import (
+    convert_module_to_bf16,
+    convert_module_to_f16,
+    convert_module_to_f32,
+)
 from .nn import (
+    avg_pool_nd,
     checkpoint,
     conv_nd,
     linear,
-    avg_pool_nd,
-    zero_module,
     normalization,
     timestep_embedding,
+    zero_module,
 )
 
 
 def pair(t):
     return t if isinstance(t, tuple) else (t, t)
+
 
 class AttentionPool2d(nn.Module):
     """
@@ -60,7 +65,7 @@ class AttentionPool2d(nn.Module):
     ):
         super().__init__()
         self.positional_embedding = nn.Parameter(
-            th.randn(embed_dim, spacial_dim ** 2 + 1) / embed_dim ** 0.5
+            th.randn(embed_dim, spacial_dim**2 + 1) / embed_dim**0.5
         )
         self.qkv_proj = conv_nd(1, embed_dim, 3 * embed_dim, 1)
         self.c_proj = conv_nd(1, embed_dim, output_dim or embed_dim, 1)
@@ -343,7 +348,7 @@ def count_flops_attn(model, _x, y):
     # We perform two matmuls with the same number of ops.
     # The first computes the weight matrix, the second computes
     # the combination of the value vectors.
-    matmul_ops = 2 * b * (num_spatial ** 2) * c
+    matmul_ops = 2 * b * (num_spatial**2) * c
     model.total_ops += th.DoubleTensor([matmul_ops])
 
 
@@ -450,7 +455,7 @@ class UNetModel(ModelMixin, ConfigMixin):
         model_channels=256,
         out_channels=3,
         num_res_blocks=3,
-        attention_resolutions=[8,16],
+        attention_resolutions=[8, 16],
         dropout=0,
         channel_mult=(1, 2, 4, 8),
         conv_resample=True,
@@ -471,7 +476,7 @@ class UNetModel(ModelMixin, ConfigMixin):
             num_heads_upsample = num_heads
 
         self.image_size = image_size
-        self.sample_size = image_size # For compatibility
+        self.sample_size = image_size  # For compatibility
         self.in_channels = in_channels
         self.model_channels = model_channels
         self.out_channels = out_channels
@@ -684,7 +689,7 @@ class UNetModel(ModelMixin, ConfigMixin):
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
 
-        h = x #.type(self.dtype)
+        h = x  # .type(self.dtype)
         for module in self.input_blocks:
             h = module(h, emb)
             hs.append(h)
@@ -695,67 +700,96 @@ class UNetModel(ModelMixin, ConfigMixin):
         # h = h.type(x.dtype)
         return self.out(h)
 
-    
+
 class PatchedUNetCondCat(UNetModel):
     """Patched UNet with conditioning upsampled and concatenated to input.
     For more details, see https://arxiv.org/abs/2207.04316
-    
+
     Args:
         in_channels: Number of input channels
         out_channels: Number of output channels
         cond_channels: Number of conditioning channels
         patch_size: Size of the patch projection before and after the UNet
     """
-    def __init__(self, in_channels: int, out_channels: int, cond_channels: int, patch_size: int, *args, **kwargs):
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        cond_channels: int,
+        patch_size: int,
+        *args,
+        **kwargs,
+    ):
         in_channels_p = in_channels * patch_size * patch_size + cond_channels
         out_channels_p = out_channels * patch_size * patch_size
-        super().__init__(in_channels=in_channels_p, out_channels=out_channels_p, *args, **kwargs)
+        super().__init__(
+            in_channels=in_channels_p, out_channels=out_channels_p, *args, **kwargs
+        )
         self.P_H, self.P_W = pair(patch_size)
         self.in_channels = in_channels
         self.out_channels = out_channels
 
-    def forward(self,
-                sample: th.FloatTensor, # Shape (B, C, H, W)
-                timestep: th.Tensor | float | int,
-                encoder_hidden_states: th.Tensor = None, # Shape (B, D_C, H_C, W_C)
-                cond_mask: th.BoolTensor | None = None, # Boolen tensor of shape (B, H_C, W_C). True for masked out pixels
-                **kwargs):
+    def forward(
+        self,
+        sample: th.FloatTensor,  # Shape (B, C, H, W)
+        timestep: th.Tensor | float | int,
+        encoder_hidden_states: th.Tensor = None,  # Shape (B, D_C, H_C, W_C)
+        cond_mask: (
+            th.BoolTensor | None
+        ) = None,  # Boolen tensor of shape (B, H_C, W_C). True for masked out pixels
+        **kwargs,
+    ):
         B, C, H, W = sample.shape
-        assert (H % self.P_H == 0) and (W % self.P_W == 0), f'Image sizes {H}x{W} must be divisible by patch sizes {self.P_H}x{self.P_W}'
-        N_H, N_W = H // self.P_H, W // self.P_W # Number of patches in height and width
-        
+        assert (H % self.P_H == 0) and (
+            W % self.P_W == 0
+        ), f"Image sizes {H}x{W} must be divisible by patch sizes {self.P_H}x{self.P_W}"
+        N_H, N_W = H // self.P_H, W // self.P_W  # Number of patches in height and width
+
         # Patchify input from B C H W -> B (C * P_H * P_W) N_H N_W
         x = rearrange(
-            sample, 'b c (nh ph) (nw pw) -> b (c ph pw) nh nw', 
-            ph=self.P_H, pw=self.P_W, nh=N_H, nw=N_W
+            sample,
+            "b c (nh ph) (nw pw) -> b (c ph pw) nh nw",
+            ph=self.P_H,
+            pw=self.P_W,
+            nh=N_H,
+            nw=N_W,
         )
 
         # Optionally mask out conditioning
         if cond_mask is not None:
-            encoder_hidden_states = torch.where(cond_mask[:,None,:,:], 0.0, encoder_hidden_states)
-        
+            encoder_hidden_states = torch.where(
+                cond_mask[:, None, :, :], 0.0, encoder_hidden_states
+            )
+
         # Concat input with upsampled conditioning
-        cond_upsampled = F.interpolate(encoder_hidden_states, (N_H, N_W), mode="nearest")
+        cond_upsampled = F.interpolate(
+            encoder_hidden_states, (N_H, N_W), mode="nearest"
+        )
         x = th.cat([x, cond_upsampled], dim=1)
-        
+
         # UNet forward pass in subspace
         x = super().forward(x, timestep, **kwargs)
-        
+
         # Depatchify output from B (C * P_H * P_W) N_H N_W -> B C H W
         x = rearrange(
-            x, 'b (c ph pw) nh nw -> b c (nh ph) (nw pw)',
-            ph=self.P_H, pw=self.P_W, nh=N_H, nw=N_W
+            x,
+            "b (c ph pw) nh nw -> b c (nh ph) (nw pw)",
+            ph=self.P_H,
+            pw=self.P_W,
+            nh=N_H,
+            nw=N_W,
         )
 
         return x
-    
+
 
 def unet_patched(**kwargs):
     return PatchedUNetCondCat(
-            patch_size=4, 
-            model_channels=256, 
-            num_res_blocks=3, 
-            attention_resolutions=[4,8],
-            channel_mult=(1,2,2,2),
-            **kwargs
-        )
+        patch_size=4,
+        model_channels=256,
+        num_res_blocks=3,
+        attention_resolutions=[4, 8],
+        channel_mult=(1, 2, 2, 2),
+        **kwargs,
+    )

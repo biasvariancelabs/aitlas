@@ -1,18 +1,26 @@
-
-import warnings
 import re
+import warnings
+
 import torch
-from torch import nn
-from tokenizers import Tokenizer, AddedToken
-from tokenizers.models import WordPiece
-from tokenizers.pre_tokenizers import BertPreTokenizer
-from tokenizers.normalizers import BertNormalizer
+from tokenizers import AddedToken, Tokenizer
 from tokenizers.decoders import WordPiece as WordPieceDecoder
+from tokenizers.models import WordPiece
+from tokenizers.normalizers import BertNormalizer
+from tokenizers.pre_tokenizers import BertPreTokenizer
+from torch import nn
 
 
 def build_blank_wordpiece():
     # Minimal tokens needed for testing
-    vocab = {"[PAD]": 0, "[UNK]": 1, "[SOS]": 2,"[EOS]": 3, "[S_0]": 4, "[S_1]": 5, "[S_2]": 6}
+    vocab = {
+        "[PAD]": 0,
+        "[UNK]": 1,
+        "[SOS]": 2,
+        "[EOS]": 3,
+        "[S_0]": 4,
+        "[S_1]": 5,
+        "[S_2]": 6,
+    }
     added_tokens = [AddedToken(w, normalized=False, special=True) for w in vocab.keys()]
     tok = Tokenizer(WordPiece(vocab, unk_token="[UNK]"))
     tok.normalizer = BertNormalizer()
@@ -24,8 +32,8 @@ def build_blank_wordpiece():
 
 def capitalize_sentences(text):
     # Split text into sentences using a regex that looks for sentence end punctuation
-    sentences = re.split('([.!?] *)', text)
-    capitalized = ''.join([s.capitalize() for s in sentences])
+    sentences = re.split("([.!?] *)", text)
+    capitalized = "".join([s.capitalize() for s in sentences])
     return capitalized
 
 
@@ -38,7 +46,9 @@ class CaptionTokenizer(nn.Module):
             self.text_tokenizer = build_blank_wordpiece()  # un-trained
         self.text_tokenizer.enable_padding()
 
-    def encode(self, text: list[str], device: torch.device, eos_id=3, *args, **kwargs) -> dict[str, torch.Tensor]:
+    def encode(
+        self, text: list[str], device: torch.device, eos_id=3, *args, **kwargs
+    ) -> dict[str, torch.Tensor]:
         """
         Args:
             text list[str]: Text to be tokenized
@@ -50,11 +60,13 @@ class CaptionTokenizer(nn.Module):
         text = [t + " [S_1]" for t in text]
 
         # Tokenize
-        tok_ids = [t.ids for t in self.text_tokenizer.encode_batch(text, add_special_tokens=True)]
+        tok_ids = [
+            t.ids
+            for t in self.text_tokenizer.encode_batch(text, add_special_tokens=True)
+        ]
 
         # Add EOS token
         tok_ids = [t + [eos_id] for t in tok_ids]
-
 
         tok_ids = torch.tensor(tok_ids, device=device)
 
@@ -62,7 +74,9 @@ class CaptionTokenizer(nn.Module):
             "tensor": tok_ids,
             "input_mask": torch.zeros_like(tok_ids, dtype=torch.bool, device=device),
             "target_mask": torch.ones_like(tok_ids, dtype=torch.bool, device=device),
-            "decoder_attention_mask": torch.zeros_like(tok_ids, dtype=torch.bool, device=device),
+            "decoder_attention_mask": torch.zeros_like(
+                tok_ids, dtype=torch.bool, device=device
+            ),
         }
 
         return text_dict
@@ -110,8 +124,10 @@ class CoordsTokenizer(nn.Module):
             tok_ids(tuple[torch.Tensor]): Token ids with shape [B, 2]
         """
         if coords.shape[1] != 2:
-            raise ValueError(f"Expect coords data in shape [batch, 2] with [lon, lat] values, "
-                             f"got coords with shape {coords.shape}.")
+            raise ValueError(
+                f"Expect coords data in shape [batch, 2] with [lon, lat] values, "
+                f"got coords with shape {coords.shape}."
+            )
 
         # Align coords with 0.25 degree grid
         coords = (coords * 4).round() / 4
@@ -120,14 +136,19 @@ class CoordsTokenizer(nn.Module):
         coords = [f"lat={c[1].item():.2f} lon={c[0].item():.2f} [EOS]" for c in coords]
 
         # Tokenize
-        tok_ids = [t.ids for t in self.text_tokenizer.encode_batch(coords, add_special_tokens=True)]
+        tok_ids = [
+            t.ids
+            for t in self.text_tokenizer.encode_batch(coords, add_special_tokens=True)
+        ]
         tok_ids = torch.tensor(tok_ids, device=device)
 
         coords_dict = {
             "tensor": tok_ids,
             "input_mask": torch.zeros_like(tok_ids, dtype=torch.bool, device=device),
             "target_mask": torch.ones_like(tok_ids, dtype=torch.bool, device=device),
-            "decoder_attention_mask": torch.zeros_like(tok_ids, dtype=torch.bool, device=device),
+            "decoder_attention_mask": torch.zeros_like(
+                tok_ids, dtype=torch.bool, device=device
+            ),
         }
 
         return coords_dict
@@ -153,8 +174,10 @@ class CoordsTokenizer(nn.Module):
                 lat, lon = text.split(" ")
                 coords.append([float(lon.strip("lon=")), float(lat.strip("lat="))])
             except Exception as e:
-                warnings.warn(f"Coordinate generation did not work correctly, generated text: {text} (Error: {e}). "
-                              f"Returning NaN.")
+                warnings.warn(
+                    f"Coordinate generation did not work correctly, generated text: {text} (Error: {e}). "
+                    f"Returning NaN."
+                )
                 coords.append([torch.nan, torch.nan])
 
         return coords

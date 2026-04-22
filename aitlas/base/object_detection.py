@@ -36,28 +36,30 @@ class BaseObjectDetection(BaseModel):
             if self._should_use_amp():
                 self.use_amp = True
             else:
-                logging.info("AMP is enabled in config but not supported on this GPU - falling back to FP32")
+                logging.info(
+                    "AMP is enabled in config but not supported on this GPU - falling back to FP32"
+                )
                 self.use_amp = False
         else:
             self.use_amp = False
 
         self.scaler = torch.amp.GradScaler("cuda") if self.use_amp else None
-    
+
     def _should_use_amp(self):
-         """Check if GPU has Tensor Cores for meaningful AMP speedup"""
-         if not torch.cuda.is_available():
+        """Check if GPU has Tensor Cores for meaningful AMP speedup"""
+        if not torch.cuda.is_available():
             return False
 
-         device_name = torch.cuda.get_device_name(0)
-         compute_capability = torch.cuda.get_device_capability(0)
+        device_name = torch.cuda.get_device_name(0)
+        compute_capability = torch.cuda.get_device_capability(0)
 
-         # Tensor Cores available in: Volta (7.0+), Turing (7.5), Ampere (8.x), Hopper (9.x)
-         has_tensor_cores = compute_capability[0] >= 7
+        # Tensor Cores available in: Volta (7.0+), Turing (7.5), Ampere (8.x), Hopper (9.x)
+        has_tensor_cores = compute_capability[0] >= 7
 
-         if has_tensor_cores:
+        if has_tensor_cores:
             logging.info(f"GPU {device_name} has Tensor Cores - enabling AMP")
             return True
-         else:
+        else:
             logging.info(f"GPU {device_name} lacks Tensor Cores - disabling AMP")
             return False
 
@@ -195,7 +197,8 @@ class BaseObjectDetection(BaseModel):
                 for i, data in enumerate(tqdm(dataloader, desc=description)):
                     inputs, targets = data
                     inputs = list(
-                        image.type(torch.FloatTensor).to(self.device) for image in inputs
+                        image.type(torch.FloatTensor).to(self.device)
+                        for image in inputs
                     )
                     targets = [
                         {k: v.to(self.device) for k, v in t.items()} for t in targets
@@ -206,7 +209,10 @@ class BaseObjectDetection(BaseModel):
                     yield inputs, outputs, targets
 
     def evaluate_model(
-        self, dataloader, criterion=None, description="testing on validation set",
+        self,
+        dataloader,
+        criterion=None,
+        description="testing on validation set",
     ):
         """Method used to evaluate the model on a validation set.
 

@@ -1,27 +1,28 @@
 import json
 import os
+
+import albumentations as A
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import torch
-import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 
-from aitlas.utils import image_loader
-from aitlas.datasets.schemas import (
-    ObjectDetectionRfiCocoDatasetSchema
+from aitlas.datasets.object_detection import (
+    BaseObjectDetectionDataset,
+    BaseObjectDetectionRotatedBboxDataset,
 )
-from aitlas.datasets.object_detection import BaseObjectDetectionRotatedBboxDataset
-from aitlas.datasets.object_detection import BaseObjectDetectionDataset
+from aitlas.datasets.schemas import ObjectDetectionRfiCocoDatasetSchema
+from aitlas.utils import image_loader
 
 
-'''
-The Parallax_AI4QC dataset contains a set of labeled parallax artefacts, in 1764 images. This 
-effect appears as a colorful pattern in images where cloud/heavy haze is present. Bounding boxes 
-were defined around Parallax artefacts in Sentinel-2 true color images (jpg images). This dataset 
-can be used to train object detection algorithms to automatically detect these parallax in a 
+"""
+The Parallax_AI4QC dataset contains a set of labeled parallax artefacts, in 1764 images. This
+effect appears as a colorful pattern in images where cloud/heavy haze is present. Bounding boxes
+were defined around Parallax artefacts in Sentinel-2 true color images (jpg images). This dataset
+can be used to train object detection algorithms to automatically detect these parallax in a
 satellite image. Two sets of labels are available: rotated bounding boxes and straight bounding boxes.
-'''
+"""
 
 url = "https://zenodo.org/records/13903820"
 name = "Parallax_AI4QC"
@@ -58,12 +59,14 @@ class ObjectDetectionRotatedParallaxDataset(BaseObjectDetectionRotatedBboxDatase
 
         # reading the images and converting them to correct size and color
         img_name = img_data
-        image = image_loader(os.path.join(self.data_dir, img_name+'.jpg')) / 255.0
+        image = image_loader(os.path.join(self.data_dir, img_name + ".jpg")) / 255.0
 
         # annotation file
-        annotations_file_path = os.path.join(self.annotation_dir,img_name+'_LABEL.json')
+        annotations_file_path = os.path.join(
+            self.annotation_dir, img_name + "_LABEL.json"
+        )
         annotations = json.load(open(annotations_file_path, "r"))
-        
+
         boxes = []
         labels = []
         image_id = []
@@ -71,7 +74,7 @@ class ObjectDetectionRotatedParallaxDataset(BaseObjectDetectionRotatedBboxDatase
 
         # box coordinates for json files are extracted and corrected for image size given
         for annotation in annotations["annotations"]:
-            labels.append(annotation["category_id"]) 
+            labels.append(annotation["category_id"])
             image_id.append(annotation["image_id"])
             rotation.append(annotation["attributes"]["rotation"])
 
@@ -106,7 +109,7 @@ class ObjectDetectionRotatedParallaxDataset(BaseObjectDetectionRotatedBboxDatase
         labels = torch.as_tensor(labels, dtype=torch.int64)
 
         rotation = torch.as_tensor(rotation, dtype=torch.float32)
-            
+
         target = {}
         target["boxes"] = boxes
         target["rotation"] = rotation
@@ -115,16 +118,16 @@ class ObjectDetectionRotatedParallaxDataset(BaseObjectDetectionRotatedBboxDatase
         target["image_id"] = image_id
 
         image, target = self.apply_transformations(image, target)
-        
-        return image,target
-    
+
+        return image, target
+
     def load_dataset(self, data_dir=None, annotation_dir=None):
         labels = []
         annotations = []
         data = []
         file_names = []
         for json_file in os.listdir(annotation_dir):
-            coco = json.load(open(annotation_dir+json_file, "r"))
+            coco = json.load(open(annotation_dir + json_file, "r"))
 
             # read labels
             labels += [
@@ -158,20 +161,20 @@ class ObjectDetectionRotatedParallaxDataset(BaseObjectDetectionRotatedBboxDatase
 
         return labels, data, annotations, file_names
 
-    def test(self,index):
+    def test(self, index):
         img_data = self.file_names[index]
         return img_data
 
     def data_distribution_table(self):
         df = pd.DataFrame(self.annotations)
-        df = df.drop(['image_id', 'bbox', 'attributes'], axis=1)
+        df = df.drop(["image_id", "bbox", "attributes"], axis=1)
         df_label = pd.DataFrame(self.labels)
         df_count = df.groupby("category_id").count()
         df_count = df_count.join(df_label)
         df_count = df_count.iloc[:, ::-1].reset_index()
-        df_count = df_count.drop(['category_id'], axis=1)
+        df_count = df_count.drop(["category_id"], axis=1)
         df_count.columns = ["Label", "Count"]
-        
+
         return df_count
 
     def data_distribution_barchart(self):
@@ -186,7 +189,7 @@ class ObjectDetectionRotatedParallaxDataset(BaseObjectDetectionRotatedBboxDatase
     def show_samples(self):
         df = pd.DataFrame(self.annotations)
         return df.head(20)
-    
+
 
 class ObjectDetectionStraightParallaxDataset(BaseObjectDetectionDataset):
     """This is a skeleton object detection dataset following the Coco format"""
@@ -218,20 +221,20 @@ class ObjectDetectionStraightParallaxDataset(BaseObjectDetectionDataset):
         img_data = self.file_names[index]
 
         # reading the images and converting them to correct size and color
-        image = image_loader(os.path.join(self.data_dir, img_data+'.jpg')) / 255.0
+        image = image_loader(os.path.join(self.data_dir, img_data + ".jpg")) / 255.0
 
         # annotation file
         name = img_data
-        annotations_file_path = os.path.join(self.annotation_dir,name+'_LABEL.json')
+        annotations_file_path = os.path.join(self.annotation_dir, name + "_LABEL.json")
         annotations = json.load(open(annotations_file_path, "r"))
-        
+
         boxes = []
         labels = []
         image_id = []
 
         # box coordinates for json files are extracted and corrected for image size given
         for annotation in annotations["annotations"]:
-            labels.append(annotation["category_id"]) 
+            labels.append(annotation["category_id"])
             image_id.append(annotation["image_id"])
 
             bbox = annotation["bbox"]
@@ -263,7 +266,7 @@ class ObjectDetectionStraightParallaxDataset(BaseObjectDetectionDataset):
             [A.Resize(480, 480), ToTensorV2(p=1.0)],
             bbox_params={"format": "pascal_voc", "label_fields": ["labels"]},
         )
-    
+
         transformed = data_transforms(
             image=image, bboxes=target["boxes"], labels=target["labels"]
         )
@@ -271,15 +274,15 @@ class ObjectDetectionStraightParallaxDataset(BaseObjectDetectionDataset):
         target["labels"] = torch.as_tensor(transformed["labels"], dtype=torch.int64)
         image = transformed["image"]
 
-        return image,target
-        
+        return image, target
+
     def load_dataset(self, data_dir=None, annotation_dir=None):
         labels = []
         annotations = []
         data = []
         file_names = []
         for json_file in os.listdir(annotation_dir):
-            coco = json.load(open(annotation_dir+json_file, "r"))
+            coco = json.load(open(annotation_dir + json_file, "r"))
 
             # read labels
             labels += [
@@ -315,15 +318,15 @@ class ObjectDetectionStraightParallaxDataset(BaseObjectDetectionDataset):
 
     def data_distribution_table(self):
         df = pd.DataFrame(self.annotations)
-        df = df.drop(['image_id', 'bbox'], axis=1)
+        df = df.drop(["image_id", "bbox"], axis=1)
         df_label = pd.DataFrame(self.labels)
-        
+
         df_count = df.groupby("category_id").count()
         df_count = df_count.join(df_label)
         df_count = df_count.iloc[:, ::-1].reset_index()
-        df_count = df_count.drop(['category_id'], axis=1)
+        df_count = df_count.drop(["category_id"], axis=1)
         df_count.columns = ["Label", "Count"]
-        
+
         return df_count
 
     def data_distribution_barchart(self):

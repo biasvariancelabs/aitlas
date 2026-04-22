@@ -1,17 +1,20 @@
 import os
 import shutil
+
 import torch
 import torch.nn as nn
 from huggingface_hub import hf_hub_download
+
+from aitlas.models.registries import BACKBONE_REGISTRY
+
 from ..base.foundation import FoundationModel
 from .AnySat.anysat import AnySatModule, anysat_base
 from .schemas import AnySatSchema
-from aitlas.models.registries import BACKBONE_REGISTRY
 
 
 class AnySat(FoundationModel):
     """AiTLAS wrapper class for AnySat model
-    
+
     .. note:: Based on https://github.com/gastruc/AnySat
     """
 
@@ -20,21 +23,21 @@ class AnySat(FoundationModel):
 
     # Define checkpoints for all backbones available on Huggingface
     BACKBONE_CHECKPOINTS = {
-        'anysat_base': [
+        "anysat_base": [
             {
-                'filename': 'AnySat.pth',
-                'repo_id': 'g-astruc/AnySat',
-                'description': 'AnySat model'
+                "filename": "AnySat.pth",
+                "repo_id": "g-astruc/AnySat",
+                "description": "AnySat model",
             },
             {
-                'filename': 'AnySat_full.pth',
-                'repo_id': 'g-astruc/AnySat',
-                'description': 'AnySat model (full)'
-            }
+                "filename": "AnySat_full.pth",
+                "repo_id": "g-astruc/AnySat",
+                "description": "AnySat model (full)",
+            },
         ]
     }
 
-    def __init__(self, config):    
+    def __init__(self, config):
         super().__init__(config)
 
         self.patch_size = self.config.patch_size
@@ -42,72 +45,98 @@ class AnySat(FoundationModel):
         self.out_indices = [0]
 
     def load_backbone(self):
-        """ Loads the AnySat (backbone) model from HuggingFace or from a local path (if available).
-        """
+        """Loads the AnySat (backbone) model from HuggingFace or from a local path (if available)."""
 
-        if hasattr(self.config, 'flash_attn'):
+        flash_attn = False
+
+        if hasattr(self.config, "flash_attn"):
             flash_attn = self.config.flash_attn
             if torch.cuda.is_available():
                 pass
             else:
                 flash_attn = False
 
-        if self.config.pretrained: # Load pretrained weights
+        if self.config.pretrained:  # Load pretrained weights
             if self.config.local_model_path:
                 # Check if the provided local path exists
                 if not os.path.exists(self.config.local_model_path):
-                    print(f"Provided local model path does not exist: {self.config.local_model_path}")
+                    print(
+                        f"Provided local model path does not exist: {self.config.local_model_path}"
+                    )
                     print("Weights will be downloaded from Huggingface instead.")
                     # Check if backbone is supported
                     if self.config.backbone_name not in self.BACKBONE_CHECKPOINTS:
-                        raise ValueError(f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}")
+                        raise ValueError(
+                            f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}"
+                        )
                     else:
                         # Check if backbone has weights available
                         if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
-                            raise ValueError(f"No pretrained weights are available for backbone '{self.config.backbone_name}'.")
-                        else: # Download the weights and load the model
+                            raise ValueError(
+                                f"No pretrained weights are available for backbone '{self.config.backbone_name}'."
+                            )
+                        else:  # Download the weights and load the model
                             # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][0]
-                            checkpoint_name = temp_checkpoint_name['filename']
-                            repo_id = temp_checkpoint_name['repo_id']
-                            downloaded_path = hf_hub_download(repo_id=repo_id, filename=checkpoint_name, subfolder="models", local_dir=os.path.dirname(self.config.local_model_path))
+                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[
+                                self.config.backbone_name
+                            ][0]
+                            checkpoint_name = temp_checkpoint_name["filename"]
+                            repo_id = temp_checkpoint_name["repo_id"]
+                            downloaded_path = hf_hub_download(
+                                repo_id=repo_id,
+                                filename=checkpoint_name,
+                                subfolder="models",
+                                local_dir=os.path.dirname(self.config.local_model_path),
+                            )
                             # Move the file from the subfolder to the desired location
-                            shutil.move(downloaded_path, self.config.local_model_path)                   
+                            shutil.move(downloaded_path, self.config.local_model_path)
                             # Clean up the empty 'models' directory
                             os.rmdir(os.path.dirname(downloaded_path))
                             # Load the checkpoint from the corrected local path
-                            checkpoint = torch.load(self.config.local_model_path, weights_only=False)
-                            state_dict = checkpoint['state_dict']
-                            backbone = globals()[self.config.backbone_name](flash_attn=flash_attn)
-                            msg = backbone.model.load_state_dict(state_dict, strict=True)
+                            checkpoint = torch.load(
+                                self.config.local_model_path, weights_only=False
+                            )
+                            state_dict = checkpoint["state_dict"]
+                            backbone = globals()[self.config.backbone_name](
+                                flash_attn=flash_attn
+                            )
+                            msg = backbone.model.load_state_dict(
+                                state_dict, strict=True
+                            )
                             print("Successfully loaded checkpoint:", checkpoint_name)
                 else:
-                    print(f"Loading weights from the provided local path: {self.config.local_model_path}")
-                    checkpoint = torch.load(self.config.local_model_path, weights_only=False)
-                    state_dict = checkpoint['state_dict']
+                    print(
+                        f"Loading weights from the provided local path: {self.config.local_model_path}"
+                    )
+                    checkpoint = torch.load(
+                        self.config.local_model_path, weights_only=False
+                    )
+                    state_dict = checkpoint["state_dict"]
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     for name, checkpoint_list in self.BACKBONE_CHECKPOINTS.items():
                         # Ensure the list of checkpoints is not None before iterating
                         if checkpoint_list:
                             # Create a list of all filenames for the current backbone
-                            filenames = [ckpt['filename'] for ckpt in checkpoint_list]
+                            filenames = [ckpt["filename"] for ckpt in checkpoint_list]
                             if checkpoint_name in filenames:
                                 self.backbone_name = name
                                 break
                     backbone = globals()[self.backbone_name](flash_attn=flash_attn)
                     msg = backbone.model.load_state_dict(state_dict, strict=True)
                     print("Successfully loaded checkpoint:", checkpoint_name)
-        else: # Load model without pretrained weights
-            raise NotImplementedError("Loading model without pretrained weights is not supported.")
+        else:  # Load model without pretrained weights
+            raise NotImplementedError(
+                "Loading model without pretrained weights is not supported."
+            )
 
         # Replace the head with identity if it exists
-        if hasattr(backbone, 'head'):
+        if hasattr(backbone, "head"):
             backbone.head = nn.Identity()
 
         # This method MUST return the loaded backbone object for the parent class.
         return backbone
-    
+
     def forward_features(self, x, patch_size=None, output=None, **kwargs):
         """Extract features from the model.
 
@@ -120,7 +149,7 @@ class AnySat(FoundationModel):
                 - "s1-asc_dates": Sentinel-1 ascending dates tensor of shape (B, T)
                 - "s2_dates": Sentinel-2 dates tensor of shape (B, T)
                 - ...
-            patch_size (int, optional): Patch size to use during the forward pass.  
+            patch_size (int, optional): Patch size to use during the forward pass.
                 If None, uses the patch size defined in the backbone.
             output (str, optional): Output mode to use during the forward pass. One of 'tile', 'patch', 'dense', 'all'.
                 If None, uses the output mode defined in the backbone ('patch').
@@ -145,14 +174,17 @@ class AnySat(FoundationModel):
         # Use provided patch_size and output mode, or default to config values
         p_size = patch_size if patch_size is not None else self.patch_size
         out_mode = output if output is not None else self.output_mode
-        
+
         # Pass the input through the backbone
         embedding = self.backbone(x, patch_size=p_size, output=out_mode, **kwargs)
 
-        if out_mode in ['dense', 'patch']:
-            embedding = embedding.permute(0, 3, 1, 2) # From (N, H, W, C) to (N, C, H, W)
+        if out_mode in ["dense", "patch"]:
+            embedding = embedding.permute(
+                0, 3, 1, 2
+            )  # From (N, H, W, C) to (N, C, H, W)
 
         return embedding
-    
+
+
 for variant in AnySat.BACKBONE_CHECKPOINTS.keys():
     BACKBONE_REGISTRY.register(variant)(AnySat)

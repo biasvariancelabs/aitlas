@@ -1,6 +1,7 @@
 """
 HRNet model for change detection
 """
+
 import timm
 import torch
 import torch.nn as nn

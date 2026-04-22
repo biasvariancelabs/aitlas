@@ -6,8 +6,6 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 import os
-import sys
-
 import shutil
 import sys
 from collections import defaultdict
@@ -15,14 +13,15 @@ from typing import Any, Dict, Optional
 
 import sphinx.ext.autodoc
 
+
 sys.path.insert(0, os.path.abspath("../../aitlas"))
 print(sys.executable)
 
 project = "AiTLAS : Artificial Intelligence Toolbox for Earth Observation"
 copyright = "2023, Bias Variance Labs"
 author = "Bias Variance Labs"
-#release = "1.0.0"
-doc_title="AiTLAS documentation"
+# release = "1.0.0"
+doc_title = "AiTLAS documentation"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -49,7 +48,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "sphinx_mdinclude",
-    'sphinx.ext.imgconverter',
+    "sphinx.ext.imgconverter",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
@@ -59,8 +58,8 @@ autosummary_generate = True
 
 # Include typehints in descriptions
 autodoc_typehints = "description"
-autodoc_mock_imports = ['gdal','solaris','tensorflow','osr']
-#nitpicky = True
+autodoc_mock_imports = ["gdal", "solaris", "tensorflow", "osr"]
+# nitpicky = True
 
 # Both the class’ and the __init__ method’s docstring are concatenated and inserted.
 autoclass_content = "both"
@@ -82,7 +81,7 @@ napoleon_use_param = True
 # napoleon_use_ivar = True
 
 nbsphinx_allow_errors = True
-nbsphinx_execute = 'never'
+nbsphinx_execute = "never"
 
 nbsphinx_execute_arguments = [
     "--InlineBackend.figure_formats={'svg', 'pdf'}",
@@ -101,12 +100,11 @@ epub_show_urls = "footnote"
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 
-
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -116,7 +114,7 @@ html_theme = "sphinx_book_theme"
 html_title = "AiTLAS Documentation"
 html_static_path = ["_static", "_media"]
 
-htmlhelp_basename = 'mainDoc'
+htmlhelp_basename = "mainDoc"
 
 # html_context = {
 #   'display_github': True,
@@ -149,39 +147,36 @@ intersphinx_mapping = {
 
 
 # -- Options for LaTeX output ------------------------------------------------
-latex_engine = 'pdflatex'
+latex_engine = "pdflatex"
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
-    'papersize': 'a4paper',
+    "papersize": "a4paper",
     # The font size ('10pt', '11pt' or '12pt')
     #
-    'pointsize': '10pt',
+    "pointsize": "10pt",
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
-    'fncychap': '\\usepackage[Sonny]{fncychap}',
-    'fontpkg': '\\usepackage{amsmath, amsfonts, amssymb, amsthm, plex-sans, plex-serif, xcolor}',
-    'printindex': r'\def\twocolumn[#1]{#1}\footnotesize\raggedright\printindex',
-     # Additional stuff for the LaTeX preamble.
+    "fncychap": "\\usepackage[Sonny]{fncychap}",
+    "fontpkg": "\\usepackage{amsmath, amsfonts, amssymb, amsthm, plex-sans, plex-serif, xcolor}",
+    "printindex": r"\def\twocolumn[#1]{#1}\footnotesize\raggedright\printindex",
+    # Additional stuff for the LaTeX preamble.
     #
-
-   
-     'preamble': r'''
+    "preamble": r"""
 
 
     \usepackage{datetime}
     \newdateformat{MonthYearFormat}{%
     \monthname[\THEMONTH], \THEYEAR}
-    ''',
+    """,
+    "maketitle": r"""
 
-    'maketitle': r'''
-   
-     
+
         \begin{titlepage}
             \centering
 
@@ -191,17 +186,17 @@ latex_elements = {
             \end{figure}
 
             \vspace*{40mm} %%% * is used to give space from top
-            {\sffamily \Huge \textbf{AiTLAS}}\\ 
+            {\sffamily \Huge \textbf{AiTLAS}}\\
             \vspace*{5mm}
             {\sffamily \Large Artificial Intelligence Toolbox for Earth Observation}\\
-         
+
 
             \vspace{0mm}
- 
+
 
             \vspace{40mm}
             {\sffamily \Large \textbf{Documentation}}\\
-           
+
             \vspace{30mm}
             {\sffamily Bias Variance Labs\\}
              \url{www.bvlabs.ai}\\
@@ -210,21 +205,20 @@ latex_elements = {
             {\sffamily \small  \MonthYearFormat\today}
 
          \end{titlepage}
-         
+
          {\sffamily \small \tableofcontents
          \clearpage}
 
-     ''',
+     """,
     # # Latex figure (float) alignment
     # 'figure_align': 'htbp',
-    'sphinxsetup': \
-        'TitleColor={rgb}{0,0,0}, \
+    "sphinxsetup": "TitleColor={rgb}{0,0,0}, \
          HeaderFamily=\\sffamily\\bfseries, \
-         InnerLinkColor={rgb}{0.208,0.374,0.486},',
-  }
-#latex_engine = 'xelatex'
-latex_show_urls = 'footnote'
-latex_logo = '_media/AiTALS_vertical_gradient.png'
+         InnerLinkColor={rgb}{0.208,0.374,0.486},",
+}
+# latex_engine = 'xelatex'
+latex_show_urls = "footnote"
+latex_logo = "_media/AiTALS_vertical_gradient.png"
 
 
-#latex_documents = [(master_doc, 'aitlas.tex', doc_title, 'Bias Variance Labs', 'manual','toctree_only=False')]
+# latex_documents = [(master_doc, 'aitlas.tex', doc_title, 'Bias Variance Labs', 'manual','toctree_only=False')]

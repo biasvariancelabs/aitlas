@@ -1,4 +1,5 @@
 """VisionTransformer model (base_patch16_224)"""
+
 import logging
 
 import timm

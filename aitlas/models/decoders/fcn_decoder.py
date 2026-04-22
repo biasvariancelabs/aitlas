@@ -1,6 +1,7 @@
 # Copyright contributors to the Terratorch project
 
 from torch import Tensor, nn
+
 from aitlas.models.registries import DECODER_REGISTRY
 
 
@@ -16,7 +17,15 @@ class Norm2d(nn.Module):
         return x
 
 
-def _conv_upscale_block(input_channels, output_channels, kernel_size, stride, dilation, padding, output_padding):
+def _conv_upscale_block(
+    input_channels,
+    output_channels,
+    kernel_size,
+    stride,
+    dilation,
+    padding,
+    output_padding,
+):
     return nn.Sequential(
         nn.ConvTranspose2d(
             input_channels,
@@ -27,16 +36,25 @@ def _conv_upscale_block(input_channels, output_channels, kernel_size, stride, di
             padding=padding,
             output_padding=output_padding,
         ),
-        nn.Conv2d(output_channels, output_channels, kernel_size=3, padding=1, bias=True),
+        nn.Conv2d(
+            output_channels, output_channels, kernel_size=3, padding=1, bias=True
+        ),
         Norm2d(output_channels),
         nn.GELU(),
     )
+
 
 @DECODER_REGISTRY.register("FCNDecoder")
 class FCNDecoder(nn.Module):
     """Fully Convolutional Decoder"""
 
-    def __init__(self, embed_dim: int, channels: int = 256, num_convs: int = 4, in_index: int = -1) -> None:
+    def __init__(
+        self,
+        embed_dim: int,
+        channels: int = 256,
+        num_convs: int = 4,
+        in_index: int = -1,
+    ) -> None:
         """Constructor
 
         Args:
@@ -64,7 +82,15 @@ class FCNDecoder(nn.Module):
         for i in range(num_convs):
             in_channels = self.embed_dim if i == 0 else self.channels
             convs.append(
-                _conv_upscale_block(in_channels, self.channels, kernel_size, stride, dilation, padding, output_padding)
+                _conv_upscale_block(
+                    in_channels,
+                    self.channels,
+                    kernel_size,
+                    stride,
+                    dilation,
+                    padding,
+                    output_padding,
+                )
             )
 
         self.convs = nn.Sequential(*convs)

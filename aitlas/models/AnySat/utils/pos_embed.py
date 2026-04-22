@@ -1,5 +1,6 @@
 import torch
 
+
 def get_2d_sincos_pos_embed_with_resolution(
     embed_dim, grid_size, res, cls_token=False, modalities=[]
 ):
@@ -22,7 +23,9 @@ def get_2d_sincos_pos_embed_with_resolution(
         grid = torch.stack(grid, dim=0)  # 2 x h x w
 
         # grid = grid.reshape([2, 1, grid_size, grid_size])
-        grid = torch.einsum("chw,n->cnhw", grid, torch.tensor([res[modality]]))  # 2 x n x h x w
+        grid = torch.einsum(
+            "chw,n->cnhw", grid, torch.tensor([res[modality]])
+        )  # 2 x n x h x w
         _, n, h, w = grid.shape
         pos_embed = get_2d_sincos_pos_embed_from_grid_torch(
             embed_dim, grid
@@ -41,6 +44,7 @@ def get_2d_sincos_pos_embed_with_resolution(
         pos_embed_final[modality] = pos_embed
     return pos_embed_final
 
+
 def get_2d_sincos_pos_embed_with_scale(
     embed_dim, grid_size, scale, cls_token=False, modis=False
 ):
@@ -57,7 +61,7 @@ def get_2d_sincos_pos_embed_with_scale(
     )  # here h goes first,direction reversed for numpy
     grid = torch.stack(grid, dim=0)  # 2 x h x w
 
-    grid = torch.einsum("chw,n->cnhw", grid, torch.tensor([scale])) 
+    grid = torch.einsum("chw,n->cnhw", grid, torch.tensor([scale]))
     _, n, h, w = grid.shape
     pos_embed = get_2d_sincos_pos_embed_from_grid_torch(
         embed_dim, grid
@@ -84,6 +88,7 @@ def get_2d_sincos_pos_embed_with_scale(
             dim=1,
         )
     return pos_embed
+
 
 def get_2d_sincos_pos_embed_from_grid_torch(embed_dim, grid):
     assert embed_dim % 2 == 0

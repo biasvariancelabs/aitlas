@@ -380,7 +380,8 @@ class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
             del data[key]
 
         return labels, data, annotations
-    
+
+
 class BaseObjectDetectionRotatedBboxDataset(BaseDataset):
     """Base object detection dataset class for a dataset with rotated bounding boxes"""
 
@@ -423,10 +424,19 @@ class BaseObjectDetectionRotatedBboxDataset(BaseDataset):
         ax = plt.subplot(1, 2, 2)
         plt.imshow(img)
         plt.axis("off")
-        for box, label, rotation in zip(target["boxes"], target["labels"], target["rotation"]):
+        for box, label, rotation in zip(
+            target["boxes"], target["labels"], target["rotation"]
+        ):
             x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
             rect = patches.Rectangle(
-                (x, y), width, height, angle=rotation, rotation_point='xy', linewidth=2, edgecolor="violet", facecolor="none"
+                (x, y),
+                width,
+                height,
+                angle=rotation,
+                rotation_point="xy",
+                linewidth=2,
+                edgecolor="violet",
+                facecolor="none",
             )
 
             # Draw the bounding box on top of the image
@@ -454,14 +464,16 @@ class BaseObjectDetectionRotatedBboxDataset(BaseDataset):
         for axes, image_index in zip(ax.flatten(), image_indices):
             img, target = self[image_index]
             axes.imshow(img)
-            for box, label, rotation in zip(target["boxes"], target["labels"], target["rotation"]):
+            for box, label, rotation in zip(
+                target["boxes"], target["labels"], target["rotation"]
+            ):
                 x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
                 rect = patches.Rectangle(
                     (x, y),
                     width,
                     height,
                     angle=rotation,
-                    rotation_point='xy',
+                    rotation_point="xy",
                     linewidth=2,
                     edgecolor="violet",
                     facecolor="none",

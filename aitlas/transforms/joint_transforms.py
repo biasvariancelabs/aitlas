@@ -1,4 +1,5 @@
 """Contains joint transforms for images and label masks."""
+
 import albumentations as A
 import cv2
 import numpy as np
@@ -31,8 +32,9 @@ def ensure_numpy_target(target_field):
 class FlipHVRandomRotate(BaseTransforms):
     """
     A class that applies flipping, random rotation, and shift-scale-rotation transformations to image and mask pairs.
-  
+
     """
+
     def __call__(self, sample):
         """
         Apply the transformation to the input sample.
@@ -80,12 +82,12 @@ class FlipHVToTensorV2(BaseTransforms):
         :rtype: tuple
         """
         image, target = sample
-        
+
         # Ensure all inputs are compatible with Albumentations (NumPy)
         image = ensure_numpy_hwc(image)
         boxes = ensure_numpy_target(target["boxes"])
         labels = ensure_numpy_target(target["labels"])
-        
+
         data_transforms = A.Compose(
             [
                 A.Resize(480, 480),
@@ -97,7 +99,7 @@ class FlipHVToTensorV2(BaseTransforms):
         )
 
         transformed = data_transforms(image=image, bboxes=boxes, labels=labels)
-        
+
         # Update target dict with transformed values
         target["boxes"] = torch.as_tensor(transformed["bboxes"], dtype=torch.float32)
         target["labels"] = torch.as_tensor(transformed["labels"], dtype=torch.int64)
@@ -110,6 +112,7 @@ class ResizeToTensorV2(BaseTransforms):
     A class that applies resizing and tensor conversion to images with bounding boxes and labels.
 
     """
+
     def __call__(self, sample):
         """
         Apply the transformation to the input sample.
@@ -120,19 +123,19 @@ class ResizeToTensorV2(BaseTransforms):
         :rtype: tuple
         """
         image, target = sample
-        
+
         # Ensure all inputs are compatible with Albumentations (NumPy)
         image = ensure_numpy_hwc(image)
         boxes = ensure_numpy_target(target["boxes"])
         labels = ensure_numpy_target(target["labels"])
-        
+
         data_transforms = A.Compose(
             [A.Resize(480, 480), ToTensorV2(p=1.0)],
             bbox_params=A.BboxParams(format="pascal_voc", label_fields=["labels"]),
         )
 
         transformed = data_transforms(image=image, bboxes=boxes, labels=labels)
-        
+
         target["boxes"] = torch.as_tensor(transformed["bboxes"], dtype=torch.float32)
         target["labels"] = torch.as_tensor(transformed["labels"], dtype=torch.int64)
 
@@ -143,6 +146,7 @@ class Resize(BaseTransforms):
     """
     A class that applies resizing to images.
     """
+
     def __call__(self, sample):
         """
         Apply the transformation to the input sample.

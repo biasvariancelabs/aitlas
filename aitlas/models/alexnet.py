@@ -1,5 +1,6 @@
 """AlexNet model for multiclass and multilabel classification
 """
+
 import torch.nn as nn
 import torchvision.models as models
 

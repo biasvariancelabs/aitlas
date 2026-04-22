@@ -1,11 +1,11 @@
 import logging
 
-import torch
-import torch.optim as optim
-
-from torch import nn
 import segmentation_models_pytorch as smp
+import torch
 import torch.nn.functional as F
+import torch.optim as optim
+from torch import nn
+
 from .metrics import SegmentationRunningScore
 from .models import BaseModel
 from .schemas import BaseSegmentationClassifierSchema
@@ -13,13 +13,16 @@ from .schemas import BaseSegmentationClassifierSchema
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
+
 class CombinedFocalDiceLoss(nn.Module):
-    def __init__(self, 
-                 weight_focal: float = 0.5, 
-                 weight_dice: float = 0.5,
-                 alpha: float = 0.25,
-                 gamma: float = 2.0,
-                 mode: str = "multiclass"):
+    def __init__(
+        self,
+        weight_focal: float = 0.5,
+        weight_dice: float = 0.5,
+        alpha: float = 0.25,
+        gamma: float = 2.0,
+        mode: str = "multiclass",
+    ):
         """
         Hybrid loss: CrossEntropy + Dice
         Args:
@@ -46,14 +49,14 @@ class CombinedFocalDiceLoss(nn.Module):
 
             # Ensure target is long (integers) for the CrossEntropy component
             y_true = y_true.long()
-        
+
         focal = self.focal_loss(y_pred, y_true)
         dice = self.dice_loss(y_pred, y_true)
         return self.weight_focal * focal + self.weight_dice * dice
 
+
 class BaseSegmentationClassifier(BaseModel):
-    """Base class for a segmentation classifier.
-    """
+    """Base class for a segmentation classifier."""
 
     schema = BaseSegmentationClassifierSchema
 
@@ -81,7 +84,9 @@ class BaseSegmentationClassifier(BaseModel):
             num_classes = outputs.shape[1]
             predicted_probs = torch.softmax(outputs, dim=1)
             predicted = torch.argmax(predicted_probs, dim=1)
-            predicted = F.one_hot(predicted, num_classes=num_classes).permute(0, 3, 1, 2)
+            predicted = F.one_hot(predicted, num_classes=num_classes).permute(
+                0, 3, 1, 2
+            )
 
         return predicted_probs, predicted
 

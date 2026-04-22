@@ -1,8 +1,7 @@
-from marshmallow import Schema, fields, validate, ValidationError, pre_load, INCLUDE
+from marshmallow import INCLUDE, Schema, ValidationError, fields, pre_load, validate
 
 
 class BaseDatasetSchema(Schema):
-
     """
     Schema for configuring a base dataset.
 
@@ -92,7 +91,17 @@ class BaseModelSchema(Schema):
         description="Metrics you want to calculate",
         example=["accuracy", "precision", "iou"],
         validate=validate.ContainsOnly(
-            ["accuracy", "precision", "recall", "f1_score", "iou", "kappa", "map", "roc_auc_score", "hamming_loss"]
+            [
+                "accuracy",
+                "precision",
+                "recall",
+                "f1_score",
+                "iou",
+                "kappa",
+                "map",
+                "roc_auc_score",
+                "hamming_loss",
+            ]
         ),
     )
     weights = fields.List(
@@ -106,12 +115,14 @@ class BaseModelSchema(Schema):
         required=False, missing=False, description="Turn on distributed data processing"
     )
     evaluate_train_every_n_epochs = fields.Int(
-        missing=1, 
-        description="Evaluate on training set every N epochs (default 1 means every epoch)", 
+        missing=1,
+        description="Evaluate on training set every N epochs (default 1 means every epoch)",
         example=5,
-        validate=validate.Range(min=1)
+        validate=validate.Range(min=1),
     )
-    automatic_mixed_precision = fields.Bool(missing=False, description="Turn on automatic mixed precision")
+    automatic_mixed_precision = fields.Bool(
+        missing=False, description="Turn on automatic mixed precision"
+    )
 
 
 class BaseClassifierSchema(BaseModelSchema):
@@ -216,6 +227,7 @@ class BaseObjectDetectionSchema(BaseClassifierSchema):
 class BaseTransformsSchema(Schema):
     pass
 
+
 class BaseFoundationModelSchema(BaseModelSchema):
     """
     Schema for configuring a base foundation model.
@@ -242,34 +254,34 @@ class BaseFoundationModelSchema(BaseModelSchema):
     backbone_name = fields.String(
         required=True,
         description="Name of the model to use as a backbone.",
-        example="vit_base_patch16"
+        example="vit_base_patch16",
     )
     local_model_path = fields.String(
         required=True,
         description="Local path of the pre-trained model (existing or to be downloaded from Huggingface).",
     )
-    use_cuda = fields.Bool(
-        missing=True, description="Whether to use CUDA if possible"
-    )
+    use_cuda = fields.Bool(missing=True, description="Whether to use CUDA if possible")
     flash_attn = fields.Bool(
-        missing=False, description="Whether to use flash attention (if cuda and flash attention are available)"
+        missing=False,
+        description="Whether to use flash attention (if cuda and flash attention are available)",
     )
 
     pass
 
+
 class CompositeModelSchema(BaseFoundationModelSchema):
     """
     Schema for configuring composite models that combine a backbone, neck, decoder, and head.
-    
+
     :param task_type: Type of task for the composite model. Can be 'feature extraction', 'multiclass classification', 'multilabel classification', 'segmentation', 'object detection', or 'change detection'.
     :type task_type: str, required
 
     :param backbone_name: Name of the model to use as a backbone. Required.
     :type backbone_name: str, required
 
-    :param necks: List of neck configurations to execute sequentially. 
-                  Each item in the list must be a dictionary containing a "name" key 
-                  (referencing a registered neck class) and any specific parameters 
+    :param necks: List of neck configurations to execute sequentially.
+                  Each item in the list must be a dictionary containing a "name" key
+                  (referencing a registered neck class) and any specific parameters
                   required by that neck (e.g., `{"name": "SelectIndices", "indices": [1, 2, 3]}`).
                   Default is None.
     :type necks: list[dict], optional
@@ -291,12 +303,21 @@ class CompositeModelSchema(BaseFoundationModelSchema):
     """
 
     class Meta:
-        unknown = INCLUDE # Configures the schema to accept "unknown" fields (like modalities) so they can be passed down to the backbone for validation.
+        unknown = INCLUDE  # Configures the schema to accept "unknown" fields (like modalities) so they can be passed down to the backbone for validation.
 
     task_type = fields.String(
         required=True,
         description="Type of task for the composite model.",
-        validate=validate.OneOf(["feature extraction", "multiclass classification", "multilabel classification", "segmentation", "object detection", "change detection"]),
+        validate=validate.OneOf(
+            [
+                "feature extraction",
+                "multiclass classification",
+                "multilabel classification",
+                "segmentation",
+                "object detection",
+                "change detection",
+            ]
+        ),
         example="segmentation",
     )
     necks = fields.List(
@@ -305,45 +326,46 @@ class CompositeModelSchema(BaseFoundationModelSchema):
         description="List of (optional) neck configurations to execute sequentially.",
         example=[
             {"name": "SelectIndices", "indices": [2, 5, 8, 11]},
-            {"name": "ReshapeTokensToImage", "remove_cls_token": False}
-        ]
+            {"name": "ReshapeTokensToImage", "remove_cls_token": False},
+        ],
     )
     decoder_name = fields.String(
         missing=None,
         description="Name of the model to use as a decoder.",
-        example="UPerNetDecoder"
+        example="UPerNetDecoder",
     )
     decoder_params = fields.Dict(
-        missing={}, 
-        description="Parameters passed to the decoder (e.g., {'pool_scales': [1,2,3,6]})."
+        missing={},
+        description="Parameters passed to the decoder (e.g., {'pool_scales': [1,2,3,6]}).",
     )
     head_name = fields.String(
         missing=None,
         description="Name of the component to use as a head (optional).",
-        example="SegmentationHead"
+        example="SegmentationHead",
     )
     head_params = fields.Dict(
         missing={},
-        description="Parameters passed to the head (e.g., {'dropout': 0.1})."
+        description="Parameters passed to the head (e.g., {'dropout': 0.1}).",
     )
     freeze_modules = fields.List(
         fields.String(),
         missing=[],
-        description="List of components to freeze. Options: 'backbone', 'necks', 'decoder', 'head'."
+        description="List of components to freeze. Options: 'backbone', 'necks', 'decoder', 'head'.",
     )
     backbone_setup_calls = fields.List(
         fields.Dict(),
-        missing=list, 
-        description="List of dicts defining methods to call on the backbone after instantiation (e.g., [{'method': 'select_input_bands', 'params': {'bands': ...}}])."
+        missing=list,
+        description="List of dicts defining methods to call on the backbone after instantiation (e.g., [{'method': 'select_input_bands', 'params': {'bands': ...}}]).",
     )
     forward_params = fields.Dict(
         missing=dict,
-        description="Additional parameters to pass to the forward method (e.g., {'wave_list': [0.443, 0.490, 0.560]} for DOFA)."
+        description="Additional parameters to pass to the forward method (e.g., {'wave_list': [0.443, 0.490, 0.560]} for DOFA).",
     )
     adapter_name = fields.String(
-        missing=None, 
-        description="Name of the model-specific adapter in the ADAPTER_REGISTRY (e.g., 'CopernicusFMAdapter')."
+        missing=None,
+        description="Name of the model-specific adapter in the ADAPTER_REGISTRY (e.g., 'CopernicusFMAdapter').",
     )
+
     @pre_load
     def ensure_list(self, data, **kwargs):
         # Check if 'necks' exists and is a single dict (not a list of dicts)
@@ -354,14 +376,22 @@ class CompositeModelSchema(BaseFoundationModelSchema):
 
     pass
 
+
 class CompositeClassificationSchema(CompositeModelSchema, BaseClassifierSchema):
     """Merges Composite architecture rules with classification (multiclass and multilabel) task rules."""
+
     pass
 
-class CompositeSegmentationSchema(CompositeModelSchema, BaseSegmentationClassifierSchema):
+
+class CompositeSegmentationSchema(
+    CompositeModelSchema, BaseSegmentationClassifierSchema
+):
     """Merges Composite architecture rules with segmentation (and change detection) task rules."""
+
     pass
+
 
 class CompositeObjectDetectionSchema(CompositeModelSchema, BaseObjectDetectionSchema):
     """Merges Composite architecture rules with object detection task rules."""
+
     pass

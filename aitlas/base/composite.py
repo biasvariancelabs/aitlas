@@ -1,18 +1,40 @@
 import inspect
 import warnings
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
-from aitlas.base import BaseMulticlassClassifier, BaseMultilabelClassifier, BaseObjectDetection, BaseSegmentationClassifier, BaseChangeDetection, FoundationModel, BaseInputAdapter
-from .models import BaseModel
-from ..models.registries import BACKBONE_REGISTRY, NECK_REGISTRY, DECODER_REGISTRY, HEAD_REGISTRY, ADAPTER_REGISTRY
-from .schemas import CompositeModelSchema, CompositeClassificationSchema, CompositeSegmentationSchema, CompositeObjectDetectionSchema
+
+from aitlas.base import (
+    BaseChangeDetection,
+    BaseInputAdapter,
+    BaseMulticlassClassifier,
+    BaseMultilabelClassifier,
+    BaseObjectDetection,
+    BaseSegmentationClassifier,
+    FoundationModel,
+)
+
 from ..models.necks import NeckSequential
+from ..models.registries import (
+    ADAPTER_REGISTRY,
+    BACKBONE_REGISTRY,
+    DECODER_REGISTRY,
+    HEAD_REGISTRY,
+    NECK_REGISTRY,
+)
+from .models import BaseModel
+from .schemas import (
+    CompositeClassificationSchema,
+    CompositeModelSchema,
+    CompositeObjectDetectionSchema,
+    CompositeSegmentationSchema,
+)
+
 
 class CompositeModelArchitectureMixin:
-    """Composite model consisting of backbone, neck, decoder, and head.
-    """
+    """Composite model consisting of backbone, neck, decoder, and head."""
 
     def setup_composite(self):
 
@@ -27,25 +49,35 @@ class CompositeModelArchitectureMixin:
         # BACKBONE
         # Prepare backbone config
         backbone_config = dict(self.config)
-        
+
         # Keys reserved for the orchestrator
         orchestrator_reserved_keys = [
-            "task_type", 
+            "task_type",
             "necks",
-            "decoder_name", "decoder_params", 
-            "head_name", "head_params",
+            "decoder_name",
+            "decoder_params",
+            "head_name",
+            "head_params",
             "freeze_modules",
             "forward_params",
             "backbone_setup_calls",
-            "learning_rate", "weight_decay", 
-            "threshold", "freeze",
-            "metrics", "mode",
-            "step_size", "gamma",
-            "adapter_name", "selection",
-            "bands", "bands_s1", 
-            "bands_s2", "bands_l8", "bands_dem"
+            "learning_rate",
+            "weight_decay",
+            "threshold",
+            "freeze",
+            "metrics",
+            "mode",
+            "step_size",
+            "gamma",
+            "adapter_name",
+            "selection",
+            "bands",
+            "bands_s1",
+            "bands_s2",
+            "bands_l8",
+            "bands_dem",
         ]
-        
+
         for key in orchestrator_reserved_keys:
             backbone_config.pop(key, None)
 
@@ -55,23 +87,25 @@ class CompositeModelArchitectureMixin:
 
         # Get the list of possible methods to call, defaulting to an empty list if None
         setup_calls = getattr(self.config, "backbone_setup_calls", []) or []
-        
+
         for call_info in setup_calls:
             method_name = call_info.get("method")
             params = call_info.get("params", {})
-            
+
             if not method_name:
-                continue # Skip if the user forgot to specify a method name
-                
+                continue  # Skip if the user forgot to specify a method name
+
             # Verify the backbone actually has this method
             if hasattr(self.model.backbone, method_name):
                 # Get the method from the backbone and execute it with the provided parameters
                 method = getattr(self.model.backbone, method_name)
-                method(**params) 
+                method(**params)
             else:
                 # Raise a warning if the method is not found in the backbone
-                warnings.warn(f"Setup method '{method_name}' not found in backbone '{self.config.backbone_name}'. Skipping.") 
-        
+                warnings.warn(
+                    f"Setup method '{method_name}' not found in backbone '{self.config.backbone_name}'. Skipping."
+                )
+
         # Ensure backbone reports its output indices and channels
         self.out_indices = self.model.backbone.out_indices
         self.current_channels = self._get_feature_info(self.model.backbone)
@@ -90,38 +124,36 @@ class CompositeModelArchitectureMixin:
 
                 # If the neck asks for specific 'indices' (e.g., SelectIndices), validate the config input
                 self._validate_indices(neck_name, params)
-                
+
                 # Get the neck class from the registry
                 neck_cls = NECK_REGISTRY.get(neck_name)
-                
+
                 # Instantiate the neck
                 neck_instance = self._instantiate_component(
-                    neck_cls, 
-                    self.current_channels, 
-                    **params
+                    neck_cls, self.current_channels, **params
                 )
                 layers.append(neck_instance)
 
                 # Update channels for the next component in the chain
                 if hasattr(neck_instance, "process_channel_list"):
-                    self.current_channels = neck_instance.process_channel_list(self.current_channels)
+                    self.current_channels = neck_instance.process_channel_list(
+                        self.current_channels
+                    )
                 elif hasattr(neck_instance, "out_channels"):
                     self.current_channels = neck_instance.out_channels
 
-        # Create Sequential container for necks        
+        # Create Sequential container for necks
         self.model.necks = NeckSequential(*layers)
 
         # DECODER
         self.model.decoder = None
         if self.config.decoder_name:
             decoder_cls = DECODER_REGISTRY.get(self.config.decoder_name)
-            
+
             self.model.decoder = self._instantiate_component(
-                decoder_cls, 
-                self.current_channels,
-                **self.config.decoder_params
+                decoder_cls, self.current_channels, **self.config.decoder_params
             )
-            
+
             # Update channels
             if hasattr(self.model.decoder, "out_channels"):
                 self.current_channels = self.model.decoder.out_channels
@@ -131,41 +163,50 @@ class CompositeModelArchitectureMixin:
         if self.config.head_name:
             head_cls = HEAD_REGISTRY.get(self.config.head_name)
             self.model.head = self._instantiate_component(
-                head_cls, 
-                self.current_channels, 
-                num_classes=self.config.num_classes, 
-                **self.config.head_params
+                head_cls,
+                self.current_channels,
+                num_classes=self.config.num_classes,
+                **self.config.head_params,
             )
 
         # Guardrails for different tasks
         self.task = self.config.task_type
-        
+
         # Feature extraction
         if self.task == "feature extraction":
             # Check if any downstream model components exist in the config
-            if len(self.model.necks) > 0 or self.model.decoder is not None or self.model.head is not None:
+            if (
+                len(self.model.necks) > 0
+                or self.model.decoder is not None
+                or self.model.head is not None
+            ):
                 warnings.warn(
                     f"Task is '{self.task}', but necks, a decoder, or a head were found in the config. "
                     f"Their weights will be safely loaded to match the checkpoint, but they will be "
                     f"completely bypassed during extraction to return raw backbone features."
                 )
-            pass 
+            pass
 
         # Prediction tasks (head is mandatory)
-        elif self.task in ["multiclass classification", "multilabel classification", "segmentation", "object detection", "change detection"]:
+        elif self.task in [
+            "multiclass classification",
+            "multilabel classification",
+            "segmentation",
+            "object detection",
+            "change detection",
+        ]:
             if self.model.head is None:
                 raise ValueError(
                     f"Task type is '{self.task}', but no 'head_name' was provided. "
                     f"For {self.task}, a head is required to produce predictions. "
                     f"Please specify a head in the config."
                 )
-            
+
         # Freeze componenets listed in the config
         self._apply_freezing()
 
     def forward(self, x=None, **kwargs):
-        """Standard forward pass through the composite model.
-        """
+        """Standard forward pass through the composite model."""
 
         # Pass the input through the adapter if it exists, and get any dynamic kwargs it produces
         dynamic_adapter_kwargs = {}
@@ -174,10 +215,10 @@ class CompositeModelArchitectureMixin:
 
         # Get the forward() params. If missing or None, default to an empty dict {}
         raw_forward_params = getattr(self.config, "forward_params", {}) or {}
-        
+
         # Copy to a new dictionary
         static_forward_kwargs = dict(raw_forward_params)
-        
+
         # Merge with any dynamic kwargs passed into the adapter and forward function
         static_forward_kwargs.update(dynamic_adapter_kwargs)
         static_forward_kwargs.update(kwargs)
@@ -188,7 +229,7 @@ class CompositeModelArchitectureMixin:
         else:
             # Standard forward method
             backbone_fn = self.model.backbone
-        
+
         # Load backbone and get feature embeddings
         if x is not None:
             features = backbone_fn(x, **static_forward_kwargs)
@@ -202,44 +243,43 @@ class CompositeModelArchitectureMixin:
 
         # Check and dynamically rebuild necks, decoders and heads if needed
         self._check_and_rebuild_components(features)
-        
+
         # Infer image size for necks if not provided in kwargs
         kwargs = self._infer_image_size(x, kwargs)
-        
+
         # Pass through the neck(s)
         # Use len(self.model.necks) because it is an nn.Sequential object
         if len(self.model.necks) > 0:
             features = self.model.necks(features, **kwargs)
 
         cur_shapes, cur_channels = self._get_feature_shape(features)
-        
+
         # Pass through the decoder, if it exists
-        if self.model.decoder is not None: 
+        if self.model.decoder is not None:
             features = self.model.decoder(features)
 
         cur_shapes, cur_channels = self._get_feature_shape(features)
 
         # If no head, return the features directly
         if self.model.head is None:
-            return features    
+            return features
 
         # Pass through head to get final predictions
         logits = self.model.head(features)
 
         cur_shapes, cur_channels = self._get_feature_shape(logits)
-        
+
         # Standard segmentation upsampling
         if self.task == "segmentation":
             # Upsample logits to match input image resolution (H, W)
             logits = self._upsample_logits(logits, x, kwargs)
-             
+
         cur_shapes, cur_channels = self._get_feature_shape(logits)
 
         return logits
 
     def predict_proba(self, x=None, **kwargs):
-        """Inference pass that returns probabilities/values instead of logits.
-        """
+        """Inference pass that returns probabilities/values instead of logits."""
 
         # Run standard forward pass to get logits
         logits = self.forward(x, **kwargs)
@@ -247,15 +287,15 @@ class CompositeModelArchitectureMixin:
         # Apply task-specific activation
         if self.task == "multiclass classification":
             return torch.softmax(logits, dim=1)
-        
+
         elif self.task == "multilabel classification":
             return torch.sigmoid(logits)
 
         elif self.task == "segmentation":
             return torch.argmax(logits, dim=1)
-        
+
         return logits
-    
+
     def extract_features(self, dataset):
         """
         Extracts raw backbone feature embeddings for an entire dataset.
@@ -266,17 +306,17 @@ class CompositeModelArchitectureMixin:
         all_labels = []
 
         dataloader = dataset.dataloader()
-        
+
         with torch.no_grad():
             # Wrap the dataloader in tqdm to use the description for the progress bar
-            description="Extracting raw backbone features"
+            description = "Extracting raw backbone features"
             for batch in tqdm(dataloader, desc=description):
                 inputs = batch[0].to(self.device)
                 labels = batch[-1].to(self.device)
 
                 # Run the Backbone
                 features = self.model.backbone(inputs)
-                
+
                 # Standardize the output (returns List[Tensor])
                 features = self._standardize_features(features)
 
@@ -295,7 +335,7 @@ class CompositeModelArchitectureMixin:
         final_labels = torch.cat(all_labels, dim=0)
 
         return final_features, final_labels
-    
+
     def extract_image_features(self, image, data_transforms=None):
         """
         Extracts the raw backbone feature vector(s) for a single image.
@@ -314,29 +354,28 @@ class CompositeModelArchitectureMixin:
         with torch.no_grad():
             # Run the backbone
             features = self.model.backbone(inputs)
-            
+
             # Standardize the output (returns List[Tensor])
             features = self._standardize_features(features)
 
         return features
 
     def _get_feature_info(self, backbone):
-        """Function to find output channels for any backbone.
-        """
-        # Option 1: Check if backbone wrapper contains the attribute 
+        """Function to find output channels for any backbone."""
+        # Option 1: Check if backbone wrapper contains the attribute
         # (not implemented at the moment, might be in the future)
         if hasattr(backbone, "feature_info") and backbone.feature_info:
             return backbone.feature_info
 
         # Access the raw underlying backbone
         raw_backbone = getattr(backbone, "backbone", backbone)
-        
+
         found_channels = None
 
         # Option 1: Check for standard attributes (timm, Swin, etc.)
-        if hasattr(raw_backbone, "feature_info"): 
+        if hasattr(raw_backbone, "feature_info"):
             # timm style: [{'num_chs': 64, ...}, ...]
-            found_channels = [x['num_chs'] for x in raw_backbone.feature_info]
+            found_channels = [x["num_chs"] for x in raw_backbone.feature_info]
         elif hasattr(raw_backbone, "embed_dims"):
             # Swin, hierarchical transformers
             found_channels = raw_backbone.embed_dims
@@ -349,10 +388,12 @@ class CompositeModelArchitectureMixin:
                 # Check if it is a list/container (e.g., AnySat, Panopticon, standard ViT)
                 if hasattr(encoder_obj, "__len__") and len(encoder_obj) > 0:
                     first_block = encoder_obj[0]
-                    if hasattr(first_block, "norm1") and hasattr(first_block.norm1, "normalized_shape"):
+                    if hasattr(first_block, "norm1") and hasattr(
+                        first_block.norm1, "normalized_shape"
+                    ):
                         dim = first_block.norm1.normalized_shape[0]
                         num_blocks = len(encoder_obj)
-                        found_channels = [dim] * num_blocks        
+                        found_channels = [dim] * num_blocks
                 # Check if it is a single module (e.g., Presto)
                 else:
                     if hasattr(encoder_obj, "norm"):
@@ -364,9 +405,11 @@ class CompositeModelArchitectureMixin:
             # Case B: Check for 'blocks'
             elif hasattr(raw_backbone, "blocks") and len(raw_backbone.blocks) > 0:
                 first_block = raw_backbone.blocks[0]
-                if hasattr(first_block, "norm1") and hasattr(first_block.norm1, "normalized_shape"):
+                if hasattr(first_block, "norm1") and hasattr(
+                    first_block.norm1, "normalized_shape"
+                ):
                     dim = first_block.norm1.normalized_shape[0]
-                    num_blocks = len(raw_backbone.blocks) 
+                    num_blocks = len(raw_backbone.blocks)
                     found_channels = [dim] * num_blocks
 
         # Option 3: Inspect the structure (ResNet backbone)
@@ -378,72 +421,90 @@ class CompositeModelArchitectureMixin:
                 for child in enc.children():
                     # We are looking for the ResNet stages
                     if isinstance(child, torch.nn.Sequential) and len(child) > 0:
-                        last_block = child[-1]                        
+                        last_block = child[-1]
                         # Logic for ResNet18/34 (BasicBlock uses bn2)
-                        if hasattr(last_block, "bn2") and hasattr(last_block.bn2, "num_features"):
-                            last_known_dim = last_block.bn2.num_features                       
+                        if hasattr(last_block, "bn2") and hasattr(
+                            last_block.bn2, "num_features"
+                        ):
+                            last_known_dim = last_block.bn2.num_features
                         # Logic for ResNet50/101 (Bottleneck uses bn3)
-                        elif hasattr(last_block, "bn3") and hasattr(last_block.bn3, "num_features"):
+                        elif hasattr(last_block, "bn3") and hasattr(
+                            last_block.bn3, "num_features"
+                        ):
                             last_known_dim = last_block.bn3.num_features
                 # If we found dimensions, return ONLY the final one as a single-item list.
                 if last_known_dim:
-                    found_channels = [last_known_dim] # [512] for ResNet18, [2048] for ResNet50
+                    found_channels = [
+                        last_known_dim
+                    ]  # [512] for ResNet18, [2048] for ResNet50
 
         # Option 4: AnySat detection
         if found_channels is None:
-            # AnySat wrapper nests the model AnySatModule -> model (AnySatEncoder)     
+            # AnySat wrapper nests the model AnySatModule -> model (AnySatEncoder)
             if hasattr(raw_backbone, "model"):
                 possible_inner = raw_backbone.model
-                if hasattr(possible_inner, "spatial_encoder") or hasattr(possible_inner, "projector_s2"):
+                if hasattr(possible_inner, "spatial_encoder") or hasattr(
+                    possible_inner, "projector_s2"
+                ):
                     raw_backbone = possible_inner
             # Inspect the structure
-            if hasattr(raw_backbone, "blocks") and hasattr(raw_backbone, "spatial_encoder"):
+            if hasattr(raw_backbone, "blocks") and hasattr(
+                raw_backbone, "spatial_encoder"
+            ):
                 # It is AnySat
                 if len(raw_backbone.blocks) > 0:
                     first_block = raw_backbone.blocks[0]
-                    if hasattr(first_block, "norm1") and hasattr(first_block.norm1, "normalized_shape"):
-                        base_dim = first_block.norm1.normalized_shape[0] # Usually 768  
+                    if hasattr(first_block, "norm1") and hasattr(
+                        first_block.norm1, "normalized_shape"
+                    ):
+                        base_dim = first_block.norm1.normalized_shape[0]  # Usually 768
                         # Check for 'dense' output mode in the config
                         # AnySat 'dense' mode typically concatenates features or upscales, doubling channels (1536)
                         backbone_params = self.config.get("backbone_params", {})
                         # Also check root config in case params are merged
-                        output_mode = backbone_params.get("output", self.config.get("output"))
+                        output_mode = backbone_params.get(
+                            "output", self.config.get("output")
+                        )
                         if output_mode == "dense":
-                             # AnySat 'dense' output is usually 2x the base dimension
-                            final_dim = base_dim * 2 
+                            # AnySat 'dense' output is usually 2x the base dimension
+                            final_dim = base_dim * 2
                             # Dense usually returns a single tensor, not a list of blocks
-                            found_channels = [final_dim] 
+                            found_channels = [final_dim]
                         else:
                             # 'tile', 'patch', 'all' modes return the base dimension
                             final_dim = base_dim
                             found_channels = [final_dim] * len(raw_backbone.blocks)
-        
+
         # Option 5: CROMA detection
         if found_channels is None:
             # Check for CROMA-specific attributes (Optical Projection Head)
-            if hasattr(raw_backbone, "s2_GAP_FFN") and isinstance(raw_backbone.s2_GAP_FFN, torch.nn.Sequential):
+            if hasattr(raw_backbone, "s2_GAP_FFN") and isinstance(
+                raw_backbone.s2_GAP_FFN, torch.nn.Sequential
+            ):
                 # CROMA uses a specific Sequential head for GAP: LayerNorm -> Linear -> GELU -> Linear
                 # We access the last Linear layer to get the output dimension (usually 768).
                 if len(raw_backbone.s2_GAP_FFN) > 0:
                     last_layer = raw_backbone.s2_GAP_FFN[-1]
                     if hasattr(last_layer, "out_features"):
                         found_channels = [last_layer.out_features]
-        
+
         # Option 6: Panopticon detection
         if found_channels is None:
             # Check for Panopticon wrapper structure
             target_model = raw_backbone
             if hasattr(target_model, "model") and hasattr(target_model.model, "blocks"):
                 # Drill down to the VisionTransformer inside PanopticonModule
-                target_model = target_model.model       
+                target_model = target_model.model
             # Now check for standard ViT blocks
             if hasattr(target_model, "blocks"):
                 # Get the last block to determine final output dimension
                 blocks = target_model.blocks
                 if len(blocks) > 0:
-                    last_block = blocks[-1]            
+                    last_block = blocks[-1]
                     # Detect dimension from the first LayerNorm or Linear layer in the block
-                    if hasattr(last_block, "norm1") and hasattr(last_block.norm1, "normalized_shape"):
+                    if hasattr(last_block, "norm1") and hasattr(
+                        last_block.norm1, "normalized_shape"
+                    ):
                         # norm1: LayerNorm((768,), ...)
                         dim = last_block.norm1.normalized_shape[0]
                         # Panopticon returns all tokens [B, N, 768] (dense=True) or CLS [B, 768] (dense=False)
@@ -462,19 +523,16 @@ class CompositeModelArchitectureMixin:
                     final_list.append(found_channels[-1])
             return final_list
 
-        raise ValueError(
-            f"Could not detect channels for {self.config.backbone_name}. "
-        )
-    
+        raise ValueError(f"Could not detect channels for {self.config.backbone_name}. ")
+
     def _instantiate_component(self, cls, current_channels, **kwargs):
-        """Smart helper to instantiate a component.
-        """
+        """Smart helper to instantiate a component."""
         try:
             sig = inspect.signature(cls.__init__)
         except ValueError:
-             # Fallback for complex decorators
-             return cls(current_channels, **kwargs)
-             
+            # Fallback for complex decorators
+            return cls(current_channels, **kwargs)
+
         params = sig.parameters
 
         # Prepare data forms
@@ -489,7 +547,7 @@ class CompositeModelArchitectureMixin:
             single_channel = self.current_channels
 
         # Determine target index if specific layer is requested
-        in_index = kwargs.get('in_index', -1)
+        in_index = kwargs.get("in_index", -1)
         try:
             target_single_channel = channels_list[in_index]
         except IndexError:
@@ -498,7 +556,7 @@ class CompositeModelArchitectureMixin:
         # Matching logic
         # ScalarHead (explicit 'in_dim')
         if "in_dim" in params:
-             kwargs["in_dim"] = target_single_channel
+            kwargs["in_dim"] = target_single_channel
 
         # SegmentationHead, RegressionHead, ASPP decoder (explicit 'in_channels')
         elif "in_channels" in params:
@@ -508,7 +566,7 @@ class CompositeModelArchitectureMixin:
         # Necks, transformer decoders (explicit 'channel_list')
         elif "channel_list" in params:
             kwargs["channel_list"] = channels_list
-            
+
         # UPerNet (explicit 'embed_dim')
         elif "embed_dim" in params:
             kwargs["embed_dim"] = channels_list
@@ -520,83 +578,88 @@ class CompositeModelArchitectureMixin:
         return cls(**kwargs)
 
     def _get_feature_shape(self, features):
-            """Helper to find feature shapes and channels from backbone output.
-            """
+        """Helper to find feature shapes and channels from backbone output."""
 
-            # Option 1: Single dictionary (standard for some models)
-            if isinstance(features, dict):
-                feature_list = [v for v in features.values() if isinstance(v, torch.Tensor)]
-            
-            # Option 2: List or tuple
-            elif isinstance(features, (list, tuple)):
-                if len(features) > 0:
-                    first_elem = features[0]
-                    
-                    # Option 2a: List of dictionaries (TerraMind style)
-                    if isinstance(first_elem, dict):
-                        feature_list = []
-                        for item in features:
-                            if isinstance(item, dict):
-                                feature_list.extend([v for v in item.values() if isinstance(v, torch.Tensor)])
-                    
-                    # Option 2b: List of tensors (standard)
+        # Option 1: Single dictionary (standard for some models)
+        if isinstance(features, dict):
+            feature_list = [v for v in features.values() if isinstance(v, torch.Tensor)]
+
+        # Option 2: List or tuple
+        elif isinstance(features, (list, tuple)):
+            if len(features) > 0:
+                first_elem = features[0]
+
+                # Option 2a: List of dictionaries (TerraMind style)
+                if isinstance(first_elem, dict):
+                    feature_list = []
+                    for item in features:
+                        if isinstance(item, dict):
+                            feature_list.extend(
+                                [
+                                    v
+                                    for v in item.values()
+                                    if isinstance(v, torch.Tensor)
+                                ]
+                            )
+
+                # Option 2b: List of tensors (standard)
+                else:
+                    # Special handling for Galileo to limit to first 4 features (Raw Output only)
+                    if "galileo" in self.config.backbone_name and len(features) > 4:
+                        feature_list = list(features[:4])
                     else:
-                        # Special handling for Galileo to limit to first 4 features (Raw Output only)
-                        if "galileo" in self.config.backbone_name and len(features) > 4:
-                            feature_list = list(features[:4])
-                        else:
-                            feature_list = features
-                else:
-                    feature_list = [] # Empty list handling
-            
-            # Option 3: Single tensor
+                        feature_list = features
             else:
-                feature_list = [features]
+                feature_list = []  # Empty list handling
 
-            current_shapes = []
-            current_channels = []
+        # Option 3: Single tensor
+        else:
+            feature_list = [features]
 
-            for f in feature_list:
-                if not isinstance(f, torch.Tensor):
-                    # Guard against non-tensor elements slipping through
-                    current_channels.append("?")
-                    continue
-                    
-                shape = list(f.shape)
-                current_shapes.append(shape)
-                
-                # Logic to find "channel" dim based on tensor rank
-                if len(shape) == 6:
-                    # Galileo 6D: [B, H, W, T, G, D] -> Last dim is D
-                    current_channels.append(shape[-1])
+        current_shapes = []
+        current_channels = []
 
-                elif len(shape) == 5:
-                    # Galileo 5D (space-only): [B, H, W, G, D] -> last dim is D
-                    current_channels.append(shape[-1])
+        for f in feature_list:
+            if not isinstance(f, torch.Tensor):
+                # Guard against non-tensor elements slipping through
+                current_channels.append("?")
+                continue
 
-                elif len(shape) == 4: 
-                    # Standard PyTorch [B, C, H, W]
-                    # Once standardized to 4D, it is always Channel-First (dim 1).
-                    current_channels.append(shape[1]) 
+            shape = list(f.shape)
+            current_shapes.append(shape)
 
-                elif len(shape) == 3: 
-                    # [B, N, C] -> Token-like (patch) -> Last dim is C
-                    current_channels.append(shape[2])
+            # Logic to find "channel" dim based on tensor rank
+            if len(shape) == 6:
+                # Galileo 6D: [B, H, W, T, G, D] -> Last dim is D
+                current_channels.append(shape[-1])
 
-                elif len(shape) == 2: 
-                    # [B, C] -> Vector (tile)
-                    current_channels.append(shape[1])
-                    
-                else:
-                    current_channels.append("?")
+            elif len(shape) == 5:
+                # Galileo 5D (space-only): [B, H, W, G, D] -> last dim is D
+                current_channels.append(shape[-1])
 
-            return current_shapes, current_channels
+            elif len(shape) == 4:
+                # Standard PyTorch [B, C, H, W]
+                # Once standardized to 4D, it is always Channel-First (dim 1).
+                current_channels.append(shape[1])
+
+            elif len(shape) == 3:
+                # [B, N, C] -> Token-like (patch) -> Last dim is C
+                current_channels.append(shape[2])
+
+            elif len(shape) == 2:
+                # [B, C] -> Vector (tile)
+                current_channels.append(shape[1])
+
+            else:
+                current_channels.append("?")
+
+        return current_shapes, current_channels
 
     def _standardize_features(self, features) -> list[torch.Tensor]:
         """Standardizes the output of various backbones into a uniform List[Tensor] format
         expected by necks and heads.
         """
-        
+
         # Option 1: Single Tensor (e.g., standard ViT with one output)
         if isinstance(features, torch.Tensor):
             return [features]
@@ -614,32 +677,38 @@ class CompositeModelArchitectureMixin:
         # Option 3: Dictionary (specific to CROMA)
         elif isinstance(features, dict):
             # Access the backbone modalities safely
-            if hasattr(self.model.backbone, 'backbone') and hasattr(self.model.backbone.backbone, 'modalities'):
+            if hasattr(self.model.backbone, "backbone") and hasattr(
+                self.model.backbone.backbone, "modalities"
+            ):
                 modalities = self.model.backbone.backbone.modalities
             else:
                 # Fallback: if we can't find the attribute, assume it's the full joint model
-                modalities = ['optical', 'sar']
+                modalities = ["optical", "sar"]
 
             # Robust checks
-            if len(modalities) == 1 and modalities[0] == 'optical':
-                return [features['optical_encodings']]
-            elif len(modalities) == 1 and modalities[0] == 'sar':
-                return [features['sar_encodings']]
+            if len(modalities) == 1 and modalities[0] == "optical":
+                return [features["optical_encodings"]]
+            elif len(modalities) == 1 and modalities[0] == "sar":
+                return [features["sar_encodings"]]
             else:
                 # Default to joint for ['optical', 'sar'], ['sar', 'optical'], or defaults
-                return [features['joint_encodings']]
+                return [features["joint_encodings"]]
 
         # Option 4: Already a list
         elif isinstance(features, list):
             # Optional: Validate contents are tensors
             for i, feat in enumerate(features):
                 if not isinstance(feat, torch.Tensor):
-                    raise TypeError(f"Expected features[{i}] to be a Tensor, but got {type(feat)}.")
+                    raise TypeError(
+                        f"Expected features[{i}] to be a Tensor, but got {type(feat)}."
+                    )
             return features
 
         # Option 5: Unknown type
         else:
-            raise TypeError(f"Expected features to be a Tensor, tuple, dict, or list of Tensors, but got {type(features)}.")
+            raise TypeError(
+                f"Expected features to be a Tensor, tuple, dict, or list of Tensors, but got {type(features)}."
+            )
 
     def _infer_image_size(self, x, kwargs: dict) -> dict:
         """Attempts to infer the spatial image size (H, W) from inputs 'x' or 'kwargs'
@@ -671,12 +740,12 @@ class CompositeModelArchitectureMixin:
                     ref_tensor = v
                     break
                 elif isinstance(v, dict):
-                     # Handle cases like Presto where input might be nested in a dict
-                     for sub_v in v.values():
-                         if isinstance(sub_v, torch.Tensor) and sub_v.ndim >= 4:
-                             ref_tensor = sub_v
-                             break
-                
+                    # Handle cases like Presto where input might be nested in a dict
+                    for sub_v in v.values():
+                        if isinstance(sub_v, torch.Tensor) and sub_v.ndim >= 4:
+                            ref_tensor = sub_v
+                            break
+
                 if ref_tensor is not None:
                     break
 
@@ -686,19 +755,22 @@ class CompositeModelArchitectureMixin:
             kwargs["image_size"] = ref_tensor.shape[-2:]
 
         return kwargs
-    
+
     def _check_and_rebuild_components(self, features: list[torch.Tensor]):
-        """Checks feature shapes and dynamically rebuilds necks, decoders, and heads if needed.
-        """
+        """Checks feature shapes and dynamically rebuilds necks, decoders, and heads if needed."""
 
         # Never dynamically destroy and rebuild the architecture during evaluation
         # This protects loaded checkpoint weights from being overwritten by random noise.
         if not self.model.training:
             return
 
-        if getattr(self, "task", "") in ["multiclass classification", "multilabel classification", "feature extraction"]:
+        if getattr(self, "task", "") in [
+            "multiclass classification",
+            "multilabel classification",
+            "feature extraction",
+        ]:
             return
-        
+
         # Get current (temporary) feature shapes
         _, temp_channels = self._get_feature_shape(features)
 
@@ -710,7 +782,7 @@ class CompositeModelArchitectureMixin:
                 "Detected change in feature channels from backbone output. "
                 "Dynamically rebuilding necks, decoder, and head to match new channels from {self.current_channels} to {temp_channels}. "
             )
-            
+
             # Update current channels
             self.current_channels = temp_channels
 
@@ -730,21 +802,21 @@ class CompositeModelArchitectureMixin:
                     params = neck_conf.copy()
                     neck_name = params.pop("name", None)
                     neck_cls = NECK_REGISTRY.get(neck_name)
-                    
+
                     # Instantiate using existing helper
                     neck_instance = self._instantiate_component(
-                        neck_cls, 
-                        self.current_channels, 
-                        **params
+                        neck_cls, self.current_channels, **params
                     )
                     layers.append(neck_instance)
 
                     # Update channels for next component
                     if hasattr(neck_instance, "process_channel_list"):
-                        self.current_channels = neck_instance.process_channel_list(self.current_channels)
+                        self.current_channels = neck_instance.process_channel_list(
+                            self.current_channels
+                        )
                     elif hasattr(neck_instance, "out_channels"):
                         self.current_channels = neck_instance.out_channels
-            
+
             # Replace and move to device
             self.model.necks = NeckSequential(*layers).to(device=device, dtype=dtype)
             # Put back to original mode (train/eval)
@@ -754,59 +826,60 @@ class CompositeModelArchitectureMixin:
             if self.config.decoder_name:
                 decoder_cls = DECODER_REGISTRY.get(self.config.decoder_name)
                 self.model.decoder = self._instantiate_component(
-                    decoder_cls, 
-                    self.current_channels,
-                    **self.config.decoder_params
+                    decoder_cls, self.current_channels, **self.config.decoder_params
                 ).to(device=device, dtype=dtype)
-                
+
                 # Put back to original mode (train/eval)
                 self.model.decoder.train(is_training_mode)
 
                 if hasattr(self.model.decoder, "out_channels"):
                     self.current_channels = self.model.decoder.out_channels
-            
+
             # Rebuild HEAD
             if self.config.head_name:
                 head_cls = HEAD_REGISTRY.get(self.config.head_name)
                 self.model.head = self._instantiate_component(
-                    head_cls, 
-                    self.current_channels, 
-                    num_classes=self.config.num_classes, 
-                    **self.config.head_params
+                    head_cls,
+                    self.current_channels,
+                    num_classes=self.config.num_classes,
+                    **self.config.head_params,
                 ).to(device=device, dtype=dtype)
 
-                # Put back to original mode (train/eval)      
+                # Put back to original mode (train/eval)
                 self.model.head.train(is_training_mode)
-            
+
             # Reset current_channels back to the backbone's true output
             self.current_channels = temp_channels
 
             # Update the optimizer to track the newly built layers without breaking the object reference
-            if hasattr(self, 'optimizer') and self.optimizer is not None:
+            if hasattr(self, "optimizer") and self.optimizer is not None:
                 # Generate a temporary optimizer that natively maps to the newly built layers
                 new_opts = self.load_optimizer()
-                
+
                 # Format as tuples for consistency
-                opts = self.optimizer if isinstance(self.optimizer, tuple) else (self.optimizer,)
+                opts = (
+                    self.optimizer
+                    if isinstance(self.optimizer, tuple)
+                    else (self.optimizer,)
+                )
                 new_opts = new_opts if isinstance(new_opts, tuple) else (new_opts,)
-                
+
                 for opt, new_opt in zip(opts, new_opts):
                     # Surgically replace the param_groups list in the existing optimizer.
                     opt.param_groups = new_opt.param_groups
-                    
+
                     # Clear old momentum/Adam stats since the layer shapes changed
                     opt.state.clear()
-    
+
     def _validate_indices(self, neck_name: str, params: dict):
-        """Internal helper to validate requested indices against available backbone features.
-        """
+        """Internal helper to validate requested indices against available backbone features."""
         num_indices = len(self.out_indices)
 
         if "indices" not in params or num_indices is None:
             return
 
         requested_indices = params["indices"]
-        
+
         # Handle case where config might be a single int
         if isinstance(requested_indices, int):
             requested_indices = [requested_indices]
@@ -826,11 +899,12 @@ class CompositeModelArchitectureMixin:
 
         # Check lower bound
         if min_idx < 0:
-            raise ValueError(f"Configuration error in neck '{neck_name}': Indices cannot be negative.")
-    
+            raise ValueError(
+                f"Configuration error in neck '{neck_name}': Indices cannot be negative."
+            )
+
     def _upsample_logits(self, logits, x, kwargs):
-        """Helper to safely determine target size and upsample.
-        """
+        """Helper to safely determine target size and upsample."""
         target_size = None
 
         # Helper to find spatial dims in a potential input object
@@ -853,7 +927,8 @@ class CompositeModelArchitectureMixin:
         if target_size is None:
             for v in kwargs.values():
                 target_size = get_shape(v)
-                if target_size: break
+                if target_size:
+                    break
 
         # Option 3: Fallback (If we can't find input size, don't resize)
         if target_size is None:
@@ -862,17 +937,13 @@ class CompositeModelArchitectureMixin:
         # Perform Interpolation
         if logits.shape[-2:] != target_size:
             return F.interpolate(
-                logits, 
-                size=target_size, 
-                mode='bilinear', 
-                align_corners=False
+                logits, size=target_size, mode="bilinear", align_corners=False
             )
         return logits
-    
+
     def _apply_freezing(self):
-        """Helper to freeze components (backbone, necks, decoder, head) based on the config.
-        """
-        
+        """Helper to freeze components (backbone, necks, decoder, head) based on the config."""
+
         # Helper function to freeze a specific PyTorch module
         def freeze_module(module):
             if module is not None:
@@ -882,31 +953,32 @@ class CompositeModelArchitectureMixin:
         # Handle legacy AiTLAS `freeze` boolean (if the user sets 'freeze: True', we assume they mean 'freeze backbone')
         if getattr(self.config, "freeze", False):
             freeze_module(self.model.backbone)
-            
+
         # Handle `freeze_modules`
         freeze_list = getattr(self.config, "freeze_modules", [])
-        
+
         if "backbone" in freeze_list:
             freeze_module(self.model.backbone)
-            
+
         if "necks" in freeze_list:
             freeze_module(self.model.necks)
-            
+
         if "decoder" in freeze_list:
             freeze_module(self.model.decoder)
-            
+
         if "head" in freeze_list:
             warnings.warn(
                 "You are freezing the prediction head! This is usually not recommended unless doing zero-shot evaluation.",
-                UserWarning
+                UserWarning,
             )
             freeze_module(self.model.head)
-    
+
 
 # Task-specific composite models that inherit from the mixin and the appropriate base class for their task type
-class CompositeMultiClassificationModel(CompositeModelArchitectureMixin, BaseMulticlassClassifier):
-    """Composite model for multiclass classification tasks.
-    """
+class CompositeMultiClassificationModel(
+    CompositeModelArchitectureMixin, BaseMulticlassClassifier
+):
+    """Composite model for multiclass classification tasks."""
 
     schema = CompositeClassificationSchema
 
@@ -920,14 +992,16 @@ class CompositeMultiClassificationModel(CompositeModelArchitectureMixin, BaseMul
 
     pass
 
-class CompositeMultilabelClassificationModel(CompositeModelArchitectureMixin, BaseMultilabelClassifier):
-    """Composite model for multilabel classification tasks.
-    """
+
+class CompositeMultilabelClassificationModel(
+    CompositeModelArchitectureMixin, BaseMultilabelClassifier
+):
+    """Composite model for multilabel classification tasks."""
 
     schema = CompositeClassificationSchema
 
     def __init__(self, config):
-        
+
         # Initialize the mixin to set up the composite architecture
         super().__init__(config)
 
@@ -936,14 +1010,16 @@ class CompositeMultilabelClassificationModel(CompositeModelArchitectureMixin, Ba
 
     pass
 
-class CompositeSegmentationModel(CompositeModelArchitectureMixin, BaseSegmentationClassifier):
-    """Composite model for segmentation and change detection tasks.
-    """
+
+class CompositeSegmentationModel(
+    CompositeModelArchitectureMixin, BaseSegmentationClassifier
+):
+    """Composite model for segmentation and change detection tasks."""
 
     schema = CompositeSegmentationSchema
 
     def __init__(self, config):
-        
+
         # Initialize the mixin to set up the composite architecture
         super().__init__(config)
 
@@ -952,14 +1028,16 @@ class CompositeSegmentationModel(CompositeModelArchitectureMixin, BaseSegmentati
 
     pass
 
-class CompositeObjectDetectionModel(CompositeModelArchitectureMixin, BaseObjectDetection):
-    """Composite model for object detection tasks.
-    """
+
+class CompositeObjectDetectionModel(
+    CompositeModelArchitectureMixin, BaseObjectDetection
+):
+    """Composite model for object detection tasks."""
 
     schema = CompositeObjectDetectionSchema
 
     def __init__(self, config):
-        
+
         # Initialize the mixin to set up the composite architecture
         super().__init__(config)
 
@@ -968,14 +1046,16 @@ class CompositeObjectDetectionModel(CompositeModelArchitectureMixin, BaseObjectD
 
     pass
 
-class CompositeChangeDetectionModel(CompositeModelArchitectureMixin, BaseChangeDetection):
-    """Composite model for change detection tasks.
-    """
 
-    schema = CompositeSegmentationSchema # Reuses the same schema as segmentation since change detection is a special case of segmentation
+class CompositeChangeDetectionModel(
+    CompositeModelArchitectureMixin, BaseChangeDetection
+):
+    """Composite model for change detection tasks."""
+
+    schema = CompositeSegmentationSchema  # Reuses the same schema as segmentation since change detection is a special case of segmentation
 
     def __init__(self, config):
-        
+
         # Initialize the mixin to set up the composite architecture
         super().__init__(config)
 
@@ -983,75 +1063,76 @@ class CompositeChangeDetectionModel(CompositeModelArchitectureMixin, BaseChangeD
         self.setup_composite()
 
     pass
+
 
 class CompositeFeatureExtractionModel(CompositeModelArchitectureMixin, FoundationModel):
     """
-    Lightweight model for raw feature extraction. 
+    Lightweight model for raw feature extraction.
     Bypasses decoders and heads to return embeddings directly.
     """
-    
-    schema = CompositeModelSchema 
-    
+
+    schema = CompositeModelSchema
+
     def __init__(self, config):
         super().__init__(config)
-        
+
         # Pacify the load_model method from BaseModel
         self.criterion = None
         self.optimizer = None
         self.lr_scheduler = None
-        
-        class DummyEarlyStopping: 
+
+        class DummyEarlyStopping:
             pass
+
         self.early_stopping = DummyEarlyStopping()
-        
+
         self.setup_composite()
 
     def load_backbone(self):
         """Overrides FoundationModel requirement."""
         return None
 
-    def predict(self, dataset=None, description="Extracting dataset features"):
+    def predict(self, dataset=None):
         """
         Delegates dataset feature extraction to the universal Mixin method.
         Returns: tuple of (labels, embeddings)
         """
-        return self.extract_features(dataset, description)
+        return self.extract_features(dataset)
 
-    def predict_image(self, image=None, labels=None, data_transforms=None, description="Extracting single image features"):
+    def predict_image(self, image=None, labels=None, data_transforms=None):
         """
         Delegates single image feature extraction to the universal Mixin method.
         Returns: embedding vector
         """
         return self.extract_image_features(image, data_transforms)
-    
+
 
 # Factory composite model that can be used for any task type based on the config
 class CompositeModel:
-    """Factory that returns the correct task-specific composite model.
-    """
-    
+    """Factory that returns the correct task-specific composite model."""
+
     def __new__(cls, config):
-        
+
         # Extract task_type from the config object/dict
         task = getattr(config, "task_type", config.get("task_type", "")).lower()
 
         if task == "feature extraction":
             return CompositeFeatureExtractionModel(config)
-        
+
         elif task == "multiclass classification":
             return CompositeMultiClassificationModel(config)
-            
+
         elif task == "multilabel classification":
             return CompositeMultilabelClassificationModel(config)
-            
+
         elif task == "segmentation":
             return CompositeSegmentationModel(config)
-        
+
         elif task == "object detection":
             return CompositeObjectDetectionModel(config)
-        
+
         elif task == "change detection":
             return CompositeChangeDetectionModel(config)
-        
+
         else:
             raise ValueError(f"Task type '{task}' is not currently supported.")

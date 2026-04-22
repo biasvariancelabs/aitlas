@@ -1,28 +1,28 @@
 API documentation
 ======================
 
-Base 
+Base
 ----------------------
 .. toctree::
    :maxdepth: 4
 
    aitlas.base
 
-Datasets 
+Datasets
 ----------------------
 .. toctree::
    :maxdepth: 4
 
    aitlas.datasets
 
-Transforms 
+Transforms
 ----------------------
 .. toctree::
    :maxdepth: 4
 
    aitlas.transforms
 
-Models 
+Models
 ----------------------
 .. toctree::
    :maxdepth: 4
@@ -30,21 +30,21 @@ Models
    aitlas.models
 
 
-Tasks 
+Tasks
 ----------------------
 .. toctree::
    :maxdepth: 4
 
    aitlas.tasks
 
-Metrics 
+Metrics
 ----------------------
 .. toctree::
    :maxdepth: 4
 
    aitlas.metrics
 
-Visualizations 
+Visualizations
 ----------------------
 .. toctree::
    :maxdepth: 4
@@ -52,24 +52,23 @@ Visualizations
    aitlas.visualizations
 
 
-Utils 
+Utils
 ----------------------
 .. toctree::
    :maxdepth: 4
 
    aitlas.utils
-  
-Clutering 
+
+Clutering
 ----------------------
 .. toctree::
    :maxdepth: 4
 
    aitlas.clustering
 
-Run 
+Run
 ----------------------
 .. toctree::
    :maxdepth: 4
 
    aitlas.run
-

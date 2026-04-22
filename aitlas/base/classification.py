@@ -15,8 +15,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class BaseMulticlassClassifier(BaseModel):
-    """Base class for a multiclass classifier.
-    """
+    """Base class for a multiclass classifier."""
 
     schema = BaseClassifierSchema
 
@@ -55,13 +54,13 @@ class BaseMulticlassClassifier(BaseModel):
         if running_metrics.confusion_matrix:
             cm = running_metrics.get_computed()
 
-        # plot confusion matrix for model evaluation
-        plot_multiclass_confusion_matrix(
-            np.array(cm),
-            labels,
-            dataset_name,
-            f"{dataset_name}_{self.name}_{run_id}_cm.pdf",
-        )
+            # plot confusion matrix for model evaluation
+            plot_multiclass_confusion_matrix(
+                np.array(cm),
+                labels,
+                dataset_name,
+                f"{dataset_name}_{self.name}_{run_id}_cm.pdf",
+            )
 
     def load_optimizer(self):
         """Load the optimizer"""
@@ -83,8 +82,7 @@ class BaseMulticlassClassifier(BaseModel):
 
 
 class BaseMultilabelClassifier(BaseModel):
-    """Base class for a multilabel classifier.
-    """
+    """Base class for a multilabel classifier."""
 
     schema = BaseClassifierSchema
 

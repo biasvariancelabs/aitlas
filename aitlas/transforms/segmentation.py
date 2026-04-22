@@ -3,9 +3,9 @@ For semantic segmentation tasks the shape of the input is (N, 3, H, W);
 The shape of the output/mask is (N, num_classes, H, W), where N is the number of images"""
 
 import albumentations as A
-from torchvision.transforms import v2
-import torch
 import numpy as np
+import torch
+from torchvision.transforms import v2
 
 from ..base import BaseTransforms
 
@@ -98,11 +98,13 @@ class Pad(BaseTransforms):
         :return: padded tensor
         :rtype: tensor
         """
-        data_transforms = v2.Compose([
-            v2.ToImage(), # Converts numpy array to tensor
-            v2.ToDtype(torch.float32, scale=False),
-            v2.Pad(4)
-        ])
+        data_transforms = v2.Compose(
+            [
+                v2.ToImage(),  # Converts numpy array to tensor
+                v2.ToDtype(torch.float32, scale=False),
+                v2.Pad(4),
+            ]
+        )
         return data_transforms(sample)
 
 
@@ -149,7 +151,7 @@ class ResizeToTensor(BaseTransforms):
         :param size: Desired output size. If int, square crop is made. If tuple, matches exact dimensions.
         """
         super().__init__(**kwargs)
-        
+
         # Handle both int (e.g., 224) and tuple (e.g., (224, 224)) inputs
         if isinstance(size, int):
             self.size = (size, size)
@@ -157,11 +159,13 @@ class ResizeToTensor(BaseTransforms):
             self.size = size
 
         # Build the transformation pipeline
-        self.data_transforms = v2.Compose([
-            v2.ToImage(),  # Converts numpy array to tensor
-            v2.ToDtype(torch.float32, scale=False),
-            v2.Resize(self.size, antialias=True),
-        ])
+        self.data_transforms = v2.Compose(
+            [
+                v2.ToImage(),  # Converts numpy array to tensor
+                v2.ToDtype(torch.float32, scale=False),
+                v2.Resize(self.size, antialias=True),
+            ]
+        )
 
     def __call__(self, sample):
         """
@@ -180,7 +184,7 @@ class ResizePerChannelToTensor(BaseTransforms):
         :param size: Desired output size. If int, square crop is made. If tuple, matches exact dimensions.
         """
         super().__init__(**kwargs)
-        
+
         # Handle both int (e.g., 224) and tuple (e.g., (224, 224)) inputs
         if isinstance(size, int):
             self.size = (size, size)
@@ -188,11 +192,13 @@ class ResizePerChannelToTensor(BaseTransforms):
             self.size = size
 
         # Build the transform pipeline once during initialization
-        self.data_transforms = v2.Compose([
-            v2.ToImage(),  # Converts numpy array to tensor
-            v2.ToDtype(torch.float32, scale=False),
-            v2.Resize(self.size, antialias=True),
-        ])
+        self.data_transforms = v2.Compose(
+            [
+                v2.ToImage(),  # Converts numpy array to tensor
+                v2.ToDtype(torch.float32, scale=False),
+                v2.Resize(self.size, antialias=True),
+            ]
+        )
 
     def __call__(self, sample):
         """Applies resize transformations per channel. This is useful for multichannel images. In torchvision transforms v2, this is automatically handled, so this class is used for legacy support only.
@@ -206,26 +212,31 @@ class ResizePerChannelToTensor(BaseTransforms):
 
 class ResizeToTensor224(ResizeToTensor):
     """Hardcoded 224x224 wrapper for AiTLAS string configs"""
+
     def __init__(self, **kwargs):
         super().__init__(size=224, **kwargs)
 
 
 class ResizePerChannelToTensor224(ResizePerChannelToTensor):
     """Hardcoded 224x224 wrapper for AiTLAS string configs"""
+
     def __init__(self, **kwargs):
         super().__init__(size=224, **kwargs)
 
 
 class ResizeToTensor120(ResizeToTensor):
     """Hardcoded 120x120 wrapper for AiTLAS string configs"""
+
     def __init__(self, **kwargs):
         super().__init__(size=120, **kwargs)
 
 
 class ResizePerChannelToTensor120(ResizePerChannelToTensor):
     """Hardcoded 120x120 wrapper for AiTLAS string configs"""
+
     def __init__(self, **kwargs):
         super().__init__(size=120, **kwargs)
+
 
 class RobustZScoreNormTranspose(BaseTransforms):
     """
@@ -256,6 +267,7 @@ class RobustZScoreNormTranspose(BaseTransforms):
         # Transpose from (H, W, C) to (C, H, W) and convert to a tensor
         return torch.tensor(normalized_sample.transpose(2, 0, 1), dtype=torch.float32)
 
+
 class RobustMinMaxNormTranspose(BaseTransforms):
     """
     Applies robust per-channel MinMax normalization with clipping and transposes the sample.
@@ -281,13 +293,13 @@ class RobustMinMaxNormTranspose(BaseTransforms):
         # Add a small epsilon to avoid division by zero
         denominator = clipped_max - clipped_min
         normalized_sample = (clipped_sample - clipped_min) / (denominator + 1e-7)
-        
+
         # Handle channels where max_val equals min_val
         normalized_sample[..., denominator == 0] = 0
 
         # Transpose from (H, W, C) to (C, H, W) and convert to a tensor
         return torch.tensor(normalized_sample.transpose(2, 0, 1), dtype=torch.float32)
-    
+
 
 class RobustMedianScalerTranspose(BaseTransforms):
     """

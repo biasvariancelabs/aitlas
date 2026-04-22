@@ -1,4 +1,5 @@
 """VGG16 model"""
+
 import torch.nn as nn
 import torch.nn.init as init
 import torchvision.models as models

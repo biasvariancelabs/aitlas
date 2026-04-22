@@ -13,6 +13,7 @@ class BaseTaskShema(Schema):
     :param id: Run name/ID for the task. Default is None.
     :type id: str, optional
     """
+
     log = fields.Boolean(required=False, missing=True, description="Turn on logging")
     id = fields.String(
         required=False,
@@ -32,6 +33,7 @@ class SplitSetObjectSchema(Schema):
     :param file: File containing the indices for the split. This is required.
     :type file: str
     """
+
     ratio = fields.Int(required=True, description="Ratio of dataset", example=60)
     file = fields.String(
         required=True, description="File indices", example="./data/indices.csv"
@@ -57,13 +59,16 @@ class SplitTaskSchema(BaseTaskShema):
     :param split: Configuration on how to split the dataset. Default is None.
     :type split: SplitObjectSchema, optional
     """
+
     data_dir = fields.String(
         required=True,
         description="Dataset path on disk",
         example="./data/tmp/ or ./data/tmp/images.csv",
     )
     csv_file = fields.String(
-        missing=None, description="CSV file on disk", example="./data/train.csv",
+        missing=None,
+        description="CSV file on disk",
+        example="./data/train.csv",
     )
     split = fields.Nested(
         SplitObjectSchema,
@@ -94,6 +99,7 @@ class TrainTaskSchema(BaseTaskShema):
     :param resume_model: File path to the model to be resumed. Default is None.
     :type resume_model: str, optional
     """
+
     dataset_config = fields.Nested(
         nested=ObjectConfig,
         required=True,
@@ -146,6 +152,7 @@ class TrainAndEvaluateTaskSchema(BaseTaskShema):
     :param val_dataset_config: Validation dataset type and configuration. This is required.
     :type val_dataset_config: ObjectConfig
     """
+
     epochs = fields.Int(
         required=True, description="Number of epochs used in training", example=50
     )
@@ -180,17 +187,25 @@ class TrainAndEvaluateTaskSchema(BaseTaskShema):
 
 class ParameterSchema(Schema):
     name = fields.String(required=True, description="Parameter to optimize")
-    min = fields.Float(missing=0, description="Lower end of range.",)
-    max = fields.Float(missing=0.5, description="Higher end of range.",)
+    min = fields.Float(
+        missing=0,
+        description="Lower end of range.",
+    )
+    max = fields.Float(
+        missing=0.5,
+        description="Higher end of range.",
+    )
     steps = fields.Int(
-        missing=10, description="In how mane steps to iterate the range",
+        missing=10,
+        description="In how mane steps to iterate the range",
     )
 
 
 class OptimizeTaskSchema(BaseTaskShema):
     """
-        Schema for configuring an optimization task.
+    Schema for configuring an optimization task.
     """
+
     epochs = fields.Int(
         required=True, description="Number of epochs used in training", example=50
     )
@@ -239,6 +254,7 @@ class EvaluateTaskSchema(BaseTaskShema):
     :param visualizations: Visualization classes you want to show. Default is an empty list.
     :type visualizations: List[str], optional
     """
+
     dataset_config = fields.Nested(
         nested=ObjectConfig,
         required=True,
@@ -295,6 +311,7 @@ class PredictTaskSchema(BaseTaskShema):
                           Must be one of ['plot', 'csv', 'image'].
     :type output_format: str, optional
     """
+
     data_dir = fields.String(
         required=True,
         description="Directory with the image to perform prediction on",
@@ -353,6 +370,7 @@ class ExtractFeaturesTaskSchema(BaseTaskShema):
     """
     Schema for configuring a task to extract features from images.
     """
+
     data_dir = fields.String(
         required=True,
         description="Directory with images to extract features from",
@@ -395,10 +413,12 @@ class VisualizeSplitObjectSchema(Schema):
 
 class VisualizeTaskSchema(BaseTaskShema):
     output_xls = fields.String(
-        missing=None, description="Excel file path where the splits will be saved",
+        missing=None,
+        description="Excel file path where the splits will be saved",
     )
     output_file = fields.String(
-        missing="plot.jpg", description="Image file path where the plots will be shown",
+        missing="plot.jpg",
+        description="Image file path where the plots will be shown",
     )
     split = fields.Nested(
         VisualizeSplitObjectSchema,

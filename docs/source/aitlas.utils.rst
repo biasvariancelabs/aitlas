@@ -16,4 +16,3 @@ aitlas.utils.utils module
    :members:
    :undoc-members:
    :show-inheritance:
-

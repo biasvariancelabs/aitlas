@@ -1,5 +1,6 @@
 from .semantic_segmentation import SemanticSegmentationDataset
 
+
 """
 The training set contains 180 color image tiles of size 5000×5000, covering a surface of 1500 m × 1500 m each
 (at a 30 cm resolution). The format is GeoTIFF (TIFF with georeferencing, but the images can be used as any other TIFF).

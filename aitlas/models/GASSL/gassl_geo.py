@@ -9,6 +9,7 @@ class MoCo_geo(nn.Module):
     Build a MoCo model with: a query encoder, a key encoder, and a queue
     https://arxiv.org/abs/1911.05722
     """
+
     def __init__(self, base_encoder, dim=128, K=65536, m=0.999, T=0.07, mlp=False):
         """
         dim: feature dimension (default: 128)
@@ -29,10 +30,16 @@ class MoCo_geo(nn.Module):
 
         if mlp:  # hack: brute-force replacement
             dim_mlp = self.encoder_q.fc.weight.shape[1]
-            self.encoder_q.fc = nn.Sequential(nn.Linear(dim_mlp, dim_mlp), nn.ReLU(), self.encoder_q.fc)
-            self.encoder_k.fc = nn.Sequential(nn.Linear(dim_mlp, dim_mlp), nn.ReLU(), self.encoder_k.fc)
+            self.encoder_q.fc = nn.Sequential(
+                nn.Linear(dim_mlp, dim_mlp), nn.ReLU(), self.encoder_q.fc
+            )
+            self.encoder_k.fc = nn.Sequential(
+                nn.Linear(dim_mlp, dim_mlp), nn.ReLU(), self.encoder_k.fc
+            )
 
-        for param_q, param_k in zip(self.encoder_q.parameters(), self.encoder_k.parameters()):
+        for param_q, param_k in zip(
+            self.encoder_q.parameters(), self.encoder_k.parameters()
+        ):
             param_k.data.copy_(param_q.data)  # initialize
             param_k.requires_grad = False  # not update by gradient
 
@@ -47,8 +54,10 @@ class MoCo_geo(nn.Module):
         """
         Momentum update of the key encoder
         """
-        for param_q, param_k in zip(self.encoder_q.parameters(), self.encoder_k.parameters()):
-            param_k.data = param_k.data * self.m + param_q.data * (1. - self.m)
+        for param_q, param_k in zip(
+            self.encoder_q.parameters(), self.encoder_k.parameters()
+        ):
+            param_k.data = param_k.data * self.m + param_q.data * (1.0 - self.m)
 
     @torch.no_grad()
     def _dequeue_and_enqueue(self, keys):
@@ -61,7 +70,7 @@ class MoCo_geo(nn.Module):
         assert self.K % batch_size == 0  # for simplicity
 
         # replace the keys at ptr (dequeue and enqueue)
-        self.queue[:, ptr:ptr + batch_size] = keys.T
+        self.queue[:, ptr : ptr + batch_size] = keys.T
         ptr = (ptr + batch_size) % self.K  # move pointer
 
         self.queue_ptr[0] = ptr
@@ -125,7 +134,7 @@ class MoCo_geo(nn.Module):
         # compute query features
         q_temp = self.encoder_q(im_q)  # queries: NxC
         q = nn.functional.normalize(q_temp, dim=1)
-      
+
         # compute key features
         with torch.no_grad():  # no gradient to keys
             self._momentum_update_key_encoder()  # update the key encoder
@@ -142,9 +151,9 @@ class MoCo_geo(nn.Module):
         # compute logits
         # Einstein sum is more intuitive
         # positive logits: Nx1
-        l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
+        l_pos = torch.einsum("nc,nc->n", [q, k]).unsqueeze(-1)
         # negative logits: NxK
-        l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])
+        l_neg = torch.einsum("nc,ck->nk", [q, self.queue.clone().detach()])
 
         # logits: Nx(1+K)
         logits = torch.cat([l_pos, l_neg], dim=1)
@@ -168,16 +177,21 @@ def concat_all_gather(tensor):
     Performs all_gather operation on the provided tensors.
     *** Warning ***: torch.distributed.all_gather has no gradient.
     """
-    tensors_gather = [torch.ones_like(tensor)
-        for _ in range(torch.distributed.get_world_size())]
+    tensors_gather = [
+        torch.ones_like(tensor) for _ in range(torch.distributed.get_world_size())
+    ]
     torch.distributed.all_gather(tensors_gather, tensor, async_op=False)
 
     output = torch.cat(tensors_gather, dim=0)
     return output
 
+
 def moco_geo_resnet50_model(**kwargs):
-    model = MoCo_geo(base_encoder=models.resnet50, dim=128, K=65536, m=0.999, T=0.07, mlp=True)
+    model = MoCo_geo(
+        base_encoder=models.resnet50, dim=128, K=65536, m=0.999, T=0.07, mlp=True
+    )
     return model
+
 
 # set recommended archs
 gassl_moco_geo_resnet50 = moco_geo_resnet50_model

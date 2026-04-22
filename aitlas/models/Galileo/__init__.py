@@ -1,1 +1,1 @@
-from .galileo import GalileoBase, Encoder, Decoder
+from .galileo import Decoder, Encoder, GalileoBase

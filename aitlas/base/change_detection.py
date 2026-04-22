@@ -1,17 +1,17 @@
 """Base classes for change detection"""
-import collections
-import logging
-import copy
 
-import torch.optim as optim
-import torch.nn as nn
-import torch
-from tqdm import tqdm
+import collections
+import copy
+import logging
+
 import matplotlib.pyplot as plt
 import numpy as np
-
-
 import segmentation_models_pytorch as smp
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from tqdm import tqdm
+
 from .metrics import SegmentationRunningScore
 from .models import BaseModel
 from .schemas import BaseSegmentationClassifierSchema
@@ -21,12 +21,14 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class CombinedFocalDiceLoss(nn.Module):
-    def __init__(self, 
-                 weight_focal: float = 0.5, 
-                 weight_dice: float = 0.5,
-                 alpha: float = 0.25,
-                 gamma: float = 2.0,
-                 mode: str = "binary"):
+    def __init__(
+        self,
+        weight_focal: float = 0.5,
+        weight_dice: float = 0.5,
+        alpha: float = 0.25,
+        gamma: float = 2.0,
+        mode: str = "binary",
+    ):
         """
         Hybrid loss: CrossEntropy + Dice
         Args:
@@ -45,17 +47,18 @@ class CombinedFocalDiceLoss(nn.Module):
             # if y_true is one-hot, convert to class indices
             if y_true.dim() == 4 and y_true.shape[1] > 1:
                 y_true = torch.argmax(y_true, dim=1)
-        
+
         focal = self.focal_loss(y_pred, y_true)
         dice = self.dice_loss(y_pred, y_true)
         return self.weight_focal * focal + self.weight_dice * dice
 
 
 class BaseChangeDetection(BaseModel):
-    """Base class for a change detection model.
-    """
+    """Base class for a change detection model."""
 
-    schema = BaseSegmentationClassifierSchema # Can reuse the segmentation schema for now
+    schema = (
+        BaseSegmentationClassifierSchema  # Can reuse the segmentation schema for now
+    )
 
     def __init__(self, config):
         super().__init__(config)
@@ -66,28 +69,30 @@ class BaseChangeDetection(BaseModel):
             if self._should_use_amp():
                 self.use_amp = True
             else:
-                logging.info("AMP is enabled in config but not supported on this GPU - falling back to FP32")
+                logging.info(
+                    "AMP is enabled in config but not supported on this GPU - falling back to FP32"
+                )
                 self.use_amp = False
         else:
             self.use_amp = False
 
         self.scaler = torch.amp.GradScaler("cuda") if self.use_amp else None
-    
+
     def _should_use_amp(self):
-         """Check if GPU has Tensor Cores for meaningful AMP speedup"""
-         if not torch.cuda.is_available():
+        """Check if GPU has Tensor Cores for meaningful AMP speedup"""
+        if not torch.cuda.is_available():
             return False
 
-         device_name = torch.cuda.get_device_name(0)
-         compute_capability = torch.cuda.get_device_capability(0)
+        device_name = torch.cuda.get_device_name(0)
+        compute_capability = torch.cuda.get_device_capability(0)
 
-         # Tensor Cores available in: Volta (7.0+), Turing (7.5), Ampere (8.x), Hopper (9.x)
-         has_tensor_cores = compute_capability[0] >= 7
+        # Tensor Cores available in: Volta (7.0+), Turing (7.5), Ampere (8.x), Hopper (9.x)
+        has_tensor_cores = compute_capability[0] >= 7
 
-         if has_tensor_cores:
+        if has_tensor_cores:
             logging.info(f"GPU {device_name} has Tensor Cores - enabling AMP")
             return True
-         else:
+        else:
             logging.info(f"GPU {device_name} lacks Tensor Cores - disabling AMP")
             return False
 
@@ -128,7 +133,7 @@ class BaseChangeDetection(BaseModel):
             running_loss += loss.item() * image1.size(0)
             running_items += image1.size(0)
             total_loss += loss.item() * image1.size(0)
-            if (i % iterations_log == iterations_log - 1):
+            if i % iterations_log == iterations_log - 1:
                 logging.info(
                     f"[{epoch + 1}, {i + 1}], loss: {running_loss / running_items : .5f}"
                 )
@@ -136,9 +141,7 @@ class BaseChangeDetection(BaseModel):
                 running_items = 0
 
         total_loss = total_loss / len(dataloader.dataset)
-        logging.info(
-            f"epoch: {epoch + 1}, loss: {total_loss: .5f}"
-        )
+        logging.info(f"epoch: {epoch + 1}, loss: {total_loss: .5f}")
         return total_loss
 
     def predict_output_per_batch(self, dataloader, description):
@@ -241,12 +244,16 @@ class BaseChangeDetection(BaseModel):
         if torch.is_tensor(image1):
             inputs1 = image1.unsqueeze(0).to(self.device)
         else:
-            inputs1 = torch.from_numpy(image1.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
+            inputs1 = (
+                torch.from_numpy(image1.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
+            )
 
         if torch.is_tensor(image2):
             inputs2 = image2.unsqueeze(0).to(self.device)
         else:
-            inputs2 = torch.from_numpy(image2.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
+            inputs2 = (
+                torch.from_numpy(image2.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
+            )
 
         with torch.no_grad():
             with torch.amp.autocast("cuda", enabled=self.use_amp):
@@ -260,7 +267,9 @@ class BaseChangeDetection(BaseModel):
         predicted = list(predicted.cpu().detach().numpy())
 
         """Display image pair and predicted masks from model"""
-        fig = plt.figure(figsize=(15, 7))  # Adjust figsize for three plots (image1, image2, mask)
+        fig = plt.figure(
+            figsize=(15, 7)
+        )  # Adjust figsize for three plots (image1, image2, mask)
 
         # Plot pre-event image
         plt.subplot(1, len(labels) + 2, 1)  # +2 for image1, image2, then labels
@@ -276,7 +285,9 @@ class BaseChangeDetection(BaseModel):
 
         # Plot masks
         for i in range(len(labels)):
-            plt.subplot(1, len(labels) + 2, i + 3)  # Offset by 3 for image1, image2, and 1-based indexing
+            plt.subplot(
+                1, len(labels) + 2, i + 3
+            )  # Offset by 3 for image1, image2, and 1-based indexing
             plt.imshow(
                 predicted[0][i].astype(np.uint8) * 255, cmap="gray", vmin=0, vmax=255
             )

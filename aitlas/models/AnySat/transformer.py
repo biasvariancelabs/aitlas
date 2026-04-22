@@ -1,10 +1,15 @@
-import torch
-from torch import nn
 import math
 
+import torch
+from torch import nn
+
+from .utils.pos_embed import (
+    get_2d_sincos_pos_embed_with_resolution,
+    get_2d_sincos_pos_embed_with_scale,
+)
 from .utils.utils import trunc_normal_
 from .utils.utils_ViT import Block, BlockTransformer
-from .utils.pos_embed import get_2d_sincos_pos_embed_with_scale, get_2d_sincos_pos_embed_with_resolution
+
 
 class Transformer(nn.Module):
     def __init__(
@@ -23,21 +28,31 @@ class Transformer(nn.Module):
     ):
         super().__init__()
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
+        dpr = [
+            x.item() for x in torch.linspace(0, drop_path_rate, depth)
+        ]  # stochastic depth decay rule
         # --
         self.predictor_pos_embed = get_2d_sincos_pos_embed_with_resolution(
-                                    embed_dim,
-                                    scale,
-                                    input_res,
-                                    cls_token=True,
-                                    modalities=modalities
-                                )
+            embed_dim, scale, input_res, cls_token=True, modalities=modalities
+        )
         # --
-        self.predictor_blocks = nn.ModuleList([
-            BlockTransformer(
-                dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=None, n_modalities=1,
-                drop=0., attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer)
-            for i in range(depth)])
+        self.predictor_blocks = nn.ModuleList(
+            [
+                BlockTransformer(
+                    dim=embed_dim,
+                    num_heads=num_heads,
+                    mlp_ratio=mlp_ratio,
+                    qkv_bias=qkv_bias,
+                    qk_scale=None,
+                    n_modalities=1,
+                    drop=0.0,
+                    attn_drop=attn_drop_rate,
+                    drop_path=dpr[i],
+                    norm_layer=norm_layer,
+                )
+                for i in range(depth)
+            ]
+        )
         self.predictor_norm = norm_layer(embed_dim)
         # ------
 
@@ -76,8 +91,9 @@ class Transformer(nn.Module):
 
         if keep_subpatch:
             return x[:, 0], x[:, 1:]
-        
+
         return x[:, 0]
+
 
 class TransformerMulti(nn.Module):
     def __init__(
@@ -97,26 +113,42 @@ class TransformerMulti(nn.Module):
     ):
         super().__init__()
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
+        dpr = [
+            x.item() for x in torch.linspace(0, drop_path_rate, depth)
+        ]  # stochastic depth decay rule
         # --
         self.input_res = input_res
         datasets = list(scales.keys())
         self.predictor_pos_embed = {}
         for dataset in datasets:
             for scale in scales[dataset]:
-                self.predictor_pos_embed['_'.join([dataset, str(scale)])] = get_2d_sincos_pos_embed_with_resolution(
-                                                                                embed_dim,
-                                                                                scale,
-                                                                                input_res,
-                                                                                cls_token=True,
-                                                                                modalities=modalities[dataset]
-                                                                            )
+                self.predictor_pos_embed["_".join([dataset, str(scale)])] = (
+                    get_2d_sincos_pos_embed_with_resolution(
+                        embed_dim,
+                        scale,
+                        input_res,
+                        cls_token=True,
+                        modalities=modalities[dataset],
+                    )
+                )
         # --
-        self.predictor_blocks = nn.ModuleList([
-            BlockTransformer(
-                dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=None, n_modalities=1,
-                drop=0., attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer)
-            for i in range(depth)])
+        self.predictor_blocks = nn.ModuleList(
+            [
+                BlockTransformer(
+                    dim=embed_dim,
+                    num_heads=num_heads,
+                    mlp_ratio=mlp_ratio,
+                    qkv_bias=qkv_bias,
+                    qk_scale=None,
+                    n_modalities=1,
+                    drop=0.0,
+                    attn_drop=attn_drop_rate,
+                    drop_path=dpr[i],
+                    norm_layer=norm_layer,
+                )
+                for i in range(depth)
+            ]
+        )
         self.predictor_norm = norm_layer(embed_dim)
         # ------
         self.init_std = init_std
@@ -149,7 +181,9 @@ class TransformerMulti(nn.Module):
         x = torch.cat([self.cls_token.expand(x.shape[0], -1, -1), x], dim=1)
 
         # -- add positional embedding to x tokens
-        x += self.predictor_pos_embed['_'.join([dataset, str(scale)])][modality].to(x.device)
+        x += self.predictor_pos_embed["_".join([dataset, str(scale)])][modality].to(
+            x.device
+        )
 
         # -- fwd prop
         for blk in self.predictor_blocks:
@@ -158,21 +192,18 @@ class TransformerMulti(nn.Module):
 
         if keep_subpatch:
             return x[:, 0], x[:, 1:]
-        
+
         return x[:, 0]
-    
+
     def forward_release(self, x, modality, scale, keep_subpatch=False):
         B, N, C = x.shape
         # -- concat class token to x
         x = torch.cat([self.cls_token.expand(B, -1, -1), x], dim=1)
 
         # -- add positional embedding to x tokens
-        x += get_2d_sincos_pos_embed_with_resolution(C,
-                                                        scale,
-                                                        self.input_res,
-                                                        cls_token=True,
-                                                        modalities=[modality]
-                                                    )[modality].to(x.device)
+        x += get_2d_sincos_pos_embed_with_resolution(
+            C, scale, self.input_res, cls_token=True, modalities=[modality]
+        )[modality].to(x.device)
 
         # -- fwd prop
         for blk in self.predictor_blocks:
@@ -181,12 +212,13 @@ class TransformerMulti(nn.Module):
 
         if keep_subpatch:
             return x[:, 0], x[:, 1:]
-        
+
         return x[:, 0]
 
 
 class VisionTransformerPredictor(nn.Module):
-    """ Vision Transformer """
+    """Vision Transformer"""
+
     def __init__(
         self,
         num_patches,
@@ -208,19 +240,32 @@ class VisionTransformerPredictor(nn.Module):
         self.predictor_embed = nn.Linear(embed_dim, predictor_embed_dim, bias=True)
         self.mask_token = nn.Parameter(torch.zeros(1, 1, predictor_embed_dim))
         self.cls_token = nn.Parameter(torch.zeros(1, 1, predictor_embed_dim))
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
+        dpr = [
+            x.item() for x in torch.linspace(0, drop_path_rate, depth)
+        ]  # stochastic depth decay rule
         # --
         self.predictor_pos_embed = get_2d_sincos_pos_embed_with_scale(
-                                        embed_dim,
-                                        int(num_patches**0.5),
-                                        scale,
-                                        cls_token=True,
-                                    )
+            embed_dim,
+            int(num_patches**0.5),
+            scale,
+            cls_token=True,
+        )
         # --
-        self.predictor_blocks = nn.ModuleList([
-            Block(dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias,
-                 attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer, flash_attn=flash_attn)
-            for i in range(depth)])
+        self.predictor_blocks = nn.ModuleList(
+            [
+                Block(
+                    dim=embed_dim,
+                    num_heads=num_heads,
+                    mlp_ratio=mlp_ratio,
+                    qkv_bias=qkv_bias,
+                    attn_drop=attn_drop_rate,
+                    drop_path=dpr[i],
+                    norm_layer=norm_layer,
+                    flash_attn=flash_attn,
+                )
+                for i in range(depth)
+            ]
+        )
         self.predictor_norm = norm_layer(predictor_embed_dim)
         self.predictor_proj = nn.Linear(predictor_embed_dim, embed_dim, bias=True)
         # ------
@@ -251,7 +296,9 @@ class VisionTransformerPredictor(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, x, masks_x, masks):
-        assert (masks is not None) and (masks_x is not None), 'Cannot run predictor without mask indices'
+        assert (masks is not None) and (
+            masks_x is not None
+        ), "Cannot run predictor without mask indices"
 
         if not isinstance(masks_x, list):
             masks_x = [masks_x]
@@ -280,21 +327,25 @@ class VisionTransformerPredictor(nn.Module):
         # --
         pred_tokens += pos_embs
         x = x.repeat(len(masks), 1, 1)
-        x = torch.cat([self.cls_token.expand(x.shape[0], -1, -1), x, pred_tokens], dim=1)
-        #mask_final = torch.cat([torch.cat(masks_x + [masks[i]], dim=1) for i in range (len(masks))], dim=0)
+        x = torch.cat(
+            [self.cls_token.expand(x.shape[0], -1, -1), x, pred_tokens], dim=1
+        )
+        # mask_final = torch.cat([torch.cat(masks_x + [masks[i]], dim=1) for i in range (len(masks))], dim=0)
         # -- fwd prop
         for blk in self.predictor_blocks:
             x = blk(x)
         x = self.predictor_norm(x)
 
         # -- return preds for mask tokens
-        x = x[:, (N_ctxt + 1):]
+        x = x[:, (N_ctxt + 1) :]
         x = self.predictor_proj(x)
 
         return x
 
+
 class VisionTransformerPredictorMulti(nn.Module):
-    """ Vision Transformer """
+    """Vision Transformer"""
+
     def __init__(
         self,
         num_patches,
@@ -316,20 +367,36 @@ class VisionTransformerPredictorMulti(nn.Module):
         self.mask_token = nn.Parameter(torch.zeros(1, 1, predictor_embed_dim))
         self.cls_token = nn.Parameter(torch.zeros(1, 1, predictor_embed_dim))
 
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
+        dpr = [
+            x.item() for x in torch.linspace(0, drop_path_rate, depth)
+        ]  # stochastic depth decay rule
         # --
         self.datasets = list(scales.keys())
         self.predictor_pos_embed = {}
         for dataset in self.datasets:
             for scale in scales[dataset]:
                 num_p = num_patches[dataset] // (scale * scale)
-                self.predictor_pos_embed['_'.join([dataset, str(scale)])] = get_2d_sincos_pos_embed_with_scale(embed_dim, 
-                                                            int(num_p ** .5), scale, cls_token=True)
+                self.predictor_pos_embed["_".join([dataset, str(scale)])] = (
+                    get_2d_sincos_pos_embed_with_scale(
+                        embed_dim, int(num_p**0.5), scale, cls_token=True
+                    )
+                )
         # --
-        self.predictor_blocks = nn.ModuleList([
-            Block(dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias,
-                 attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer, flash_attn=flash_attn)
-            for i in range(depth)])
+        self.predictor_blocks = nn.ModuleList(
+            [
+                Block(
+                    dim=embed_dim,
+                    num_heads=num_heads,
+                    mlp_ratio=mlp_ratio,
+                    qkv_bias=qkv_bias,
+                    attn_drop=attn_drop_rate,
+                    drop_path=dpr[i],
+                    norm_layer=norm_layer,
+                    flash_attn=flash_attn,
+                )
+                for i in range(depth)
+            ]
+        )
         self.predictor_norm = norm_layer(predictor_embed_dim)
         self.predictor_proj = nn.Linear(predictor_embed_dim, embed_dim, bias=True)
         # ------
@@ -360,7 +427,9 @@ class VisionTransformerPredictorMulti(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, x, masks_x, masks, dataset, scale):
-        assert (masks is not None) and (masks_x is not None), 'Cannot run predictor without mask indices'
+        assert (masks is not None) and (
+            masks_x is not None
+        ), "Cannot run predictor without mask indices"
 
         if not isinstance(masks_x, list):
             masks_x = [masks_x]
@@ -375,7 +444,9 @@ class VisionTransformerPredictorMulti(nn.Module):
         x = self.predictor_embed(x)
 
         # -- add positional embedding to x tokens
-        pos_embed = self.predictor_pos_embed['_'.join([dataset, str(scale)])].to(x.device)
+        pos_embed = self.predictor_pos_embed["_".join([dataset, str(scale)])].to(
+            x.device
+        )
         x_pos_embed = pos_embed.repeat(B, 1, 1)
         x += apply_masks(x_pos_embed, masks_x)
 
@@ -390,26 +461,35 @@ class VisionTransformerPredictorMulti(nn.Module):
         # --
         pred_tokens += pos_embs
         x = x.repeat(len(masks), 1, 1)
-        x = torch.cat([self.cls_token.expand(x.shape[0], -1, -1), x, pred_tokens], dim=1)
-        mask_final = torch.cat([torch.cat(masks_x + [masks[i]], dim=1) for i in range (len(masks))], dim=0)
+        x = torch.cat(
+            [self.cls_token.expand(x.shape[0], -1, -1), x, pred_tokens], dim=1
+        )
+        mask_final = torch.cat(
+            [torch.cat(masks_x + [masks[i]], dim=1) for i in range(len(masks))], dim=0
+        )
         # -- fwd prop
         for blk in self.predictor_blocks:
             x = blk(x)
         x = self.predictor_norm(x)
 
         # -- return preds for mask tokens
-        x = x[:, (N_ctxt + 1):]
+        x = x[:, (N_ctxt + 1) :]
         x = self.predictor_proj(x)
 
         return x
 
+
 def repeat_interleave_batch(x, B, repeat):
     N = len(x) // B
-    x = torch.cat([
-        torch.cat([x[i*B:(i+1)*B] for _ in range(repeat)], dim=0)
-        for i in range(N)
-    ], dim=0)
+    x = torch.cat(
+        [
+            torch.cat([x[i * B : (i + 1) * B] for _ in range(repeat)], dim=0)
+            for i in range(N)
+        ],
+        dim=0,
+    )
     return x
+
 
 def apply_masks(x, masks):
     """
@@ -421,4 +501,3 @@ def apply_masks(x, masks):
         mask_keep = m.unsqueeze(-1).repeat(1, 1, x.size(-1))
         all_x += [torch.gather(x, dim=1, index=mask_keep)]
     return torch.cat(all_x, dim=0)
- 

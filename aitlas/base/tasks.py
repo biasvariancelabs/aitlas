@@ -17,7 +17,7 @@ class BaseTask(Configurable):
 
     @staticmethod
     def create_dataset(dataset_config):
-        """ Builds the input dataset using the provided configuration. """
+        """Builds the input dataset using the provided configuration."""
 
         classname, config = dataset_config.classname, dataset_config.config
 
@@ -36,5 +36,3 @@ class BaseTask(Configurable):
     def run(self):
         """Runs the task."""
         raise NotImplementedError
-
-

@@ -1,6 +1,5 @@
 """Metrics for classification tasks."""
 
-
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 from ..base import BaseMetric
@@ -68,10 +67,11 @@ class AveragedScore(BaseMetric):
         :raises ValueError: If the shapes of y_pred and y_true do not match.
 
         """
-
+        # pylint: disable=not-callable
         micro = self.method(y_true, y_pred, average="micro")
         macro = self.method(y_true, y_pred, average="macro")
         weighted = self.method(y_true, y_pred, average="weighted")
+        # pylint: enable=not-callable
 
         return {"micro": micro, "macro": macro, "weighted": weighted}
 

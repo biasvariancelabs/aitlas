@@ -18,30 +18,22 @@
 # licensed under the Apache License, Version 2.0.
 # Source: https://github.com/apple/ml-4m/
 
-from contextlib import nullcontext
 import copy
+from contextlib import nullcontext
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange, repeat
 from huggingface_hub import PyTorchModelHubMixin
 
-from .quantizers import (
-    VectorQuantizerLucid,
-    Memcodes,
-    FiniteScalarQuantizer,
-)
-from .models import vit_models
-from .models.unet import unet
-from .models import uvit
-from .models.mlp_models import build_mlp
-from .scheduling import (
-    DDPMScheduler,
-    DDIMScheduler,
-    PipelineCond,
-)
-
 from ..utils import denormalize
+from .models import uvit, vit_models
+from .models.mlp_models import build_mlp
+from .models.unet import unet
+from .quantizers import FiniteScalarQuantizer, Memcodes, VectorQuantizerLucid
+from .scheduling import DDIMScheduler, DDPMScheduler, PipelineCond
+
 
 try:
     from diffusers.schedulers.scheduling_utils import SchedulerMixin
@@ -312,7 +304,9 @@ class VQ(nn.Module, PyTorchModelHubMixin):
             Preprocessed input tensor of shape B C H W
         """
         if self.undo_std:
-            x = 2.0 * denormalize(x) - 1.0
+            mean = (0.485, 0.456, 0.406)
+            std = (0.229, 0.224, 0.225)
+            x = 2.0 * denormalize(x, mean, std) - 1.0
         if self.cls_emb is not None:
             x = rearrange(self.cls_emb(x), "b h w c -> b c h w")
         return x
@@ -332,7 +326,10 @@ class VQ(nn.Module, PyTorchModelHubMixin):
         return x
 
     def encode(
-        self, x: torch.Tensor, *args, **kwargs,
+        self,
+        x: torch.Tensor,
+        *args,
+        **kwargs,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.LongTensor]:
         """Encodes an input image tensor and quantizes the latent code.
 
@@ -386,7 +383,9 @@ class VQ(nn.Module, PyTorchModelHubMixin):
         Returns:
             Decoded image tensor of shape B C H W
         """
-        pass
+        raise NotImplementedError(
+            "Subclasses must implement decode_quant to return a Tensor."
+        )
 
     def tokens_to_embedding(self, tokens: torch.LongTensor) -> torch.Tensor:
         """Look up the codebook entries corresponding the discrete tokens.
@@ -410,8 +409,10 @@ class VQ(nn.Module, PyTorchModelHubMixin):
         """
         quant = self.tokens_to_embedding(tokens)
         # Get image size from token shape
-        image_size = (kwargs.pop("image_size", None) or
-                      (tokens.shape[-2] * self.patch_size, tokens.shape[-1] * self.patch_size))
+        image_size = kwargs.pop("image_size", None) or (
+            tokens.shape[-2] * self.patch_size,
+            tokens.shape[-1] * self.patch_size,
+        )
 
         dec = self.decode_quant(quant, image_size=image_size, **kwargs)
         return dec
@@ -608,7 +609,9 @@ class DiVAE(VQ):
         try:
             import diffusers
         except ImportError:
-            raise ImportError("Please install diffusers to use VQVAE with `pip install diffusers==0.20.0`.")
+            raise ImportError(
+                "Please install diffusers to use VQVAE with `pip install diffusers==0.20.0`."
+            )
 
         if config is not None:
             config = copy.deepcopy(config)
@@ -816,7 +819,7 @@ class DiVAE(VQ):
         self,
         input_clean: torch.Tensor,
         input_noised: torch.Tensor,
-        timesteps: torch.Tensor |float | int,
+        timesteps: torch.Tensor | float | int,
         cond_mask: torch.Tensor | None = None,
         orig_res: torch.LongTensor | tuple[int, int] | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
