@@ -10,11 +10,8 @@ from functools import partial
 from multiprocessing import Pool
 
 import cv2
-
-try:
-    import gdal
-except ModuleNotFoundError as err:
-    from osgeo import gdal
+import tifffile
+import logging
 
 import numpy as np
 import pandas as pd
@@ -32,6 +29,22 @@ from ..utils import parse_img_id
 
 # Ignore the "low-contrast" warnings
 warnings.filterwarnings("ignore")
+
+# Suppress noisy tifffile warnings about GDAL_NODATA casting
+warnings.filterwarnings("ignore", message=".*GDAL_NODATA.*")
+logging.getLogger('tifffile').setLevel(logging.ERROR)
+
+def get_transform_info(tif_path):
+    """Extracts transform info using tifffile."""
+    with tifffile.TiffFile(tif_path) as tif:
+        page = tif.pages[0]
+        try:
+            tiepoint = page.tags['ModelTiepointTag'].value
+            x_min = tiepoint[3]
+            y_max = tiepoint[4]
+        except KeyError:
+            x_min, y_max = 0, 0
+        return x_min, y_max
 
 
 def polygon_to_mask(poly, image_size):
@@ -306,15 +319,17 @@ class SpaceNet6Dataset(BaseDataset):
             )
             strip_name = "_".join(image_id.split("_")[-4:-2])
             rotation = orientations.loc[strip_name]["direction"].squeeze()
-            tr = gdal.Open(sar_path).GetGeoTransform()
-            orientations.loc[strip_name, "sum_y"] += tr[3]
+            
+            tr0, tr3 = get_transform_info(sar_path)
+            
+            orientations.loc[strip_name, "sum_y"] += tr3
             orientations.loc[strip_name, "ctr_y"] += 1
             fold_no = min(
                 self.config.num_folds - 1,
                 max(
                     0,
                     math.floor(
-                        (tr[0] - l_edge) / (r_edge - l_edge) * self.config.num_folds
+                        (tr0 - l_edge) / (r_edge - l_edge) * self.config.num_folds
                     ),
                 ),
             )
@@ -327,8 +342,8 @@ class SpaceNet6Dataset(BaseDataset):
                     "sar": sar_path,
                     "segm": segmentation_path,
                     "rotation": rotation,
-                    "x": tr[0],
-                    "y": tr[3],
+                    "x": tr0,
+                    "y": tr3,
                     "fold": fold_no,
                 },
                 ignore_index=True,
