@@ -33,7 +33,6 @@ albumentations>=2.0.0
 albucore>=0.0.20
 
 # Geospatial and EO
-GDAL>=3.11.0
 rasterio>=1.4.0
 fiona>=1.10.0
 shapely>=2.0.0
