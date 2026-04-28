@@ -6,13 +6,12 @@
 The AiTLAS toolbox (Artificial Intelligence Toolbox for Earth Observation) includes state-of-the-art machine learning methods for exploratory and predictive analysis of satellite imagery as well as repository of AI-ready Earth Observation (EO) datasets. It can be easily applied for a variety of Earth Observation tasks, such as land use and cover classification, crop type prediction, localization of specific objects (semantic segmentation), etc. The main goal of AiTLAS is to facilitate better usability and adoption of novel AI methods (and models) by EO experts, while offering easy access and standardized format of EO datasets to AI experts which allows benchmarking of various existing and novel AI methods tailored for EO data.
 
 # 📢 Latest updates
-🔥🔥🔥 AiTLAS 2.0.0 is out now! [2026-04-30] 🔥🔥🔥
+### 📅 **April 30, 2026**
+🔥🔥🔥 AiTLAS 2.0.0 is out now! 🔥🔥🔥
 
 ## 🛰️ New foundation models & adapters
-Added comprehensive support for the following foundation models:
-- AnySat, CACo, Copernicus-FM, CROMA, DOFA (v2)
-- Galileo, GASSL, Panopticon, Presto, Prithvi (v2)
-- SatMAE, SatMAE++, Scale-MAE, SeCo, TerraFM, TerraMind
+Added comprehensive support for the following **foundation models**:
+- AnySat, CACo, Copernicus-FM, CROMA, DOFA (v2), Galileo, GASSL, Panopticon, Presto, Prithvi (v2), SatMAE, SatMAE++, Scale-MAE, SeCo, TerraFM, TerraMind
 
 ## 🧠 New model architectures
 - **Change detection**: Added BIT, CGNet, ChangeFormer V6, ChangeMamba, ChangeVIT, CSSM, HRNet SiamConc, SiamCRNN, STANet, TinyCD, and U-Net SiamConc.
