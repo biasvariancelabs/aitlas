@@ -129,5 +129,6 @@ lines-after-imports = 2
 quote-style = "double"
 indent-style = "space"
 
-[tool.hatch.build.targets.wheel]
-packages = ["aitlas/aitlas"]
+[tool.setuptools]
+packages = ["aitlas"]
+package-dir = {"" = "."}
