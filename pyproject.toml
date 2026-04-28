@@ -84,13 +84,11 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "black>=24.0.0",
     "codecov>=2.1.13",
-    "isort>=5.13.0",
     "pre-commit>=3.5.0",
-    "pylint>=3.0.0",
     "pytest>=8.0.0",
     "pytest-cov>=7.1.0",
+    "ruff>=0.15.12",
 ]
 
 [tool.ruff]
