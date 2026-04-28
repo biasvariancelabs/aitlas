@@ -21,33 +21,37 @@ AiTLAS examples:
 
 # Installation
 
-The best way to install `aitlas`, is if you create a virtual environment and install the  requirements with `pip`. Here are the steps:
+AiTLAS requires Python 3.12+. While you can use standard `pip`, we highly recommend `uv` for significantly faster installations. This will automatically handle all dependencies defined in pyproject.toml. Here are the steps:
+
 - Clone the AiTLAS repository
 ```bash
 git clone https://github.com/biasvariancelabs/aitlas.git
 ```
+
 - Go to the folder where you cloned the repo
-- Create a virtual environment
+
+- Install using `uv`
 ```bash
-conda create -n aitlas python=3.12
+uv pip install .
 ```
-- Use the virtual environment
+
+- Or, for developers (editable mode)
 ```bash
-conda activate aitlas
+uv pip install -e .
 ```
-- Install the requirements
+
+- Verify the installation
+Check that the toolbox is correctly installed and showing the correct version:
 ```bash
-pip install -r requirements.txt
+python -c "import aitlas; print(f'AiTLAS version: {aitlas.__version__}')"
 ```
-And, that's it, you can start using `aitlas`!
+
+- Running AiTLAS
+You can verify the setup by running an example configuration:
+
 ```bash
 python -m aitlas.run configs/example_config.json
 ```
-If you want to use `aitlas` as a package run
-```bash
-pip install .
-```
-in the folder where you cloned the repo.
 
 ---
 
