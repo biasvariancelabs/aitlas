@@ -128,24 +128,33 @@ from .registries import (
 from .resnet import ResNet50, ResNet50MultiLabel, ResNet152, ResNet152MultiLabel
 from .retinanet import RetinaNet
 from .SatMAE import (
-    MaskedAutoencoderGroupChannelViT,
+    MaskedAutoencoderGroupChannelViT as SatMAEGroupChannelViT,
+)
+from .SatMAE import (
     MaskedAutoencoderTemporalViT,
-    MaskedAutoencoderViT,
     satmae_vit_base_multispectral,
     satmae_vit_large,
     satmae_vit_large_multispectral,
     satmae_vit_large_temporal,
 )
+from .SatMAE import (
+    MaskedAutoencoderViT as SatMAEViT,
+)
 from .SatMAE_plusplus import (
-    MaskedAutoencoderGroupChannelViT,
-    MaskedAutoencoderViT,
+    MaskedAutoencoderGroupChannelViT as SatMAEPlusPlusGroupChannelViT,
+)
+from .SatMAE_plusplus import (
+    MaskedAutoencoderViT as SatMAEPlusPlusViT,
+)
+from .SatMAE_plusplus import (
     satmae_plusplus_vit_large,
     satmae_plusplus_vit_large_multispectral,
 )
 from .satmae_plusplus_wrapper import SatMAE_plusplus
 from .satmae_wrapper import SatMAE
 from .scale_mae_wrapper import ScaleMAE
-from .ScaleMAE import MaskedAutoencoderViT, scalemae_vit_large_patch16
+from .ScaleMAE import MaskedAutoencoderViT as ScaleMAEViT
+from .ScaleMAE import scalemae_vit_large_patch16
 from .SeCo import MoCoV2Module, seco_resnet18, seco_resnet50
 from .seco_wrapper import SeCo
 from .segformer import SegFormer

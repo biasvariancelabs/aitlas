@@ -119,6 +119,9 @@ ignore = [
     "PLR1714", # Ignore "consider merging multiple comparisons"
 ]
 
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["kenny"]
 lines-after-imports = 2
