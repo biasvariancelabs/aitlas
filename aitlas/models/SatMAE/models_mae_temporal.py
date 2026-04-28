@@ -8,9 +8,8 @@
 from functools import partial
 
 import torch
-import torch.nn as nn
 from timm.models.vision_transformer import Block, PatchEmbed
-from torchvision.utils import save_image
+from torch import nn
 
 from .pos_embed import get_1d_sincos_pos_embed_from_grid_torch, get_2d_sincos_pos_embed
 
@@ -112,9 +111,7 @@ class MaskedAutoencoderTemporalViT(nn.Module):
             int(self.patch_embed.num_patches**0.5),
             cls_token=True,
         )
-        self.decoder_pos_embed.data.copy_(
-            torch.from_numpy(decoder_pos_embed).float().unsqueeze(0)
-        )
+        self.decoder_pos_embed.data.copy_(torch.from_numpy(decoder_pos_embed).float().unsqueeze(0))
 
         # initialize patch_embed like nn.Linear (instead of nn.Conv2d)
         w = self.patch_embed.proj.weight.data
@@ -192,14 +189,11 @@ class MaskedAutoencoderTemporalViT(nn.Module):
             ids_shuffle = torch.cat(ids_shuffle, dim=1)
             # print(ids_shuffle[0])
             # assert False
+        elif mask is None:
+            # sort noise for each sample
+            ids_shuffle = torch.argsort(noise, dim=1)  # ascend: small is keep, large is remove
         else:
-            if mask is None:
-                # sort noise for each sample
-                ids_shuffle = torch.argsort(
-                    noise, dim=1
-                )  # ascend: small is keep, large is remove
-            else:
-                ids_shuffle = mask
+            ids_shuffle = mask
         ids_restore = torch.argsort(ids_shuffle, dim=1)
 
         # keep the first subset
@@ -274,9 +268,7 @@ class MaskedAutoencoderTemporalViT(nn.Module):
         x = self.decoder_embed(x)
 
         # append mask tokens to sequence
-        mask_tokens = self.mask_token.repeat(
-            x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1
-        )
+        mask_tokens = self.mask_token.repeat(x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1)
         x_ = torch.cat([x[:, 1:, :], mask_tokens], dim=1)  # no cls token
         x_ = torch.gather(
             x_, dim=1, index=ids_restore.unsqueeze(-1).repeat(1, 1, x.shape[2])
@@ -305,9 +297,7 @@ class MaskedAutoencoderTemporalViT(nn.Module):
 
         ts_embed = torch.cat(
             [
-                torch.zeros(
-                    (ts_embed.shape[0], 1, ts_embed.shape[2]), device=ts_embed.device
-                ),
+                torch.zeros((ts_embed.shape[0], 1, ts_embed.shape[2]), device=ts_embed.device),
                 ts_embed,
             ],
             dim=1,
@@ -397,9 +387,7 @@ class MaskedAutoencoderTemporalViT(nn.Module):
         return loss
 
     def forward(self, imgs, timestamps, mask_ratio=0.75, mask=None):
-        latent, mask, ids_restore = self.forward_encoder(
-            imgs, timestamps, mask_ratio, mask=mask
-        )
+        latent, mask, ids_restore = self.forward_encoder(imgs, timestamps, mask_ratio, mask=mask)
         pred = self.forward_decoder(latent, timestamps, ids_restore)  # [N, L, p*p*3]
         loss = self.forward_loss(imgs, pred, mask)
         return loss, pred, mask
@@ -416,7 +404,7 @@ def mae_vit_base_patch16_dec512d8b(**kwargs):
         decoder_num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -432,7 +420,7 @@ def mae_vit_large_patch16_dec512d8b(**kwargs):
         decoder_num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -449,7 +437,7 @@ def mae_vit_large_patch16_dec512d8b_samemask(**kwargs):
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
         same_mask=True,
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -465,15 +453,13 @@ def mae_vit_huge_patch14_dec512d8b(**kwargs):
         decoder_num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
 
 # set recommended archs
 satmae_vit_base_temporal = mae_vit_base_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
-satmae_vit_large_temporal = (
-    mae_vit_large_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
-)
+satmae_vit_large_temporal = mae_vit_large_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
 satmae_vit_large_temporal_samemask = mae_vit_large_patch16_dec512d8b_samemask
 satmae_vit_huge_temporal = mae_vit_huge_patch14_dec512d8b  # decoder: 512 dim, 8 blocks

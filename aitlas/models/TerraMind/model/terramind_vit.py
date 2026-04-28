@@ -96,7 +96,7 @@ class TerraMindViT(nn.Module):
             modalities = [modalities]
         elif not isinstance(modalities, list):
             raise ValueError(
-                f"Modalities must be None, a list of modality keys or a dict with ints/embedding layers."
+                "Modalities must be None, a list of modality keys or a dict with ints/embedding layers."
             )
 
         # Build embedding layers for all defined modalities
@@ -112,8 +112,7 @@ class TerraMindViT(nn.Module):
         self.image_modalities = [
             key
             for key, value in self.encoder_embeddings.items()
-            if isinstance(value, ImageEncoderEmbedding)
-            or isinstance(value, ImageTokenEncoderEmbedding)
+            if isinstance(value, ImageEncoderEmbedding | ImageTokenEncoderEmbedding)
         ]
         self.modality_drop_rate = modality_drop_rate
         assert 0 <= self.modality_drop_rate <= 1, "modality_drop_rate must be in [0, 1]"
@@ -147,9 +146,7 @@ class TerraMindViT(nn.Module):
 
         # Needed for terratorch decoders
         if merge_method == "concat":
-            self.out_channels = [
-                dim * len(self.image_modalities) for i in range(encoder_depth)
-            ]
+            self.out_channels = [dim * len(self.image_modalities) for i in range(encoder_depth)]
         else:
             self.out_channels = [dim for i in range(encoder_depth)]
 
@@ -158,9 +155,7 @@ class TerraMindViT(nn.Module):
         # Additional register tokens that can be used by the encoder during fine-tuning
         self.num_register_tokens = num_register_tokens
         if self.num_register_tokens > 0:
-            self.register_tokens = nn.Parameter(
-                torch.zeros(1, self.num_register_tokens, dim)
-            )
+            self.register_tokens = nn.Parameter(torch.zeros(1, self.num_register_tokens, dim))
             nn.init.normal_(self.register_tokens, std=0.02)
         else:
             self.register_tokens = None
@@ -189,22 +184,18 @@ class TerraMindViT(nn.Module):
             elif isinstance(m, nn.Linear):
                 if "qkv" in name:
                     # treat the weights of Q, K, V separately
-                    val = math.sqrt(
-                        6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1])
-                    )
+                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1]))
                     nn.init.uniform_(m.weight, -val, val)
                 elif "kv" in name:
                     # treat the weights of K, V separately
-                    val = math.sqrt(
-                        6.0 / float(m.weight.shape[0] // 2 + m.weight.shape[1])
-                    )
+                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 2 + m.weight.shape[1]))
                     nn.init.uniform_(m.weight, -val, val)
                 else:
                     nn.init.xavier_uniform_(m.weight)
                 if isinstance(m, nn.Linear) and m.bias is not None:
                     nn.init.constant_(m.bias, 0)
             # LayerNorm
-            elif isinstance(m, nn.LayerNorm) or isinstance(m, LayerNorm):
+            elif isinstance(m, LayerNorm | nn.LayerNorm):
                 nn.init.constant_(m.weight, 1.0)
                 nn.init.constant_(m.bias, 0)
 
@@ -250,7 +241,7 @@ class TerraMindViT(nn.Module):
             d = {self.modalities[0]: d}
         elif d is None or len(d) == 0:
             d = {}
-            if not len(kwargs):
+            if not kwargs:
                 raise ValueError("No input provided.")
 
         # Add additional keyword args to input dict
@@ -279,9 +270,7 @@ class TerraMindViT(nn.Module):
             if self.mod_name_mapping[mod] in self.tokenizer:
                 # Tokenize input if required
                 device = next(self.parameters()).device
-                tensor = self.tokenizer[self.mod_name_mapping[mod]].encode(
-                    tensor, device
-                )
+                tensor = self.tokenizer[self.mod_name_mapping[mod]].encode(tensor, device)
                 if self.mod_name_mapping[mod] in self.image_modalities:
                     tensor = tensor[-1]
                 else:

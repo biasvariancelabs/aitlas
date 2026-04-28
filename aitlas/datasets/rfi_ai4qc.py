@@ -4,7 +4,6 @@ from xml.etree import ElementTree as et
 
 import cv2
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import torch
@@ -39,15 +38,11 @@ class ObjectDetectionRfiPascalDataset(BaseObjectDetectionDataset):
         self.image_dir = self.config.image_dir
         self.annotations_dir = self.config.annotations_dir
 
-        self.labels, self.annotations, self.data = self.load_dataset(
-            self.annotations_dir
-        )
+        self.labels, self.annotations, self.data = self.load_dataset(self.annotations_dir)
 
     def __getitem__(self, index):
         img_name = self.data[index]
-        image = (
-            image_loader(os.path.join(self.image_dir, f"{img_name}.SAFE.png")) / 255.0
-        )
+        image = image_loader(os.path.join(self.image_dir, f"{img_name}.SAFE.png")) / 255.0
 
         # annotation file
         annot_file_path = os.path.join(self.annotations_dir, f"{img_name}_LABEL.xml")
@@ -128,9 +123,7 @@ class ObjectDetectionRfiPascalDataset(BaseObjectDetectionDataset):
         objects_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=objects_count, ax=ax)
-        ax.set_title(
-            "Number of instances for {}".format(self.get_name()), pad=20, fontsize=18
-        )
+        ax.set_title("Number of instances for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig
 
 
@@ -227,9 +220,7 @@ class ObjectDetectionRfiCocoDataset(BaseObjectDetectionDataset):
             coco = json.load(open(annotation_dir + json_file, "r"))
 
             # read labels
-            labels += [
-                y["name"] for y in sorted(coco["categories"], key=lambda x: x["id"])
-            ]
+            labels += [y["name"] for y in sorted(coco["categories"], key=lambda x: x["id"])]
             # create data
             dataf = [
                 {
@@ -275,9 +266,7 @@ class ObjectDetectionRfiCocoDataset(BaseObjectDetectionDataset):
         df_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=df_count, ax=ax)
-        ax.set_title(
-            "Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18
-        )
+        ax.set_title("Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig
 
     def show_samples(self):
@@ -301,9 +290,7 @@ class ObjectDetectionRfiYoloDataset(BaseObjectDetectionDataset):
 
     def __getitem__(self, index):
         img_name = self.data[index]
-        image = (
-            image_loader(os.path.join(self.data_dir, f"{img_name}.SAFE.png")) / 255.0
-        )
+        image = image_loader(os.path.join(self.data_dir, f"{img_name}.SAFE.png")) / 255.0
         img_h, img_w = image.shape[:2]
 
         # annotation file
@@ -362,7 +349,6 @@ class ObjectDetectionRfiYoloDataset(BaseObjectDetectionDataset):
             # box coordinates for txt files are extracted
 
             for annotation in annot:
-
                 lines = annotation[:-1]  # removes /n
                 elements = lines.split(" ")
                 # bounding box
@@ -395,7 +381,5 @@ class ObjectDetectionRfiYoloDataset(BaseObjectDetectionDataset):
         objects_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=objects_count, ax=ax)
-        ax.set_title(
-            "Number of instances for {}".format(self.get_name()), pad=20, fontsize=18
-        )
+        ax.set_title("Number of instances for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig

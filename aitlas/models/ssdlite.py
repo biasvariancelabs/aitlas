@@ -3,8 +3,8 @@
 from functools import partial
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torchvision.models.detection import (
     SSDLite320_MobileNet_V3_Large_Weights,
     ssdlite320_mobilenet_v3_large,
@@ -81,9 +81,7 @@ class SSDLite(BaseObjectDetection):
         # Load an object detection model pre-trained on COCO
         self.model = ssdlite320_mobilenet_v3_large(
             weights=(
-                SSDLite320_MobileNet_V3_Large_Weights.COCO_V1
-                if self.config.pretrained
-                else None
+                SSDLite320_MobileNet_V3_Large_Weights.COCO_V1 if self.config.pretrained else None
             )
         )
 
@@ -92,7 +90,6 @@ class SSDLite(BaseObjectDetection):
 
         # Check if we need to replace the head
         if cls_head.num_columns != self.config.num_classes:
-
             # Create a new list of predictors
             new_cls_layers = nn.ModuleList()
 

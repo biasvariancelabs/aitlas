@@ -172,6 +172,4 @@ class SelectBands(BaseTransforms):
 
         x = x[idxs]
 
-        return torch.from_numpy(x).type(torch.FloatTensor), torch.tensor(
-            y, dtype=torch.long
-        )
+        return torch.from_numpy(x).type(torch.FloatTensor), torch.tensor(y, dtype=torch.long)

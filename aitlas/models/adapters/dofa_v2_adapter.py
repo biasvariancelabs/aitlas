@@ -3,7 +3,7 @@ import torch
 from aitlas.base.adapters import BaseInputAdapter
 from aitlas.models.registries import ADAPTER_REGISTRY
 
-from .utils import SENTINEL_2_BANDWIDTHS, SENTINEL_2_WAVELENGTHS
+from .utils import SENTINEL_2_WAVELENGTHS
 
 
 @ADAPTER_REGISTRY.register("DOFAAdapter")
@@ -12,7 +12,6 @@ class DOFAAdapter(BaseInputAdapter):
         kwargs = {}
 
         if isinstance(x, torch.Tensor):
-
             # Replace NaNs and Infs with 0.0 to prevent issues with model training
             x = torch.nan_to_num(x, nan=0.0, posinf=0.0, neginf=0.0)
 

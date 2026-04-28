@@ -1,7 +1,7 @@
 # Copyright contributors to the Terratorch project
 
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from aitlas.models.registries import HEAD_REGISTRY
 
@@ -49,10 +49,7 @@ class SegmentationHead(nn.Module):
 
             channel_list = [in_channels, *channel_list]
             pre_head = nn.Sequential(
-                *[
-                    block(channel_list[i], channel_list[i + 1])
-                    for i in range(len(channel_list) - 1)
-                ]
+                *[block(channel_list[i], channel_list[i + 1]) for i in range(len(channel_list) - 1)]
             )
             in_channels = channel_list[-1]
         dropout = nn.Identity() if dropout == 0 else nn.Dropout(dropout)

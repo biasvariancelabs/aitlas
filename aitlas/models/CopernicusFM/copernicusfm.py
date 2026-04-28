@@ -11,11 +11,10 @@ from typing import Any, Literal
 
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
 from timm.models.vision_transformer import Block
-from torch import Tensor
+from torch import Tensor, nn
+from torch.nn import init
 from torchvision.models._api import Weights, WeightsEnum
 
 from ..DOFA import FCResLayer, TransformerWeightGenerator
@@ -62,9 +61,7 @@ class FourierExpansion(nn.Module):
             Fourier series-style expansion of `x` of shape `(..., n, d)`.
         """
         # If the input is not within the configured range, the embedding might be ambiguous!
-        in_range = torch.logical_and(
-            self.lower <= x.abs(), torch.all(x.abs() <= self.upper)
-        )
+        in_range = torch.logical_and(self.lower <= x.abs(), torch.all(x.abs() <= self.upper))
         # Allow zeros to pass through.
         in_range_or_zero = torch.all(torch.logical_or(in_range, x == 0))
         if self.assert_range and not in_range_or_zero:
@@ -138,9 +135,7 @@ class DynamicPatchEmbed(nn.Module):
             # Variable hypernetwork: Language embedding for variable names.
             self.language_proj = nn.Linear(2048, self.hyper_dim)
 
-        self.weight_generator = TransformerWeightGenerator(
-            hyper_dim, self._num_kernel, embed_dim
-        )
+        self.weight_generator = TransformerWeightGenerator(hyper_dim, self._num_kernel, embed_dim)
         self.scaler = 0.01
         self.fclayer = FCResLayer(hyper_dim)
         self._init_weights()
@@ -207,9 +202,7 @@ class DynamicPatchEmbed(nn.Module):
                 raise ValueError(msg)
 
             emb_central = self.spectrum_central_expansion(wavelengths, self.hyper_dim)
-            emb_bandwidth = self.spectrum_bandwidth_expansion(
-                bandwidths, self.hyper_dim
-            )
+            emb_bandwidth = self.spectrum_bandwidth_expansion(bandwidths, self.hyper_dim)
             waves = emb_central + emb_bandwidth
         elif self.input_mode == "variable":
             if language_embed is None:
@@ -227,15 +220,11 @@ class DynamicPatchEmbed(nn.Module):
         waves = self.fclayer(waves)
         weight, bias = self._get_weights(waves)
         inplanes = waves.size(0)
-        dynamic_weight = weight.view(
-            inplanes, self.kernel_size, self.kernel_size, self.embed_dim
-        )
+        dynamic_weight = weight.view(inplanes, self.kernel_size, self.kernel_size, self.embed_dim)
         dynamic_weight = dynamic_weight.permute(3, 0, 1, 2)
 
         if kernel_size is not None and self.kernel_size != kernel_size:
-            dynamic_weight = pi_resize_patch_embed(
-                dynamic_weight, (kernel_size, kernel_size)
-            )
+            dynamic_weight = pi_resize_patch_embed(dynamic_weight, (kernel_size, kernel_size))
         else:
             kernel_size = self.kernel_size
 
@@ -244,9 +233,7 @@ class DynamicPatchEmbed(nn.Module):
 
         weights = dynamic_weight * self.scaler
 
-        dynamic_out = F.conv2d(
-            x, weights, bias=bias, stride=kernel_size, padding=1, dilation=1
-        )
+        dynamic_out = F.conv2d(x, weights, bias=bias, stride=kernel_size, padding=1, dilation=1)
         x = dynamic_out.flatten(2).transpose(1, 2)
         return x
 
@@ -369,9 +356,7 @@ class CopernicusFMModule(nn.Module):
         )
 
         self.head_drop = nn.Dropout(drop_rate)
-        self.head = (
-            nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
-        )
+        self.head = nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
     def get_coord_pos_embed(self, lons: Tensor, lats: Tensor, embed_dim: int) -> Tensor:
         """Geospatial coordinate position embedding.
@@ -469,9 +454,7 @@ class CopernicusFMModule(nn.Module):
                 x, wavelengths=wvs, bandwidths=bws, kernel_size=kernel_size
             )
         elif input_mode == "variable":
-            x = self.patch_embed_variable(
-                x, language_embed=language_embed, kernel_size=kernel_size
-            )
+            x = self.patch_embed_variable(x, language_embed=language_embed, kernel_size=kernel_size)
 
         # resize pos embed
         num_patches = x.size(1)

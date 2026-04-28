@@ -1,9 +1,9 @@
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
 from aitlas.models import CROMA
 
@@ -113,9 +113,7 @@ def test_instantiation_croma_local(
     assert isinstance(model.backbone.head, nn.Identity)
 
     # Ensure we loaded the state dict from local path
-    mock_torch_load.assert_called_with(
-        config_croma_base["local_model_path"], weights_only=False
-    )
+    mock_torch_load.assert_called_with(config_croma_base["local_model_path"], weights_only=False)
 
 
 @patch("aitlas.models.croma_wrapper.hf_hub_download")

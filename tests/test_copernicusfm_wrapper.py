@@ -1,9 +1,9 @@
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
 from aitlas.models import CopernicusFM
 
@@ -63,9 +63,7 @@ def dummy_copernicus_input_spectral():
 def dummy_copernicus_input_variable():
     """Creates a dummy input dictionary for CopernicusFM (Variable Mode)."""
     return {
-        "x": torch.randn(
-            BATCH_SIZE, 1, HEIGHT, WIDTH
-        ),  # Usually 1 channel for variable mode
+        "x": torch.randn(BATCH_SIZE, 1, HEIGHT, WIDTH),  # Usually 1 channel for variable mode
         "metadata": torch.randn(BATCH_SIZE, METADATA_DIM),
         "language_embed": torch.randn(2048),  # Llama embedding size
         "input_mode": "variable",

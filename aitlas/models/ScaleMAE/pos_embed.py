@@ -56,16 +56,12 @@ def get_2d_sincos_pos_embed_with_resolution(
     # grid = grid.reshape([2, 1, grid_size, grid_size])
     grid = torch.einsum("chw,n->cnhw", grid, res)  # 2 x n x h x w
     _, n, h, w = grid.shape
-    pos_embed = get_2d_sincos_pos_embed_from_grid_torch(
-        embed_dim, grid
-    )  #  # (nxH*W, D/2)
+    pos_embed = get_2d_sincos_pos_embed_from_grid_torch(embed_dim, grid)  #  # (nxH*W, D/2)
     pos_embed = pos_embed.reshape(n, h * w, embed_dim)
     if cls_token:
         pos_embed = torch.cat(
             [
-                torch.zeros(
-                    [n, 1, embed_dim], dtype=torch.float32, device=pos_embed.device
-                ),
+                torch.zeros([n, 1, embed_dim], dtype=torch.float32, device=pos_embed.device),
                 pos_embed,
             ],
             dim=1,
@@ -88,12 +84,8 @@ def get_2d_sincos_pos_embed_from_grid_torch(embed_dim, grid):
     assert embed_dim % 2 == 0
 
     # use half of dimensions to encode grid_h
-    emb_h = get_1d_sincos_pos_embed_from_grid_torch(
-        embed_dim // 2, grid[0]
-    )  # (H*W, D/2)
-    emb_w = get_1d_sincos_pos_embed_from_grid_torch(
-        embed_dim // 2, grid[1]
-    )  # (H*W, D/2)
+    emb_h = get_1d_sincos_pos_embed_from_grid_torch(embed_dim // 2, grid[0])  # (H*W, D/2)
+    emb_w = get_1d_sincos_pos_embed_from_grid_torch(embed_dim // 2, grid[1])  # (H*W, D/2)
 
     emb = torch.cat([emb_h, emb_w], dim=1)  # (H*W, D)
     return emb
@@ -166,9 +158,9 @@ def interpolate_pos_embed(model, checkpoint_model):
             extra_tokens = pos_embed_checkpoint[:, :num_extra_tokens]
             # only the position tokens are interpolated
             pos_tokens = pos_embed_checkpoint[:, num_extra_tokens:]
-            pos_tokens = pos_tokens.reshape(
-                -1, orig_size, orig_size, embedding_size
-            ).permute(0, 3, 1, 2)
+            pos_tokens = pos_tokens.reshape(-1, orig_size, orig_size, embedding_size).permute(
+                0, 3, 1, 2
+            )
             pos_tokens = torch.nn.functional.interpolate(
                 pos_tokens,
                 size=(new_size, new_size),

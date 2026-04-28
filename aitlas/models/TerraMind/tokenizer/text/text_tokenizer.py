@@ -60,10 +60,7 @@ class CaptionTokenizer(nn.Module):
         text = [t + " [S_1]" for t in text]
 
         # Tokenize
-        tok_ids = [
-            t.ids
-            for t in self.text_tokenizer.encode_batch(text, add_special_tokens=True)
-        ]
+        tok_ids = [t.ids for t in self.text_tokenizer.encode_batch(text, add_special_tokens=True)]
 
         # Add EOS token
         tok_ids = [t + [eos_id] for t in tok_ids]
@@ -74,9 +71,7 @@ class CaptionTokenizer(nn.Module):
             "tensor": tok_ids,
             "input_mask": torch.zeros_like(tok_ids, dtype=torch.bool, device=device),
             "target_mask": torch.ones_like(tok_ids, dtype=torch.bool, device=device),
-            "decoder_attention_mask": torch.zeros_like(
-                tok_ids, dtype=torch.bool, device=device
-            ),
+            "decoder_attention_mask": torch.zeros_like(tok_ids, dtype=torch.bool, device=device),
         }
 
         return text_dict
@@ -136,19 +131,14 @@ class CoordsTokenizer(nn.Module):
         coords = [f"lat={c[1].item():.2f} lon={c[0].item():.2f} [EOS]" for c in coords]
 
         # Tokenize
-        tok_ids = [
-            t.ids
-            for t in self.text_tokenizer.encode_batch(coords, add_special_tokens=True)
-        ]
+        tok_ids = [t.ids for t in self.text_tokenizer.encode_batch(coords, add_special_tokens=True)]
         tok_ids = torch.tensor(tok_ids, device=device)
 
         coords_dict = {
             "tensor": tok_ids,
             "input_mask": torch.zeros_like(tok_ids, dtype=torch.bool, device=device),
             "target_mask": torch.ones_like(tok_ids, dtype=torch.bool, device=device),
-            "decoder_attention_mask": torch.zeros_like(
-                tok_ids, dtype=torch.bool, device=device
-            ),
+            "decoder_attention_mask": torch.zeros_like(tok_ids, dtype=torch.bool, device=device),
         }
 
         return coords_dict

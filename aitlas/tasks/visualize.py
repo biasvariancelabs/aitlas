@@ -30,18 +30,12 @@ class VisualizeTask(BaseTask):
 
     def get_distribution(self):
         # load the datasets and distributions
-        train, train_name = self.get_distribution_for_split(
-            self.config.split.train, "Train"
-        )
+        train, train_name = self.get_distribution_for_split(self.config.split.train, "Train")
         val, val_name = self.get_distribution_for_split(self.config.split.val, "Val")
-        test, test_name = self.get_distribution_for_split(
-            self.config.split.test, "Test"
-        )
+        test, test_name = self.get_distribution_for_split(self.config.split.test, "Test")
 
         name = (
-            train_name
-            if train_name
-            else test_name if test_name else val_name if val_name else ""
+            train_name if train_name else test_name if test_name else val_name if val_name else ""
         )
 
         label_count = pd.concat([train, val, test])

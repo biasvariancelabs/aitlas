@@ -2,21 +2,14 @@ import os
 
 import requests
 import torch
-import torch.nn as nn
+from torch import nn
 from tqdm import tqdm
 
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
-from .SatMAE.models_mae import MaskedAutoencoderViT, satmae_vit_large
-from .SatMAE.models_mae_group_channels import (
-    MaskedAutoencoderGroupChannelViT,
-    satmae_vit_base_multispectral,
-    satmae_vit_large_multispectral,
-)
 from .SatMAE.models_mae_temporal import (
     MaskedAutoencoderTemporalViT,
-    satmae_vit_large_temporal,
 )
 
 
@@ -101,37 +94,32 @@ class SatMAE(FoundationModel):
                         raise ValueError(
                             f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}"
                         )
-                    else:
-                        # Check if backbone has weights available
-                        if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
-                            raise ValueError(
-                                f"No pretrained weights are available for backbone '{self.config.backbone_name}'."
-                            )
-                        else:  # Download the weights and load the model
-                            # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[
-                                self.config.backbone_name
-                            ][0]
-                            checkpoint_name = temp_checkpoint_name["filename"]
-                            record_id = temp_checkpoint_name["record_id"]
-                            self._download_from_zenodo(
-                                record_id=record_id,
-                                checkpoint_name=checkpoint_name,
-                                local_model_path=self.config.local_model_path,
-                            )
-                            checkpoint = torch.load(
-                                self.config.local_model_path, weights_only=False
-                            )
-                            backbone = globals()[self.config.backbone_name]()
-                            msg = backbone.load_state_dict(checkpoint, strict=False)
-                            print("Successfully loaded checkpoint:", checkpoint_name)
+                    # Check if backbone has weights available
+                    elif self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
+                        raise ValueError(
+                            f"No pretrained weights are available for backbone '{self.config.backbone_name}'."
+                        )
+                    else:  # Download the weights and load the model
+                        # For now, just load the first checkpoint available for the backbone
+                        temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][
+                            0
+                        ]
+                        checkpoint_name = temp_checkpoint_name["filename"]
+                        record_id = temp_checkpoint_name["record_id"]
+                        self._download_from_zenodo(
+                            record_id=record_id,
+                            checkpoint_name=checkpoint_name,
+                            local_model_path=self.config.local_model_path,
+                        )
+                        checkpoint = torch.load(self.config.local_model_path, weights_only=False)
+                        backbone = globals()[self.config.backbone_name]()
+                        msg = backbone.load_state_dict(checkpoint, strict=False)
+                        print("Successfully loaded checkpoint:", checkpoint_name)
                 else:
                     print(
                         f"Loading weights from the provided local path: {self.config.local_model_path}"
                     )
-                    checkpoint = torch.load(
-                        self.config.local_model_path, weights_only=False
-                    )
+                    checkpoint = torch.load(self.config.local_model_path, weights_only=False)
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
                     self.backbone_name = None
@@ -147,9 +135,7 @@ class SatMAE(FoundationModel):
                     msg = backbone.load_state_dict(checkpoint, strict=False)
                     print("Successfully loaded checkpoint:", checkpoint_name)
         else:  # Load model without pretrained weights
-            raise NotImplementedError(
-                "Loading model without pretrained weights is not supported."
-            )
+            raise NotImplementedError("Loading model without pretrained weights is not supported.")
 
         # Replace the head with identity if it exists
         if hasattr(backbone, "head"):
@@ -189,9 +175,7 @@ class SatMAE(FoundationModel):
             if timestamps is None:
                 raise ValueError("The temporal model requires a 'timestamps' argument.")
 
-            latent, _, _ = self.backbone.forward_encoder(
-                x, timestamps, mask_ratio=0.0, **kwargs
-            )
+            latent, _, _ = self.backbone.forward_encoder(x, timestamps, mask_ratio=0.0, **kwargs)
         else:  # Standard (RGB) or multispectral backbone
             latent, _, _ = self.backbone.forward_encoder(x, mask_ratio=0.0, **kwargs)
 
@@ -200,25 +184,22 @@ class SatMAE(FoundationModel):
         return embedding
 
     # Internal methods
-    def _download_from_zenodo(
-        self, record_id: str, checkpoint_name: str, local_model_path: str
-    ):
+    def _download_from_zenodo(self, record_id: str, checkpoint_name: str, local_model_path: str):
         """Internal method to handle downloading files from Zenodo."""
 
         zenodo_url = f"https://zenodo.org/api/records/{record_id}"
         response = requests.get(zenodo_url)
         record_data = response.json()
 
-        file_to_download = next(
-            f for f in record_data["files"] if f["key"] == checkpoint_name
-        )
+        file_to_download = next(f for f in record_data["files"] if f["key"] == checkpoint_name)
         download_url = file_to_download["links"]["self"]
 
         with requests.get(download_url, stream=True) as r:
             r.raise_for_status()
-            with open(local_model_path, "wb") as f, tqdm(
-                unit="B", unit_scale=True, desc=checkpoint_name
-            ) as progress_bar:
+            with (
+                open(local_model_path, "wb") as f,
+                tqdm(unit="B", unit_scale=True, desc=checkpoint_name) as progress_bar,
+            ):
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
                     progress_bar.update(len(chunk))

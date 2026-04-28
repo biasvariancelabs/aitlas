@@ -154,9 +154,7 @@ class BigEarthNetSchema(BaseDatasetSchema):
         description="43 or 19 labels",
         example="43 labels/19 labels",
     )
-    import_to_lmdb = fields.Bool(
-        missing=False, description="Should the data be moved to LMDB"
-    )
+    import_to_lmdb = fields.Bool(missing=False, description="Should the data be moved to LMDB")
     bands10_mean = fields.List(
         fields.Float,
         missing=(429.9430203, 614.21682446, 590.23569706),
@@ -214,9 +212,7 @@ class SpaceNet6DatasetSchema(BaseDatasetSchema):
         required=False,
         description="Destination directory for saving the predictions from all folds",
     )
-    edge_weight = fields.Int(
-        required=False, description="Weight for the building edges pixels"
-    )
+    edge_weight = fields.Int(required=False, description="Weight for the building edges pixels")
     contact_weight = fields.Int(
         required=False, description="Weight for the building contact pixels"
     )
@@ -284,9 +280,7 @@ class BreizhCropsSchema(BaseDatasetSchema):
         description="Dataset path on disk",
         example="./breizhcrops_dataset",
     )
-    year = fields.Integer(
-        missing=2017, description="year", validate=validate.OneOf([2017, 2018])
-    )
+    year = fields.Integer(missing=2017, description="year", validate=validate.OneOf([2017, 2018]))
     filter_length = fields.Integer(missing=0, description="filter_length")
     level = fields.String(
         required=True,
@@ -296,9 +290,7 @@ class BreizhCropsSchema(BaseDatasetSchema):
     )
     verbose = fields.Bool(missing=False, description="verbose")  # change to true
     load_timeseries = fields.Bool(missing=True, description="load_timeseries")
-    recompile_h5_from_csv = fields.Bool(
-        missing=False, description="recompile_h5_from_csv"
-    )
+    recompile_h5_from_csv = fields.Bool(missing=False, description="recompile_h5_from_csv")
     preload_ram = fields.Bool(missing=False, description="preload_ram")
 
 
@@ -333,9 +325,7 @@ class So2SatDatasetSchema(BaseDatasetSchema):
     Schema for configuring the So2Sat dataset.
     """
 
-    h5_file = fields.String(
-        required=True, description="H5 file on disk", example="./data/train.h5"
-    )
+    h5_file = fields.String(required=True, description="H5 file on disk", example="./data/train.h5")
 
 
 class CloudDatasets_AI4QCSchema(BaseDatasetSchema):

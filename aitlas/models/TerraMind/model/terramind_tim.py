@@ -89,9 +89,7 @@ def build_tim_modality_embeddings(
                 #  E.g., if untok S2 input is missing, predict tok S2.
             continue
 
-        mod_name_mapping[modality] = (
-            key  # Requires manual mapping for loading model weights
-        )
+        mod_name_mapping[modality] = key  # Requires manual mapping for loading model weights
         mod_info = MODALITY_INFO[key]
         mod_embeddings[key] = mod_info["encoder_embedding"](
             image_size=img_size, dim_tokens=dim, **mod_info
@@ -182,7 +180,7 @@ class TerraMindTiM(nn.Module):
             modalities = [modalities]
         elif not isinstance(modalities, list):
             raise ValueError(
-                f"Modalities must be None, a list of modality keys or a dict with ints/embedding layers."
+                "Modalities must be None, a list of modality keys or a dict with ints/embedding layers."
             )
 
         self.tim_modalities = tim_modalities or ["LULC"]
@@ -195,14 +193,12 @@ class TerraMindTiM(nn.Module):
         self.tim_encoder_embeddings, _ = build_modality_embeddings(
             MODALITY_INFO, modalities, img_size=img_size, dim=dim, patch_size=patch_size
         )
-        tim_decoder_embeddings, tim_decoder_name_mapping = (
-            build_output_modality_embeddings(
-                MODALITY_INFO,
-                self.tim_modalities,
-                img_size=img_size,
-                dim=dim,
-                patch_size=patch_size,
-            )
+        tim_decoder_embeddings, tim_decoder_name_mapping = build_output_modality_embeddings(
+            MODALITY_INFO,
+            self.tim_modalities,
+            img_size=img_size,
+            dim=dim,
+            patch_size=patch_size,
         )
 
         # Build embedding layers for encoder (modalities and tim_modalities as inputs)
@@ -217,9 +213,7 @@ class TerraMindTiM(nn.Module):
         self.mod_name_mapping = mod_name_mapping
         self.modalities = list(mod_name_mapping.keys())  # Further code expects list
         self.output_mod_name_mapping = {k: k for k in mod_name_mapping.keys()}
-        self.output_mod_name_mapping.update(
-            {v: k for k, v in tim_decoder_name_mapping.items()}
-        )
+        self.output_mod_name_mapping.update({v: k for k, v in tim_decoder_name_mapping.items()})
 
         # Build TiM model
         mae_model = TerraMindModule(
@@ -250,8 +244,7 @@ class TerraMindTiM(nn.Module):
         self.image_modalities = [
             key
             for key, value in self.encoder_embeddings.items()
-            if isinstance(value, ImageEncoderEmbedding)
-            or isinstance(value, ImageTokenEncoderEmbedding)
+            if isinstance(value, ImageEncoderEmbedding | ImageTokenEncoderEmbedding)
         ]
         self.modality_drop_rate = modality_drop_rate
         assert 0 <= self.modality_drop_rate <= 1, "modality_drop_rate must be in [0, 1]"
@@ -285,9 +278,7 @@ class TerraMindTiM(nn.Module):
 
         # Needed for terratorch decoders
         if merge_method == "concat":
-            self.out_channels = [
-                dim * len(self.image_modalities) for i in range(encoder_depth)
-            ]
+            self.out_channels = [dim * len(self.image_modalities) for i in range(encoder_depth)]
         else:
             self.out_channels = [dim for i in range(encoder_depth)]
 
@@ -296,9 +287,7 @@ class TerraMindTiM(nn.Module):
         # Additional register tokens that can be used by the encoder during fine-tuning
         self.num_register_tokens = num_register_tokens
         if self.num_register_tokens > 0:
-            self.register_tokens = nn.Parameter(
-                torch.zeros(1, self.num_register_tokens, dim)
-            )
+            self.register_tokens = nn.Parameter(torch.zeros(1, self.num_register_tokens, dim))
             nn.init.normal_(self.register_tokens, std=0.02)
         else:
             self.register_tokens = None
@@ -326,22 +315,18 @@ class TerraMindTiM(nn.Module):
             elif isinstance(m, nn.Linear):
                 if "qkv" in name:
                     # treat the weights of Q, K, V separately
-                    val = math.sqrt(
-                        6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1])
-                    )
+                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1]))
                     nn.init.uniform_(m.weight, -val, val)
                 elif "kv" in name:
                     # treat the weights of K, V separately
-                    val = math.sqrt(
-                        6.0 / float(m.weight.shape[0] // 2 + m.weight.shape[1])
-                    )
+                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 2 + m.weight.shape[1]))
                     nn.init.uniform_(m.weight, -val, val)
                 else:
                     nn.init.xavier_uniform_(m.weight)
                 if isinstance(m, nn.Linear) and m.bias is not None:
                     nn.init.constant_(m.bias, 0)
             # LayerNorm
-            elif isinstance(m, nn.LayerNorm) or isinstance(m, LayerNorm):
+            elif isinstance(m, LayerNorm | nn.LayerNorm):
                 nn.init.constant_(m.weight, 1.0)
                 nn.init.constant_(m.bias, 0)
 
@@ -416,9 +401,7 @@ class TerraMindTiM(nn.Module):
             if self.mod_name_mapping[mod] in self.tokenizer:
                 # Tokenize
                 with torch.no_grad():
-                    value = self.tokenizer[self.mod_name_mapping[mod]].encode(
-                        value, device
-                    )
+                    value = self.tokenizer[self.mod_name_mapping[mod]].encode(value, device)
                 if isinstance(value, dict):
                     # Save tokenized input in d to avoid running the tokenizer twice
                     d[mod] = value
@@ -427,12 +410,9 @@ class TerraMindTiM(nn.Module):
 
             if self.mod_name_mapping[mod] in self.image_modalities:
                 # Get image size and num tokens
-                patch_size = self.encoder_embeddings[
-                    self.mod_name_mapping[mod]
-                ].patch_size
+                patch_size = self.encoder_embeddings[self.mod_name_mapping[mod]].patch_size
                 img_num_tokens = int(
-                    (input_size[-1] / patch_size[-1])
-                    * (input_size[-2] / patch_size[-2])
+                    (input_size[-1] / patch_size[-1]) * (input_size[-2] / patch_size[-2])
                 )
 
                 # Init raw image input masks

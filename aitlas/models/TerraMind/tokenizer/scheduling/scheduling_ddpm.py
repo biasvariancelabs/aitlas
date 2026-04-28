@@ -170,9 +170,7 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
         # setable values
         self.custom_timesteps = False
         self.num_inference_steps = None
-        self.timesteps = torch.from_numpy(
-            np.arange(0, num_train_timesteps)[::-1].copy()
-        )
+        self.timesteps = torch.from_numpy(np.arange(0, num_train_timesteps)[::-1].copy())
 
         self.variance_type = variance_type
 
@@ -215,9 +213,7 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
 
         """
         if num_inference_steps is not None and timesteps is not None:
-            raise ValueError(
-                "Can only pass one of `num_inference_steps` or `custom_timesteps`."
-            )
+            raise ValueError("Can only pass one of `num_inference_steps` or `custom_timesteps`.")
 
         if timesteps is not None:
             for i in range(1, len(timesteps)):
@@ -365,9 +361,7 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
             "learned",
             "learned_range",
         ]:
-            model_output, predicted_variance = torch.split(
-                model_output, sample.shape[1], dim=1
-            )
+            model_output, predicted_variance = torch.split(model_output, sample.shape[1], dim=1)
         else:
             predicted_variance = None
 
@@ -388,9 +382,7 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
         elif self.config.prediction_type == "sample":
             pred_original_sample = model_output
         elif self.config.prediction_type == "v_prediction":
-            pred_original_sample = (alpha_prod_t**0.5) * sample - (
-                beta_prod_t**0.5
-            ) * model_output
+            pred_original_sample = (alpha_prod_t**0.5) * sample - (beta_prod_t**0.5) * model_output
         else:
             raise ValueError(
                 f"prediction_type given as {self.config.prediction_type} must be one of `epsilon`, `sample` or"
@@ -407,16 +399,13 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
 
         # 4. Compute coefficients for pred_original_sample x_0 and current sample x_t
         # See formula (7) from https://arxiv.org/pdf/2006.11239.pdf
-        pred_original_sample_coeff = (
-            alpha_prod_t_prev ** (0.5) * current_beta_t
-        ) / beta_prod_t
+        pred_original_sample_coeff = (alpha_prod_t_prev ** (0.5) * current_beta_t) / beta_prod_t
         current_sample_coeff = current_alpha_t ** (0.5) * beta_prod_t_prev / beta_prod_t
 
         # 5. Compute predicted previous sample µ_t
         # See formula (7) from https://arxiv.org/pdf/2006.11239.pdf
         pred_prev_sample = (
-            pred_original_sample_coeff * pred_original_sample
-            + current_sample_coeff * sample
+            pred_original_sample_coeff * pred_original_sample + current_sample_coeff * sample
         )
 
         # 6. Add noise
@@ -431,8 +420,7 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
             )
             if self.variance_type == "fixed_small_log":
                 variance = (
-                    self._get_variance(t, predicted_variance=predicted_variance)
-                    * variance_noise
+                    self._get_variance(t, predicted_variance=predicted_variance) * variance_noise
                 )
             elif self.variance_type == "learned_range":
                 variance = self._get_variance(t, predicted_variance=predicted_variance)
@@ -451,9 +439,7 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
             prev_sample=pred_prev_sample, pred_original_sample=pred_original_sample
         )
 
-    def get_alpha_sigma_sqrts(
-        self, timesteps, device, dtype, shape
-    ) -> torch.FloatTensor:
+    def get_alpha_sigma_sqrts(self, timesteps, device, dtype, shape) -> torch.FloatTensor:
         # Make sure alphas_cumprod and timestep have same device and dtype as original_samples
         alphas_cumprod = self.alphas_cumprod.to(device=device, dtype=dtype)
         timesteps = timesteps.to(device)
@@ -482,9 +468,7 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
             original_samples.dtype,
             original_samples.shape,
         )
-        noisy_samples = (
-            sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
-        )
+        noisy_samples = sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
         return noisy_samples
 
     def get_velocity(

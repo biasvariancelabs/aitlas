@@ -4,7 +4,7 @@ import logging
 
 import timm
 import torch
-import torch.nn as nn
+from torch import nn
 
 from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
@@ -34,22 +34,16 @@ class VisionTransformer(BaseMulticlassClassifier):
             last_layer = checkpoint[last_layer_key]
             num_classes = len(last_layer)
             self.model = timm.create_model("vit_base_patch16_224", pretrained=False)
-            self.model.head = nn.Linear(
-                in_features=768, out_features=num_classes, bias=True
-            )
+            self.model.head = nn.Linear(in_features=768, out_features=num_classes, bias=True)
             # remove prefix "module."
             checkpoint = {k.replace("backbone.", ""): v for k, v in checkpoint.items()}
             checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
             for k, v in self.model.state_dict().items():
                 if k not in list(checkpoint):
-                    logging.info(
-                        'key "{}" could not be found in provided state dict'.format(k)
-                    )
+                    logging.info('key "{}" could not be found in provided state dict'.format(k))
                 elif checkpoint[k].shape != v.shape:
                     logging.info(
-                        'key "{}" is of different shape in model and provided state dict'.format(
-                            k
-                        )
+                        'key "{}" is of different shape in model and provided state dict'.format(k)
                     )
                     checkpoint[k] = v
             self.model.load_state_dict(checkpoint, strict=False)
@@ -94,22 +88,16 @@ class VisionTransformerMultilabel(BaseMultilabelClassifier):
             last_layer = checkpoint[last_layer_key]
             num_classes = len(last_layer)
             self.model = timm.create_model("vit_base_patch16_224", pretrained=False)
-            self.model.head = nn.Linear(
-                in_features=768, out_features=num_classes, bias=True
-            )
+            self.model.head = nn.Linear(in_features=768, out_features=num_classes, bias=True)
             # remove prefix "module."
             checkpoint = {k.replace("backbone.", ""): v for k, v in checkpoint.items()}
             checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
             for k, v in self.model.state_dict().items():
                 if k not in list(checkpoint):
-                    logging.info(
-                        'key "{}" could not be found in provided state dict'.format(k)
-                    )
+                    logging.info('key "{}" could not be found in provided state dict'.format(k))
                 elif checkpoint[k].shape != v.shape:
                     logging.info(
-                        'key "{}" is of different shape in model and provided state dict'.format(
-                            k
-                        )
+                        'key "{}" is of different shape in model and provided state dict'.format(k)
                     )
                     checkpoint[k] = v
             self.model.load_state_dict(checkpoint, strict=False)

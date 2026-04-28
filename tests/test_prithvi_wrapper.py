@@ -3,18 +3,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-import torch.nn as nn
 
 from aitlas.models import Prithvi
 from aitlas.models.prithvi_wrapper import (
     PrithviMAE,
-    PrithviViT,
     prithvi_eo_v1_base,
     prithvi_eo_v2_base_tl,
-    prithvi_eo_v2_huge,
-    prithvi_eo_v2_huge_tl,
-    prithvi_eo_v2_large,
-    prithvi_eo_v2_large_tl,
     prithvi_eo_v2_tiny_tl,
 )
 
@@ -194,16 +188,12 @@ def test_fallback_to_hf_download(mock_torch_load, mock_hf_download, mock_model_f
     mock_hf_download.assert_called_once_with(
         repo_id=expected_repo_id,
         filename=expected_filename,
-        local_dir=os.path.dirname(
-            non_existent_path
-        ),  # It uses the dir of the non-existent path
+        local_dir=os.path.dirname(non_existent_path),  # It uses the dir of the non-existent path
     )
 
     mock_torch_load.assert_called_once_with(downloaded_path, weights_only=False)
     mock_model_factory.assert_called_once()
-    mock_model_instance.load_state_dict.assert_called_once_with(
-        dummy_dict, strict=False
-    )
+    mock_model_instance.load_state_dict.assert_called_once_with(dummy_dict, strict=False)
     # Check that the backbone was actually set
     assert model_wrapper.backbone is mock_model_instance
 
@@ -227,9 +217,7 @@ def test_raises_error_if_pretrained_is_false():
     ["unsupported_prithvi_model", "vit_base", "prithvi"],  # Test invalid names
 )
 @patch("aitlas.models.prithvi_wrapper.hf_hub_download")
-def test_raises_error_for_invalid_backbones_on_download(
-    mock_hf_download, backbone_name
-):
+def test_raises_error_for_invalid_backbones_on_download(mock_hf_download, backbone_name):
     """Tests that a ValueError is raised for invalid backbones when download is triggered."""
     config = {
         "local_model_path": "/path/to/non_existent/model.pth",  # Force download path

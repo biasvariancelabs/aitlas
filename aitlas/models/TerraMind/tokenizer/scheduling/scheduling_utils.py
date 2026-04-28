@@ -56,9 +56,7 @@ def enforce_zero_terminal_snr(betas: torch.Tensor) -> torch.Tensor:
     return betas
 
 
-def betas_for_alpha_bar(
-    num_diffusion_timesteps: int, max_beta: float = 0.999
-) -> torch.Tensor:
+def betas_for_alpha_bar(num_diffusion_timesteps: int, max_beta: float = 0.999) -> torch.Tensor:
     """Create a beta schedule that discretizes the given alpha_t_bar function,
     which defines the cumulative product of (1-beta) over time from t = [0,1].
 
@@ -85,9 +83,7 @@ def betas_for_alpha_bar(
     return torch.tensor(betas, dtype=torch.float)
 
 
-def scaled_cosine_alphas(
-    num_diffusion_timesteps: int, noise_shift: float = 1.0
-) -> torch.Tensor:
+def scaled_cosine_alphas(num_diffusion_timesteps: int, noise_shift: float = 1.0) -> torch.Tensor:
     """Shifts a cosine noise schedule by a specified amount in log-SNR space.
 
     noise_shift = 1.0 corresponds to the standard cosine noise schedule.

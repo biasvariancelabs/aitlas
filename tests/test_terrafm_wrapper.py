@@ -1,9 +1,9 @@
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
 from aitlas.models import TerraFM
 
@@ -183,9 +183,7 @@ def test_raises_error_no_weights_for_backbone_terrafm(mock_os_exists):
         "backbone_name": "terrafm_large",  # This is defined as None in wrapper code
         "pretrained": True,
     }
-    with pytest.raises(
-        ValueError, match="No pretrained weights are available for backbone"
-    ):
+    with pytest.raises(ValueError, match="No pretrained weights are available for backbone"):
         TerraFM(config)
 
 

@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch import nn
 
@@ -21,7 +20,6 @@ class ASPPModule(nn.Module):
     """
 
     def __init__(self, dilations, in_channels, channels, conv_cfg, norm_cfg, act_cfg):
-
         super(ASPPModule, self).__init__()
 
         self.dilations = dilations
@@ -34,7 +32,6 @@ class ASPPModule(nn.Module):
         modules_list = list()
 
         for dilation in dilations:
-
             layer_module = ConvModule(
                 self.in_channels,
                 self.channels,
@@ -84,9 +81,8 @@ class ASPPHead(nn.Module):
         head_dropout_ratio: float = 0.3,
         input_transform: str = None,
         in_index: int = -1,
-        **kwargs
+        **kwargs,
     ):
-
         super(ASPPHead, self).__init__(**kwargs)
 
         self.dilations = dilations
@@ -214,7 +210,6 @@ class ASPPHead(nn.Module):
         return feats
 
     def forward(self, inputs):
-
         output = self._forward_feature(inputs)
 
         return output
@@ -243,9 +238,8 @@ class ASPPSegmentationHead(ASPPHead):
         head_dropout_ratio: float = 0.3,
         input_transform: str = None,
         in_index: int = -1,
-        **kwargs
+        **kwargs,
     ):
-
         super(ASPPSegmentationHead, self).__init__(
             dilations=dilations,
             in_channels=in_channels,
@@ -254,7 +248,7 @@ class ASPPSegmentationHead(ASPPHead):
             head_dropout_ratio=head_dropout_ratio,
             input_transform=input_transform,
             in_index=in_index,
-            **kwargs
+            **kwargs,
         )
 
         self.num_classes = num_classes
@@ -272,7 +266,6 @@ class ASPPSegmentationHead(ASPPHead):
         return output
 
     def forward(self, inputs):
-
         output = self._forward_feature(inputs)
         output = self.segmentation_head(output)
 
@@ -302,9 +295,8 @@ class ASPPRegressionHead(ASPPHead):
         head_dropout_ratio: float = 0.3,
         input_transform: str = None,
         in_index: int = -1,
-        **kwargs
+        **kwargs,
     ):
-
         super(ASPPRegressionHead, self).__init__(
             dilations=dilations,
             in_channels=in_channels,
@@ -314,7 +306,7 @@ class ASPPRegressionHead(ASPPHead):
             head_dropout_ratio=head_dropout_ratio,
             input_transform=input_transform,
             in_index=in_index,
-            **kwargs
+            **kwargs,
         )
 
         self.out_channels = out_channels
@@ -328,7 +320,6 @@ class ASPPRegressionHead(ASPPHead):
         return output
 
     def forward(self, inputs):
-
         output = self._forward_feature(inputs)
         output = self.regression_head(output)
 

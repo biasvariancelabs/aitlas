@@ -3,7 +3,7 @@
 import math
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torchvision.models.detection import (
     RetinaNet_ResNet50_FPN_V2_Weights,
     retinanet_resnet50_fpn_v2,
@@ -24,11 +24,7 @@ class RetinaNet(BaseObjectDetection):
 
         # Load an object detection model pre-trained on COCO
         self.model = retinanet_resnet50_fpn_v2(
-            weights=(
-                RetinaNet_ResNet50_FPN_V2_Weights.COCO_V1
-                if self.config.pretrained
-                else None
-            )
+            weights=(RetinaNet_ResNet50_FPN_V2_Weights.COCO_V1 if self.config.pretrained else None)
         )
 
         # Access the internal classification head

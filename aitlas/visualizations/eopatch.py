@@ -13,9 +13,7 @@ from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 
 
-def display_eopatch_predictions(
-    eopatches_path, patch, y_pred, test_index, y_true, classmapping
-):
+def display_eopatch_predictions(eopatches_path, patch, y_pred, test_index, y_true, classmapping):
     """
     Displays the predictions of an EOPatch.
 
@@ -42,15 +40,9 @@ def display_eopatch_predictions(
     for row in polygons.itertuples():
         current_path = patch + os.sep + str(int(row.polygon_id))
         if current_path in test_index.path.values:
-            label = y_pred[
-                test_index.index[test_index["path"] == current_path].values[0]
-            ]
-            true_label = y_true[
-                test_index.index[test_index["path"] == current_path].values[0]
-            ]
-            predictions_list.append(
-                int(label)
-            )  # temporary, not consistent with classmapping
+            label = y_pred[test_index.index[test_index["path"] == current_path].values[0]]
+            true_label = y_true[test_index.index[test_index["path"] == current_path].values[0]]
+            predictions_list.append(int(label))  # temporary, not consistent with classmapping
             true_list.append(int(true_label))
         else:
             predictions_list.append(
@@ -59,9 +51,7 @@ def display_eopatch_predictions(
             true_list.append(11)
 
     pred_polygons = polygons.copy()
-    pred_polygons["ct_pred"] = pd.Series(
-        data=predictions_list, index=pred_polygons.index
-    )
+    pred_polygons["ct_pred"] = pd.Series(data=predictions_list, index=pred_polygons.index)
 
     n_classes = len(classmapping.index)
 
@@ -99,8 +89,7 @@ def display_eopatch_predictions(
     # create a patch (proxy artist) for every color
 
     labels = [
-        classmapping[classmapping.id == cl_id].classname.values[0]
-        for cl_id in values[:-1]
+        classmapping[classmapping.id == cl_id].classname.values[0] for cl_id in values[:-1]
     ] + ["Background"]
     labels = ["\n".join(wrap(l, 22)) for l in labels]
     patches = [

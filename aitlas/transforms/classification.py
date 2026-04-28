@@ -1,4 +1,4 @@
-""" Contains classes for image transformations for classification datasets."""
+"""Contains classes for image transformations for classification datasets."""
 
 import albumentations as A
 import cv2
@@ -210,9 +210,7 @@ class ComplexTransform(BaseTransforms):
                 # A.Transpose(p=0.5),
                 A.VerticalFlip(p=0.5),
                 A.HorizontalFlip(p=0.5),
-                A.RandomBrightnessContrast(
-                    brightness_limit=0.2, contrast_limit=0.2, p=0.75
-                ),
+                A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.75),
                 # A.RandomContrast(limit=0.2, p=0.75),
                 A.OneOf(
                     [
@@ -255,7 +253,6 @@ class ComplexTransform(BaseTransforms):
         )
         transformed = data_transforms(image=sample)
         transformed = (
-            torch.tensor(transformed["image"].transpose(2, 0, 1), dtype=torch.float32)
-            / 255.0
+            torch.tensor(transformed["image"].transpose(2, 0, 1), dtype=torch.float32) / 255.0
         )
         return transformed

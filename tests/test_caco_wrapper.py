@@ -1,9 +1,7 @@
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-import torch.nn as nn
 
 from aitlas.models import CACo
 from aitlas.models.CACo import MoCoV2CACoModule, caco_resnet18, caco_resnet50
@@ -119,9 +117,7 @@ def test_forward_pass_raises_error_if_backbone_not_loaded(config_caco_resnet18):
 @patch("aitlas.models.caco_wrapper.caco_resnet50")
 @patch("aitlas.models.caco_wrapper.CACo._download_from_cornell")
 @patch("torch.load")
-def test_fallback_to_cornell_download(
-    mock_torch_load, mock_download, mock_model_factory
-):
+def test_fallback_to_cornell_download(mock_torch_load, mock_download, mock_model_factory):
     """Tests the fallback to Cornell download if local_model_path does not exist."""
 
     # Setup mocks

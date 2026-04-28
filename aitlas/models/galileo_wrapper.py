@@ -4,14 +4,14 @@ from pathlib import Path
 from typing import Any, Dict, Tuple, Union
 
 import torch
-import torch.nn as nn
-from einops import rearrange, repeat
+from einops import rearrange
 from huggingface_hub import hf_hub_download
+from torch import nn
 
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
-from .Galileo import Decoder, Encoder, GalileoBase
+from .Galileo import Encoder
 from .Galileo.utils import CONFIG_FILENAME, ENCODER_FILENAME, construct_galileo_input
 
 
@@ -88,52 +88,49 @@ class Galileo(FoundationModel):
                         raise ValueError(
                             f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}"
                         )
-                    else:
-                        # Check if backbone has weights available
-                        if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
-                            raise ValueError(
-                                f"No pretrained weights are available for backbone '{self.config.backbone_name}'."
-                            )
-                        else:  # Download the weights and load the model
-                            # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[
-                                self.config.backbone_name
-                            ][0]
-                            checkpoint_name = temp_checkpoint_name["filename"]
-                            config_name = temp_checkpoint_name["config_name"]
-                            repo_id = temp_checkpoint_name["repo_id"]
-                            subfolder = temp_checkpoint_name["subfolder"]
-                            downloaded_path = hf_hub_download(
-                                repo_id=repo_id,
-                                filename=checkpoint_name,
-                                subfolder=subfolder,
-                                local_dir=os.path.dirname(self.config.local_model_path),
-                            )
-                            downloaded_cfg_path = hf_hub_download(
-                                repo_id=repo_id,
-                                filename=config_name,
-                                subfolder=subfolder,
-                                local_dir=os.path.dirname(self.config.local_model_path),
-                            )
-                            # Move the file from the subfolder to the desired location
-                            shutil.move(downloaded_path, self.config.local_model_path)
-                            shutil.move(
-                                downloaded_cfg_path,
-                                os.path.join(
-                                    os.path.dirname(self.config.local_model_path),
-                                    config_name,
-                                ),
-                            )
-                            # Clean up the empty 'models' directory
-                            shutil.rmtree(Path(os.path.dirname(downloaded_path)).parent)
-                            # Load the checkpoint from the corrected local path
-                            backbone = Encoder.load_from_folder(
-                                folder=Path(
-                                    os.path.dirname(self.config.local_model_path)
-                                ),
-                                device=torch.device("cpu"),
-                            )
-                            print("Successfully loaded checkpoint:", checkpoint_name)
+                    # Check if backbone has weights available
+                    elif self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
+                        raise ValueError(
+                            f"No pretrained weights are available for backbone '{self.config.backbone_name}'."
+                        )
+                    else:  # Download the weights and load the model
+                        # For now, just load the first checkpoint available for the backbone
+                        temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][
+                            0
+                        ]
+                        checkpoint_name = temp_checkpoint_name["filename"]
+                        config_name = temp_checkpoint_name["config_name"]
+                        repo_id = temp_checkpoint_name["repo_id"]
+                        subfolder = temp_checkpoint_name["subfolder"]
+                        downloaded_path = hf_hub_download(
+                            repo_id=repo_id,
+                            filename=checkpoint_name,
+                            subfolder=subfolder,
+                            local_dir=os.path.dirname(self.config.local_model_path),
+                        )
+                        downloaded_cfg_path = hf_hub_download(
+                            repo_id=repo_id,
+                            filename=config_name,
+                            subfolder=subfolder,
+                            local_dir=os.path.dirname(self.config.local_model_path),
+                        )
+                        # Move the file from the subfolder to the desired location
+                        shutil.move(downloaded_path, self.config.local_model_path)
+                        shutil.move(
+                            downloaded_cfg_path,
+                            os.path.join(
+                                os.path.dirname(self.config.local_model_path),
+                                config_name,
+                            ),
+                        )
+                        # Clean up the empty 'models' directory
+                        shutil.rmtree(Path(os.path.dirname(downloaded_path)).parent)
+                        # Load the checkpoint from the corrected local path
+                        backbone = Encoder.load_from_folder(
+                            folder=Path(os.path.dirname(self.config.local_model_path)),
+                            device=torch.device("cpu"),
+                        )
+                        print("Successfully loaded checkpoint:", checkpoint_name)
                 else:
                     print(
                         f"Loading weights from the provided local path: {self.config.local_model_path}"
@@ -155,9 +152,7 @@ class Galileo(FoundationModel):
                     )
                     print("Successfully loaded checkpoint:", checkpoint_name)
         else:  # Load model without pretrained weights
-            raise NotImplementedError(
-                "Loading model without pretrained weights is not supported."
-            )
+            raise NotImplementedError("Loading model without pretrained weights is not supported.")
 
         # Replace the head with identity if it exists
         if hasattr(backbone, "head"):

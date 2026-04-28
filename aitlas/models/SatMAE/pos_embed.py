@@ -95,7 +95,7 @@ def interpolate_pos_embed(model, checkpoint_model):
         embedding_size = pos_embed_checkpoint.shape[-1]
         try:
             num_patches = model.patch_embed.num_patches
-        except AttributeError as err:
+        except AttributeError:
             num_patches = model.patch_embed[0].num_patches
         num_extra_tokens = model.pos_embed.shape[-2] - num_patches
         # height (== width) for the checkpoint position embedding
@@ -111,9 +111,9 @@ def interpolate_pos_embed(model, checkpoint_model):
             extra_tokens = pos_embed_checkpoint[:, :num_extra_tokens]
             # only the position tokens are interpolated
             pos_tokens = pos_embed_checkpoint[:, num_extra_tokens:]
-            pos_tokens = pos_tokens.reshape(
-                -1, orig_size, orig_size, embedding_size
-            ).permute(0, 3, 1, 2)
+            pos_tokens = pos_tokens.reshape(-1, orig_size, orig_size, embedding_size).permute(
+                0, 3, 1, 2
+            )
             pos_tokens = torch.nn.functional.interpolate(
                 pos_tokens,
                 size=(new_size, new_size),

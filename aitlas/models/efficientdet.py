@@ -4,8 +4,8 @@ import math
 
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torchvision import models
 from torchvision.ops.boxes import nms as nms_torch
 
@@ -28,11 +28,7 @@ def calc_iou(a, b):
 
     iw = torch.clamp(iw, min=0)
     ih = torch.clamp(ih, min=0)
-    ua = (
-        torch.unsqueeze((a[:, 2] - a[:, 0]) * (a[:, 3] - a[:, 1]), dim=1)
-        + area
-        - iw * ih
-    )
+    ua = torch.unsqueeze((a[:, 2] - a[:, 0]) * (a[:, 3] - a[:, 1]), dim=1) + area - iw * ih
     ua = torch.clamp(ua, min=1e-8)
     intersection = iw * ih
     IoU = intersection / ua
@@ -73,9 +69,7 @@ def shift(shape, stride, anchors):
 
     A = anchors.shape[0]
     K = shifts.shape[0]
-    all_anchors = anchors.reshape((1, A, 4)) + shifts.reshape((1, K, 4)).transpose(
-        (1, 0, 2)
-    )
+    all_anchors = anchors.reshape((1, A, 4)) + shifts.reshape((1, K, 4)).transpose((1, 0, 2))
     all_anchors = all_anchors.reshape((K * A, 4))
 
     return all_anchors
@@ -143,9 +137,7 @@ class ClipBoxes(nn.Module):
 
 
 class Anchors(nn.Module):
-    def __init__(
-        self, pyramid_levels=None, strides=None, sizes=None, ratios=None, scales=None
-    ):
+    def __init__(self, pyramid_levels=None, strides=None, sizes=None, ratios=None, scales=None):
         super(Anchors, self).__init__()
 
         if pyramid_levels is None:
@@ -219,9 +211,7 @@ class FocalLoss(nn.Module):
             IoU_max, IoU_argmax = torch.max(IoU, dim=1)
 
             # compute the loss for classification
-            targets = (
-                torch.ones(classification.shape, device=classifications.device) * -1
-            )
+            targets = torch.ones(classification.shape, device=classifications.device) * -1
 
             targets[torch.lt(IoU_max, 0.4), :] = 0
 
@@ -232,19 +222,11 @@ class FocalLoss(nn.Module):
             assigned_annotations = bbox_annotation[IoU_argmax, :]
 
             targets[positive_indices, :] = 0
-            targets[
-                positive_indices, assigned_annotations[positive_indices, 4].long()
-            ] = 1
+            targets[positive_indices, assigned_annotations[positive_indices, 4].long()] = 1
 
-            alpha_factor = (
-                torch.ones(targets.shape, device=classifications.device) * alpha
-            )
-            alpha_factor = torch.where(
-                torch.eq(targets, 1.0), alpha_factor, 1.0 - alpha_factor
-            )
-            focal_weight = torch.where(
-                torch.eq(targets, 1.0), 1.0 - classification, classification
-            )
+            alpha_factor = torch.ones(targets.shape, device=classifications.device) * alpha
+            alpha_factor = torch.where(torch.eq(targets, 1.0), alpha_factor, 1.0 - alpha_factor)
+            focal_weight = torch.where(torch.eq(targets, 1.0), 1.0 - classification, classification)
             focal_weight = alpha_factor * torch.pow(focal_weight, gamma)
 
             bce = -(
@@ -254,9 +236,7 @@ class FocalLoss(nn.Module):
 
             cls_loss = focal_weight * bce
 
-            cls_loss = torch.where(
-                torch.ne(targets, -1.0), cls_loss, torch.zeros_like(cls_loss)
-            )
+            cls_loss = torch.where(torch.ne(targets, -1.0), cls_loss, torch.zeros_like(cls_loss))
 
             classification_losses.append(
                 cls_loss.sum() / torch.clamp(num_positive_anchors.float(), min=1.0)
@@ -302,9 +282,9 @@ class FocalLoss(nn.Module):
                     torch.tensor(0, dtype=torch.float32, device=classifications.device)
                 )
 
-        return torch.stack(classification_losses).mean(
-            dim=0, keepdim=True
-        ), torch.stack(regression_losses).mean(dim=0, keepdim=True)
+        return torch.stack(classification_losses).mean(dim=0, keepdim=True), torch.stack(
+            regression_losses
+        ).mean(dim=0, keepdim=True)
 
 
 # -----------------------------------------------------------------------------
@@ -525,17 +505,14 @@ def _load_original_weights_to_torchvision(tv_model, state_dict, verbose=True):
         if tv_key in tv_state and tv_state[tv_key].shape == orig_value.shape:
             new_state[tv_key] = orig_value
             matched += 1
-        else:
-            if tv_key not in tv_state:
-                missing_original.append(tv_key)
-                if verbose:
-                    print(f"  Key not in torchvision: {tv_key} (from {orig_key})")
-            elif tv_state[tv_key].shape != orig_value.shape:
-                if verbose:
-                    print(
-                        f"  Shape mismatch: {tv_key} {tv_state[tv_key].shape} vs {orig_value.shape}"
-                    )
-                skipped += 1
+        elif tv_key not in tv_state:
+            missing_original.append(tv_key)
+            if verbose:
+                print(f"  Key not in torchvision: {tv_key} (from {orig_key})")
+        elif tv_state[tv_key].shape != orig_value.shape:
+            if verbose:
+                print(f"  Shape mismatch: {tv_key} {tv_state[tv_key].shape} vs {orig_value.shape}")
+            skipped += 1
 
     # Load into model
     tv_state.update(new_state)
@@ -568,9 +545,7 @@ class EfficientNetEncoder(nn.Module):
         compound_coef = max(0, min(compound_coef, 7))
 
         # Load with ImageNet weights initially (we'll replace them if needed)
-        model = backbone_fns[compound_coef](
-            weights="IMAGENET1K_V1" if pretrained else None
-        )
+        model = backbone_fns[compound_coef](weights="IMAGENET1K_V1" if pretrained else None)
 
         # Patch first conv layer if input channels != 3
         if in_channels != 3:
@@ -587,9 +562,7 @@ class EfficientNetEncoder(nn.Module):
             if pretrained and in_channels == 3:
                 new_conv.weight.data = old_conv.weight.data[:, :in_channels, :, :]
             else:
-                nn.init.kaiming_normal_(
-                    new_conv.weight, mode="fan_out", nonlinearity="relu"
-                )
+                nn.init.kaiming_normal_(new_conv.weight, mode="fan_out", nonlinearity="relu")
             model.features[0][0] = new_conv
 
         # Truncate at index 8 to include all blocks (features[1] through features[7])
@@ -689,32 +662,24 @@ class BiFPN(nn.Module):
         p4_w2 = self.p4_w2_relu(self.p4_w2)
         weight = p4_w2 / (torch.sum(p4_w2, dim=0) + self.epsilon)
         p4_out = self.conv4_down(
-            weight[0] * p4_in
-            + weight[1] * p4_up
-            + weight[2] * self.p4_downsample(p3_out)
+            weight[0] * p4_in + weight[1] * p4_up + weight[2] * self.p4_downsample(p3_out)
         )
 
         p5_w2 = self.p5_w2_relu(self.p5_w2)
         weight = p5_w2 / (torch.sum(p5_w2, dim=0) + self.epsilon)
         p5_out = self.conv5_down(
-            weight[0] * p5_in
-            + weight[1] * p5_up
-            + weight[2] * self.p5_downsample(p4_out)
+            weight[0] * p5_in + weight[1] * p5_up + weight[2] * self.p5_downsample(p4_out)
         )
 
         p6_w2 = self.p6_w2_relu(self.p6_w2)
         weight = p6_w2 / (torch.sum(p6_w2, dim=0) + self.epsilon)
         p6_out = self.conv6_down(
-            weight[0] * p6_in
-            + weight[1] * p6_up
-            + weight[2] * self.p6_downsample(p5_out)
+            weight[0] * p6_in + weight[1] * p6_up + weight[2] * self.p6_downsample(p5_out)
         )
 
         p7_w2 = self.p7_w2_relu(self.p7_w2)
         weight = p7_w2 / (torch.sum(p7_w2, dim=0) + self.epsilon)
-        p7_out = self.conv7_down(
-            weight[0] * p7_in + weight[1] * self.p7_downsample(p6_out)
-        )
+        p7_out = self.conv7_down(weight[0] * p7_in + weight[1] * self.p7_downsample(p6_out))
 
         return p3_out, p4_out, p5_out, p6_out, p7_out
 
@@ -724,14 +689,10 @@ class Regressor(nn.Module):
         super(Regressor, self).__init__()
         layers = []
         for _ in range(num_layers):
-            layers.append(
-                nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=1, padding=1)
-            )
+            layers.append(nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=1, padding=1))
             layers.append(nn.ReLU(True))
         self.layers = nn.Sequential(*layers)
-        self.header = nn.Conv2d(
-            in_channels, num_anchors * 4, kernel_size=3, stride=1, padding=1
-        )
+        self.header = nn.Conv2d(in_channels, num_anchors * 4, kernel_size=3, stride=1, padding=1)
 
     def forward(self, inputs):
         inputs = self.layers(inputs)
@@ -747,9 +708,7 @@ class Classifier(nn.Module):
         self.num_classes = num_classes
         layers = []
         for _ in range(num_layers):
-            layers.append(
-                nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=1, padding=1)
-            )
+            layers.append(nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=1, padding=1))
             layers.append(nn.ReLU(True))
         self.layers = nn.Sequential(*layers)
         self.header = nn.Conv2d(
@@ -820,23 +779,13 @@ class EfficientDetModel(nn.Module):
         c3_size, c4_size, c5_size = backbone_out_channels[self.compound_coef]
 
         # Conv layers to project backbone features to BiFPN channels
-        self.conv3 = nn.Conv2d(
-            c3_size, self.num_channels, kernel_size=1, stride=1, padding=0
-        )
-        self.conv4 = nn.Conv2d(
-            c4_size, self.num_channels, kernel_size=1, stride=1, padding=0
-        )
-        self.conv5 = nn.Conv2d(
-            c5_size, self.num_channels, kernel_size=1, stride=1, padding=0
-        )
-        self.conv6 = nn.Conv2d(
-            c5_size, self.num_channels, kernel_size=3, stride=2, padding=1
-        )
+        self.conv3 = nn.Conv2d(c3_size, self.num_channels, kernel_size=1, stride=1, padding=0)
+        self.conv4 = nn.Conv2d(c4_size, self.num_channels, kernel_size=1, stride=1, padding=0)
+        self.conv5 = nn.Conv2d(c5_size, self.num_channels, kernel_size=1, stride=1, padding=0)
+        self.conv6 = nn.Conv2d(c5_size, self.num_channels, kernel_size=3, stride=2, padding=1)
         self.conv7 = nn.Sequential(
             nn.ReLU(),
-            nn.Conv2d(
-                self.num_channels, self.num_channels, kernel_size=3, stride=2, padding=1
-            ),
+            nn.Conv2d(self.num_channels, self.num_channels, kernel_size=3, stride=2, padding=1),
         )
 
         self.bifpn = nn.Sequential(
@@ -918,9 +867,7 @@ class EfficientDetModel(nn.Module):
         features = self.bifpn(features)
 
         regression = torch.cat([self.regressor(feature) for feature in features], dim=1)
-        classification = torch.cat(
-            [self.classifier(feature) for feature in features], dim=1
-        )
+        classification = torch.cat([self.classifier(feature) for feature in features], dim=1)
         anchors = self.anchors(img_batch)
 
         if is_training:
@@ -1062,7 +1009,7 @@ class EfficientDet(BaseObjectDetection):
 
         in_channels = getattr(self.config, "in_channels", 3)
 
-        print(f"Loading pretrained EfficientDet weights...")
+        print("Loading pretrained EfficientDet weights...")
         print(f"  Target: {self.num_classes} classes, {in_channels} input channels")
 
         # 1. Load BiFPN and head weights (non-backbone) directly
@@ -1089,7 +1036,7 @@ class EfficientDet(BaseObjectDetection):
             new_state_dict[k] = v
 
         # 2. Load backbone weights using the mapping function
-        print(f"\nMapping backbone weights from efficientnet-pytorch to torchvision...")
+        print("\nMapping backbone weights from efficientnet-pytorch to torchvision...")
         backbone_stats = _load_original_weights_to_torchvision(
             self.model.backbone_net, state_dict, verbose=False
         )
@@ -1100,14 +1047,12 @@ class EfficientDet(BaseObjectDetection):
         # Collect statistics
         matched_non_backbone = len(new_state_dict) - len(msg.unexpected_keys)
 
-        print(f"\nPretrained weights loaded.")
+        print("\nPretrained weights loaded.")
         print(f"  Non-backbone matched: {matched_non_backbone}")
         print(f"  Backbone matched: {backbone_stats['matched']}")
         print(f"  Backbone skipped: {backbone_stats['skipped']}")
         if skipped_classifier > 0:
-            print(
-                f"  Skipped classifier keys: {skipped_classifier} (num_classes mismatch)"
-            )
+            print(f"  Skipped classifier keys: {skipped_classifier} (num_classes mismatch)")
         if skipped_stem > 0:
             print(f"  Skipped stem conv: {skipped_stem} (in_channels mismatch)")
 
@@ -1116,9 +1061,7 @@ class EfficientDet(BaseObjectDetection):
             k
             for k in msg.missing_keys
             if "backbone_net" not in k
-            and not any(
-                x in k for x in ["anchors", "regressBoxes", "clipBoxes", "focalLoss"]
-            )
+            and not any(x in k for x in ["anchors", "regressBoxes", "clipBoxes", "focalLoss"])
         ]
 
         if other_missing:
@@ -1135,17 +1078,13 @@ class EfficientDet(BaseObjectDetection):
         if self.model.training and targets is not None:
             # Convert Aitlas targets to the format expected by FocalLoss
             # Find max number of objects in the batch to pad
-            max_objs = (
-                max([t["boxes"].shape[0] for t in targets]) if len(targets) > 0 else 0
-            )
+            max_objs = max([t["boxes"].shape[0] for t in targets]) if len(targets) > 0 else 0
 
             if max_objs == 0:
                 # Handle empty batch of targets if necessary, though unlikely in training
                 target_tensor = torch.zeros((len(targets), 0, 5), device=self.device)
             else:
-                target_tensor = (
-                    torch.ones((len(targets), max_objs, 5), device=self.device) * -1
-                )
+                target_tensor = torch.ones((len(targets), max_objs, 5), device=self.device) * -1
                 for i, target in enumerate(targets):
                     num_objs = target["boxes"].shape[0]
                     if num_objs > 0:
@@ -1188,9 +1127,7 @@ class EfficientDet(BaseObjectDetection):
                 masked_labels = labels[mask]
 
                 # Perform NMS
-                keep = nms(
-                    torch.cat([masked_boxes, masked_scores.unsqueeze(1)], dim=1), 0.5
-                )
+                keep = nms(torch.cat([masked_boxes, masked_scores.unsqueeze(1)], dim=1), 0.5)
 
                 final_outputs.append(
                     {

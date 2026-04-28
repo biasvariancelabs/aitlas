@@ -3,7 +3,7 @@ from functools import partial
 from typing import Callable, Optional
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from .transformer import TransformerMulti
 from .utils.ltae import PatchLTAEMulti
@@ -66,7 +66,6 @@ class AnySatEncoder(nn.Module):
         flash_attn: bool = True,
         release: bool = False,
     ):
-
         super(AnySatEncoder, self).__init__()
         self.modalities = modalities
 
@@ -75,9 +74,7 @@ class AnySatEncoder(nn.Module):
         self.keep_subpatch = keep_subpatch
         self.modality_keep = modality_keep
 
-        self.cls_token = (
-            nn.Parameter(torch.zeros(1, 1, embed_dim)) if class_token else None
-        )
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim)) if class_token else None
         if not release:
             self.datasets = list(modalities.keys())
             self.pos_embed = {}
@@ -155,9 +152,7 @@ class AnySatEncoder(nn.Module):
         tokens = []
         masks = {}
         out = {}
-        pos_embed = self.pos_embed["_".join([x["dataset"], str(x["scale"])])].to(
-            x["label"].device
-        )
+        pos_embed = self.pos_embed["_".join([x["dataset"], str(x["scale"])])].to(x["label"].device)
         _, N, _ = pos_embed.shape
         for modality in self.modalities[x["dataset"]]:
             if (
@@ -166,25 +161,22 @@ class AnySatEncoder(nn.Module):
                 or modality == "aerial-flair"
                 or modality == "naip"
             ):
+                token = getattr(self, "_".join(["projector", modality]))(x[modality], x["scale"])
+            elif "_".join([modality, "mask"]) in list(x.keys()):
                 token = getattr(self, "_".join(["projector", modality]))(
-                    x[modality], x["scale"]
+                    x[modality],
+                    x["_".join([modality, "dates"])],
+                    x["scale"],
+                    x["_".join([modality, "mask"])],
                 )
+                if modality != "modis":
+                    out["_".join(["masks", modality])] = get_mask(
+                        x["_".join([modality, "mask"])], modality
+                    )
             else:
-                if "_".join([modality, "mask"]) in list(x.keys()):
-                    token = getattr(self, "_".join(["projector", modality]))(
-                        x[modality],
-                        x["_".join([modality, "dates"])],
-                        x["scale"],
-                        x["_".join([modality, "mask"])],
-                    )
-                    if modality != "modis":
-                        out["_".join(["masks", modality])] = get_mask(
-                            x["_".join([modality, "mask"])], modality
-                        )
-                else:
-                    token = getattr(self, "_".join(["projector", modality]))(
-                        x[modality], x["_".join([modality, "dates"])], x["scale"]
-                    )
+                token = getattr(self, "_".join(["projector", modality]))(
+                    x[modality], x["_".join([modality, "dates"])], x["scale"]
+                )
             token = self.spatial_encoder(token, modality, x["dataset"], x["scale"])
             if modality == "modis":
                 tokens.insert(0, token.unsqueeze(1))
@@ -202,9 +194,7 @@ class AnySatEncoder(nn.Module):
         """
         pos_embed = self.pos_embed["_".join([dataset, str(scale)])].to(x.device)
         if self.cls_token is not None:
-            cls_tokens = (self.cls_token + pos_embed[:, :1, :]).expand(
-                x.shape[0], -1, -1
-            )
+            cls_tokens = (self.cls_token + pos_embed[:, :1, :]).expand(x.shape[0], -1, -1)
             tokens = torch.cat((cls_tokens, x), dim=1)
         else:
             tokens = x
@@ -221,9 +211,7 @@ class AnySatEncoder(nn.Module):
         """
         tokens = []
         out = {}
-        pos_embed = self.pos_embed["_".join([x["dataset"], str(x["scale"])])].to(
-            x["label"].device
-        )
+        pos_embed = self.pos_embed["_".join([x["dataset"], str(x["scale"])])].to(x["label"].device)
         _, N, _ = pos_embed.shape
         for modality in self.modalities[x["dataset"]]:
             if (
@@ -232,29 +220,24 @@ class AnySatEncoder(nn.Module):
                 or modality == "aerial-flair"
                 or modality == "naip"
             ):
+                token = getattr(self, "_".join(["projector", modality]))(x[modality], x["scale"])
+            elif "_".join([modality, "mask"]) in list(x.keys()):
                 token = getattr(self, "_".join(["projector", modality]))(
-                    x[modality], x["scale"]
+                    x[modality],
+                    x["_".join([modality, "dates"])],
+                    x["scale"],
+                    x["_".join([modality, "mask"])],
                 )
             else:
-                if "_".join([modality, "mask"]) in list(x.keys()):
-                    token = getattr(self, "_".join(["projector", modality]))(
-                        x[modality],
-                        x["_".join([modality, "dates"])],
-                        x["scale"],
-                        x["_".join([modality, "mask"])],
-                    )
-                else:
-                    token = getattr(self, "_".join(["projector", modality]))(
-                        x[modality], x["_".join([modality, "dates"])], x["scale"]
-                    )
+                token = getattr(self, "_".join(["projector", modality]))(
+                    x[modality], x["_".join([modality, "dates"])], x["scale"]
+                )
 
             if self.keep_subpatch and modality == self.modality_keep:
                 token, subs = self.spatial_encoder(
                     token, modality, x["dataset"], x["scale"], keep_subpatch=True
                 )
-                out["_".join(["subpatches"])] = subs.view(
-                    -1, N - 1, subs.shape[1], subs.shape[2]
-                )
+                out["_".join(["subpatches"])] = subs.view(-1, N - 1, subs.shape[1], subs.shape[2])
             else:
                 token = self.spatial_encoder(token, modality, x["dataset"], x["scale"])
             if modality == "modis":
@@ -265,9 +248,7 @@ class AnySatEncoder(nn.Module):
 
         tokens = torch.cat(tokens, dim=1)
         if self.cls_token is not None:
-            cls_tokens = (self.cls_token + pos_embed[:, :1, :]).expand(
-                token.shape[0], -1, -1
-            )
+            cls_tokens = (self.cls_token + pos_embed[:, :1, :]).expand(token.shape[0], -1, -1)
             tokens = torch.cat((cls_tokens, tokens), dim=1)
         tokens = self.patch_drop(tokens)
         tokens = self.norm_pre(tokens)
@@ -283,9 +264,7 @@ class AnySatEncoder(nn.Module):
         out = {}
         keep_subpatch = output == "dense"
         modalities = [
-            mod
-            for mod in x.keys()
-            if not (mod.endswith("_dates") or mod.endswith("_mask"))
+            mod for mod in x.keys() if not (mod.endswith("_dates") or mod.endswith("_mask"))
         ]
         if keep_subpatch and output_modality == "":
             output_modality = modalities[0]
@@ -301,21 +280,18 @@ class AnySatEncoder(nn.Module):
                 or modality == "aerial-flair"
                 or modality == "naip"
             ):
+                token = getattr(self, "_".join(["projector", modality]))(x[modality], scale)
+            elif "_".join([modality, "mask"]) in list(x.keys()):
                 token = getattr(self, "_".join(["projector", modality]))(
-                    x[modality], scale
+                    x[modality],
+                    x["_".join([modality, "dates"])],
+                    scale,
+                    x["_".join([modality, "mask"])],
                 )
             else:
-                if "_".join([modality, "mask"]) in list(x.keys()):
-                    token = getattr(self, "_".join(["projector", modality]))(
-                        x[modality],
-                        x["_".join([modality, "dates"])],
-                        scale,
-                        x["_".join([modality, "mask"])],
-                    )
-                else:
-                    token = getattr(self, "_".join(["projector", modality]))(
-                        x[modality], x["_".join([modality, "dates"])], scale
-                    )
+                token = getattr(self, "_".join(["projector", modality]))(
+                    x[modality], x["_".join([modality, "dates"])], scale
+                )
 
             if pos_embed is None and modality != "modis":
                 B, _, C = token.shape
@@ -328,9 +304,7 @@ class AnySatEncoder(nn.Module):
                 token, subs = self.spatial_encoder.forward_release(
                     token, modality, scale, keep_subpatch=True
                 )
-                out["_".join(["subpatches"])] = subs.view(
-                    -1, N, subs.shape[1], subs.shape[2]
-                )
+                out["_".join(["subpatches"])] = subs.view(-1, N, subs.shape[1], subs.shape[2])
             else:
                 token = self.spatial_encoder.forward_release(token, modality, scale)
             if modality == "modis":
@@ -341,9 +315,7 @@ class AnySatEncoder(nn.Module):
 
         tokens = torch.cat(tokens, dim=1)
         if self.cls_token is not None:
-            cls_tokens = (self.cls_token + pos_embed[:, :1, :]).expand(
-                token.shape[0], -1, -1
-            )
+            cls_tokens = (self.cls_token + pos_embed[:, :1, :]).expand(token.shape[0], -1, -1)
             tokens = torch.cat((cls_tokens, tokens), dim=1)
         tokens = self.patch_drop(tokens)
         tokens = self.norm_pre(tokens)
@@ -353,9 +325,7 @@ class AnySatEncoder(nn.Module):
             tokens, n_modalities=n_modalities, modis=modis, scale=scale
         )
         if keep_subpatch:
-            tokens = (
-                tokens[:, 1:].unsqueeze(2).repeat(1, 1, out["subpatches"].shape[2], 1)
-            )
+            tokens = tokens[:, 1:].unsqueeze(2).repeat(1, 1, out["subpatches"].shape[2], 1)
             dense_tokens = torch.cat([tokens, out["subpatches"]], dim=3)
             B, N, P, D = dense_tokens.shape
             patch_size = int(P ** (1 / 2))
@@ -366,9 +336,7 @@ class AnySatEncoder(nn.Module):
                 B, 1, D, num_patches, num_patches, patch_size, patch_size
             ).permute(0, 1, 2, 3, 5, 4, 6)
             dense_tokens = (
-                dense_tokens.reshape(B, 1, D, size, size)
-                .flatten(0, 1)
-                .permute(0, 2, 3, 1)
+                dense_tokens.reshape(B, 1, D, size, size).flatten(0, 1).permute(0, 2, 3, 1)
             )
             return dense_tokens
         if output == "tile":
@@ -669,9 +637,7 @@ class AnySatModule(nn.Module):
                         f"Modalities {mod1} and {mod2} have incompatible sizes: {size_values[i]} vs {size_values[i + 1]}"
                     )
 
-        return self.model.forward_release(
-            x, scale=patch_size // 10, output=output, **kwargs
-        )
+        return self.model.forward_release(x, scale=patch_size // 10, output=output, **kwargs)
 
 
 # Factory functions for dynamic instantiation

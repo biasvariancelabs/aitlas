@@ -9,7 +9,7 @@ from functools import partial
 
 import timm.models.vision_transformer
 import torch
-import torch.nn as nn
+from torch import nn
 
 from .pos_embed import get_2d_sincos_pos_embed
 
@@ -69,7 +69,7 @@ def vit_base_patch16(**kwargs):
         mlp_ratio=4,
         qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -82,7 +82,7 @@ def vit_large_patch16(**kwargs):
         mlp_ratio=4,
         qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -95,6 +95,6 @@ def vit_huge_patch14(**kwargs):
         mlp_ratio=4,
         qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model

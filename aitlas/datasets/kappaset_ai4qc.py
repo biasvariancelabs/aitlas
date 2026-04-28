@@ -4,19 +4,15 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import torch
 from matplotlib.patches import Patch
 from skimage.transform import resize
-from torch.utils.data import DataLoader, Dataset
 
-from ..base import BaseDataset
-from ..utils import image_loader, tiff_loader
+from ..utils import image_loader
 from .schemas import CloudDatasets_AI4QCSchema
 from .semantic_segmentation import SemanticSegmentationDataset
 
 
 def interp_band(bands, img10_shape=[512, 512]):
-
     bands_interp = np.zeros(img10_shape).astype(np.float32)
     bands_interp = resize(
         bands, img10_shape, mode="reflect"
@@ -33,7 +29,6 @@ from the KappaSet dataset, where the cloud masks were reclassified.
 
 
 class KappaSet_AI4QCDataset(SemanticSegmentationDataset):
-
     url = "https://zenodo.org/records/11121065"
 
     labels = ["clear", "thick cloud", "thin cloud", "cloud shadow"]
@@ -124,9 +119,7 @@ class KappaSet_AI4QCDataset(SemanticSegmentationDataset):
             raise ValueError("You need to provide the list of labels for the dataset")
 
         ids = os.listdir(os.path.join(data_dir, "Sentinel_2_B02/B02"))
-        self.images = [
-            os.path.join(data_dir, "Sentinel_2_B02/B02", image_id) for image_id in ids
-        ]
+        self.images = [os.path.join(data_dir, "Sentinel_2_B02/B02", image_id) for image_id in ids]
         self.imagesB01 = [
             os.path.join(
                 data_dir,

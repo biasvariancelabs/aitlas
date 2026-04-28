@@ -9,18 +9,11 @@
 # DeiT: https://github.com/facebookresearch/deit
 # --------------------------------------------------------
 
-import json
-import math
-import pdb
-from functools import partial, reduce
-from operator import mul
+from functools import partial
 
-import numpy as np
 import torch
-import torch.nn as nn
-from timm.models.vision_transformer import Block, PatchEmbed
-from torch.nn import Conv2d, Dropout
-from torch.nn.modules.utils import _pair
+from timm.models.vision_transformer import Block
+from torch import nn
 
 from .wave_dynamic_layer import Dynamic_MLP_OFA
 
@@ -76,9 +69,7 @@ class OFAViT(nn.Module):
         )
 
         self.head_drop = nn.Dropout(drop_rate)
-        self.head = (
-            nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
-        )
+        self.head = nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
     def forward_features(self, x, wave_list):
         # embed patches
@@ -123,7 +114,7 @@ def dofa_v1_vit_base_patch16(**kwargs):
         num_heads=12,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -136,7 +127,7 @@ def dofa_v1_vit_large_patch16(**kwargs):
         num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -149,7 +140,7 @@ def dofa_v2_vit_base_patch14(**kwargs):
         num_heads=12,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -162,6 +153,6 @@ def dofa_v2_vit_large_patch14(**kwargs):
         num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model

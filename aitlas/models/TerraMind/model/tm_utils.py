@@ -46,9 +46,7 @@ def build_1d_sincos_posemb(max_len, embed_dim=1024, temperature=10000.0):
     omega = torch.arange(pos_dim, dtype=torch.float) / pos_dim  # Shape (D/2,)
     omega = 1.0 / (temperature**omega)
     out = torch.einsum("n,d->nd", [arange, omega])  # Outer product, shape (N, D/2)
-    pos_emb = torch.cat([torch.sin(out), torch.cos(out)], dim=1).unsqueeze(
-        0
-    )  # Shape (1, N, D)
+    pos_emb = torch.cat([torch.sin(out), torch.cos(out)], dim=1).unsqueeze(0)  # Shape (1, N, D)
     return pos_emb
 
 
@@ -66,17 +64,11 @@ def build_2d_sincos_posemb(h, w, embed_dim=1024, temperature=10000.0):
     pos_dim = embed_dim // 4
     omega = torch.arange(pos_dim, dtype=torch.float) / pos_dim  # Shape (D/4,)
     omega = 1.0 / (temperature**omega)
-    out_w = torch.einsum(
-        "n,d->nd", [grid_w.reshape(-1), omega]
-    )  # Outer product, shape (W*H, D/4)
-    out_h = torch.einsum(
-        "n,d->nd", [grid_h.reshape(-1), omega]
-    )  # Outer product, shape (W*H, D/4)
+    out_w = torch.einsum("n,d->nd", [grid_w.reshape(-1), omega])  # Outer product, shape (W*H, D/4)
+    out_h = torch.einsum("n,d->nd", [grid_h.reshape(-1), omega])  # Outer product, shape (W*H, D/4)
     pos_emb = torch.cat(
         [torch.sin(out_w), torch.cos(out_w), torch.sin(out_h), torch.cos(out_h)], dim=1
-    ).unsqueeze(
-        0
-    )  # Shape (1, W*H, D)
+    ).unsqueeze(0)  # Shape (1, W*H, D)
     return pos_emb
 
 
@@ -87,9 +79,7 @@ def drop_path(x, drop_prob: float = 0.0, training: bool = False):
     if drop_prob == 0.0 or not training:
         return x
     keep_prob = 1 - drop_prob
-    shape = (x.shape[0],) + (1,) * (
-        x.ndim - 1
-    )  # work with diff dim tensors, not just 2D ConvNets
+    shape = (x.shape[0],) + (1,) * (x.ndim - 1)  # work with diff dim tensors, not just 2D ConvNets
     random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()  # binarize
     output = x.div(keep_prob) * random_tensor
@@ -207,9 +197,7 @@ class Attention(nn.Module):
     def forward(self, x, mask=None):
         B, N, C = x.shape
         qkv = (
-            self.qkv(x)
-            .reshape(B, N, 3, self.num_heads, C // self.num_heads)
-            .permute(2, 0, 3, 1, 4)
+            self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         )
         q, k, v = qkv.unbind(0)  # make torchscript happy (cannot use tensor as tuple)
 
@@ -259,11 +247,7 @@ class CrossAttention(nn.Module):
         B, N, C = x.shape
         _, M, _ = context.shape
 
-        q = (
-            self.q(x)
-            .reshape(B, N, self.num_heads, C // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         kv = (
             self.kv(context)
             .reshape(B, M, 2, self.num_heads, C // self.num_heads)
@@ -273,9 +257,7 @@ class CrossAttention(nn.Module):
 
         attn = (q @ k.transpose(-2, -1)) * self.scale
         if mask is not None:
-            mask = rearrange(
-                mask, "b n m -> b 1 n m"
-            )  # Unsqueeze / reshape for multi-head
+            mask = rearrange(mask, "b n m -> b 1 n m")  # Unsqueeze / reshape for multi-head
             attn = attn.masked_fill(mask, -torch.finfo(attn.dtype).max)
 
         if self.allow_zero_attn:
@@ -319,9 +301,7 @@ class NormAttention(nn.Module):
     def forward(self, x, mask=None):
         B, N, C = x.shape
         qkv = (
-            self.qkv(x)
-            .reshape(B, N, 3, self.num_heads, C // self.num_heads)
-            .permute(2, 0, 3, 1, 4)
+            self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         )
         q, k, v = qkv.unbind(0)  # make torchscript happy (cannot use tensor as tuple)
 
@@ -378,11 +358,7 @@ class NormCrossAttention(nn.Module):
         B, N, C = x.shape
         _, M, _ = context.shape
 
-        q = (
-            self.q(x)
-            .reshape(B, N, self.num_heads, C // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         kv = (
             self.kv(context)
             .reshape(B, M, 2, self.num_heads, C // self.num_heads)
@@ -395,9 +371,7 @@ class NormCrossAttention(nn.Module):
 
         attn = (q @ k.transpose(-2, -1)) * self.scale
         if mask is not None:
-            mask = rearrange(
-                mask, "b n m -> b 1 n m"
-            )  # Unsqueeze / reshape for multi-head
+            mask = rearrange(mask, "b n m -> b 1 n m")  # Unsqueeze / reshape for multi-head
             attn = attn.masked_fill(mask, -torch.finfo(attn.dtype).max)
 
         if self.allow_zero_attn:
@@ -642,9 +616,7 @@ def interpolate_pos_encoding(
 
     # Assuming squared default image size
     sqrt_num_positions = int(num_positions**0.5)
-    pos_embeddings = pos_embeddings.reshape(
-        1, sqrt_num_positions, sqrt_num_positions, dim_tokens
-    )
+    pos_embeddings = pos_embeddings.reshape(1, sqrt_num_positions, sqrt_num_positions, dim_tokens)
     pos_embeddings = pos_embeddings.permute(0, 3, 1, 2)
 
     pos_embeddings = nn.functional.interpolate(

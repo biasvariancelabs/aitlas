@@ -22,9 +22,11 @@
 Helpers to train with 16-bit precision.
 """
 
+import math
+
 import numpy as np
 import torch as th
-import torch.nn as nn
+from torch import nn
 from torch._utils import _flatten_dense_tensors, _unflatten_dense_tensors
 
 
@@ -69,9 +71,9 @@ def make_master_params(param_groups_and_shapes):
     master_params = []
     for param_group, shape in param_groups_and_shapes:
         master_param = nn.Parameter(
-            _flatten_dense_tensors(
-                [param.detach().float() for (_, param) in param_group]
-            ).view(shape)
+            _flatten_dense_tensors([param.detach().float() for (_, param) in param_group]).view(
+                shape
+            )
         )
         master_param.requires_grad = True
         master_params.append(master_param)
@@ -83,9 +85,7 @@ def model_grads_to_master_grads(param_groups_and_shapes, master_params):
     Copy the gradients from the model parameters into the master parameters
     from make_master_params().
     """
-    for master_param, (param_group, shape) in zip(
-        master_params, param_groups_and_shapes
-    ):
+    for master_param, (param_group, shape) in zip(master_params, param_groups_and_shapes):
         master_param.grad = _flatten_dense_tensors(
             [param_grad_or_zeros(param) for (_, param) in param_group]
         ).view(shape)
@@ -121,14 +121,10 @@ def get_param_groups_and_shapes(named_model_params):
     return [scalar_vector_named_params, matrix_named_params]
 
 
-def master_params_to_state_dict(
-    model, param_groups_and_shapes, master_params, use_fp16
-):
+def master_params_to_state_dict(model, param_groups_and_shapes, master_params, use_fp16):
     if use_fp16:
         state_dict = model.state_dict()
-        for master_param, (param_group, _) in zip(
-            master_params, param_groups_and_shapes
-        ):
+        for master_param, (param_group, _) in zip(master_params, param_groups_and_shapes):
             for (name, _), unflat_master_param in zip(
                 param_group, unflatten_master_params(param_group, master_param.view(-1))
             ):
@@ -144,9 +140,7 @@ def master_params_to_state_dict(
 
 def state_dict_to_master_params(model, state_dict, use_fp16):
     if use_fp16:
-        named_model_params = [
-            (name, state_dict[name]) for name, _ in model.named_parameters()
-        ]
+        named_model_params = [(name, state_dict[name]) for name, _ in model.named_parameters()]
         param_groups_and_shapes = get_param_groups_and_shapes(named_model_params)
         master_params = make_master_params(param_groups_and_shapes)
     else:
@@ -256,4 +250,4 @@ class MixedPrecisionTrainer:
 
 
 def check_overflow(value):
-    return (value == float("inf")) or (value == -float("inf")) or (value != value)
+    return math.isinf(value) or math.isnan(value)

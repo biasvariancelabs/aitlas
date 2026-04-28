@@ -1,12 +1,11 @@
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
 
-from aitlas.models.Presto.presto import PrestoModel, presto_default
+from aitlas.models.Presto.presto import PrestoModel
 from aitlas.models.Presto.utils import prepare_presto_input
-from aitlas.models.presto_wrapper import Presto, PrestoSchema
+from aitlas.models.presto_wrapper import Presto
 
 
 # Fixtures
@@ -72,19 +71,14 @@ class TestPreparePrestoInputs:
         latlons = torch.randn(b, 2, h, w)
         default_month = 5
 
-        _, dw, _, mnths = prepare_presto_input(
-            s1=s1, latlons=latlons, default_month=default_month
-        )
+        _, dw, _, mnths = prepare_presto_input(s1=s1, latlons=latlons, default_month=default_month)
 
         assert torch.all(dw == 9)
-        assert torch.all(
-            mnths == torch.fmod(torch.arange(5, 5 + t, dtype=torch.long), 12)
-        )
+        assert torch.all(mnths == torch.fmod(torch.arange(5, 5 + t, dtype=torch.long), 12))
 
 
 # Wrapper class tests
 class TestPrestoWrapper:
-
     # Integration tests
     def test_instantiation(self, config_presto):
         """Tests real instantiation and model loading from a local file."""
@@ -128,9 +122,7 @@ class TestPrestoWrapper:
         Presto(config_presto)
 
         mock_hf_download.assert_called_once()
-        mock_torch_load.assert_called_with(
-            mock_hf_download.return_value, weights_only=False
-        )
+        mock_torch_load.assert_called_with(mock_hf_download.return_value, weights_only=False)
 
     def test_forward_pass_empty_input(self, config_presto):
         """Tests the error case for an empty input dictionary."""
@@ -138,9 +130,7 @@ class TestPrestoWrapper:
         with pytest.raises(ValueError, match="Input dictionary cannot be empty"):
             model.forward_features({})
 
-    def test_forward_pass_raises_error_if_latlons_missing(
-        self, config_presto, dummy_input_dict
-    ):
+    def test_forward_pass_raises_error_if_latlons_missing(self, config_presto, dummy_input_dict):
         """Tests that a ValueError is raised if the latlons key is missing."""
         del dummy_input_dict["latlons"]
 

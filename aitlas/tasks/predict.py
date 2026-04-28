@@ -2,8 +2,8 @@ import csv
 import logging
 import os
 
-from ..base import BaseDataset, BaseModel, BaseTask, Configurable
-from ..utils import get_class, image_loader, stringify
+from ..base import BaseDataset, BaseModel, BaseTask
+from ..utils import image_loader
 from ..visualizations import (
     display_eopatch_predictions,
     display_image_labels,
@@ -88,9 +88,7 @@ class PredictTask(BaseTask):
 
         if self.output_format == "plot":
             for i, image_path in enumerate(test_dataset.data):
-                plot_path = os.path.join(
-                    self.output_dir, f"{test_dataset.fnames[i]}_plot.png"
-                )
+                plot_path = os.path.join(self.output_dir, f"{test_dataset.fnames[i]}_plot.png")
                 # y_true, y_pred, y_prob, labels, file
                 display_image_labels(
                     image_path,

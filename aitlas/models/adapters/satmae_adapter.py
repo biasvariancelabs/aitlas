@@ -10,7 +10,6 @@ class SatMAEAdapter(BaseInputAdapter):
         kwargs = {}
 
         if isinstance(x, torch.Tensor):
-
             # Replace NaNs and Infs with 0.0 to prevent issues with model training
             x = torch.nan_to_num(x, nan=0.0, posinf=0.0, neginf=0.0)
 

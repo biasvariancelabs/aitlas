@@ -179,9 +179,7 @@ def dumps_pickle(obj):
 def cls2multihot(cls_vec, label_indices):
     label_conversion = label_indices["label_conversion"]
 
-    bigearthnet_19_label_idx = {
-        v: k for k, v in label_indices["BigEarthNet-19_labels"].items()
-    }
+    bigearthnet_19_label_idx = {v: k for k, v in label_indices["BigEarthNet-19_labels"].items()}
 
     bigearthnet_19_labels_multihot = np.zeros((len(label_conversion),))
     original_labels_multihot = np.zeros((len(label_indices["original_labels"]),))
@@ -264,9 +262,7 @@ class BigEarthNetDataset(BaseDataset):
                 bands20 = bands20.astype(np.float32)
 
                 if self.transform:
-                    bands10, bands20, bands60, multihots = self.transform(
-                        (bands10, bands20)
-                    )
+                    bands10, bands20, bands60, multihots = self.transform((bands10, bands20))
                 if self.target_transform:
                     multihots = self.target_transform(multihots)
 
@@ -315,9 +311,7 @@ class BigEarthNetDataset(BaseDataset):
         if size % 3:
             raise ValueError("The provided size should be divided by 3!")
         image_indices = random.sample(range(0, len(self.patches)), size)
-        figure, ax = plt.subplots(
-            int(size / 3), 3, figsize=(13.75, 2.0 * int(size / 3))
-        )
+        figure, ax = plt.subplots(int(size / 3), 3, figsize=(13.75, 2.0 * int(size / 3)))
         if show_title:
             figure.suptitle(
                 "Example images with labels from {}".format(self.get_name()),
@@ -387,9 +381,7 @@ class BigEarthNetDataset(BaseDataset):
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
-        ax.set_title(
-            "Image distribution for {}".format(self.get_name()), pad=20, fontsize=18
-        )
+        ax.set_title("Image distribution for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig
 
     def labels_stats(self):
@@ -402,11 +394,9 @@ class BigEarthNetDataset(BaseDataset):
 
             _, multihots = self[patch_index]
 
-            if sum(multihots) < min_number:
-                min_number = sum(multihots)
+            min_number = min(min_number, sum(multihots))
 
-            if sum(multihots) > max_number:
-                max_number = sum(multihots)
+            max_number = max(max_number, sum(multihots))
 
             average_number += sum(multihots)
 
@@ -492,39 +482,29 @@ class PrepBigEarthNetDataset(Dataset):
         for band in self.bands10:
             bands10_array.append(
                 tiff_loader(
-                    os.path.join(
-                        self.data_dir, patch_name, patch_name + "_B" + band + ".tif"
-                    )
+                    os.path.join(self.data_dir, patch_name, patch_name + "_B" + band + ".tif")
                 ).astype(np.float32)
             )
 
         for band in self.bands20:
             bands20_array.append(
                 tiff_loader(
-                    os.path.join(
-                        self.data_dir, patch_name, patch_name + "_B" + band + ".tif"
-                    )
+                    os.path.join(self.data_dir, patch_name, patch_name + "_B" + band + ".tif")
                 ).astype(np.float32)
             )
 
         for band in self.bands60:
             bands60_array.append(
                 tiff_loader(
-                    os.path.join(
-                        self.data_dir, patch_name, patch_name + "_B" + band + ".tif"
-                    )
+                    os.path.join(self.data_dir, patch_name, patch_name + "_B" + band + ".tif")
                 ).astype(np.float32)
             )
 
         labels = parse_json_labels(
-            os.path.join(
-                self.data_dir, patch_name, patch_name + "_labels_metadata.json"
-            )
+            os.path.join(self.data_dir, patch_name, patch_name + "_labels_metadata.json")
         )
 
-        labels_multihot_19, labels_multihot_43 = cls2multihot(
-            labels, self.label_indices
-        )
+        labels_multihot_19, labels_multihot_43 = cls2multihot(labels, self.label_indices)
 
         return (
             np.array(bands10_array).transpose(1, 2, 0),

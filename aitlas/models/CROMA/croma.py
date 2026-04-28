@@ -56,9 +56,7 @@ class CROMAModule(nn.Module):
         """
         super().__init__()
         for modality in modalities:
-            assert (
-                modality in self.valid_modalities
-            ), f"{modality} is not a valid modality"
+            assert modality in self.valid_modalities, f"{modality} is not a valid modality"
 
         assert image_size % 8 == 0, "image_size must be a multiple of 8"
         assert num_heads % 2 == 0, "num_heads must be a power of 2"
@@ -74,9 +72,7 @@ class CROMAModule(nn.Module):
         self.s1_channels = 2  # fixed at 2 SAR backscatter channels
         self.s2_channels = 12  # fixed at 12 multispectral optical channels
 
-        self.attn_bias = get_2dalibi(
-            num_heads=self.num_heads, num_patches=self.num_patches
-        )
+        self.attn_bias = get_2dalibi(num_heads=self.num_heads, num_patches=self.num_patches)
 
         def initialize_encoder(
             encoder_dim: int, encoder_depth: int, in_channels: int
@@ -131,9 +127,7 @@ class CROMAModule(nn.Module):
             return_dict["sar_GAP"] = sar_GAP
 
         if "optical" in self.modalities and x_optical is not None:
-            optical_encodings = self.s2_encoder(
-                imgs=x_optical, attn_bias=self.attn_bias
-            )
+            optical_encodings = self.s2_encoder(imgs=x_optical, attn_bias=self.attn_bias)
             optical_GAP = self.s2_GAP_FFN(optical_encodings.mean(dim=1))
             return_dict["optical_encodings"] = optical_encodings
             return_dict["optical_GAP"] = optical_GAP
@@ -163,9 +157,7 @@ def get_2dalibi(num_heads: int, num_patches: int) -> Tensor:
     """
     # inspired by: https://github.com/ofirpress/attention_with_linear_biases
     points = list(
-        itertools.product(
-            range(int(math.sqrt(num_patches))), range(int(math.sqrt(num_patches)))
-        )
+        itertools.product(range(int(math.sqrt(num_patches))), range(int(math.sqrt(num_patches))))
     )
 
     def get_slopes(n: int) -> list[float]:
@@ -180,9 +172,7 @@ def get_2dalibi(num_heads: int, num_patches: int) -> Tensor:
             dist = math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
             idxs.append(dist * slopes * -1)
     all_bias = torch.cat(idxs, dim=1)
-    return nn.Parameter(
-        all_bias.view(1, num_heads, num_patches, num_patches), requires_grad=False
-    )
+    return nn.Parameter(all_bias.view(1, num_heads, num_patches, num_patches), requires_grad=False)
 
 
 class FFN(nn.Module):
@@ -255,9 +245,7 @@ class Attention(nn.Module):
         """
         x = self.input_norm(x)
         q, k, v = self.to_qkv(x).chunk(3, dim=-1)
-        q, k, v = map(
-            lambda t: rearrange(t, "b n (h d) -> b h n d", h=self.num_heads), (q, k, v)
-        )
+        q, k, v = map(lambda t: rearrange(t, "b n (h d) -> b h n d", h=self.num_heads), (q, k, v))
 
         attention_scores = einsum("b h i d, b h j d -> b h i j", q, k) * self.scale
         attention_scores = attention_scores + relative_position_bias
@@ -299,9 +287,7 @@ class CrossAttention(nn.Module):
         self.input_norm = nn.LayerNorm(dim)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(
-        self, x: Tensor, context: Tensor, relative_position_bias: Tensor
-    ) -> Tensor:
+    def forward(self, x: Tensor, context: Tensor, relative_position_bias: Tensor) -> Tensor:
         """Forward pass of the cross-attention layer.
 
         Args:
@@ -319,9 +305,7 @@ class CrossAttention(nn.Module):
         k = self.to_k(context)
         v = self.to_v(context)
 
-        q, k, v = map(
-            lambda t: rearrange(t, "b n (h d) -> b h n d", h=self.num_heads), (q, k, v)
-        )
+        q, k, v = map(lambda t: rearrange(t, "b n (h d) -> b h n d", h=self.num_heads), (q, k, v))
 
         attention_scores = einsum("b h i d, b h j d -> b h i j", q, k) * self.scale
         attention_scores = attention_scores + relative_position_bias
@@ -419,9 +403,7 @@ class BaseTransformerCrossAttn(nn.Module):
                 nn.ModuleList(
                     [
                         Attention(dim=dim, num_heads=num_heads, dropout=attn_dropout),
-                        CrossAttention(
-                            dim=dim, num_heads=num_heads, dropout=attn_dropout
-                        ),
+                        CrossAttention(dim=dim, num_heads=num_heads, dropout=attn_dropout),
                         FFN(dim=dim, mult=ff_mult, dropout=ff_dropout),
                     ]
                 )
@@ -429,9 +411,7 @@ class BaseTransformerCrossAttn(nn.Module):
 
         self.norm_out = nn.LayerNorm(dim)
 
-    def forward(
-        self, x: Tensor, context: Tensor, relative_position_bias: Tensor
-    ) -> Tensor:
+    def forward(self, x: Tensor, context: Tensor, relative_position_bias: Tensor) -> Tensor:
         """Forward pass of the base transformer model with cross-attention.
 
         Args:
@@ -471,9 +451,7 @@ class ViT(nn.Module):
 
         pixels_per_patch = int(self.patch_size * self.patch_size * in_channels)
         self.linear_input = nn.Linear(pixels_per_patch, self.dim)
-        self.transformer = BaseTransformer(
-            dim=self.dim, depth=self.depth, num_heads=self.num_heads
-        )
+        self.transformer = BaseTransformer(dim=self.dim, depth=self.depth, num_heads=self.num_heads)
 
     def forward(self, imgs: Tensor, attn_bias: Tensor) -> Tensor:
         """Forward pass of the vision transformer model.
@@ -584,9 +562,7 @@ def load_weights(model: CROMAModule, weights: WeightsEnum) -> None:
     assert not unexpected_keys, f"Unexpected keys: {unexpected_keys}"
 
 
-def croma_base(
-    weights: CROMABase_Weights | None = None, *args: Any, **kwargs: Any
-) -> CROMAModule:
+def croma_base(weights: CROMABase_Weights | None = None, *args: Any, **kwargs: Any) -> CROMAModule:
     """CROMA base model.
 
     If you use this model in your research, please cite the following paper:

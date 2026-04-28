@@ -1,8 +1,7 @@
-"""AlexNet model for multiclass and multilabel classification
-"""
+"""AlexNet model for multiclass and multilabel classification"""
 
-import torch.nn as nn
-import torchvision.models as models
+from torch import nn
+from torchvision import models
 
 from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 

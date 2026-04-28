@@ -36,9 +36,7 @@ class RPEIndexFunction(torch.autograd.Function):
         ctx.save_for_backward(index)
         ctx.input_shape = input.shape
         forward_fn = (
-            rpe_index_cpp.forward_cpu
-            if input.device.type == "cpu"
-            else rpe_index_cpp.forward_gpu
+            rpe_index_cpp.forward_cpu if input.device.type == "cpu" else rpe_index_cpp.forward_gpu
         )
         output = forward_fn(input, index)
         return output
@@ -89,13 +87,9 @@ if __name__ == "__main__":
         x2.requires_grad = True
 
         y = RPEIndexFunction.apply(x1, index)
-        gt_y = x2.flatten(2)[:, :, (index + offset).flatten()].view(
-            B, H, L_query, L_key
-        )
+        gt_y = x2.flatten(2)[:, :, (index + offset).flatten()].view(B, H, L_query, L_key)
 
-        np.testing.assert_almost_equal(
-            gt_y.detach().cpu().numpy(), y.detach().cpu().numpy()
-        )
+        np.testing.assert_almost_equal(gt_y.detach().cpu().numpy(), y.detach().cpu().numpy())
 
         mask = torch.randn(gt_y.shape, device=x.device)
         (gt_y * mask).sum().backward()
@@ -103,9 +97,7 @@ if __name__ == "__main__":
 
         print("X1:", x1.grad.cpu().numpy().flatten().sum())
         print("X2:", x2.grad.cpu().numpy().flatten().sum())
-        np.testing.assert_almost_equal(
-            x1.grad.cpu().numpy(), x2.grad.cpu().numpy(), decimal=5
-        )
+        np.testing.assert_almost_equal(x1.grad.cpu().numpy(), x2.grad.cpu().numpy(), decimal=5)
         print("Test over", x.device)
         print("Cost:", time.time() - tic)
 

@@ -2,7 +2,7 @@ import copy
 
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class PositionalEncoder(nn.Module):
@@ -11,25 +11,19 @@ class PositionalEncoder(nn.Module):
         self.d = d
         self.T = T
         self.repeat = repeat
-        self.denom = torch.pow(
-            T, 2 * (torch.arange(offset, offset + d).float() // 2) / d
-        )
+        self.denom = torch.pow(T, 2 * (torch.arange(offset, offset + d).float() // 2) / d)
         self.updated_location = False
 
     def forward(self, batch_positions):
         if not self.updated_location:
             self.denom = self.denom.to(batch_positions.device)
             self.updated_location = True
-        sinusoid_table = (
-            batch_positions[:, :, None] / self.denom[None, None, :]
-        )  # B x T x C
+        sinusoid_table = batch_positions[:, :, None] / self.denom[None, None, :]  # B x T x C
         sinusoid_table[:, :, 0::2] = torch.sin(sinusoid_table[:, :, 0::2])  # dim 2i
         sinusoid_table[:, :, 1::2] = torch.cos(sinusoid_table[:, :, 1::2])  # dim 2i+1
 
         if self.repeat is not None:
-            sinusoid_table = torch.cat(
-                [sinusoid_table for _ in range(self.repeat)], dim=-1
-            )
+            sinusoid_table = torch.cat([sinusoid_table for _ in range(self.repeat)], dim=-1)
 
         return sinusoid_table
 
@@ -95,15 +89,11 @@ class LTAE2d(nn.Module):
         self.mlp.insert(0, self.d_model)
 
         if positional_encoding:
-            self.positional_encoder = PositionalEncoder(
-                self.d_model // n_head, T=T, repeat=n_head
-            )
+            self.positional_encoder = PositionalEncoder(self.d_model // n_head, T=T, repeat=n_head)
         else:
             self.positional_encoder = None
 
-        self.attention_heads = MultiHeadAttention(
-            n_head=n_head, d_k=d_k, d_in=self.d_model
-        )
+        self.attention_heads = MultiHeadAttention(n_head=n_head, d_k=d_k, d_in=self.d_model)
 
         if in_norm:
             self.in_norm = nn.GroupNorm(
@@ -135,9 +125,7 @@ class LTAE2d(nn.Module):
     def forward(self, x, batch_positions=None, pad_mask=None):
         sz_b, seq_len, d, h, w = x.shape
         if pad_mask is not None:
-            pad_mask = (
-                pad_mask.permute(0, 2, 3, 1).contiguous().view(sz_b * h * w, seq_len)
-            )
+            pad_mask = pad_mask.permute(0, 2, 3, 1).contiguous().view(sz_b * h * w, seq_len)
 
         out = x.permute(0, 3, 4, 1, 2).contiguous().view(sz_b * h * w, seq_len, d)
 
@@ -150,19 +138,14 @@ class LTAE2d(nn.Module):
 
         if self.positional_encoder is not None:
             bp = (
-                batch_positions.unsqueeze(-1)
-                .repeat((1, 1, h))
-                .unsqueeze(-1)
-                .repeat((1, 1, 1, w))
+                batch_positions.unsqueeze(-1).repeat((1, 1, h)).unsqueeze(-1).repeat((1, 1, 1, w))
             )  # BxTxHxW
             bp = bp.permute(0, 2, 3, 1).contiguous().view(sz_b * h * w, seq_len)
             out = out + self.positional_encoder(bp)
 
         out, attn = self.attention_heads(out, pad_mask=pad_mask)
 
-        out = (
-            out.permute(1, 0, 2).contiguous().view(sz_b * h * w, -1)
-        )  # Concatenate heads
+        out = out.permute(1, 0, 2).contiguous().view(sz_b * h * w, -1)  # Concatenate heads
         out = self.dropout(self.mlp(out))
         out = self.out_norm(out) if self.out_norm is not None else out
         out = out.view(sz_b, h, w, -1).permute(0, 3, 1, 2)
@@ -202,29 +185,19 @@ class MultiHeadAttention(nn.Module):
         d_k, d_in, n_head = self.d_k, self.d_in, self.n_head
         sz_b, seq_len, _ = v.size()
 
-        q = torch.stack([self.Q for _ in range(sz_b)], dim=1).view(
-            -1, d_k
-        )  # (n*b) x d_k
+        q = torch.stack([self.Q for _ in range(sz_b)], dim=1).view(-1, d_k)  # (n*b) x d_k
 
         k = self.fc1_k(v).view(sz_b, seq_len, n_head, d_k)
         k = k.permute(2, 0, 1, 3).contiguous().view(-1, seq_len, d_k)  # (n*b) x lk x dk
 
         if pad_mask is not None:
-            pad_mask = pad_mask.repeat(
-                (n_head, 1)
-            )  # replicate pad_mask for each head (nxb) x lk
+            pad_mask = pad_mask.repeat((n_head, 1))  # replicate pad_mask for each head (nxb) x lk
 
-        v = torch.stack(v.split(v.shape[-1] // n_head, dim=-1)).view(
-            n_head * sz_b, seq_len, -1
-        )
+        v = torch.stack(v.split(v.shape[-1] // n_head, dim=-1)).view(n_head * sz_b, seq_len, -1)
         if return_comp:
-            output, attn, comp = self.attention(
-                q, k, v, pad_mask=pad_mask, return_comp=return_comp
-            )
+            output, attn, comp = self.attention(q, k, v, pad_mask=pad_mask, return_comp=return_comp)
         else:
-            output, attn = self.attention(
-                q, k, v, pad_mask=pad_mask, return_comp=return_comp
-            )
+            output, attn = self.attention(q, k, v, pad_mask=pad_mask, return_comp=return_comp)
         attn = attn.view(n_head, sz_b, 1, seq_len)
         attn = attn.squeeze(dim=2)
 

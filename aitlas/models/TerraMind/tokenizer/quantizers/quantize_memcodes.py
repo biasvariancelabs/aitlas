@@ -52,9 +52,7 @@ class Memcodes(nn.Module):
         num_codebooks = heads
         codebook_dim = dim // heads
 
-        self.codes = nn.Parameter(
-            torch.randn(num_codebooks, codebook_size, codebook_dim)
-        )
+        self.codes = nn.Parameter(torch.randn(num_codebooks, codebook_size, codebook_dim))
         self.to_k = Mix(
             "h n d -> h n c",
             weight_shape="h d c",

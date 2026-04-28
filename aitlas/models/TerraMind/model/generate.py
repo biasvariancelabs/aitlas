@@ -32,13 +32,10 @@ from tqdm import tqdm
 
 
 def get_sentinel_to_id_mapping(tokenizer, match_str="[S_"):
-    sentinel_tokens = {
-        k: v for k, v in tokenizer.get_vocab().items() if k.startswith(match_str)
-    }
+    sentinel_tokens = {k: v for k, v in tokenizer.get_vocab().items() if k.startswith(match_str)}
     # Extract the sentinel token id, the id is of the form "[S_0]", "[S_1]", etc.
     sentinel_to_id = {
-        int(k.split("_")[1][:-1]): v
-        for k, v in sorted(sentinel_tokens.items(), key=lambda x: x[1])
+        int(k.split("_")[1][:-1]): v for k, v in sorted(sentinel_tokens.items(), key=lambda x: x[1])
     }
     return sentinel_to_id
 
@@ -73,9 +70,7 @@ def cosine_schedule(num_steps, total_tokens):
     schedule = np.array(
         [
             final_value
-            + 0.5
-            * (base_value - final_value)
-            * (1 + math.cos(math.pi * i / (len(iters))))
+            + 0.5 * (base_value - final_value) * (1 + math.cos(math.pi * i / (len(iters))))
             for i in iters
         ]
     )
@@ -92,9 +87,7 @@ def linear_schedule(num_steps, total_tokens):
     return np.trim_zeros(schedule_tokens, "b")  # Trims trailing zeros.
 
 
-def onex_temp_schedule(
-    max_t, min_t, token_schedule, power=0.5, min_linspace=1, max_linspace=100
-):
+def onex_temp_schedule(max_t, min_t, token_schedule, power=0.5, min_linspace=1, max_linspace=100):
     """Abitrary temperature schedule for one over x"""
     x = np.linspace(min_linspace, max_linspace, num=sum(token_schedule))
     y = 1 / (x**power)
@@ -102,13 +95,11 @@ def onex_temp_schedule(
     y = y / max(y)
     unscaled_schedule = y
     schedule_cumsum = np.cumsum(token_schedule) / np.sum(token_schedule)
-    unscaled_schedule = [
-        (1 - cs) * us for us, cs in zip(unscaled_schedule, schedule_cumsum)
-    ]
+    unscaled_schedule = [(1 - cs) * us for us, cs in zip(unscaled_schedule, schedule_cumsum)]
 
-    temp_schedule = np.array(
-        [min_t + (max_t - min_t) * s for s in unscaled_schedule]
-    ).clip(min=1e-9)
+    temp_schedule = np.array([min_t + (max_t - min_t) * s for s in unscaled_schedule]).clip(
+        min=1e-9
+    )
     return temp_schedule
 
 
@@ -117,11 +108,7 @@ def linear_temp_schedule(temp, token_schedule):
     return np.concatenate(
         [
             np.array([temp * 1.0]),
-            (
-                temp
-                * (token_schedule.sum() - token_schedule.cumsum())
-                / token_schedule.sum()
-            )[:-1],
+            (temp * (token_schedule.sum() - token_schedule.cumsum()) / token_schedule.sum())[:-1],
         ]
     ).clip(min=1e-9)
 
@@ -143,9 +130,7 @@ def empty_seq_modality(mod_dict, s1_id=5):
     # Input is [S_1], target is [S_1] ...... [S_2]
     # (so [S_1] [S_1] ..... [S_2] when combined)
     mod_dict["tensor"][:] = 0
-    mod_dict["tensor"][
-        :, [0, 1]
-    ] = s1_id  # s1_id is id of the first sentinel token ([S_1])
+    mod_dict["tensor"][:, [0, 1]] = s1_id  # s1_id is id of the first sentinel token ([S_1])
     mod_dict["tensor"][:, -1] = s1_id + 1
 
     # Input mask
@@ -171,9 +156,7 @@ def empty_seq_emb_modality(mod_dict, mod=None):
     return mod_dict
 
 
-def init_empty_target_modality(
-    modality_info, domain, batch_size, num_tokens, device, s1_id=5
-):
+def init_empty_target_modality(modality_info, domain, batch_size, num_tokens, device, s1_id=5):
     """
     Initializes an empty target modality dictionary for a given domain.
     Used to initialize target modality dictionaries for generation.
@@ -181,29 +164,17 @@ def init_empty_target_modality(
     if modality_info[domain]["type"] == "img":
         # Initialize mod dict
         mod_dict = {
-            "tensor": torch.zeros(
-                (batch_size, num_tokens), dtype=torch.int64, device=device
-            ),
-            "input_mask": torch.ones(
-                (batch_size, num_tokens), dtype=torch.bool, device=device
-            ),
-            "target_mask": torch.zeros(
-                (batch_size, num_tokens), dtype=torch.bool, device=device
-            ),
+            "tensor": torch.zeros((batch_size, num_tokens), dtype=torch.int64, device=device),
+            "input_mask": torch.ones((batch_size, num_tokens), dtype=torch.bool, device=device),
+            "target_mask": torch.zeros((batch_size, num_tokens), dtype=torch.bool, device=device),
         }
 
     elif modality_info[domain]["type"] in ["seq", "seq_token", "seq_emb"]:
         # Initialize mod dict
         mod_dict = {
-            "tensor": torch.zeros(
-                (batch_size, num_tokens), dtype=torch.int, device=device
-            ),
-            "input_mask": torch.ones(
-                (batch_size, num_tokens), dtype=torch.bool, device=device
-            ),
-            "target_mask": torch.zeros(
-                (batch_size, num_tokens), dtype=torch.bool, device=device
-            ),
+            "tensor": torch.zeros((batch_size, num_tokens), dtype=torch.int, device=device),
+            "input_mask": torch.ones((batch_size, num_tokens), dtype=torch.bool, device=device),
+            "target_mask": torch.zeros((batch_size, num_tokens), dtype=torch.bool, device=device),
             "decoder_attention_mask": torch.zeros(
                 (batch_size, num_tokens), dtype=torch.bool, device=device
             ),
@@ -230,36 +201,28 @@ def init_conditioned_target_modality(
         mod_dict["tensor"] = torch.cat(
             [
                 mod_dict["tensor"],
-                torch.zeros(
-                    (batch_size, num_target_tokens), dtype=torch.int, device=device
-                ),
+                torch.zeros((batch_size, num_target_tokens), dtype=torch.int, device=device),
             ],
             dim=1,
         )
         mod_dict["input_mask"] = torch.cat(
             [
                 mod_dict["input_mask"],
-                torch.ones(
-                    (batch_size, num_target_tokens), dtype=torch.bool, device=device
-                ),
+                torch.ones((batch_size, num_target_tokens), dtype=torch.bool, device=device),
             ],
             dim=1,
         )
         mod_dict["target_mask"] = torch.cat(
             [
                 mod_dict["target_mask"],
-                torch.zeros(
-                    (batch_size, num_target_tokens), dtype=torch.bool, device=device
-                ),
+                torch.zeros((batch_size, num_target_tokens), dtype=torch.bool, device=device),
             ],
             dim=1,
         )
         mod_dict["decoder_attention_mask"] = torch.cat(
             [
                 mod_dict["decoder_attention_mask"],
-                torch.ones(
-                    (batch_size, num_target_tokens), dtype=torch.bool, device=device
-                ),
+                torch.ones((batch_size, num_target_tokens), dtype=torch.bool, device=device),
             ],
             dim=1,
         )
@@ -267,9 +230,7 @@ def init_conditioned_target_modality(
         if eos_id in mod_dict["tensor"]:
             eos_indices = torch.where(mod_dict["tensor"] == eos_id)[1]
         else:
-            warnings.warn(
-                f"Cannot find EOS token in {domain} input, assuming last input position."
-            )
+            warnings.warn(f"Cannot find EOS token in {domain} input, assuming last input position.")
             eos_indices = [input_length] * len(mod_dict["tensor"])
         for i in range(len(mod_dict["tensor"])):
             eos_idx = eos_indices[i]
@@ -285,13 +246,9 @@ def init_conditioned_target_modality(
 
     elif modality_info[domain]["type"] in ["img"]:
         # TODO: Implement image masking in input
-        raise NotImplementedError(
-            f"Conditioned target modality not implemented for {domain}"
-        )
+        raise NotImplementedError(f"Conditioned target modality not implemented for {domain}")
     else:
-        raise NotImplementedError(
-            f"Conditioned target modality not implemented for {domain}"
-        )
+        raise NotImplementedError(f"Conditioned target modality not implemented for {domain}")
 
     return mod_dict
 
@@ -376,9 +333,7 @@ def custom_text(
     mod_dict["tensor"] = all_ids.to(device)
     mod_dict["input_mask"] = input_mask.to(device)
     mod_dict["target_mask"] = target_mask.to(device)
-    mod_dict["decoder_attention_mask"] = torch.zeros(
-        all_ids.shape, dtype=torch.bool, device=device
-    )
+    mod_dict["decoder_attention_mask"] = torch.zeros(all_ids.shape, dtype=torch.bool, device=device)
 
     return mod_dict
 
@@ -422,7 +377,6 @@ def build_chained_generation_schedules(
     cond_domains = cond_domains.copy()
 
     for target_idx in range(len(target_domains)):
-
         scheme = autoregression_schemes[target_idx]
         target_domain = target_domains[target_idx]
         ntoks = tokens_per_target[target_idx]
@@ -462,9 +416,7 @@ def build_chained_generation_schedules(
             elif maskgit_token_schedule_name == "linear":
                 token_schedule = linear_schedule(num_steps, (ntoks))
             else:
-                raise ValueError(
-                    f"Illegal MaskGIT token schedule {maskgit_token_schedule_name}"
-                )
+                raise ValueError(f"Illegal MaskGIT token schedule {maskgit_token_schedule_name}")
         elif scheme == "roar":
             # ROAR token schedule setup (one-by-one, but random order)
             num_steps = decoding_steps[target_idx]
@@ -547,9 +499,7 @@ class GenerationSampler(nn.Module):
             cum_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
             sorted_indices_to_remove = cum_probs > top_p
             # Shift the indices to the right to keep also the first token above the threshold
-            sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[
-                ..., :-1
-            ].clone()
+            sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
             sorted_indices_to_remove[..., 0] = 0
 
             restore_indices = torch.argsort(sorted_indices, dim=-1)
@@ -576,9 +526,7 @@ class GenerationSampler(nn.Module):
         if logits.ndim > 2:
             B, N = logits.shape[0], logits.shape[1]
             logits = rearrange(logits, "b n v -> (b n) v")
-            samples, sampled_probs = self.sample_tokens(
-                logits, temperature, top_k, top_p
-            )
+            samples, sampled_probs = self.sample_tokens(logits, temperature, top_k, top_p)
             samples = rearrange(samples, "(b n) -> b n", b=B, n=N)
             sampled_probs = rearrange(sampled_probs, "(b n) -> b n", b=B, n=N)
             return samples, sampled_probs
@@ -638,9 +586,7 @@ class GenerationSampler(nn.Module):
 
         # Add arange multiplied by small constant to mask so they get sorted in a deterministic way
         mask_arange = (
-            torch.arange(
-                encoder_mask_all.shape[1], device=encoder_mask_all.device
-            ).unsqueeze(0)
+            torch.arange(encoder_mask_all.shape[1], device=encoder_mask_all.device).unsqueeze(0)
             * 1e-6
         )
         ids_shuffle = torch.argsort(encoder_mask_all + mask_arange, dim=1)
@@ -662,9 +608,7 @@ class GenerationSampler(nn.Module):
             register_tokens = repeat(self.model.register_tokens, "() n d -> b n d", b=B)
             # We add prompt tokens at the beginning of the sequence
             encoder_tokens = torch.cat([register_tokens, encoder_tokens], dim=1)
-            encoder_emb = torch.cat(
-                [torch.zeros_like(register_tokens), encoder_emb], dim=1
-            )
+            encoder_emb = torch.cat([torch.zeros_like(register_tokens), encoder_emb], dim=1)
             encoder_mask = torch.cat(
                 [
                     torch.zeros(
@@ -711,18 +655,14 @@ class GenerationSampler(nn.Module):
             d["ids"], self.model.modality_info[target_mod]["id"], dtype=torch.int
         )
         mod_pos_all = torch.arange(d["x"].shape[1], device=d["x"].device).unsqueeze(0)
-        mod_pos_all = repeat(
-            mod_pos_all, "1 n -> b n", b=B
-        )  # Added: Expansion for batching
+        mod_pos_all = repeat(mod_pos_all, "1 n -> b n", b=B)  # Added: Expansion for batching
         num_decoder_tokens = (
             ~decoder_mask_all[0]
         ).sum()  # Adapted for batching / Assumes num_decoder_tokens is the same across the batch
 
         # Add arange multiplied by small constant to mask so they get sorted in a deterministic way
         mask_arange = (
-            torch.arange(
-                decoder_mask_all.shape[1], device=decoder_mask_all.device
-            ).unsqueeze(0)
+            torch.arange(decoder_mask_all.shape[1], device=decoder_mask_all.device).unsqueeze(0)
             * 1e-6
         )
         ids_shuffle = torch.argsort(decoder_mask_all + mask_arange, dim=1)
@@ -760,9 +700,7 @@ class GenerationSampler(nn.Module):
             d["ids"], self.model.modality_info[target_mod]["id"], dtype=torch.int
         )
         mod_pos_all = torch.arange(d["x"].shape[1], device=d["x"].device).unsqueeze(0)
-        mod_pos_all = repeat(
-            mod_pos_all, "1 n -> b n", b=B
-        )  # Added: Expansion for batching
+        mod_pos_all = repeat(mod_pos_all, "1 n -> b n", b=B)  # Added: Expansion for batching
         # Only keep the first num_select tokens
         num_decoder_tokens = min(
             num_select, (~decoder_mask_all[0]).sum()
@@ -770,9 +708,7 @@ class GenerationSampler(nn.Module):
 
         # Add a small random number to the mask so they get sorted in a random way, but keeping the masked tokens first
         mask_rand = (
-            torch.rand(
-                decoder_mask_all.shape[1], device=decoder_mask_all.device
-            ).unsqueeze(0)
+            torch.rand(decoder_mask_all.shape[1], device=decoder_mask_all.device).unsqueeze(0)
             * 1e-6
         )
         ids_shuffle = torch.argsort(decoder_mask_all + mask_rand, dim=1)
@@ -819,9 +755,7 @@ class GenerationSampler(nn.Module):
 
         # Add arange multiplied by small constant to mask so they get sorted in a deterministic way
         mask_arange = (
-            torch.arange(
-                decoder_mask_all.shape[1], device=decoder_mask_all.device
-            ).unsqueeze(0)
+            torch.arange(decoder_mask_all.shape[1], device=decoder_mask_all.device).unsqueeze(0)
             * 1e-6
         )
         ids_shuffle = torch.argsort(decoder_mask_all + mask_arange, dim=1)
@@ -849,9 +783,7 @@ class GenerationSampler(nn.Module):
         device = mod_dict[target_mod]["tensor"].device
         # Get input ids
         input_ids = mod_dict[target_mod]["tensor"].squeeze().detach().cpu()
-        input_ids = input_ids[
-            mod_dict[target_mod]["input_mask"].squeeze().detach().cpu() == 0
-        ]
+        input_ids = input_ids[mod_dict[target_mod]["input_mask"].squeeze().detach().cpu() == 0]
         input_ids = input_ids.tolist()
 
         if len(input_ids) == 0:
@@ -875,9 +807,7 @@ class GenerationSampler(nn.Module):
             "input_mask": new_input_mask.to(device),
             "target_mask": new_target_mask.to(device),
         }
-        new_dict["decoder_attention_mask"] = torch.zeros_like(
-            new_target_mask, dtype=torch.bool
-        )
+        new_dict["decoder_attention_mask"] = torch.zeros_like(new_target_mask, dtype=torch.bool)
 
         mod_dict[target_mod] = new_dict
         return mod_dict
@@ -922,9 +852,7 @@ class GenerationSampler(nn.Module):
             p1d = (0, max_seq_len - merged_seq_lens[i])
             merged_tensors[i] = F.pad(merged_tensors[i], p1d, "constant", pad_id)
             merged_input_masks[i] = F.pad(merged_input_masks[i], p1d, "constant", True)
-            merged_target_masks[i] = F.pad(
-                merged_target_masks[i], p1d, "constant", True
-            )
+            merged_target_masks[i] = F.pad(merged_target_masks[i], p1d, "constant", True)
 
         new_dict = {
             "tensor": torch.cat(merged_tensors, dim=0).to(device),
@@ -964,9 +892,7 @@ class GenerationSampler(nn.Module):
         y = decoder_tokens + decoder_emb
         y = self.model.forward_decoder(y, context, encoder_mask, None)
         B, N, D = y.shape
-        logits = self.model.forward_logits(y, decoder_mod_dict, decoder_mod_mask)[
-            target_mod
-        ]
+        logits = self.model.forward_logits(y, decoder_mod_dict, decoder_mod_mask)[target_mod]
         logits = logits.reshape(B, N, -1)
 
         return logits, mod_pos
@@ -974,9 +900,7 @@ class GenerationSampler(nn.Module):
     def maskgit_step_batched(
         self, mod_dict, target_mod, num_select, temperature, top_k, top_p, seed=None
     ):
-        logits, mod_pos = self.forward_enc_dec_maskgit_batched(
-            mod_dict, target_mod, seed=seed
-        )
+        logits, mod_pos = self.forward_enc_dec_maskgit_batched(mod_dict, target_mod, seed=seed)
 
         # MaskGIT sampling
         top_samples, top_indices = self.select_tokens_batched(
@@ -1016,11 +940,8 @@ class GenerationSampler(nn.Module):
         seed=None,
         write_all_predictions=False,
     ):
-
         ### 1 - First pass, with conditioning
-        logits_cond, _ = self.forward_enc_dec_maskgit_batched(
-            mod_dict, target_mod, seed=seed
-        )
+        logits_cond, _ = self.forward_enc_dec_maskgit_batched(mod_dict, target_mod, seed=seed)
 
         ### 2 - Second pass, without conditioning
         mod_dict_uncond = copy.deepcopy(mod_dict)
@@ -1086,7 +1007,6 @@ class GenerationSampler(nn.Module):
         seed=None,
         write_all_predictions=False,
     ):
-
         ### 1 - Conditional forward passes (one for each guided condition)
         logits_cond_all = []
         for cond_dict in cond_dicts:
@@ -1181,16 +1101,12 @@ class GenerationSampler(nn.Module):
             )
         }
         decoder_tokens, decoder_emb, decoder_mask, decoder_mod_mask, mod_pos = (
-            self.forward_mask_decoder_roar(
-                decoder_mod_dict, target_mod, num_select, seed=seed
-            )
+            self.forward_mask_decoder_roar(decoder_mod_dict, target_mod, num_select, seed=seed)
         )
         y = decoder_tokens + decoder_emb
         y = self.model.forward_decoder(y, context, encoder_mask, None)
         B, N, D = y.shape
-        logits = self.model.forward_logits(y, decoder_mod_dict, decoder_mod_mask)[
-            target_mod
-        ]
+        logits = self.model.forward_logits(y, decoder_mod_dict, decoder_mod_mask)[target_mod]
         logits = logits.reshape(B, N, -1)
 
         return logits, mod_pos
@@ -1304,7 +1220,6 @@ class GenerationSampler(nn.Module):
         top_p,
         seed=None,
     ):
-
         ### 1 - Conditional forward passes (one for each guided condition)
         logits_cond_all = []
         for cond_dict in cond_dicts:
@@ -1383,7 +1298,6 @@ class GenerationSampler(nn.Module):
         text_tokenizer=None,
         seed=None,
     ):
-
         # Encoder
         encoder_mod_dict = {
             mod: self.model.encoder_embeddings[mod](d)
@@ -1407,9 +1321,7 @@ class GenerationSampler(nn.Module):
             )
         }
         decoder_ids, decoder_emb, decoder_mask, decoder_mod_mask, mod_pos = (
-            self.forward_mask_decoder_autoregressive(
-                decoder_mod_dict, target_mod, seed=seed
-            )
+            self.forward_mask_decoder_autoregressive(decoder_mod_dict, target_mod, seed=seed)
         )
         device = decoder_ids.device
         seq_len = self.model.modality_info[target_mod]["max_tokens"]
@@ -1438,20 +1350,15 @@ class GenerationSampler(nn.Module):
         for i in range(seq_len):
             cur_len = out.shape[1]
             # Convert ids into word embeddings and add corresponding posembs + modemb
-            y = (
-                self.model.decoder_embeddings[target_mod].token_emb(out)
-                + y_emb[:, :cur_len]
-            )
+            y = self.model.decoder_embeddings[target_mod].token_emb(out) + y_emb[:, :cur_len]
             # Build causal mask
-            causal_mask = torch.ones(
-                (cur_len, cur_len), dtype=torch.bool, device=y.device
-            ).triu(1)
+            causal_mask = torch.ones((cur_len, cur_len), dtype=torch.bool, device=y.device).triu(1)
             causal_mask = repeat(causal_mask, "n1 n2 -> b n1 n2", b=B)
 
             y = self.model.forward_decoder(y, context, encoder_mask, causal_mask)
-            logits = self.model.forward_logits(
-                y, decoder_mod_dict, decoder_mod_mask[:, :cur_len]
-            )[target_mod]
+            logits = self.model.forward_logits(y, decoder_mod_dict, decoder_mod_mask[:, :cur_len])[
+                target_mod
+            ]
             logits = rearrange(logits, "(b n) d -> b n d", b=B, n=cur_len)
             last_logits = logits[:, -1]
 
@@ -1467,9 +1374,7 @@ class GenerationSampler(nn.Module):
             if use_eos and (out == eos_token).any(dim=-1).all():
                 break
 
-        mod_dict = self.merge_sequences_batched(
-            mod_dict, out, target_mod, text_tokenizer
-        )
+        mod_dict = self.merge_sequences_batched(mod_dict, out, target_mod, text_tokenizer)
 
         return mod_dict
 
@@ -1488,7 +1393,6 @@ class GenerationSampler(nn.Module):
         guidance_scale=1.0,
         seed=None,
     ):
-
         ### 1 - Encoder forward pass, with conditioning
 
         # Encoder
@@ -1514,9 +1418,7 @@ class GenerationSampler(nn.Module):
             )
         }
         decoder_ids, decoder_emb, decoder_mask, decoder_mod_mask_cond, mod_pos = (
-            self.forward_mask_decoder_autoregressive(
-                decoder_mod_dict_cond, target_mod, seed=seed
-            )
+            self.forward_mask_decoder_autoregressive(decoder_mod_dict_cond, target_mod, seed=seed)
         )
         device = decoder_ids.device
         seq_len = self.model.modality_info[target_mod]["max_tokens"]
@@ -1552,9 +1454,7 @@ class GenerationSampler(nn.Module):
             )
         }
         decoder_ids, decoder_emb, decoder_mask, decoder_mod_mask_uncond, mod_pos = (
-            self.forward_mask_decoder_autoregressive(
-                decoder_mod_dict_uncond, target_mod, seed=seed
-            )
+            self.forward_mask_decoder_autoregressive(decoder_mod_dict_uncond, target_mod, seed=seed)
         )
 
         if use_eos and eos_token is None:
@@ -1581,20 +1481,13 @@ class GenerationSampler(nn.Module):
         for i in range(seq_len):
             cur_len = out.shape[1]
             # Convert ids into word embeddings and add corresponding posembs + modemb
-            y = (
-                self.model.decoder_embeddings[target_mod].token_emb(out)
-                + y_emb[:, :cur_len]
-            )
+            y = self.model.decoder_embeddings[target_mod].token_emb(out) + y_emb[:, :cur_len]
             # Build causal mask
-            causal_mask = torch.ones(
-                (cur_len, cur_len), dtype=torch.bool, device=y.device
-            ).triu(1)
+            causal_mask = torch.ones((cur_len, cur_len), dtype=torch.bool, device=y.device).triu(1)
             causal_mask = repeat(causal_mask, "n1 n2 -> b n1 n2", b=B)
 
             ### 3a - Decoder forward pass, with conditioning
-            y_cond = self.model.forward_decoder(
-                y, context_cond, encoder_mask_cond, causal_mask
-            )
+            y_cond = self.model.forward_decoder(y, context_cond, encoder_mask_cond, causal_mask)
             logits_cond = self.model.forward_logits(
                 y_cond, decoder_mod_dict_cond, decoder_mod_mask_cond[:, :cur_len]
             )[target_mod]
@@ -1613,8 +1506,7 @@ class GenerationSampler(nn.Module):
 
             ### 3c - Classifier-free guidance
             last_logits = (
-                last_logits_uncond
-                + (last_logits_cond - last_logits_uncond) * guidance_scale
+                last_logits_uncond + (last_logits_cond - last_logits_uncond) * guidance_scale
             )
 
             # Sample token for the newly generated logit
@@ -1629,9 +1521,7 @@ class GenerationSampler(nn.Module):
             if use_eos and (out == eos_token).any(dim=-1).all():
                 break
 
-        mod_dict = self.merge_sequences_batched(
-            mod_dict, out, target_mod, text_tokenizer
-        )
+        mod_dict = self.merge_sequences_batched(mod_dict, out, target_mod, text_tokenizer)
 
         return mod_dict
 

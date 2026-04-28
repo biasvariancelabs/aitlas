@@ -7,11 +7,10 @@
 
 from functools import partial
 
-import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from timm.models.vision_transformer import Block, PatchEmbed
+from torch import nn
 
 from ..SatMAE.pos_embed import get_2d_sincos_pos_embed
 
@@ -32,9 +31,7 @@ class LayerNorm(nn.Module):
 
     def forward(self, x):
         if self.data_format == "channels_last":
-            return F.layer_norm(
-                x, self.normalized_shape, self.weight, self.bias, self.eps
-            )
+            return F.layer_norm(x, self.normalized_shape, self.weight, self.bias, self.eps)
         elif self.data_format == "channels_first":
             u = x.mean(1, keepdim=True)
             s = (x - u).pow(2).mean(1, keepdim=True)
@@ -78,9 +75,7 @@ class UpsampleBlock(nn.Module):
         self.res_block = ResidualBlock(in_channels)
         self.res_norm = LayerNorm(in_channels, eps=1e-6, data_format="channels_first")
 
-        self.proj_out = nn.Conv2d(
-            in_channels, out_channels, kernel_size=3, stride=1, padding=1
-        )
+        self.proj_out = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1)
 
         self.apply(self._init_weights)
 
@@ -142,9 +137,7 @@ class MaskedAutoencoderViT(nn.Module):
         ######################################################
         # create upsample block layers
         ms_dim = self.in_c * proj_ratio
-        self.proj_up_conv = nn.Conv2d(
-            self.in_c, ms_dim, kernel_size=1, stride=1, padding=0
-        )
+        self.proj_up_conv = nn.Conv2d(self.in_c, ms_dim, kernel_size=1, stride=1, padding=0)
         self.proj_up_norm = LayerNorm(ms_dim, eps=1e-6, data_format="channels_first")
 
         self.up_block = UpsampleBlock(ms_dim, self.in_c)
@@ -220,9 +213,7 @@ class MaskedAutoencoderViT(nn.Module):
             int(self.patch_embed.num_patches**0.5),
             cls_token=True,
         )
-        self.decoder_pos_embed.data.copy_(
-            torch.from_numpy(decoder_pos_embed).float().unsqueeze(0)
-        )
+        self.decoder_pos_embed.data.copy_(torch.from_numpy(decoder_pos_embed).float().unsqueeze(0))
 
         # initialize patch_embed like nn.Linear (instead of nn.Conv2d)
         w = self.patch_embed.proj.weight.data
@@ -289,9 +280,7 @@ class MaskedAutoencoderViT(nn.Module):
         noise = torch.rand(N, L, device=x.device)  # noise in [0, 1]
 
         # sort noise for each sample
-        ids_shuffle = torch.argsort(
-            noise, dim=1
-        )  # ascend: small is keep, large is remove
+        ids_shuffle = torch.argsort(noise, dim=1)  # ascend: small is keep, large is remove
         ids_restore = torch.argsort(ids_shuffle, dim=1)
 
         # keep the first subset
@@ -333,9 +322,7 @@ class MaskedAutoencoderViT(nn.Module):
         x = self.decoder_embed(x)
 
         # append mask tokens to sequence
-        mask_tokens = self.mask_token.repeat(
-            x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1
-        )
+        mask_tokens = self.mask_token.repeat(x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1)
         x_ = torch.cat([x[:, 1:, :], mask_tokens], dim=1)  # no cls token
         x_ = torch.gather(
             x_, dim=1, index=ids_restore.unsqueeze(-1).repeat(1, 1, x.shape[2])
@@ -415,7 +402,7 @@ def mae_vit_base_patch16_dec512d8b(**kwargs):
         decoder_num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -430,13 +417,11 @@ def mae_vit_large_patch16_dec512d8b(**kwargs):
         decoder_num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
 
 # set recommended archs
 satmae_plusplus_vit_base = mae_vit_base_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
-satmae_plusplus_vit_large = (
-    mae_vit_large_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
-)
+satmae_plusplus_vit_large = mae_vit_large_patch16_dec512d8b  # decoder: 512 dim, 8 blocks

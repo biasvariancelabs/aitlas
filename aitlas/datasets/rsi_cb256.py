@@ -41,7 +41,6 @@ LABELS = [
 
 
 class RSICB256Dataset(MultiClassClassificationDataset):
-
     url = "https://github.com/lehaifeng/RSI-CB"
     labels = LABELS
 

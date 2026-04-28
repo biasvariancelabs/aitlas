@@ -2,9 +2,8 @@ import logging
 
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as nnf
-import torch.optim as optim
+from torch import nn, optim
 
 from .metrics import MultiClassRunningScore, MultiLabelRunningScore
 from .models import BaseModel
@@ -119,9 +118,7 @@ class BaseMultilabelClassifier(BaseModel):
         :rtype: tuple
         """
         predicted_probs = torch.sigmoid(outputs)
-        predicted = predicted_probs >= (
-            threshold if threshold else self.config.threshold
-        )
+        predicted = predicted_probs >= (threshold if threshold else self.config.threshold)
         return predicted_probs, predicted
 
     def report(self, labels, dataset_name, running_metrics, **kwargs):

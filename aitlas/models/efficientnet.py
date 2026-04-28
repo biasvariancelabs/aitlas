@@ -1,7 +1,7 @@
 """EfficientNetB0 (V1) for image classification"""
 
-import torch.nn as nn
-import torchvision.models as models
+from torch import nn
+from torchvision import models
 
 from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 

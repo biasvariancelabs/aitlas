@@ -21,7 +21,6 @@ from tqdm import tqdm
 
 from aitlas.datasets.crops_classification import CropsDataset
 
-from ..base import BaseDataset
 from .schemas import BreizhCropsSchema
 from .urls import (
     CLASSMAPPINGURL,
@@ -30,7 +29,6 @@ from .urls import (
     RAW_CSV_URL,
     H5_URLs,
     INDEX_FILE_URLs,
-    SHP_URLs,
 )
 
 
@@ -52,13 +50,9 @@ def download_file(url, output_path, overwrite=False):
         with DownloadProgressBar(
             unit="B", unit_scale=True, miniters=1, desc=url.split("/")[-1]
         ) as t:
-            urllib.request.urlretrieve(
-                url, filename=output_path, reporthook=t.update_to
-            )
+            urllib.request.urlretrieve(url, filename=output_path, reporthook=t.update_to)
     else:
-        logging.info(
-            f"file exists in {output_path}. specify `overwrite=True` if intended"
-        )
+        logging.info(f"file exists in {output_path}. specify `overwrite=True` if intended")
 
 
 def unzip(zipfile_path, target_dir):
@@ -75,9 +69,7 @@ def untar(filepath):
     with tarfile.open(filepath, "r:gz") as tar:
         for member in tar.getmembers():
             if member.isreg():  # skip if the TarInfo is not files
-                member.name = os.path.basename(
-                    member.name
-                )  # remove the path by reset it
+                member.name = os.path.basename(member.name)  # remove the path by reset it
                 tar.extract(member, dirname)  # extract
 
 
@@ -213,9 +205,7 @@ class BreizhCropsDataset(CropsDataset):
                 self.shapefile[region],
                 self.classmapping,
                 self.csvfolder[region],
-            ) = self.build_folder_structure(
-                self.root, self.config.year, self.config.level, region
-            )
+            ) = self.build_folder_structure(self.root, self.config.year, self.config.level, region)
 
             self.load_classmapping(self.classmapping)
             logging.info("Path " + self.h5path[region])
@@ -249,9 +239,7 @@ class BreizhCropsDataset(CropsDataset):
                 self.download_h5_database(region)
 
             index_region = pd.read_csv(self.indexfile[region], index_col=None)
-            index_region = index_region.loc[
-                index_region["CODE_CULTU"].isin(self.mapping.index)
-            ]
+            index_region = index_region.loc[index_region["CODE_CULTU"].isin(self.mapping.index)]
 
             if (
                 "classid" not in index_region.columns
@@ -259,20 +247,16 @@ class BreizhCropsDataset(CropsDataset):
                 or "region" not in index_region.columns
             ):
                 # drop fields that are not in the class mapping
-                index_region = index_region.loc[
-                    index_region["CODE_CULTU"].isin(self.mapping.index)
-                ]
-                index_region[["classid", "classname"]] = index_region[
-                    "CODE_CULTU"
-                ].apply(lambda code: self.mapping.loc[code])
+                index_region = index_region.loc[index_region["CODE_CULTU"].isin(self.mapping.index)]
+                index_region[["classid", "classname"]] = index_region["CODE_CULTU"].apply(
+                    lambda code: self.mapping.loc[code]
+                )
                 index_region["region"] = region
                 index_region.to_csv(self.indexfile[region])
 
             if len(self.index.columns) == 0:
                 self.index = pd.DataFrame(columns=index_region.columns)
-            self.index = pd.concat(
-                [self.index, index_region], axis=0, ignore_index=True
-            )
+            self.index = pd.concat([self.index, index_region], axis=0, ignore_index=True)
 
         if self.config.verbose:
             logging.info(
@@ -344,9 +328,7 @@ class BreizhCropsDataset(CropsDataset):
 
     def parcel_distribution_table(self):
         # Figure 2 a) in the paper
-        parcel_count = (
-            self.index[["id", "region"]].groupby("region").count().reset_index()
-        )
+        parcel_count = self.index[["id", "region"]].groupby("region").count().reset_index()
         parcel_count.columns = ["Region NUTS-3", "# " + self.config.level]
         total_row = parcel_count.sum(axis=0)
         total_row["Region NUTS-3"] = "Total"
@@ -358,9 +340,7 @@ class BreizhCropsDataset(CropsDataset):
         # Figure 2 b) in the paper
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
-        g = sns.barplot(
-            x="Label", y="Number of parcels", hue="Region", data=label_count, ax=ax
-        )
+        g = sns.barplot(x="Label", y="Number of parcels", hue="Region", data=label_count, ax=ax)
         g.set_xticklabels(g.get_xticklabels(), rotation=30)
         g.set_yscale("log")
         return fig
@@ -391,9 +371,7 @@ class BreizhCropsDataset(CropsDataset):
         zipped_file = os.path.join(
             self.root, str(self.config.year), self.config.level, f"{region}.zip"
         )
-        download_file(
-            RAW_CSV_URL[self.config.year][self.config.level][region], zipped_file
-        )
+        download_file(RAW_CSV_URL[self.config.year][self.config.level][region], zipped_file)
         unzip(zipped_file, self.csvfolder[region])
         os.remove(zipped_file)
 
@@ -445,7 +423,7 @@ class BreizhCropsDataset(CropsDataset):
         untar(self.h5path[region] + ".tar.gz")
         logging.info(f"removing {self.h5path[region]}.tar.gz")
         os.remove(self.h5path[region] + ".tar.gz")
-        logging.info(f"checking integrity by file size...")
+        logging.info("checking integrity by file size...")
         assert (
             os.path.getsize(self.h5path[region])
             == FILESIZES[self.config.year][self.config.level][region]
@@ -472,9 +450,8 @@ class BreizhCropsDataset(CropsDataset):
                     f"no classmapping found at {classmapping}, downloading from {CLASSMAPPINGURL}"
                 )
             download_file(CLASSMAPPINGURL, classmapping)
-        else:
-            if self.config.verbose:
-                print(f"found classmapping at {classmapping}")
+        elif self.config.verbose:
+            print(f"found classmapping at {classmapping}")
 
         self.mapping = pd.read_csv(classmapping, index_col=0).sort_values(by="id")
         self.mapping = self.mapping.set_index("code")
@@ -493,9 +470,8 @@ class BreizhCropsDataset(CropsDataset):
                     f"no classmapping found at {classmapping}, downloading from {CLASSMAPPINGURL}"
                 )
             download_file(CLASSMAPPINGURL, classmapping)
-        else:
-            if self.config.verbose:
-                logging.info(f"found classmapping at {classmapping}")
+        elif self.config.verbose:
+            logging.info(f"found classmapping at {classmapping}")
 
         mapping = pd.read_csv(classmapping, index_col=0).sort_values(by="id")
         mapping = mapping[["id", "classname"]].groupby("id").first()
@@ -561,9 +537,7 @@ class BreizhCropsDataset(CropsDataset):
                 raise ValueError(f"Unknown level: {self.config.level}")
 
             X = self.load(os.path.join(self.csvfolder, csv_file))
-            culturecode, id = self.load_culturecode_and_id(
-                os.path.join(self.csvfolder, csv_file)
-            )
+            culturecode, id = self.load_culturecode_and_id(os.path.join(self.csvfolder, csv_file))
 
             if culturecode is None or id is None:
                 continue

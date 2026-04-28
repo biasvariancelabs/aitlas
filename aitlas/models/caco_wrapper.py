@@ -2,13 +2,12 @@ import os
 
 import requests
 import torch
-import torch.nn as nn
+from torch import nn
 from tqdm import tqdm
 
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
-from .CACo.caco import MoCoV2CACoModule, caco_resnet18, caco_resnet50
 
 
 class CACo(FoundationModel):
@@ -58,44 +57,41 @@ class CACo(FoundationModel):
                     print(
                         f"Provided local model path does not exist: {self.config.local_model_path}"
                     )
-                    print(
-                        "Weights will be downloaded from Cornell University website instead."
-                    )
+                    print("Weights will be downloaded from Cornell University website instead.")
                     # Check if backbone is supported
                     if self.config.backbone_name not in self.BACKBONE_CHECKPOINTS:
                         raise ValueError(
                             f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}"
                         )
-                    else:
-                        # Check if backbone has weights available
-                        if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
-                            raise ValueError(
-                                f"No pretrained weights are available for backbone '{self.config.backbone_name}'."
-                            )
-                        else:  # Download the weights and load the model
-                            # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[
-                                self.config.backbone_name
-                            ][0]
-                            checkpoint_name = temp_checkpoint_name["filename"]
-                            print(checkpoint_name)
-                            self._download_from_cornell(
-                                checkpoint_name=checkpoint_name,
-                                local_model_path=self.config.local_model_path,
-                            )
-                            checkpoint = torch.load(
-                                self.config.local_model_path,
-                                map_location="cpu",
-                                weights_only=False,
-                            )
-                            backbone = globals()[self.config.backbone_name]()
-                            msg_q = backbone.encoder_q.load_state_dict(
-                                checkpoint, strict=True
-                            )  # Load weights for the query encoder
-                            msg_k = backbone.encoder_k.load_state_dict(
-                                checkpoint, strict=True
-                            )  # Load weights for the key encoder
-                            print("Successfully loaded checkpoint:", checkpoint_name)
+                    # Check if backbone has weights available
+                    elif self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
+                        raise ValueError(
+                            f"No pretrained weights are available for backbone '{self.config.backbone_name}'."
+                        )
+                    else:  # Download the weights and load the model
+                        # For now, just load the first checkpoint available for the backbone
+                        temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][
+                            0
+                        ]
+                        checkpoint_name = temp_checkpoint_name["filename"]
+                        print(checkpoint_name)
+                        self._download_from_cornell(
+                            checkpoint_name=checkpoint_name,
+                            local_model_path=self.config.local_model_path,
+                        )
+                        checkpoint = torch.load(
+                            self.config.local_model_path,
+                            map_location="cpu",
+                            weights_only=False,
+                        )
+                        backbone = globals()[self.config.backbone_name]()
+                        msg_q = backbone.encoder_q.load_state_dict(
+                            checkpoint, strict=True
+                        )  # Load weights for the query encoder
+                        msg_k = backbone.encoder_k.load_state_dict(
+                            checkpoint, strict=True
+                        )  # Load weights for the key encoder
+                        print("Successfully loaded checkpoint:", checkpoint_name)
                 else:
                     print(
                         f"Loading weights from the provided local path: {self.config.local_model_path}"
@@ -125,9 +121,7 @@ class CACo(FoundationModel):
                     )  # Load weights for the key encoder
                     print("Successfully loaded checkpoint:", checkpoint_name)
         else:  # Load model without pretrained weights
-            raise NotImplementedError(
-                "Loading model without pretrained weights is not supported."
-            )
+            raise NotImplementedError("Loading model without pretrained weights is not supported.")
 
         # Replace the head with identity if it exists
         if hasattr(backbone, "head"):
@@ -170,9 +164,7 @@ class CACo(FoundationModel):
             local_model_path: The local path to save the file.
         """
 
-        download_url = (
-            f"https://research.cs.cornell.edu/caco/checkpoints/{checkpoint_name}"
-        )
+        download_url = f"https://research.cs.cornell.edu/caco/checkpoints/{checkpoint_name}"
 
         try:
             # Use requests to download the weights
@@ -183,13 +175,16 @@ class CACo(FoundationModel):
                 total_size = int(r.headers.get("content-length", 0))
 
                 # Open the local file and write in chunks with a tqdm progress bar
-                with open(local_model_path, "wb") as f, tqdm(
-                    desc=checkpoint_name,
-                    total=total_size,
-                    unit="B",  # Unit is Bytes
-                    unit_scale=True,  # Automatically scale (KB, MB, GB)
-                    unit_divisor=1024,  # Use 1024 for scaling
-                ) as progress_bar:
+                with (
+                    open(local_model_path, "wb") as f,
+                    tqdm(
+                        desc=checkpoint_name,
+                        total=total_size,
+                        unit="B",  # Unit is Bytes
+                        unit_scale=True,  # Automatically scale (KB, MB, GB)
+                        unit_divisor=1024,  # Use 1024 for scaling
+                    ) as progress_bar,
+                ):
                     for chunk in r.iter_content(chunk_size=8192):
                         f.write(chunk)
                         progress_bar.update(len(chunk))

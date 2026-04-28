@@ -8,8 +8,9 @@ Copy-paste from torch.nn.Transformer with modifications:
     * extra LN at the end of encoder is removed
     * decoder returns a stack of activations from all decoding layers
 """
+
 import copy
-from typing import List, Optional
+from typing import Optional
 
 import torch
 import torch.nn.functional as F
@@ -35,9 +36,7 @@ class Transformer(nn.Module):
             d_model, nhead, dim_feedforward, dropout, activation, normalize_before
         )
         encoder_norm = nn.LayerNorm(d_model) if normalize_before else None
-        self.encoder = TransformerEncoder(
-            encoder_layer, num_encoder_layers, encoder_norm
-        )
+        self.encoder = TransformerEncoder(encoder_layer, num_encoder_layers, encoder_norm)
 
         decoder_layer = TransformerDecoderLayer(
             d_model, nhead, dim_feedforward, dropout, activation, normalize_before

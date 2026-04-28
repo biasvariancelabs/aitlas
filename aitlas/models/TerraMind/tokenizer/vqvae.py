@@ -22,10 +22,10 @@ import copy
 from contextlib import nullcontext
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange, repeat
 from huggingface_hub import PyTorchModelHubMixin
+from torch import nn
 
 from ..utils import denormalize
 from .models import uvit, vit_models
@@ -37,7 +37,7 @@ from .scheduling import DDIMScheduler, DDPMScheduler, PipelineCond
 
 try:
     from diffusers.schedulers.scheduling_utils import SchedulerMixin
-except:
+except ImportError:
     # diffusers not available
     SchedulerMixin = None
 
@@ -154,9 +154,7 @@ class VQ(nn.Module, PyTorchModelHubMixin):
 
         # For semantic segmentation
         if n_labels is not None:
-            self.cls_emb = nn.Embedding(
-                num_embeddings=n_labels, embedding_dim=n_channels
-            )
+            self.cls_emb = nn.Embedding(num_embeddings=n_labels, embedding_dim=n_channels)
             self.colorize = torch.randn(3, n_labels, 1, 1)
         else:
             self.cls_emb = None
@@ -383,9 +381,7 @@ class VQ(nn.Module, PyTorchModelHubMixin):
         Returns:
             Decoded image tensor of shape B C H W
         """
-        raise NotImplementedError(
-            "Subclasses must implement decode_quant to return a Tensor."
-        )
+        raise NotImplementedError("Subclasses must implement decode_quant to return a Tensor.")
 
     def tokens_to_embedding(self, tokens: torch.LongTensor) -> torch.Tensor:
         """Look up the codebook entries corresponding the discrete tokens.
@@ -484,9 +480,7 @@ class VQVAE(VQ):
             )
             self.dec_dim = self.decoder.dim_tokens
         elif "MLP" in dec_type:
-            self.decoder = build_mlp(
-                model_id=dec_type, dim_in=None, dim_out=out_channels
-            )
+            self.decoder = build_mlp(model_id=dec_type, dim_in=None, dim_out=out_channels)
             self.dec_dim = self.decoder.dim_in
         else:
             raise NotImplementedError(f"{dec_type} not implemented.")
@@ -605,9 +599,8 @@ class DiVAE(VQ):
         *args,
         **kwargs,
     ):
-
         try:
-            import diffusers
+            import diffusers  # noqa: F401
         except ImportError:
             raise ImportError(
                 "Please install diffusers to use VQVAE with `pip install diffusers==0.20.0`."
@@ -630,9 +623,7 @@ class DiVAE(VQ):
         self.zero_terminal_snr = zero_terminal_snr
 
         if cls_free_guidance_dropout > 0.0:
-            self.cfg_dist = torch.distributions.Bernoulli(
-                probs=cls_free_guidance_dropout
-            )
+            self.cfg_dist = torch.distributions.Bernoulli(probs=cls_free_guidance_dropout)
         else:
             self.cfg_dist = None
         self.masked_cfg = masked_cfg
@@ -697,13 +688,9 @@ class DiVAE(VQ):
         num_tokens = H_Q * W_Q
         high = high if high is not None else num_tokens
 
-        zero_idxs = torch.randint(
-            low=low, high=high + 1, size=(B,), device=quant.device
-        )
+        zero_idxs = torch.randint(low=low, high=high + 1, size=(B,), device=quant.device)
         noise = torch.rand(B, num_tokens, device=quant.device)
-        ids_arange_shuffle = torch.argsort(
-            noise, dim=1
-        )  # ascend: small is keep, large is remove
+        ids_arange_shuffle = torch.argsort(noise, dim=1)  # ascend: small is keep, large is remove
         mask = torch.where(ids_arange_shuffle < zero_idxs.unsqueeze(1), 0, 1)
         mask = rearrange(mask, "b (h w) -> b h w", h=H_Q, w=W_Q).bool()
 
@@ -719,9 +706,7 @@ class DiVAE(VQ):
         Returns:
             Conditional diffusion pipeline.
         """
-        return PipelineCond(
-            model=self.decoder, scheduler=scheduler, n_channels=self.n_channels
-        )
+        return PipelineCond(model=self.decoder, scheduler=scheduler, n_channels=self.n_channels)
 
     def decode_quant(
         self,
@@ -849,12 +834,8 @@ class DiVAE(VQ):
             cond_mask = self.cfg_dist.sample((B,)).to(quant.device, dtype=torch.bool)
             cond_mask = repeat(cond_mask, "b -> b h w", h=H_Q, w=W_Q)
             if self.masked_cfg:
-                mask = self.sample_mask(
-                    quant, low=self.masked_cfg_low, high=self.masked_cfg_high
-                )
+                mask = self.sample_mask(quant, low=self.masked_cfg_low, high=self.masked_cfg_high)
                 cond_mask = mask * cond_mask
 
-        dec = self.decoder(
-            input_noised, timesteps, quant, cond_mask=cond_mask, orig_res=orig_res
-        )
+        dec = self.decoder(input_noised, timesteps, quant, cond_mask=cond_mask, orig_res=orig_res)
         return dec, code_loss

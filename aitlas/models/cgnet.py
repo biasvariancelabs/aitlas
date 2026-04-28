@@ -1,8 +1,8 @@
 """CGNet: Change Guiding Network for Change Detection"""
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torchvision import models
 
 from ..base import BaseChangeDetection
@@ -14,9 +14,7 @@ from ..base import BaseChangeDetection
 
 
 class BasicConv2d(nn.Module):
-    def __init__(
-        self, in_planes, out_planes, kernel_size, stride=1, padding=0, dilation=1
-    ):
+    def __init__(self, in_planes, out_planes, kernel_size, stride=1, padding=0, dilation=1):
         super(BasicConv2d, self).__init__()
         self.conv = nn.Conv2d(
             in_planes,
@@ -47,15 +45,9 @@ class ChangeGuideModule(nn.Module):
         super(ChangeGuideModule, self).__init__()
         self.chanel_in = in_dim
 
-        self.query_conv = nn.Conv2d(
-            in_channels=in_dim, out_channels=in_dim // 8, kernel_size=1
-        )
-        self.key_conv = nn.Conv2d(
-            in_channels=in_dim, out_channels=in_dim // 8, kernel_size=1
-        )
-        self.value_conv = nn.Conv2d(
-            in_channels=in_dim, out_channels=in_dim, kernel_size=1
-        )
+        self.query_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim // 8, kernel_size=1)
+        self.key_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim // 8, kernel_size=1)
+        self.value_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim, kernel_size=1)
         self.gamma = nn.Parameter(torch.zeros(1))
 
         self.softmax = nn.Softmax(dim=-1)
@@ -119,9 +111,7 @@ class CGNetModel(nn.Module):
                 padding=old_conv.padding,
                 bias=old_conv.bias,
             )
-            nn.init.kaiming_normal_(
-                new_conv.weight, mode="fan_out", nonlinearity="relu"
-            )
+            nn.init.kaiming_normal_(new_conv.weight, mode="fan_out", nonlinearity="relu")
             vgg16_bn.features[0] = new_conv
 
         # Backbone Slices (VGG-16 BN)
@@ -139,9 +129,7 @@ class CGNetModel(nn.Module):
 
         # Decoders
         # The internal guide map decoder always outputs 1 channel as it's used for attention guidance.
-        self.decoder = nn.Sequential(
-            BasicConv2d(512, 64, 3, 1, 1), nn.Conv2d(64, 1, 3, 1, 1)
-        )
+        self.decoder = nn.Sequential(BasicConv2d(512, 64, 3, 1, 1), nn.Conv2d(64, 1, 3, 1, 1))
         # The final decoder outputs num_classes as requested by the framework.
         self.decoder_final = nn.Sequential(
             BasicConv2d(128, 64, 3, 1, 1), nn.Conv2d(64, num_classes, 1)
@@ -181,9 +169,7 @@ class CGNetModel(nn.Module):
         layer4 = self.conv_reduce_4(torch.cat((l4_B, l4_A), dim=1))
 
         # Initial Guide Map Generation (Internal Guidance)
-        layer4_up = F.interpolate(
-            layer4, layer1.size()[2:], mode="bilinear", align_corners=True
-        )
+        layer4_up = F.interpolate(layer4, layer1.size()[2:], mode="bilinear", align_corners=True)
         change_map = self.decoder(layer4_up)
 
         # Hierarchical Change-Guided Decoding
@@ -194,15 +180,11 @@ class CGNetModel(nn.Module):
         f3 = self.decoder_module3(torch.cat([self.upsample2x(layer3), layer2], dim=1))
 
         layer2 = self.cgm_2(f3, change_map)
-        layer1 = self.decoder_module2(
-            torch.cat([self.upsample2x(layer2), layer1], dim=1)
-        )
+        layer1 = self.decoder_module2(torch.cat([self.upsample2x(layer2), layer1], dim=1))
 
         # Final Prediction
         final_map = self.decoder_final(layer1)
-        final_map_out = F.interpolate(
-            final_map, size, mode="bilinear", align_corners=True
-        )
+        final_map_out = F.interpolate(final_map, size, mode="bilinear", align_corners=True)
 
         return final_map_out
 

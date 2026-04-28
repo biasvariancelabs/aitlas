@@ -3,8 +3,8 @@ SiamCRNN: Change Detection in Multisource VHR Images via Deep Siamese Convolutio
 """
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torchvision import models
 
 from ..base import BaseChangeDetection
@@ -217,9 +217,7 @@ class SiamCRNNModel(nn.Module):
                 padding=old_conv.padding,
                 bias=old_conv.bias,
             )
-            nn.init.kaiming_normal_(
-                new_conv.weight, mode="fan_out", nonlinearity="relu"
-            )
+            nn.init.kaiming_normal_(new_conv.weight, mode="fan_out", nonlinearity="relu")
             resnet.conv1 = new_conv
 
         # Decompose ResNet to access intermediate layers
@@ -245,9 +243,7 @@ class SiamCRNNModel(nn.Module):
         self.smooth_layer_1 = self._make_smooth_layer(128)
 
         # --- Classifier ---
-        self.main_clf_1 = nn.Conv2d(
-            in_channels=128, out_channels=num_classes, kernel_size=1
-        )
+        self.main_clf_1 = nn.Conv2d(in_channels=128, out_channels=num_classes, kernel_size=1)
 
     def _convert_resnet_to_output_stride_16(self, resnet):
         # Modify layer3: stride=1, dilation=2

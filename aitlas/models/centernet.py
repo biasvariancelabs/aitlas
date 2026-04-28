@@ -6,8 +6,8 @@ import re
 
 import requests
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torchvision import models
 
 from ..base import BaseObjectDetection
@@ -55,9 +55,7 @@ def gaussian2D(shape, sigma=1, device="cpu"):
 
 def draw_umich_gaussian(heatmap, center, radius, k=1):
     diameter = 2 * radius + 1
-    gaussian = gaussian2D(
-        (diameter, diameter), sigma=diameter / 6, device=heatmap.device
-    )
+    gaussian = gaussian2D((diameter, diameter), sigma=diameter / 6, device=heatmap.device)
 
     x, y = int(center[0]), int(center[1])
 
@@ -67,9 +65,7 @@ def draw_umich_gaussian(heatmap, center, radius, k=1):
     top, bottom = min(y, radius), min(height - y, radius + 1)
 
     masked_heatmap = heatmap[y - top : y + bottom, x - left : x + right]
-    masked_gaussian = gaussian[
-        radius - top : radius + bottom, radius - left : radius + right
-    ]
+    masked_gaussian = gaussian[radius - top : radius + bottom, radius - left : radius + right]
 
     if min(masked_gaussian.shape) > 0 and min(masked_heatmap.shape) > 0:
         torch.max(masked_heatmap, masked_gaussian * k, out=masked_heatmap)
@@ -251,15 +247,11 @@ class DCNConv(nn.Module):
 
     def __init__(self, in_channels, out_channels, kernel_size=3, padding=1):
         super().__init__()
-        self.weight = nn.Parameter(
-            torch.zeros(out_channels, in_channels, kernel_size, kernel_size)
-        )
+        self.weight = nn.Parameter(torch.zeros(out_channels, in_channels, kernel_size, kernel_size))
         # Bias for main conv (some checkpoints have it)
         self.bias = nn.Parameter(torch.zeros(out_channels))
         # Offset + mask conv: 3 * kernel_size^2 = 27 for 3x3
-        self.conv_offset_mask = nn.Conv2d(
-            in_channels, 27, kernel_size=3, padding=1, bias=True
-        )
+        self.conv_offset_mask = nn.Conv2d(in_channels, 27, kernel_size=3, padding=1, bias=True)
 
     def forward(self, x):
         # Standard conv forward (DCN requires custom CUDA kernel)
@@ -317,9 +309,7 @@ class PoseResNet(nn.Module):
                 fc = nn.Sequential(
                     nn.Conv2d(64, head_conv, kernel_size=3, padding=1, bias=True),
                     nn.ReLU(inplace=True),
-                    nn.Conv2d(
-                        head_conv, num_output, kernel_size=1, stride=1, padding=0
-                    ),
+                    nn.Conv2d(head_conv, num_output, kernel_size=1, stride=1, padding=0),
                 )
             else:
                 fc = nn.Conv2d(64, num_output, kernel_size=1, stride=1, padding=0)
@@ -464,9 +454,7 @@ class CenterNet(BaseObjectDetection):
         heads = {"hm": self.num_classes, "wh": 2, "reg": 2}
         backbone_name = "resnet101"
         head_conv = 64
-        model_url = (
-            "https://drive.google.com/file/d/1tKkSyzC3iWmM6XTYNJrC4XLCIToDmnHz/view"
-        )
+        model_url = "https://drive.google.com/file/d/1tKkSyzC3iWmM6XTYNJrC4XLCIToDmnHz/view"
 
         # 1. Determine backbone initialization strategy
         # We only download ImageNet weights if pretrained=True AND no custom weights are provided
@@ -547,9 +535,7 @@ class CenterNet(BaseObjectDetection):
 
         # Step 2: Second request with the token (if we found one)
         if token and token != "already_handled":
-            response = session.get(
-                url, params={"id": file_id, "confirm": token}, stream=True
-            )
+            response = session.get(url, params={"id": file_id, "confirm": token}, stream=True)
 
         # Step 3: The modern User-Content Fallback
         # If we are STILL getting HTML, try Google's newer direct-download format
@@ -573,9 +559,7 @@ class CenterNet(BaseObjectDetection):
                 if chunk:
                     f.write(chunk)
 
-        print(
-            f"Successfully downloaded weights: {os.path.getsize(destination) / 1024**2:.2f} MB"
-        )
+        print(f"Successfully downloaded weights: {os.path.getsize(destination) / 1024**2:.2f} MB")
 
     def load_centernet_weights(self, checkpoint_path):
         """
@@ -598,22 +582,18 @@ class CenterNet(BaseObjectDetection):
 
             # Filter: Skip first conv if in_channels != 3
             if in_channels != 3 and "conv1.weight" in name:
-                print(
-                    f"Skipping {k} due to input channel mismatch ({in_channels} vs 3)"
-                )
+                print(f"Skipping {k} due to input channel mismatch ({in_channels} vs 3)")
                 continue
 
             # Filter: Skip class-specific weights if num_classes != 80 (COCO)
             if self.num_classes != 80 and "hm" in name:
-                print(
-                    f"Skipping {k} due to class count mismatch ({self.num_classes} vs 80)"
-                )
+                print(f"Skipping {k} due to class count mismatch ({self.num_classes} vs 80)")
                 continue
 
             new_state_dict[name] = v
 
         msg = self.model.load_state_dict(new_state_dict, strict=False)
-        print(f"Loaded pretrained CenterNet weights.")
+        print("Loaded pretrained CenterNet weights.")
         if msg.missing_keys:
             print(
                 f"Missing keys ({len(msg.missing_keys)}): {msg.missing_keys[:10]}{'...' if len(msg.missing_keys) > 10 else ''}"
@@ -625,15 +605,11 @@ class CenterNet(BaseObjectDetection):
 
     def generate_targets(self, targets, output_h, output_w, device):
         batch_size = len(targets)
-        hm = torch.zeros(
-            (batch_size, self.num_classes, output_h, output_w), device=device
-        )
+        hm = torch.zeros((batch_size, self.num_classes, output_h, output_w), device=device)
         wh = torch.zeros((batch_size, self.max_objs, 2), device=device)
         reg = torch.zeros((batch_size, self.max_objs, 2), device=device)
         ind = torch.zeros((batch_size, self.max_objs), dtype=torch.int64, device=device)
-        reg_mask = torch.zeros(
-            (batch_size, self.max_objs), dtype=torch.float32, device=device
-        )
+        reg_mask = torch.zeros((batch_size, self.max_objs), dtype=torch.float32, device=device)
 
         for b in range(batch_size):
             boxes = targets[b]["boxes"]

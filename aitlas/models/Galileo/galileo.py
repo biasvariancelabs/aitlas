@@ -7,10 +7,9 @@ from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange, repeat
-from torch import Tensor, vmap
+from torch import Tensor, nn, vmap
 from torch.jit import Final
 
 from .utils import (
@@ -44,9 +43,7 @@ def get_2d_sincos_pos_embed_with_resolution(
     # grid = grid.reshape([2, 1, grid_size, grid_size])
     grid = torch.einsum("chw,n->cnhw", grid, res)  # 2 x n x h x w
     _, n, h, w = grid.shape
-    pos_embed = get_2d_sincos_pos_embed_from_grid_torch(
-        embed_dim, grid
-    )  #  # (nxH*W, D/2)
+    pos_embed = get_2d_sincos_pos_embed_from_grid_torch(embed_dim, grid)  #  # (nxH*W, D/2)
     pos_embed = pos_embed.reshape(n, h * w, embed_dim)
     if cls_token:
         pos_embed = torch.cat(
@@ -63,12 +60,8 @@ def get_2d_sincos_pos_embed_from_grid_torch(embed_dim, grid):
     assert embed_dim % 2 == 0
 
     # use half of dimensions to encode grid_h
-    emb_h = get_1d_sincos_pos_embed_from_grid_torch(
-        embed_dim // 2, grid[0]
-    )  # (H*W, D/2)
-    emb_w = get_1d_sincos_pos_embed_from_grid_torch(
-        embed_dim // 2, grid[1]
-    )  # (H*W, D/2)
+    emb_h = get_1d_sincos_pos_embed_from_grid_torch(embed_dim // 2, grid[0])  # (H*W, D/2)
+    emb_w = get_1d_sincos_pos_embed_from_grid_torch(embed_dim // 2, grid[1])  # (H*W, D/2)
 
     emb = torch.cat([emb_h, emb_w], dim=1)  # (H*W, D)
     return emb
@@ -119,10 +112,7 @@ def adjust_learning_rate(
         lr = max_lr * epoch / warmup_epochs
     else:
         lr = min_lr + (max_lr - min_lr) * 0.5 * (
-            1.0
-            + math.cos(
-                math.pi * (epoch - warmup_epochs) / (total_epochs - warmup_epochs)
-            )
+            1.0 + math.cos(math.pi * (epoch - warmup_epochs) / (total_epochs - warmup_epochs))
         )
     for group in optimizer.param_groups:
         group["lr"] = lr
@@ -202,9 +192,7 @@ class FlexiPatchEmbed(nn.Module):
         )
         return x_resized[0, 0, ...]
 
-    def _calculate_pinv(
-        self, old_shape: Tuple[int, int], new_shape: Tuple[int, int]
-    ) -> Tensor:
+    def _calculate_pinv(self, old_shape: Tuple[int, int], new_shape: Tuple[int, int]) -> Tensor:
         mat = []
         for i in range(np.prod(old_shape)):
             basis_vec = torch.zeros(old_shape)
@@ -221,9 +209,7 @@ class FlexiPatchEmbed(nn.Module):
 
         # Calculate pseudo-inverse of resize matrix
         if new_patch_size not in self.pinvs:
-            self.pinvs[new_patch_size] = self._calculate_pinv(
-                self.patch_size, new_patch_size
-            )
+            self.pinvs[new_patch_size] = self._calculate_pinv(self.patch_size, new_patch_size)
         pinv = self.pinvs[new_patch_size]
         pinv = pinv.to(patch_embed.device)
 
@@ -295,9 +281,7 @@ class Attention(nn.Module):
         self.num_heads = num_heads
         self.head_dim = dim // num_heads
         self.scale = self.head_dim**-0.5
-        self.fast_attn = hasattr(
-            torch.nn.functional, "scaled_dot_product_attention"
-        )  # FIXME
+        self.fast_attn = hasattr(torch.nn.functional, "scaled_dot_product_attention")  # FIXME
 
         self.cross_attn = cross_attn
 
@@ -401,9 +385,7 @@ def drop_path(x, drop_prob: float = 0.0, training: bool = False):
     if drop_prob == 0.0 or not training:
         return x
     keep_prob = 1 - drop_prob
-    shape = (x.shape[0],) + (1,) * (
-        x.ndim - 1
-    )  # work with diff dim tensors, not just 2D ConvNets
+    shape = (x.shape[0],) + (1,) * (x.ndim - 1)  # work with diff dim tensors, not just 2D ConvNets
     random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()  # binarize
     output = x.div(keep_prob) * random_tensor
@@ -449,9 +431,7 @@ class Block(nn.Module):
             norm_layer=norm_layer,
             cross_attn=cross_attn,
         )
-        self.ls1 = (
-            LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
-        )
+        self.ls1 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
         self.norm2 = norm_layer(dim)
@@ -461,9 +441,7 @@ class Block(nn.Module):
             act_layer=act_layer,
             drop=drop,
         )
-        self.ls2 = (
-            LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
-        )
+        self.ls2 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
 
     def forward(self, x, y, attn_mask):
         x = x + self.drop_path(self.ls1(self.attn(self.norm1(x), y, attn_mask)))
@@ -603,9 +581,7 @@ class GalileoBase(nn.Module):
         n_s_t_t = h * w * t * s_t_c_g
         n_t_t = t * t_c_g
 
-        s_t_x = rearrange(
-            x[:, :n_s_t_t], "b (h w t c) d -> b h w t c d", h=h, w=w, t=t, c=s_t_c_g
-        )
+        s_t_x = rearrange(x[:, :n_s_t_t], "b (h w t c) d -> b h w t c d", h=h, w=w, t=t, c=s_t_c_g)
         sp_x = rearrange(
             x[:, n_s_t_t : -(n_t_t + st_c_g)],
             "b (h w c) d -> b h w c d",
@@ -613,9 +589,7 @@ class GalileoBase(nn.Module):
             w=w,
             c=sp_c_g,
         )
-        t_x = rearrange(
-            x[:, -(n_t_t + st_c_g) : -st_c_g], "b (t c) d -> b t c d", t=t, c=t_c_g
-        )
+        t_x = rearrange(x[:, -(n_t_t + st_c_g) : -st_c_g], "b (t c) d -> b t c d", t=t, c=t_c_g)
         st_x = x[:, -st_c_g:]
 
         return s_t_x, sp_x, t_x, st_x
@@ -625,14 +599,10 @@ class GalileoBase(nn.Module):
         sp_c_g, t_c_g = sp_x.shape[-2], t_x.shape[-2]
         st_c_g = st_x.shape[-2]
 
-        s_t_channel = repeat(
-            self.s_t_channel_embed, "c_g d -> b h w t c_g d", b=b, h=h, w=w, t=t
-        )
+        s_t_channel = repeat(self.s_t_channel_embed, "c_g d -> b h w t c_g d", b=b, h=h, w=w, t=t)
         t_channel = repeat(self.t_channel_embed, "c_g d -> b t c_g d", b=b, t=t)
         st_channel = repeat(self.st_channel_embed, "c_g d -> b c_g d", b=b)
-        sp_channel = repeat(
-            self.sp_channel_embed, "c_g d -> b h w c_g d", b=b, h=h, w=w
-        )
+        sp_channel = repeat(self.sp_channel_embed, "c_g d -> b h w c_g d", b=b, h=h, w=w)
 
         pos_embed_s_t = repeat(
             self.pos_embed[:t], "t d -> b h w t c_g d", b=b, h=h, w=w, c_g=s_t_c_g
@@ -643,9 +613,7 @@ class GalileoBase(nn.Module):
 
         pos_embed_t = repeat(self.pos_embed[:t], "t d -> b t c_g d", b=b, c_g=t_c_g)
         m_embed_t = repeat(self.month_embed(months), "b t d -> b t c_g d", c_g=t_c_g)
-        t_zeros = torch.zeros(
-            b, t, t_c_g, int(self.embedding_size * 0.25), device=t_x.device
-        )
+        t_zeros = torch.zeros(b, t, t_c_g, int(self.embedding_size * 0.25), device=t_x.device)
 
         sp_zeros = torch.zeros(
             b,
@@ -656,9 +624,7 @@ class GalileoBase(nn.Module):
             device=sp_channel.device,
         )
 
-        st_zeros = torch.zeros(
-            b, st_c_g, st_channel.shape[-1] * 3, device=st_channel.device
-        )
+        st_zeros = torch.zeros(b, st_c_g, st_channel.shape[-1] * 3, device=st_channel.device)
 
         # find the resolution that each token represents, which will be
         # the number of pixels in a patch * the resolution of each pixel
@@ -667,9 +633,7 @@ class GalileoBase(nn.Module):
         token_res = input_res * patch_size
         gsd_ratio = token_res / BASE_GSD
 
-        assert (
-            h == w
-        ), "get_2d_sincos_pos_embed_with_resolution currently requires that h==w"
+        assert h == w, "get_2d_sincos_pos_embed_with_resolution currently requires that h==w"
         spatial_embed = get_2d_sincos_pos_embed_with_resolution(
             int(self.embedding_size * 0.25),
             h,
@@ -680,13 +644,9 @@ class GalileoBase(nn.Module):
         spatial_embed_s_t = repeat(
             spatial_embed, "b h w d -> b h w t c_g d", h=h, w=w, t=t, c_g=s_t_c_g
         )
-        spatial_embed_s = repeat(
-            spatial_embed, "b h w d -> b h w c_g d", h=h, w=w, c_g=sp_c_g
-        )
+        spatial_embed_s = repeat(spatial_embed, "b h w d -> b h w c_g d", h=h, w=w, c_g=sp_c_g)
 
-        s_t_embed = torch.cat(
-            [s_t_channel, pos_embed_s_t, m_embed_s_t, spatial_embed_s_t], dim=-1
-        )
+        s_t_embed = torch.cat([s_t_channel, pos_embed_s_t, m_embed_s_t, spatial_embed_s_t], dim=-1)
         sp_embed = torch.cat([sp_channel, sp_zeros, spatial_embed_s], dim=-1)
         t_embed = torch.cat([t_channel, pos_embed_t, m_embed_t, t_zeros], dim=-1)
         st_embed = torch.cat([st_channel, st_zeros], dim=-1)
@@ -740,17 +700,13 @@ class Encoder(GalileoBase):
         )
         self.time_embed = nn.ModuleDict(
             {
-                group_name: nn.Linear(
-                    in_features=len(group), out_features=embedding_size
-                )
+                group_name: nn.Linear(in_features=len(group), out_features=embedding_size)
                 for group_name, group in self.time_groups.items()
             }
         )
         self.static_embed = nn.ModuleDict(
             {
-                group_name: nn.Linear(
-                    in_features=len(group), out_features=embedding_size
-                )
+                group_name: nn.Linear(in_features=len(group), out_features=embedding_size)
                 for group_name, group in self.static_groups.items()
             }
         )
@@ -805,9 +761,7 @@ class Encoder(GalileoBase):
             [],
             [],
         )
-        for idx, (channel_group, channel_idxs) in enumerate(
-            self.space_time_groups.items()
-        ):
+        for idx, (channel_group, channel_idxs) in enumerate(self.space_time_groups.items()):
             s_t_m_l.append(s_t_m[:, 0::patch_size, 0::patch_size, :, idx])
             if s_t_m_l[-1].min() == 0:
                 s_t_l.append(
@@ -853,9 +807,7 @@ class Encoder(GalileoBase):
                 t_l.append(self.time_embed[channel_group](t_x[:, :, channel_idxs]))
             else:
                 t_l.append(
-                    torch.zeros(
-                        b, t, self.embedding_size, dtype=t_x.dtype, device=t_x.device
-                    )
+                    torch.zeros(b, t, self.embedding_size, dtype=t_x.dtype, device=t_x.device)
                 )
 
         for idx, (channel_group, channel_idxs) in enumerate(self.static_groups.items()):
@@ -864,9 +816,7 @@ class Encoder(GalileoBase):
                 st_l.append(self.static_embed[channel_group](st_x[:, channel_idxs]))
             else:
                 st_l.append(
-                    torch.zeros(
-                        b, self.embedding_size, dtype=st_x.dtype, device=st_x.device
-                    )
+                    torch.zeros(b, self.embedding_size, dtype=st_x.dtype, device=st_x.device)
                 )
 
         return (
@@ -886,9 +836,7 @@ class Encoder(GalileoBase):
         mask = mask.bool()
         # https://stackoverflow.com/a/68621610/2332296
         # move all non-masked values to the front of their rows
-        sorted_mask, indices = torch.sort(
-            (~mask).int(), dim=1, descending=True, stable=True
-        )
+        sorted_mask, indices = torch.sort((~mask).int(), dim=1, descending=True, stable=True)
         x = x.gather(1, indices[:, :, None].expand_as(x))
         # set masked values to 0 (not really necessary since we'll ignore them anyway)
         x = x * sorted_mask.unsqueeze(-1)
@@ -961,17 +909,13 @@ class Encoder(GalileoBase):
         s_t_x, sp_x, t_x, st_x = self.apply_encodings(
             s_t_x, sp_x, t_x, st_x, months, patch_size, input_res
         )
-        x, m = self.collapse_and_combine_hwtc(
-            s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m
-        )
+        x, m = self.collapse_and_combine_hwtc(s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m)
 
         # we only care about the values >= 1 for this mask, since 2 just tells the decoder
         # to decode those tokens. From the perspective of the encoder, 1 and 2 are equivalent
         # since they both represent masked values
         new_m = m >= 1
-        x, indices, new_m = self.remove_masked_tokens(
-            x, new_m
-        )  # new_m is shape (bsz, seq_len)
+        x, indices, new_m = self.remove_masked_tokens(x, new_m)  # new_m is shape (bsz, seq_len)
 
         if exit_ids_seq is not None:
             exit_ids_seq, _, _ = self.remove_masked_tokens(exit_ids_seq, m >= 1)
@@ -1023,9 +967,7 @@ class Encoder(GalileoBase):
 
     @classmethod
     def average_tokens(cls, s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m):
-        x, m = cls.collapse_and_combine_hwtc(
-            s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m
-        )
+        x, m = cls.collapse_and_combine_hwtc(s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m)
         x, _, m = cls.remove_masked_tokens(x, m)
         x_for_mean = x * (1 - m.unsqueeze(-1))
         return x_for_mean.sum(dim=1) / torch.sum(1 - m, -1, keepdim=True)
@@ -1053,9 +995,7 @@ class Encoder(GalileoBase):
         st_x = repeat(st_x, "b c_g d -> b s c_g d", s=sp_x.shape[1])
         s_t_m = rearrange(s_t_m, "b t_h t_w t c_g-> b (t_h t_w) (t c_g)")
         sp_m = rearrange(sp_m, "b t_h t_w c_g-> b (t_h t_w) c_g")
-        t_m = repeat(
-            rearrange(t_m, "b t c_g -> b (t c_g)"), "b n -> b s n", s=sp_x.shape[1]
-        )
+        t_m = repeat(rearrange(t_m, "b t c_g -> b (t c_g)"), "b n -> b s n", s=sp_x.shape[1])
         st_m = repeat(st_m, "b c_g -> b s c_g", s=sp_x.shape[1])
 
         x = torch.cat([s_t_x, sp_x, t_x, st_x], dim=2)  # B, S, N, D
@@ -1110,9 +1050,7 @@ class Encoder(GalileoBase):
             sp_m,
             t_m,
             st_m,
-        ) = self.apply_linear_projection(
-            s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m, patch_size
-        )
+        ) = self.apply_linear_projection(s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m, patch_size)
 
         if (exit_after is None) or (exit_after > 0):
             s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m = self.apply_attn(
@@ -1152,9 +1090,7 @@ class Encoder(GalileoBase):
     def load_from_folder(cls, folder: Path, device: torch.device):
         if not (folder / CONFIG_FILENAME).exists():
             all_files_in_folder = [f.name for f in folder.glob("*")]
-            raise ValueError(
-                f"Expected {CONFIG_FILENAME} in {folder}, found {all_files_in_folder}"
-            )
+            raise ValueError(f"Expected {CONFIG_FILENAME} in {folder}, found {all_files_in_folder}")
         if not (folder / ENCODER_FILENAME).exists():
             all_files_in_folder = [f.name for f in folder.glob("*")]
             raise ValueError(
@@ -1209,9 +1145,7 @@ class Decoder(GalileoBase):
         if output_embedding_size is None:
             output_embedding_size = encoder_embedding_size
         self.output_embedding_size = output_embedding_size
-        self.to_output_embed = nn.Linear(
-            decoder_embedding_size, output_embedding_size, bias=True
-        )
+        self.to_output_embed = nn.Linear(decoder_embedding_size, output_embedding_size, bias=True)
         self.mask_token = nn.Parameter(torch.zeros(decoder_embedding_size))
 
         self.max_patch_size = max_patch_size
@@ -1227,9 +1161,7 @@ class Decoder(GalileoBase):
 
         s_t_x = s_t_x * (1 - to_kept_boolean(s_t_m)).unsqueeze(-1)
         B, H, W, T, S_T_C, _ = s_t_x.shape
-        s_t_m_reshaped = repeat(
-            self.mask_token, "d -> b h w t c d", b=B, h=H, w=W, t=T, c=S_T_C
-        )
+        s_t_m_reshaped = repeat(self.mask_token, "d -> b h w t c d", b=B, h=H, w=W, t=T, c=S_T_C)
         s_t_m_add = s_t_m_reshaped * to_kept_boolean(s_t_m).unsqueeze(-1)
 
         sp_x = sp_x * (1 - to_kept_boolean(sp_m)).unsqueeze(-1)
@@ -1261,9 +1193,7 @@ class Decoder(GalileoBase):
         # move all non-masked values to the front of their rows
         # and all masked values to be decoded to the end of their rows
         # since we multiply by -1, we now have that -2: to be decoded, -1: masked and ignored, 0: unmasked
-        sorted_mask, indices = torch.sort(
-            mask.int(), dim=1, descending=True, stable=True
-        )
+        sorted_mask, indices = torch.sort(mask.int(), dim=1, descending=True, stable=True)
         tokens = tokens.gather(1, indices[:, :, None].expand_as(tokens))
         # cut off to the length of the longest sequence
         max_length_to_be_decoded = (sorted_mask == 2).sum(-1).max()
@@ -1276,14 +1206,10 @@ class Decoder(GalileoBase):
         # x tokens to add back into the token list. TODO is this even necessary? it could
         # get padded with noise tokens since we don't care about reconstruction at all
         # for a whole bunch of tokens
-        x_mask = (sorted_mask == 2)[:, :max_length_to_be_decoded].to(
-            dtype=org_mask_dtype
-        )
+        x_mask = (sorted_mask == 2)[:, :max_length_to_be_decoded].to(dtype=org_mask_dtype)
         # the y mask is going to be used to determine which of the y values take. True values
         # take part in the attention (we don't take the inverse here, unlike in the decoder)
-        y_mask = (sorted_mask == 0)[:, -max_length_of_unmasked_tokens:].to(
-            dtype=org_mask_dtype
-        )
+        y_mask = (sorted_mask == 0)[:, -max_length_of_unmasked_tokens:].to(dtype=org_mask_dtype)
         return x, y, x_mask, y_mask, indices
 
     @staticmethod
@@ -1316,9 +1242,7 @@ class Decoder(GalileoBase):
         s_t_x, sp_x, t_x, st_x = self.apply_encodings(
             s_t_x, sp_x, t_x, st_x, months, patch_size, input_res
         )
-        x, m = self.collapse_and_combine_hwtc(
-            s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m
-        )
+        x, m = self.collapse_and_combine_hwtc(s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m)
         x, y, x_mask, y_mask, indices = self.split_x_y(x, m)
         for blk in self.blocks:
             # note that we are not taking the inverse of the mask, since split_x_y gives us
@@ -1352,9 +1276,7 @@ class Decoder(GalileoBase):
         t_x = self.encoder_to_decoder_embed(self.input_norm(t_x))
         st_x = self.encoder_to_decoder_embed(self.input_norm(st_x))
 
-        s_t_x, sp_x, t_x, st_x = self.add_masks(
-            s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m
-        )
+        s_t_x, sp_x, t_x, st_x = self.add_masks(s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m)
         s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m = self.apply_attn(
             s_t_x,
             sp_x,
@@ -1373,9 +1295,7 @@ class Decoder(GalileoBase):
         output_s_t, output_sp, output_t, output_st = [], [], [], []
         for idx in range(len(self.space_time_groups)):
             if s_t_m[:, :, :, :, idx].max() == 2:
-                output_s_t.append(
-                    self.to_output_embed(self.norm(s_t_x[:, :, :, :, idx]))
-                )
+                output_s_t.append(self.to_output_embed(self.norm(s_t_x[:, :, :, :, idx])))
             else:
                 output_s_t.append(
                     torch.zeros(

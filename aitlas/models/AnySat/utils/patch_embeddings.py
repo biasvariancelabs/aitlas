@@ -1,7 +1,7 @@
 from typing import List
 
 import torch
-from torch import nn as nn
+from torch import nn
 
 
 class PatchMLP(nn.Module):
@@ -76,9 +76,7 @@ class PatchMLPMulti(nn.Module):
     def forward(self, x, scale):
         x = self.patch_embed(x)
         grid_size = (self.res // self.patch_size, self.res // self.patch_size)
-        x = x.unfold(2, grid_size[0], grid_size[0]).unfold(
-            3, grid_size[1], grid_size[1]
-        )
+        x = x.unfold(2, grid_size[0], grid_size[0]).unfold(3, grid_size[1], grid_size[1])
         x = x.flatten(4, 5)
         x = x.unfold(2, scale, scale).unfold(3, scale, scale)
         x = x.flatten(2, 3).permute(0, 1, 2, 4, 5, 3).flatten(3, 5)

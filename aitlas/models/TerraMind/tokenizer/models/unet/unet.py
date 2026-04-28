@@ -25,11 +25,11 @@ from abc import abstractmethod
 import numpy as np
 import torch
 import torch as th
-import torch.nn as nn
 import torch.nn.functional as F
 from diffusers.configuration_utils import ConfigMixin
 from diffusers.models.modeling_utils import ModelMixin
 from einops import rearrange
+from torch import nn
 
 from .fp16_util import (
     convert_module_to_bf16,
@@ -131,9 +131,7 @@ class Upsample(nn.Module):
     def forward(self, x):
         assert x.shape[1] == self.channels
         if self.dims == 3:
-            x = F.interpolate(
-                x, (x.shape[2], x.shape[3] * 2, x.shape[4] * 2), mode="nearest"
-            )
+            x = F.interpolate(x, (x.shape[2], x.shape[3] * 2, x.shape[4] * 2), mode="nearest")
         else:
             x = F.interpolate(x, scale_factor=2, mode="nearest")
         if self.use_conv:
@@ -158,9 +156,7 @@ class Downsample(nn.Module):
         self.dims = dims
         stride = 2 if dims != 3 else (1, 2, 2)
         if use_conv:
-            self.op = conv_nd(
-                dims, self.channels, self.out_channels, 3, stride=stride, padding=1
-            )
+            self.op = conv_nd(dims, self.channels, self.out_channels, 3, stride=stride, padding=1)
         else:
             assert self.channels == self.out_channels
             self.op = avg_pool_nd(dims, kernel_size=stride, stride=stride)
@@ -236,17 +232,13 @@ class ResBlock(TimestepBlock):
             normalization(self.out_channels),
             nn.SiLU(),
             nn.Dropout(p=dropout),
-            zero_module(
-                conv_nd(dims, self.out_channels, self.out_channels, 3, padding=1)
-            ),
+            zero_module(conv_nd(dims, self.out_channels, self.out_channels, 3, padding=1)),
         )
 
         if self.out_channels == channels:
             self.skip_connection = nn.Identity()
         elif use_conv:
-            self.skip_connection = conv_nd(
-                dims, channels, self.out_channels, 3, padding=1
-            )
+            self.skip_connection = conv_nd(dims, channels, self.out_channels, 3, padding=1)
         else:
             self.skip_connection = conv_nd(dims, channels, self.out_channels, 1)
 
@@ -257,9 +249,7 @@ class ResBlock(TimestepBlock):
         :param emb: an [N x emb_channels] Tensor of timestep embeddings.
         :return: an [N x C x ...] Tensor of outputs.
         """
-        return checkpoint(
-            self._forward, (x, emb), self.parameters(), self.use_checkpoint
-        )
+        return checkpoint(self._forward, (x, emb), self.parameters(), self.use_checkpoint)
 
     def _forward(self, x, emb):
         if self.updown:
@@ -552,9 +542,7 @@ class UNetModel(ModelMixin, ConfigMixin):
                             down=True,
                         )
                         if resblock_updown
-                        else Downsample(
-                            ch, conv_resample, dims=dims, out_channels=out_ch
-                        )
+                        else Downsample(ch, conv_resample, dims=dims, out_channels=out_ch)
                     )
                 )
                 ch = out_ch
@@ -723,9 +711,7 @@ class PatchedUNetCondCat(UNetModel):
     ):
         in_channels_p = in_channels * patch_size * patch_size + cond_channels
         out_channels_p = out_channels * patch_size * patch_size
-        super().__init__(
-            in_channels=in_channels_p, out_channels=out_channels_p, *args, **kwargs
-        )
+        super().__init__(in_channels=in_channels_p, out_channels=out_channels_p, *args, **kwargs)
         self.P_H, self.P_W = pair(patch_size)
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -763,9 +749,7 @@ class PatchedUNetCondCat(UNetModel):
             )
 
         # Concat input with upsampled conditioning
-        cond_upsampled = F.interpolate(
-            encoder_hidden_states, (N_H, N_W), mode="nearest"
-        )
+        cond_upsampled = F.interpolate(encoder_hidden_states, (N_H, N_W), mode="nearest")
         x = th.cat([x, cond_upsampled], dim=1)
 
         # UNet forward pass in subspace

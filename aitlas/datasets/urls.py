@@ -119,9 +119,7 @@ H5_URLs = {
 }
 
 # 9-classes used in ISPRS submission
-CLASSMAPPINGURL = (
-    "https://syncandshare.lrz.de/dl/fiWcv23b3PxswYZFh2htEpSs/classmapping.csv"
-)
+CLASSMAPPINGURL = "https://syncandshare.lrz.de/dl/fiWcv23b3PxswYZFh2htEpSs/classmapping.csv"
 
 # 13-classes used in ICML workshop
 CLASSMAPPINGURL_ICML = (

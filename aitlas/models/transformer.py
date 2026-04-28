@@ -8,9 +8,8 @@ Transformer model
 
 """
 
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
+from torch import nn, optim
 from torch.nn.modules import LayerNorm, Linear, ReLU
 from torch.nn.modules.transformer import TransformerEncoder, TransformerEncoderLayer
 

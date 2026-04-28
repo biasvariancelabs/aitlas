@@ -1,16 +1,7 @@
 # Dynamic One-For-All (DOFA) foundation model (v1)
-import json
-import math
-import pdb
-from functools import partial, reduce
-from operator import mul
 
-import numpy as np
 import torch
-import torch.nn as nn
-from timm.models.vision_transformer import Block, PatchEmbed
-from torch.nn import Conv2d, Dropout
-from torch.nn.modules.utils import _pair
+from torch import nn
 
 from ...base import FoundationModel
 

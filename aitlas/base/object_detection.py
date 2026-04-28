@@ -1,8 +1,8 @@
 import logging
 
 import torch
-import torch.optim as optim
 import torchvision
+from torch import optim
 from tqdm import tqdm
 
 from ..utils import current_ts
@@ -25,9 +25,7 @@ class BaseObjectDetection(BaseModel):
     def __init__(self, config):
         super().__init__(config)
 
-        self.running_metrics = ObjectDetectionRunningScore(
-            self.num_classes, self.device
-        )
+        self.running_metrics = ObjectDetectionRunningScore(self.num_classes, self.device)
         self.step_size = self.config.step_size
         self.gamma = self.config.gamma
 
@@ -121,9 +119,7 @@ class BaseObjectDetection(BaseModel):
         for i, data in enumerate(tqdm(dataloader, desc="training")):
             inputs, targets = data
 
-            inputs = list(
-                image.type(torch.FloatTensor).to(self.device) for image in inputs
-            )
+            inputs = list(image.type(torch.FloatTensor).to(self.device) for image in inputs)
             targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
 
             # zero the parameter gradients
@@ -164,18 +160,12 @@ class BaseObjectDetection(BaseModel):
             running_loss += loss.item() * len(inputs)
             total_loss += loss.item() * len(inputs)
 
-            if (
-                i % iterations_log == iterations_log - 1
-            ):  # print every iterations_log mini-batches
-                logging.info(
-                    f"[{epoch + 1}, {i + 1}], loss: {running_loss / iterations_log : .5f}"
-                )
+            if i % iterations_log == iterations_log - 1:  # print every iterations_log mini-batches
+                logging.info(f"[{epoch + 1}, {i + 1}], loss: {running_loss / iterations_log: .5f}")
                 running_loss = 0.0
 
         total_loss = total_loss / len(dataloader.dataset)
-        logging.info(
-            f"epoch: {epoch + 1}, time: {current_ts() - start}, loss: {total_loss: .5f}"
-        )
+        logging.info(f"epoch: {epoch + 1}, time: {current_ts() - start}, loss: {total_loss: .5f}")
         return total_loss
 
     def predict_output_per_batch(self, dataloader, description):
@@ -196,13 +186,8 @@ class BaseObjectDetection(BaseModel):
             with torch.amp.autocast("cuda", enabled=self.use_amp):
                 for i, data in enumerate(tqdm(dataloader, desc=description)):
                     inputs, targets = data
-                    inputs = list(
-                        image.type(torch.FloatTensor).to(self.device)
-                        for image in inputs
-                    )
-                    targets = [
-                        {k: v.to(self.device) for k, v in t.items()} for t in targets
-                    ]
+                    inputs = list(image.type(torch.FloatTensor).to(self.device) for image in inputs)
+                    targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
 
                     outputs = self(inputs, targets)
 
@@ -228,10 +213,7 @@ class BaseObjectDetection(BaseModel):
 
         self.model.eval()
 
-        for inputs, outputs, targets in self.predict_output_per_batch(
-            dataloader, description
-        ):
-
+        for inputs, outputs, targets in self.predict_output_per_batch(dataloader, description):
             predicted = self.get_predicted(outputs)
             self.running_metrics.update(predicted, targets)
 

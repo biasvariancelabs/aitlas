@@ -1,10 +1,7 @@
-import os
-from collections import OrderedDict
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-import torch.nn as nn
 
 from aitlas.models import SeCo
 from aitlas.models.SeCo import MoCoV2Module, seco_resnet18, seco_resnet50
@@ -97,9 +94,7 @@ def test_forward_pass_resnet50(config_seco_resnet50):
 @patch("aitlas.models.seco_wrapper.seco_resnet50")
 @patch("aitlas.models.seco_wrapper.SeCo._download_from_zenodo")
 @patch("torch.load")
-def test_fallback_to_zenodo_download(
-    mock_torch_load, mock_download, mock_model_factory
-):
+def test_fallback_to_zenodo_download(mock_torch_load, mock_download, mock_model_factory):
     """Tests the fallback to Zenodo download if local_model_path does not exist."""
     # Setup mocks
     mock_model_instance = MagicMock()

@@ -9,9 +9,9 @@ from functools import partial
 
 import timm.models.vision_transformer
 import torch
-import torch.nn as nn
+from torch import nn
 
-from .pos_embed import get_1d_sincos_pos_embed_from_grid_torch, get_2d_sincos_pos_embed
+from .pos_embed import get_1d_sincos_pos_embed_from_grid_torch
 
 
 class TemporalVisionTransformer(timm.models.vision_transformer.VisionTransformer):
@@ -38,7 +38,6 @@ class TemporalVisionTransformer(timm.models.vision_transformer.VisionTransformer
         return x
 
     def forward_features(self, x, timestamps):
-
         B = x.shape[0]
         x1 = self.patch_embed(x[:, 0])
         x2 = self.patch_embed(x[:, 1])
@@ -64,9 +63,7 @@ class TemporalVisionTransformer(timm.models.vision_transformer.VisionTransformer
         )
         ts_embed = torch.cat(
             [
-                torch.zeros(
-                    (ts_embed.shape[0], 1, ts_embed.shape[2]), device=ts_embed.device
-                ),
+                torch.zeros((ts_embed.shape[0], 1, ts_embed.shape[2]), device=ts_embed.device),
                 ts_embed,
             ],
             dim=1,
@@ -114,7 +111,7 @@ def vit_base_patch16(**kwargs):
         mlp_ratio=4,
         qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -128,7 +125,7 @@ def vit_large_patch16(**kwargs):
         mlp_ratio=4,
         qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -142,6 +139,6 @@ def vit_huge_patch14(**kwargs):
         mlp_ratio=4,
         qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model

@@ -1,8 +1,8 @@
 """Siamese UNet model for change detection"""
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torchvision import models
 
 from ..base import BaseChangeDetection
@@ -28,9 +28,7 @@ class DecoderBlock(nn.Module):
     def __init__(self, in_channels, skip_channels, out_channels):
         super().__init__()
         # In the library, they concatenate (in + skip) then pass to conv1
-        self.conv1 = Conv2dReLU(
-            in_channels + skip_channels, out_channels, kernel_size=3, padding=1
-        )
+        self.conv1 = Conv2dReLU(in_channels + skip_channels, out_channels, kernel_size=3, padding=1)
         self.conv2 = Conv2dReLU(out_channels, out_channels, kernel_size=3, padding=1)
 
     def forward(self, x, skip=None):
@@ -73,9 +71,7 @@ class SiameseUnet(nn.Module):
                 bias=False,
             )
 
-            nn.init.kaiming_normal_(
-                new_conv.weight, mode="fan_out", nonlinearity="relu"
-            )
+            nn.init.kaiming_normal_(new_conv.weight, mode="fan_out", nonlinearity="relu")
             self.encoder.conv1 = new_conv
 
         # Remove unused layers
@@ -108,19 +104,13 @@ class SiameseUnet(nn.Module):
             DecoderBlock(head_channels, encoder_channels[3] * 2, decoder_channels[0])
         )
         self.blocks.append(
-            DecoderBlock(
-                decoder_channels[0], encoder_channels[2] * 2, decoder_channels[1]
-            )
+            DecoderBlock(decoder_channels[0], encoder_channels[2] * 2, decoder_channels[1])
         )
         self.blocks.append(
-            DecoderBlock(
-                decoder_channels[1], encoder_channels[1] * 2, decoder_channels[2]
-            )
+            DecoderBlock(decoder_channels[1], encoder_channels[1] * 2, decoder_channels[2])
         )
         self.blocks.append(
-            DecoderBlock(
-                decoder_channels[2], encoder_channels[0] * 2, decoder_channels[3]
-            )
+            DecoderBlock(decoder_channels[2], encoder_channels[0] * 2, decoder_channels[3])
         )
         self.blocks.append(DecoderBlock(decoder_channels[3], 0, decoder_channels[4]))
 

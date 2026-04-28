@@ -1,8 +1,7 @@
-import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
+from torch import nn
+from torch.nn import init
 
 
 random_seed = 1234
@@ -64,9 +63,7 @@ class TransformerWeightGenerator(nn.Module):
         x = torch.cat([x, self.bias_token], dim=0)
         transformer_output = self.transformer_encoder(x)
         weights = self.fc_weight(transformer_output[self.wt_num : -1] + pos_wave)
-        bias = self.fc_bias(
-            transformer_output[-1]
-        )  # Using the last output to generate bias
+        bias = self.fc_bias(transformer_output[-1])  # Using the last output to generate bias
         return weights, bias
 
 
@@ -176,9 +173,7 @@ class Dynamic_MLP_OFA(nn.Module):
         self.patch_size = (kernel_size, kernel_size)
         self.num_patches = -1
 
-        self.weight_generator = TransformerWeightGenerator(
-            wv_planes, self._num_kernel, embed_dim
-        )
+        self.weight_generator = TransformerWeightGenerator(wv_planes, self._num_kernel, embed_dim)
         self.scaler = 0.01
 
         self.fclayer = FCResLayer(wv_planes)
@@ -210,9 +205,7 @@ class Dynamic_MLP_OFA(nn.Module):
         weight, bias = self._get_weights(waves)  # 3x3x3
 
         # Fix bug
-        dynamic_weight = weight.view(
-            inplanes, self.kernel_size, self.kernel_size, self.embed_dim
-        )
+        dynamic_weight = weight.view(inplanes, self.kernel_size, self.kernel_size, self.embed_dim)
         dynamic_weight = dynamic_weight.permute([3, 0, 1, 2])
 
         if bias is not None:

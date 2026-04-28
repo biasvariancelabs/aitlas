@@ -7,16 +7,13 @@ import pandas as pd
 import torch
 from matplotlib.patches import Patch
 from skimage.transform import resize
-from torch.utils.data import Dataset
 
-from ..base import BaseDataset
 from ..utils import image_loader, tiff_loader
 from .schemas import CloudDatasets_AI4QCSchema
 from .semantic_segmentation import SemanticSegmentationDataset
 
 
 def interp_band(bands, img_shape=[10980, 10980]):
-
     bands_interp = np.zeros(img_shape).astype(np.float32)
     bands_interp = (
         resize(bands / 10000, img_shape, mode="reflect") * 10000
@@ -34,7 +31,6 @@ from the PixBox dataset, where the cloud masks were reclassified and rasterized.
 
 
 class PixBox_AI4QCDataset(SemanticSegmentationDataset):
-
     url = "https://zenodo.org/records/11121168"
 
     labels = ["clear", "thick cloud", "thin cloud", "cloud shadow"]

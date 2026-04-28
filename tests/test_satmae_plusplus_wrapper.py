@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
 from aitlas.models import SatMAE_plusplus
 from aitlas.models.SatMAE_plusplus.models_mae import (
@@ -36,10 +36,7 @@ def create_dummy_multispectral_state_dict():
 def dummy_standard_checkpoint(tmp_path_factory):
     """Creates a temporary checkpoint file for the standard model."""
     # Filename must match an entry in the wrapper's backbone_checkpoints dict
-    path = (
-        tmp_path_factory.mktemp("checkpoints")
-        / "checkpoint_ViT-L_pretrain_fmow_rgb.pth"
-    )
+    path = tmp_path_factory.mktemp("checkpoints") / "checkpoint_ViT-L_pretrain_fmow_rgb.pth"
     torch.save(create_dummy_standard_state_dict(), path)
     return str(path)
 
@@ -48,10 +45,7 @@ def dummy_standard_checkpoint(tmp_path_factory):
 def dummy_multispectral_checkpoint(tmp_path_factory):
     """Creates a temporary checkpoint file for the multispectral model."""
     # Filename must match an entry in the wrapper's backbone_checkpoints dict
-    path = (
-        tmp_path_factory.mktemp("checkpoints")
-        / "checkpoint_ViT-L_pretrain_fmow_sentinel.pth"
-    )
+    path = tmp_path_factory.mktemp("checkpoints") / "checkpoint_ViT-L_pretrain_fmow_sentinel.pth"
     torch.save(create_dummy_multispectral_state_dict(), path)
     return str(path)
 
@@ -105,9 +99,7 @@ def test_forward_pass_standard(config_standard):
 def test_forward_pass_multispectral(config_multispectral):
     """Tests the forward_features pass for the multispectral model."""
     model = SatMAE_plusplus(config_multispectral)
-    dummy_input = torch.randn(
-        2, 10, 96, 96
-    )  # Expects a smaller image as input (H, W) = (96, 96)
+    dummy_input = torch.randn(2, 10, 96, 96)  # Expects a smaller image as input (H, W) = (96, 96)
     output = model.forward_features(dummy_input)
     assert output.shape == (2, 1024)
 
@@ -116,18 +108,14 @@ def test_forward_pass_multispectral(config_multispectral):
 @patch("aitlas.models.satmae_plusplus_wrapper.satmae_plusplus_vit_large_multispectral")
 @patch("aitlas.models.satmae_plusplus_wrapper.hf_hub_download")
 @patch("torch.load")
-def test_fallback_to_hf_hub_download(
-    mock_torch_load, mock_hf_download, mock_model_factory
-):
+def test_fallback_to_hf_hub_download(mock_torch_load, mock_hf_download, mock_model_factory):
     """Tests the fallback to Huggingface hub download if local_model_path is invalid."""
     mock_model_instance = MagicMock()
     mock_model_factory.return_value = mock_model_instance
     mock_torch_load.return_value = create_dummy_multispectral_state_dict()
 
     non_existent_path = "/path/to/non_existent/model.pth"
-    mock_hf_download.return_value = (
-        non_existent_path  # Simulate download returning the path
-    )
+    mock_hf_download.return_value = non_existent_path  # Simulate download returning the path
 
     config = {
         "local_model_path": non_existent_path,

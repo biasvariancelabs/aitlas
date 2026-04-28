@@ -7,8 +7,7 @@ from typing import Any
 
 import timm
 import torch
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
 from torchvision.models._api import Weights, WeightsEnum
 
 from .utils import _to_tuple, resize_abs_pos_embed
@@ -171,10 +170,13 @@ class ChnAttn(nn.Module):
             mask = mask.unsqueeze(1).expand(-1, L, -1).flatten(0, 1)  # BL,C
 
         query = self.query.expand(x.shape[0], -1, -1)  # BL,1,D
-        assert query.shape == (
-            x.shape[0],
-            1,
-            x.shape[-1],
+        assert (
+            query.shape
+            == (
+                x.shape[0],
+                1,
+                x.shape[-1],
+            )
         ), f"Expected query to have shape: {x.shape[0], 1, x.shape[-1]}, but got shape: {query.shape}"
 
         x = self.xattn(query, x, x, key_padding_mask=mask)
@@ -211,9 +213,7 @@ class ChnEmb(torch.nn.Module):
         dim2 = embed_dim - 2 * dim1
         self.embed_transmit = nn.Parameter(torch.zeros(2, dim1))  # 0:V, 1:H
         self.embed_receive = nn.Parameter(torch.zeros(2, dim1))  # 0:V, 1:H
-        self.embed_orbit = nn.Parameter(
-            torch.zeros(2, dim2)
-        )  # 0:ascending, 1:descending
+        self.embed_orbit = nn.Parameter(torch.zeros(2, dim2))  # 0:ascending, 1:descending
 
     def forward(self, input: Tensor) -> Tensor:
         """Forward pass.
@@ -238,9 +238,7 @@ class ChnEmb(torch.nn.Module):
         device = mus.device
         dtype = self.embed_transmit.dtype
 
-        embs = torch.zeros(
-            [*list(mus.shape), self.embed_dim], device=device, dtype=dtype
-        )
+        embs = torch.zeros([*list(mus.shape), self.embed_dim], device=device, dtype=dtype)
 
         # Build optical embeddings
         mus[opt_indices] = (mus[opt_indices] // self.opt_coarsity).to(mus.dtype)
@@ -315,11 +313,7 @@ class CrossAttnNoQueryProj(nn.Module):
             Resulting tensor.
         """
         B, Nq, D = q.shape
-        q = (
-            self.inproj_q(q)
-            .reshape(B, Nq, self.num_heads, D // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        q = self.inproj_q(q).reshape(B, Nq, self.num_heads, D // self.num_heads).permute(0, 2, 1, 3)
         q = q * self.scale
 
         B, Nkv, D = k.shape  # same as v.shape
@@ -336,9 +330,7 @@ class CrossAttnNoQueryProj(nn.Module):
 
         attn = q @ k.transpose(-2, -1)  # shape: (B, num_heads, Nq, Nkv)
         if key_padding_mask is not None:
-            key_padding_mask = key_padding_mask.unsqueeze(1).unsqueeze(
-                2
-            )  # (B, 1, 1, Nkv)
+            key_padding_mask = key_padding_mask.unsqueeze(1).unsqueeze(2)  # (B, 1, 1, Nkv)
             attn = attn.masked_fill(key_padding_mask, float("-inf"))
 
         attn = attn.softmax(dim=-1)
@@ -422,9 +414,7 @@ class PanopticonModule(torch.nn.Module):
     .. versionadded:: 0.7
     """
 
-    def __init__(
-        self, attn_dim: int = 2304, embed_dim: int = 768, img_size: int = 224
-    ) -> None:
+    def __init__(self, attn_dim: int = 2304, embed_dim: int = 768, img_size: int = 224) -> None:
         """Initialize a Panopticon model.
 
         Args:
@@ -452,9 +442,7 @@ class PanopticonModule(torch.nn.Module):
 
         self.model: nn.Module = dinov2_vit
 
-    def forward(
-        self, x_dict: dict[str, Tensor], dense_features: bool = False
-    ) -> Tensor:
+    def forward(self, x_dict: dict[str, Tensor], dense_features: bool = False) -> Tensor:
         """Forward pass of the model including forward pass through the head.
 
         Args:
@@ -468,7 +456,7 @@ class PanopticonModule(torch.nn.Module):
         Returns:
             Embeddings.
         """
-        if dense_features == True:
+        if dense_features:
             # Forward pass to get unpooled features
             out: Tensor = self.model.forward_features(x_dict)
         else:
@@ -528,9 +516,7 @@ def panopticon_base(
             state_dict["pos_embed"], img_size // patch_size, 518 // patch_size
         )
 
-        missing_keys, unexpected_keys = model.model.load_state_dict(
-            state_dict, strict=True
-        )
+        missing_keys, unexpected_keys = model.model.load_state_dict(state_dict, strict=True)
         assert not missing_keys
         assert not unexpected_keys
 

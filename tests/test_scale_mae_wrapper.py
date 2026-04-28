@@ -1,9 +1,7 @@
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-import torch.nn as nn
 
 from aitlas.models import ScaleMAE
 from aitlas.models.ScaleMAE.scale_mae import (

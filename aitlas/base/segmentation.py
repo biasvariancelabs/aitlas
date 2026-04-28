@@ -3,8 +3,7 @@ import logging
 import segmentation_models_pytorch as smp
 import torch
 import torch.nn.functional as F
-import torch.optim as optim
-from torch import nn
+from torch import nn, optim
 
 from .metrics import SegmentationRunningScore
 from .models import BaseModel
@@ -84,9 +83,7 @@ class BaseSegmentationClassifier(BaseModel):
             num_classes = outputs.shape[1]
             predicted_probs = torch.softmax(outputs, dim=1)
             predicted = torch.argmax(predicted_probs, dim=1)
-            predicted = F.one_hot(predicted, num_classes=num_classes).permute(
-                0, 3, 1, 2
-            )
+            predicted = F.one_hot(predicted, num_classes=num_classes).permute(0, 3, 1, 2)
 
         return predicted_probs, predicted
 

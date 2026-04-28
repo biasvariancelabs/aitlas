@@ -1,9 +1,7 @@
 import math
 from copy import deepcopy
-from typing import NamedTuple
-from typing import OrderedDict
+from typing import NamedTuple, OrderedDict, cast
 from typing import OrderedDict as OrderedDictType
-from typing import cast
 
 import numpy as np
 import torch
@@ -101,9 +99,7 @@ SPACE_DIV_VALUES = np.array(SRTM_DIV_VALUES + DW_DIV_VALUES + WC_DIV_VALUES)
 STATIC_SHIFT_VALUES = np.array(
     LANDSCAN_SHIFT_VALUES + [0, 0, 0] + DW_SHIFT_VALUES + WC_SHIFT_VALUES
 )
-STATIC_DIV_VALUES = np.array(
-    LANDSCAN_DIV_VALUES + [1, 1, 1] + DW_DIV_VALUES + WC_DIV_VALUES
-)
+STATIC_DIV_VALUES = np.array(LANDSCAN_DIV_VALUES + [1, 1, 1] + DW_DIV_VALUES + WC_DIV_VALUES)
 
 SPACE_TIME_BANDS_GROUPS_IDX: OrderedDictType[str, list[int]] = OrderedDict(
     {
@@ -450,36 +446,24 @@ def construct_galileo_input(
         h, w = 1, 1
 
     # now, we can construct our empty input tensors. By default, everything is masked
-    s_t_x = torch.zeros(
-        (b, h, w, t, len(SPACE_TIME_BANDS)), dtype=torch.float, device=device
-    )
+    s_t_x = torch.zeros((b, h, w, t, len(SPACE_TIME_BANDS)), dtype=torch.float, device=device)
     s_t_m = torch.ones(
         (b, h, w, t, len(SPACE_TIME_BANDS_GROUPS_IDX)),
         dtype=torch.float,
         device=device,
     )
     sp_x = torch.zeros((b, h, w, len(SPACE_BANDS)), dtype=torch.float, device=device)
-    sp_m = torch.ones(
-        (b, h, w, len(SPACE_BAND_GROUPS_IDX)), dtype=torch.float, device=device
-    )
+    sp_m = torch.ones((b, h, w, len(SPACE_BAND_GROUPS_IDX)), dtype=torch.float, device=device)
     t_x = torch.zeros((b, t, len(TIME_BANDS)), dtype=torch.float, device=device)
-    t_m = torch.ones(
-        (b, t, len(TIME_BAND_GROUPS_IDX)), dtype=torch.float, device=device
-    )
+    t_m = torch.ones((b, t, len(TIME_BAND_GROUPS_IDX)), dtype=torch.float, device=device)
     st_x = torch.zeros((b, len(STATIC_BANDS)), dtype=torch.float, device=device)
-    st_m = torch.ones(
-        (b, len(STATIC_BAND_GROUPS_IDX)), dtype=torch.float, device=device
-    )
+    st_m = torch.ones((b, len(STATIC_BAND_GROUPS_IDX)), dtype=torch.float, device=device)
 
     for x, bands_list, group_key in zip([s1, s2], [S1_BANDS, S2_BANDS], ["S1", "S2"]):
         if x is not None:
-            indices = [
-                idx for idx, val in enumerate(SPACE_TIME_BANDS) if val in bands_list
-            ]
+            indices = [idx for idx, val in enumerate(SPACE_TIME_BANDS) if val in bands_list]
             groups_idx = [
-                idx
-                for idx, key in enumerate(SPACE_TIME_BANDS_GROUPS_IDX)
-                if group_key in key
+                idx for idx, key in enumerate(SPACE_TIME_BANDS_GROUPS_IDX) if group_key in key
             ]
             s_t_x[:, :, :, :, indices] = x
             s_t_m[:, :, :, :, groups_idx] = 0
@@ -489,9 +473,7 @@ def construct_galileo_input(
     ):
         if x is not None:
             indices = [idx for idx, val in enumerate(SPACE_BANDS) if val in bands_list]
-            groups_idx = [
-                idx for idx, key in enumerate(SPACE_BAND_GROUPS_IDX) if group_key in key
-            ]
+            groups_idx = [idx for idx, key in enumerate(SPACE_BAND_GROUPS_IDX) if group_key in key]
             sp_x[:, :, :, indices] = x
             sp_m[:, :, :, groups_idx] = 0
 
@@ -502,9 +484,7 @@ def construct_galileo_input(
     ):
         if x is not None:
             indices = [idx for idx, val in enumerate(TIME_BANDS) if val in bands_list]
-            groups_idx = [
-                idx for idx, key in enumerate(TIME_BAND_GROUPS_IDX) if group_key in key
-            ]
+            groups_idx = [idx for idx, key in enumerate(TIME_BAND_GROUPS_IDX) if group_key in key]
             t_x[:, :, indices] = x
             t_m[:, :, groups_idx] = 0
 
@@ -516,31 +496,20 @@ def construct_galileo_input(
                 # transform latlon to cartesian
                 x = cast(torch.Tensor, to_cartesian(x[:, 0], x[:, 1]))
             indices = [idx for idx, val in enumerate(STATIC_BANDS) if val in bands_list]
-            groups_idx = [
-                idx
-                for idx, key in enumerate(STATIC_BAND_GROUPS_IDX)
-                if group_key in key
-            ]
+            groups_idx = [idx for idx, key in enumerate(STATIC_BAND_GROUPS_IDX) if group_key in key]
             st_x[:, indices] = x
             st_m[:, groups_idx] = 0
 
     if months is None:
         months = torch.ones((b, t), dtype=torch.long, device=device) * DEFAULT_MONTH
-    else:
-        if months.shape[1] != t:
-            raise ValueError("Incorrect number of input months")
+    elif months.shape[1] != t:
+        raise ValueError("Incorrect number of input months")
 
     if normalize:
-        s_t_x = (
-            torch.from_numpy(DEFAULT_NORMALIZER(s_t_x.cpu().numpy())).to(device).float()
-        )
-        sp_x = (
-            torch.from_numpy(DEFAULT_NORMALIZER(sp_x.cpu().numpy())).to(device).float()
-        )
+        s_t_x = torch.from_numpy(DEFAULT_NORMALIZER(s_t_x.cpu().numpy())).to(device).float()
+        sp_x = torch.from_numpy(DEFAULT_NORMALIZER(sp_x.cpu().numpy())).to(device).float()
         t_x = torch.from_numpy(DEFAULT_NORMALIZER(t_x.cpu().numpy())).to(device).float()
-        st_x = (
-            torch.from_numpy(DEFAULT_NORMALIZER(st_x.cpu().numpy())).to(device).float()
-        )
+        st_x = torch.from_numpy(DEFAULT_NORMALIZER(st_x.cpu().numpy())).to(device).float()
 
     return MaskedOutput(
         s_t_x=s_t_x,
@@ -560,12 +529,8 @@ def to_cartesian(
 ) -> np.ndarray | torch.Tensor:
     """Transform latitudes and longitudes to cartesian coordinates."""
     if isinstance(lat, float):
-        assert (
-            -90 <= lat <= 90
-        ), f"lat out of range ({lat}). Make sure you are in EPSG:4326"
-        assert (
-            -180 <= lon <= 180
-        ), f"lon out of range ({lon}). Make sure you are in EPSG:4326"
+        assert -90 <= lat <= 90, f"lat out of range ({lat}). Make sure you are in EPSG:4326"
+        assert -180 <= lon <= 180, f"lon out of range ({lon}). Make sure you are in EPSG:4326"
         assert isinstance(lon, float), f"Expected float got {type(lon)}"
         # transform to radians
         lat = lat * math.pi / 180
@@ -575,18 +540,10 @@ def to_cartesian(
         z = math.sin(lat)
         return np.array([x, y, z])
     elif isinstance(lon, np.ndarray):
-        assert (
-            -90 <= lat.min()
-        ), f"lat out of range ({lat.min()}). Make sure you are in EPSG:4326"
-        assert (
-            90 >= lat.max()
-        ), f"lat out of range ({lat.max()}). Make sure you are in EPSG:4326"
-        assert (
-            -180 <= lon.min()
-        ), f"lon out of range ({lon.min()}). Make sure you are in EPSG:4326"
-        assert (
-            180 >= lon.max()
-        ), f"lon out of range ({lon.max()}). Make sure you are in EPSG:4326"
+        assert -90 <= lat.min(), f"lat out of range ({lat.min()}). Make sure you are in EPSG:4326"
+        assert 90 >= lat.max(), f"lat out of range ({lat.max()}). Make sure you are in EPSG:4326"
+        assert -180 <= lon.min(), f"lon out of range ({lon.min()}). Make sure you are in EPSG:4326"
+        assert 180 >= lon.max(), f"lon out of range ({lon.max()}). Make sure you are in EPSG:4326"
         assert isinstance(lat, np.ndarray), f"Expected np.ndarray got {type(lat)}"
         # transform to radians
         lat = lat * math.pi / 180
@@ -596,18 +553,10 @@ def to_cartesian(
         z_np = np.sin(lat)
         return np.stack([x_np, y_np, z_np], axis=-1)
     elif isinstance(lon, torch.Tensor):
-        assert (
-            -90 <= lat.min()
-        ), f"lat out of range ({lat.min()}). Make sure you are in EPSG:4326"
-        assert (
-            90 >= lat.max()
-        ), f"lat out of range ({lat.max()}). Make sure you are in EPSG:4326"
-        assert (
-            -180 <= lon.min()
-        ), f"lon out of range ({lon.min()}). Make sure you are in EPSG:4326"
-        assert (
-            180 >= lon.max()
-        ), f"lon out of range ({lon.max()}). Make sure you are in EPSG:4326"
+        assert -90 <= lat.min(), f"lat out of range ({lat.min()}). Make sure you are in EPSG:4326"
+        assert 90 >= lat.max(), f"lat out of range ({lat.max()}). Make sure you are in EPSG:4326"
+        assert -180 <= lon.min(), f"lon out of range ({lon.min()}). Make sure you are in EPSG:4326"
+        assert 180 >= lon.max(), f"lon out of range ({lon.max()}). Make sure you are in EPSG:4326"
         assert isinstance(lat, torch.Tensor), f"Expected torch.Tensor got {type(lat)}"
         # transform to radians
         lat = lat * math.pi / 180

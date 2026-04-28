@@ -3,8 +3,8 @@
 import logging
 
 import torch
-import torch.nn as nn
-import torchvision.models as models
+from torch import nn
+from torchvision import models
 
 from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
 
@@ -36,23 +36,13 @@ class ResNet50(BaseMulticlassClassifier):
                 last_layer_key = next(reversed(checkpoint))
                 last_layer = checkpoint[last_layer_key]
                 num_classes = len(last_layer)
-                self.model = models.resnet50(
-                    weights=None, progress=False, num_classes=num_classes
-                )
+                self.model = models.resnet50(weights=None, progress=False, num_classes=num_classes)
                 # remove prefix "module."
-                checkpoint = {
-                    k.replace("backbone.", ""): v for k, v in checkpoint.items()
-                }
-                checkpoint = {
-                    k.replace("module.", ""): v for k, v in checkpoint.items()
-                }
+                checkpoint = {k.replace("backbone.", ""): v for k, v in checkpoint.items()}
+                checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
                 for k, v in self.model.state_dict().items():
                     if k not in list(checkpoint):
-                        logging.info(
-                            'key "{}" could not be found in provided state dict'.format(
-                                k
-                            )
-                        )
+                        logging.info('key "{}" could not be found in provided state dict'.format(k))
                     elif checkpoint[k].shape != v.shape:
                         logging.info(
                             'key "{}" is of different shape in model and provided state dict'.format(
@@ -142,9 +132,7 @@ class ResNet50MultiLabel(BaseMultilabelClassifier):
                 last_layer_key = next(reversed(checkpoint["state_dict"]))
                 last_layer = checkpoint["state_dict"][last_layer_key]
                 num_classes = len(last_layer)
-                self.model = models.resnet50(
-                    weights=None, progress=False, num_classes=num_classes
-                )
+                self.model = models.resnet50(weights=None, progress=False, num_classes=num_classes)
                 self.model.load_state_dict(checkpoint["state_dict"], strict=False)
             else:
                 self.model = models.resnet50(

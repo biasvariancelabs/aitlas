@@ -35,9 +35,7 @@ class SplitSetObjectSchema(Schema):
     """
 
     ratio = fields.Int(required=True, description="Ratio of dataset", example=60)
-    file = fields.String(
-        required=True, description="File indices", example="./data/indices.csv"
-    )
+    file = fields.String(required=True, description="File indices", example="./data/indices.csv")
 
 
 class SplitObjectSchema(Schema):
@@ -105,9 +103,7 @@ class TrainTaskSchema(BaseTaskShema):
         required=True,
         description="Train dataset type and configuration.",
     )
-    epochs = fields.Int(
-        required=True, description="Number of epochs used in training", example=50
-    )
+    epochs = fields.Int(required=True, description="Number of epochs used in training", example=50)
     model_directory = fields.String(
         required=True,
         description="Directory of the model output",
@@ -153,9 +149,7 @@ class TrainAndEvaluateTaskSchema(BaseTaskShema):
     :type val_dataset_config: ObjectConfig
     """
 
-    epochs = fields.Int(
-        required=True, description="Number of epochs used in training", example=50
-    )
+    epochs = fields.Int(required=True, description="Number of epochs used in training", example=50)
     model_directory = fields.String(
         required=True,
         description="Directory of the model output",
@@ -206,9 +200,7 @@ class OptimizeTaskSchema(BaseTaskShema):
     Schema for configuring an optimization task.
     """
 
-    epochs = fields.Int(
-        required=True, description="Number of epochs used in training", example=50
-    )
+    epochs = fields.Int(required=True, description="Number of epochs used in training", example=50)
     model_directory = fields.String(
         required=True,
         description="Directory of the model output",

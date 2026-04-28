@@ -7,13 +7,11 @@ import pandas as pd
 import seaborn as sns
 import sklearn.metrics as skmetrics
 
-from ..base import BaseDetailedVisualization, BaseVisualization
+from ..base import BaseDetailedVisualization
 from ..utils import pil_loader
 
 
-def plot_confusion_matrix(
-    confusion_matrix, axes, class_label, class_names, fontsize=14
-):
+def plot_confusion_matrix(confusion_matrix, axes, class_label, class_names, fontsize=14):
     """
     Plots a confusion matrix.
 
@@ -138,9 +136,7 @@ class PrecisionRecallCurve(BaseDetailedVisualization):
         for i in range(len(self.labels)):
             filtered_true = [1 if x == i else 0 for x in self.y_true]
             filtered_pred = [1 if x == i else 0 for x in self.y_pred]
-            precision, recall, _ = skmetrics.precision_recall_curve(
-                filtered_true, filtered_pred
-            )
+            precision, recall, _ = skmetrics.precision_recall_curve(filtered_true, filtered_pred)
             plt.plot(recall, precision, lw=2, label=self.labels[i])
 
         plt.xlabel("Recall")
@@ -222,9 +218,7 @@ class ImageLabelsVisualization(BaseDetailedVisualization):
 
 
 def display_image_labels(image, y_true, y_pred, y_prob, labels, output_file):
-    viz = ImageLabelsVisualization(
-        y_true, y_pred, y_prob, labels, output_file, image=image
-    )
+    viz = ImageLabelsVisualization(y_true, y_pred, y_prob, labels, output_file, image=image)
     viz.plot()
 
 

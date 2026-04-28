@@ -1,9 +1,8 @@
 """BIT: Bitemporal Image Transformer for Change Detection"""
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from einops import rearrange
+from torch import nn
 from torchvision import models
 
 from ..base import BaseChangeDetection
@@ -225,14 +224,10 @@ class Transformer(nn.Module):
                         Residual(
                             PreNorm(
                                 dim,
-                                Attention(
-                                    dim, heads=heads, dim_head=dim_head, dropout=dropout
-                                ),
+                                Attention(dim, heads=heads, dim_head=dim_head, dropout=dropout),
                             )
                         ),
-                        Residual(
-                            PreNorm(dim, FeedForward(dim, mlp_dim, dropout=dropout))
-                        ),
+                        Residual(PreNorm(dim, FeedForward(dim, mlp_dim, dropout=dropout))),
                     ]
                 )
             )
@@ -264,9 +259,7 @@ class TransformerDecoder(nn.Module):
                                 ),
                             )
                         ),
-                        Residual(
-                            PreNorm(dim, FeedForward(dim, mlp_dim, dropout=dropout))
-                        ),
+                        Residual(PreNorm(dim, FeedForward(dim, mlp_dim, dropout=dropout))),
                     ]
                 )
             )
@@ -327,9 +320,7 @@ class BITModel(nn.Module):
                 bias=old_conv.bias,
             )
 
-            nn.init.kaiming_normal_(
-                new_conv.weight, mode="fan_out", nonlinearity="relu"
-            )
+            nn.init.kaiming_normal_(new_conv.weight, mode="fan_out", nonlinearity="relu")
             resnet.conv1 = new_conv
 
         # 2. Define layers to execute.
@@ -346,12 +337,8 @@ class BITModel(nn.Module):
 
         # 3. Resolution Adjustments
         #    Original model upsamples backbone features (1/8) to (1/4) before Transformer
-        self.upsamplex2 = nn.Upsample(
-            scale_factor=2, mode="bilinear", align_corners=True
-        )
-        self.upsamplex4 = nn.Upsample(
-            scale_factor=4, mode="bilinear", align_corners=True
-        )
+        self.upsamplex2 = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
+        self.upsamplex4 = nn.Upsample(scale_factor=4, mode="bilinear", align_corners=True)
 
         # --- Tokenizer & Projection ---
         self.token_len = token_len

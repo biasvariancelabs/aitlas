@@ -4,13 +4,11 @@
 #
 # ------------------------------------------------------------------------------
 import math
-import random
 import warnings
 from functools import partial
 
 import torch
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
 
 
 def make_2tuple(x):
@@ -69,9 +67,7 @@ def drop_path(x, drop_prob: float = 0.0, training: bool = False):
     if drop_prob == 0.0 or not training:
         return x
     keep_prob = 1 - drop_prob
-    shape = (x.shape[0],) + (1,) * (
-        x.ndim - 1
-    )  # work with diff dim tensors, not just 2D ConvNets
+    shape = (x.shape[0],) + (1,) * (x.ndim - 1)  # work with diff dim tensors, not just 2D ConvNets
     random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()  # binarize
     output = x.div(keep_prob) * random_tensor
@@ -138,9 +134,7 @@ class Attention(nn.Module):
     def forward(self, x):
         B, N, C = x.shape
         qkv = (
-            self.qkv(x)
-            .reshape(B, N, 3, self.num_heads, C // self.num_heads)
-            .permute(2, 0, 3, 1, 4)
+            self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         )
         q, k, v = qkv[0], qkv[1], qkv[2]
 
@@ -219,9 +213,7 @@ class PatchEmbed(nn.Module):
         self.conv2d_s2_l1c = nn.Conv2d(
             in_chans_s2, attn_dim, kernel_size=patch_size, stride=patch_size
         )
-        self.conv2d_s1 = nn.Conv2d(
-            in_chans_s1, attn_dim, kernel_size=patch_size, stride=patch_size
-        )
+        self.conv2d_s1 = nn.Conv2d(in_chans_s1, attn_dim, kernel_size=patch_size, stride=patch_size)
 
         self.projection = TokenProjection(embed_dim=embed_dim, attn_dim=attn_dim)
         self.s2_l2a_embed = nn.Parameter(torch.zeros(1, attn_dim))
@@ -230,7 +222,6 @@ class PatchEmbed(nn.Module):
         self.attn_dim = attn_dim
 
     def forward(self, x12: Tensor, is_l2a: bool = False) -> Tensor:
-
         B, C, W, H = x12.shape
         device, dtype = x12.device, x12.dtype
         B = len(x12)
@@ -296,7 +287,7 @@ class TerraFMModule(nn.Module):
         attn_drop_rate=0.0,
         drop_path_rate=0.0,
         norm_layer=nn.LayerNorm,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.num_features = self.embed_dim = embed_dim
@@ -336,9 +327,7 @@ class TerraFMModule(nn.Module):
         self.norm = norm_layer(embed_dim)
 
         # Classifier head
-        self.head = (
-            nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
-        )
+        self.head = nn.Linear(embed_dim, num_classes) if num_classes > 0 else nn.Identity()
 
         trunc_normal_(self.pos_embed, std=0.02)
         trunc_normal_(self.cls_token, std=0.02)
@@ -367,16 +356,13 @@ class TerraFMModule(nn.Module):
         # see discussion at https://github.com/facebookresearch/dino/issues/8
         w0, h0 = w0 + 0.1, h0 + 0.1
         patch_pos_embed = nn.functional.interpolate(
-            patch_pos_embed.reshape(
-                1, int(math.sqrt(N)), int(math.sqrt(N)), dim
-            ).permute(0, 3, 1, 2),
+            patch_pos_embed.reshape(1, int(math.sqrt(N)), int(math.sqrt(N)), dim).permute(
+                0, 3, 1, 2
+            ),
             scale_factor=(w0 / math.sqrt(N), h0 / math.sqrt(N)),
             mode="bicubic",
         )
-        assert (
-            int(w0) == patch_pos_embed.shape[-2]
-            and int(h0) == patch_pos_embed.shape[-1]
-        )
+        assert int(w0) == patch_pos_embed.shape[-2] and int(h0) == patch_pos_embed.shape[-1]
         patch_pos_embed = patch_pos_embed.permute(0, 2, 3, 1).view(1, -1, dim)
         return torch.cat((class_pos_embed.unsqueeze(0), patch_pos_embed), dim=1)
 
@@ -438,8 +424,9 @@ class TerraFMModule(nn.Module):
     def extract_feature(self, images, return_h_w=True, out_indices=[3, 5, 7, 11]):
         x = self.prepare_tokens(images)
         output = []
-        h, w = int(images.shape[2] / self.patch_embed.patch_size), int(
-            images.shape[3] / self.patch_embed.patch_size
+        h, w = (
+            int(images.shape[2] / self.patch_embed.patch_size),
+            int(images.shape[3] / self.patch_embed.patch_size),
         )
         for i, blk in enumerate(self.blocks):
             x = blk(x)
@@ -462,7 +449,7 @@ def terrafm_base(patch_size=16, **kwargs):
         mlp_ratio=4,
         qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -476,6 +463,6 @@ def terrafm_large(patch_size=16, **kwargs):
         mlp_ratio=4,
         qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model

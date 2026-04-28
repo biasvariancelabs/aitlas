@@ -1,8 +1,8 @@
 """STANet: A Spatio-Temporal Attention Network for Change Detection"""
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torchvision import models
 
 # Assuming BaseChangeDetection is available in your environment
@@ -32,21 +32,15 @@ class BAM(nn.Module):
         self.chanel_in = in_dim
         self.key_channel = self.chanel_in // 8
         self.activation = activation
-        self.ds = ds  #
+        self.ds = ds
         self.pool = nn.AvgPool2d(self.ds)
         print("ds: ", ds)
-        self.query_conv = nn.Conv2d(
-            in_channels=in_dim, out_channels=in_dim // 8, kernel_size=1
-        )
-        self.key_conv = nn.Conv2d(
-            in_channels=in_dim, out_channels=in_dim // 8, kernel_size=1
-        )
-        self.value_conv = nn.Conv2d(
-            in_channels=in_dim, out_channels=in_dim, kernel_size=1
-        )
+        self.query_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim // 8, kernel_size=1)
+        self.key_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim // 8, kernel_size=1)
+        self.value_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim, kernel_size=1)
         self.gamma = nn.Parameter(torch.zeros(1))
 
-        self.softmax = nn.Softmax(dim=-1)  #
+        self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, input):
         """
@@ -61,17 +55,13 @@ class BAM(nn.Module):
         proj_query = (
             self.query_conv(x).view(m_batchsize, -1, width * height).permute(0, 2, 1)
         )  # B X C X (N)/(ds*ds)
-        proj_key = self.key_conv(x).view(
-            m_batchsize, -1, width * height
-        )  # B X C x (*W*H)/(ds*ds)
+        proj_key = self.key_conv(x).view(m_batchsize, -1, width * height)  # B X C x (*W*H)/(ds*ds)
         energy = torch.bmm(proj_query, proj_key)  # transpose check
         energy = (self.key_channel**-0.5) * energy
 
         attention = self.softmax(energy)  # BX (N) X (N)/(ds*ds)/(ds*ds)
 
-        proj_value = self.value_conv(x).view(
-            m_batchsize, -1, width * height
-        )  # B X C X N
+        proj_value = self.value_conv(x).view(m_batchsize, -1, width * height)  # B X C X N
 
         out = torch.bmm(proj_value, attention.permute(0, 2, 1))
         out = out.view(m_batchsize, C, width, height)
@@ -170,17 +160,11 @@ class _PAMBlock(nn.Module):
         def func(value_local, query_local, key_local):
             batch_size_new = value_local.size(0)
             h_local, w_local = value_local.size(2), value_local.size(3)
-            value_local = value_local.contiguous().view(
-                batch_size_new, self.value_channels, -1
-            )
+            value_local = value_local.contiguous().view(batch_size_new, self.value_channels, -1)
 
-            query_local = query_local.contiguous().view(
-                batch_size_new, self.key_channels, -1
-            )
+            query_local = query_local.contiguous().view(batch_size_new, self.key_channels, -1)
             query_local = query_local.permute(0, 2, 1)
-            key_local = key_local.contiguous().view(
-                batch_size_new, self.key_channels, -1
-            )
+            key_local = key_local.contiguous().view(batch_size_new, self.key_channels, -1)
 
             sim_map = torch.bmm(query_local, key_local)  # batch matrix multiplication
             sim_map = (self.key_channels**-0.5) * sim_map
@@ -231,16 +215,12 @@ class _PAMBlock(nn.Module):
 
 
 class PAMBlock(_PAMBlock):
-    def __init__(
-        self, in_channels, key_channels=None, value_channels=None, scale=1, ds=1
-    ):
-        if key_channels == None:
+    def __init__(self, in_channels, key_channels=None, value_channels=None, scale=1, ds=1):
+        if key_channels is None:
             key_channels = in_channels // 8
-        if value_channels == None:
+        if value_channels is None:
             value_channels = in_channels
-        super(PAMBlock, self).__init__(
-            in_channels, key_channels, value_channels, scale, ds
-        )
+        super(PAMBlock, self).__init__(in_channels, key_channels, value_channels, scale, ds)
 
 
 class PAM(nn.Module):
@@ -258,9 +238,7 @@ class PAM(nn.Module):
 
         self.stages = nn.ModuleList(
             [
-                self._make_stage(
-                    in_channels, self.key_channels, self.value_channels, size, self.ds
-                )
+                self._make_stage(in_channels, self.key_channels, self.value_channels, size, self.ds)
                 for size in sizes
             ]
         )
@@ -378,9 +356,7 @@ class STANetDecoder(nn.Module):
     def __init__(self, encoder_out_channels, f_c=64, sa_mode="PAM"):
         super(STANetDecoder, self).__init__()
         self.out_channel = f_c
-        self.backbone_decoder = BackboneDecoder(
-            f_c, nn.BatchNorm2d, encoder_out_channels
-        )
+        self.backbone_decoder = BackboneDecoder(f_c, nn.BatchNorm2d, encoder_out_channels)
         self.netA = CDSA(in_c=f_c, ds=1, mode=sa_mode)
 
     def forward(self, *features):
@@ -391,12 +367,8 @@ class STANetDecoder(nn.Module):
         # NOTE: In the change_detection.pytorch library it expects specific indices for ResNet features
         # [0]: input, [1]: conv1, [2]: layer1, [3]: layer2, [4]: layer3, [5]: layer4
 
-        feature_0 = self.backbone_decoder(
-            feature_0[5], feature_0[2], feature_0[3], feature_0[4]
-        )
-        feature_1 = self.backbone_decoder(
-            feature_1[5], feature_1[2], feature_1[3], feature_1[4]
-        )
+        feature_0 = self.backbone_decoder(feature_0[5], feature_0[2], feature_0[3], feature_0[4])
+        feature_1 = self.backbone_decoder(feature_1[5], feature_1[2], feature_1[3], feature_1[4])
         feature_0, feature_1 = self.netA(feature_0, feature_1)
         return feature_0, feature_1
 
@@ -418,9 +390,7 @@ class SegmentationHead(nn.Sequential):
             in_channels, out_channels, kernel_size=kernel_size, padding=kernel_size // 2
         )
         upsampling = (
-            nn.Upsample(
-                scale_factor=upsampling, mode="bilinear", align_corners=align_corners
-            )
+            nn.Upsample(scale_factor=upsampling, mode="bilinear", align_corners=align_corners)
             if upsampling > 1
             else nn.Identity()
         )
@@ -446,9 +416,7 @@ class STANetModel(nn.Module):
     DOI: 10.3390/rs12101662
     """
 
-    def __init__(
-        self, in_channels=3, num_classes=2, pretrained=True, return_distance_map=False
-    ):
+    def __init__(self, in_channels=3, num_classes=2, pretrained=True, return_distance_map=False):
         super().__init__()
         self.in_channels = in_channels
         self.num_classes = num_classes
@@ -469,9 +437,7 @@ class STANetModel(nn.Module):
                 bias=old_conv.bias,
             )
 
-            nn.init.kaiming_normal_(
-                new_conv.weight, mode="fan_out", nonlinearity="relu"
-            )
+            nn.init.kaiming_normal_(new_conv.weight, mode="fan_out", nonlinearity="relu")
             resnet.conv1 = new_conv
 
         # We manually construct it to match the feature list output format of SMP
@@ -556,9 +522,7 @@ class STANetModel(nn.Module):
         # consistency with other models in Aitlas toolbox.
         if self.return_distance_map:
             dist = F.pairwise_distance(feat1, feat2, keepdim=True)
-            dist = F.interpolate(
-                dist, x1.shape[2:], mode="bilinear", align_corners=True
-            )
+            dist = F.interpolate(dist, x1.shape[2:], mode="bilinear", align_corners=True)
             return dist
         else:
             decoder_output = torch.cat([feat1, feat2], dim=1)

@@ -54,9 +54,7 @@ class So2SatDataset(BaseDataset):
         super().__init__(config)
 
         self.file_path = self.config.h5_file
-        self.data = h5py.File(
-            self.file_path
-        )  # TODO: we should close this file eventually
+        self.data = h5py.File(self.file_path)  # TODO: we should close this file eventually
 
     def __getitem__(self, index):
         label = self.data["label"][index]
@@ -98,9 +96,7 @@ class So2SatDataset(BaseDataset):
         if size % 5:
             raise ValueError("The provided size should be divided by 5!")
         image_indices = random.sample(range(0, len(self.data["sen2"])), size)
-        figure, ax = plt.subplots(
-            int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5))
-        )
+        figure, ax = plt.subplots(int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5)))
         if show_title:
             figure.suptitle(
                 "Example images with labels from {}".format(self.get_name()),
@@ -117,16 +113,12 @@ class So2SatDataset(BaseDataset):
 
     def data_distribution_table(self):
         sums = np.sum(self.data["label"], axis=0)
-        label_count = pd.DataFrame(
-            list(zip(self.labels, sums)), columns=["Label", "Count"]
-        )
+        label_count = pd.DataFrame(list(zip(self.labels, sums)), columns=["Label", "Count"])
         return label_count
 
     def data_distribution_barchart(self):
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
-        ax.set_title(
-            "Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18
-        )
+        ax.set_title("Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig

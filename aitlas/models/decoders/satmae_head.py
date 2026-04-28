@@ -1,15 +1,14 @@
 # Copyright contributors to the Terratorch project
 
 import torch
-import torch.nn as nn
-from timm.models.vision_transformer import Block, PatchEmbed
+from timm.models.vision_transformer import Block
+from torch import nn
 
 from aitlas.models.registries import DECODER_REGISTRY
 
 
 @DECODER_REGISTRY.register("SatMAEHead")
 class SatMAEHead(nn.Module):
-
     def __init__(
         self,
         embed_dim: int = None,
@@ -23,7 +22,6 @@ class SatMAEHead(nn.Module):
         norm_layer=nn.LayerNorm,
         in_chans: int = None,
     ) -> None:
-
         super(SatMAEHead, self).__init__()
 
         if type(embed_dim) == tuple:
@@ -42,9 +40,7 @@ class SatMAEHead(nn.Module):
         self.num_patches = num_patches
         self.depth = depth
 
-        self.decoder_embed = nn.Linear(
-            self.embed_dim, self.out_channels, bias=self.bias
-        )
+        self.decoder_embed = nn.Linear(self.embed_dim, self.out_channels, bias=self.bias)
 
         self.mask_token = nn.Parameter(torch.zeros(1, 1, self.out_channels))
 
@@ -89,14 +85,11 @@ class SatMAEHead(nn.Module):
         return imgs
 
     def forward(self, x, ids_restore) -> torch.Tensor:
-
         # embed tokens
         x = self.decoder_embed(x)
 
         # append mask tokens to sequence
-        mask_tokens = self.mask_token.repeat(
-            x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1
-        )
+        mask_tokens = self.mask_token.repeat(x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1)
         x_ = torch.cat([x[:, 1:, :], mask_tokens], dim=1)  # no cls token
         x_ = torch.gather(
             x_, dim=1, index=ids_restore.unsqueeze(-1).repeat(1, 1, x.shape[2])
@@ -124,7 +117,6 @@ class SatMAEHead(nn.Module):
 
 
 class SatMAEHeadViT(nn.Module):
-
     def __init__(
         self,
         embed_dim: int = None,
@@ -138,7 +130,6 @@ class SatMAEHeadViT(nn.Module):
         norm_layer=nn.LayerNorm,
         in_chans: int = None,
     ) -> None:
-
         super(SatMAEHeadViT, self).__init__()
 
         if type(embed_dim) == tuple:
@@ -156,9 +147,7 @@ class SatMAEHeadViT(nn.Module):
         self.num_patches = num_patches
         self.depth = depth
 
-        self.decoder_embed = nn.Linear(
-            self.embed_dim, self.out_channels, bias=self.bias
-        )
+        self.decoder_embed = nn.Linear(self.embed_dim, self.out_channels, bias=self.bias)
 
         self.mask_token = nn.Parameter(torch.zeros(1, 1, self.out_channels))
 
@@ -203,7 +192,6 @@ class SatMAEHeadViT(nn.Module):
         return imgs
 
     def forward(self, x) -> torch.Tensor:
-
         x = torch.stack(x, dim=0)
 
         # embed tokens

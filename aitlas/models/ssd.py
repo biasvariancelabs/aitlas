@@ -1,7 +1,7 @@
 """SSD model for object detection"""
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torchvision.models.detection import SSD300_VGG16_Weights, ssd300_vgg16
 
 from ..base import BaseObjectDetection
@@ -27,7 +27,6 @@ class SSD(BaseObjectDetection):
 
         # Check if we need to replace the head
         if cls_head.num_columns != self.config.num_classes:
-
             # Create a new list of predictors
             new_cls_layers = nn.ModuleList()
 

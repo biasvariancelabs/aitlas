@@ -3,7 +3,7 @@
 import math
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from .utils import trunc_normal_
 
@@ -44,10 +44,7 @@ def piecewise_index(relative_position, alpha, beta, gamma, dtype):
     rp_abs_out = rp_abs[not_mask]
     y_out = (
         torch.sign(rp_out)
-        * (
-            alpha
-            + torch.log(rp_abs_out / alpha) / math.log(gamma / alpha) * (beta - alpha)
-        )
+        * (alpha + torch.log(rp_abs_out / alpha) / math.log(gamma / alpha) * (beta - alpha))
         .round()
         .clip(max=beta)
     ).to(dtype)
@@ -88,14 +85,8 @@ def get_absolute_positions(height, width, dtype, device):
         The shape is (height, width, 2),
         where 2 represents a 2D position (row, col).
     """
-    rows = (
-        torch.arange(height, dtype=dtype, device=device)
-        .view(height, 1)
-        .repeat(1, width)
-    )
-    cols = (
-        torch.arange(width, dtype=dtype, device=device).view(1, width).repeat(height, 1)
-    )
+    rows = torch.arange(height, dtype=dtype, device=device).view(height, 1).repeat(1, width)
+    cols = torch.arange(width, dtype=dtype, device=device).view(1, width).repeat(height, 1)
     return torch.stack([rows, cols], 2)
 
 
@@ -516,25 +507,20 @@ class iRPE(nn.Module):
         # initialize the parameters of iRPE
         if self.transposed:
             if self.mode == "bias":
-                self.lookup_table_bias = nn.Parameter(
-                    torch.zeros(self.num_heads, self.num_buckets)
-                )
+                self.lookup_table_bias = nn.Parameter(torch.zeros(self.num_heads, self.num_buckets))
                 self.initializer(self.lookup_table_bias)
             elif self.mode == "contextual":
                 self.lookup_table_weight = nn.Parameter(
                     torch.zeros(self.num_heads, self.head_dim, self.num_buckets)
                 )
                 self.initializer(self.lookup_table_weight)
-        else:
-            if self.mode == "bias":
-                raise NotImplementedError(
-                    "[Error] Bias non-transposed RPE does not exist."
-                )
-            elif self.mode == "contextual":
-                self.lookup_table_weight = nn.Parameter(
-                    torch.zeros(self.num_heads, self.num_buckets, self.head_dim)
-                )
-                self.initializer(self.lookup_table_weight)
+        elif self.mode == "bias":
+            raise NotImplementedError("[Error] Bias non-transposed RPE does not exist.")
+        elif self.mode == "contextual":
+            self.lookup_table_weight = nn.Parameter(
+                torch.zeros(self.num_heads, self.num_buckets, self.head_dim)
+            )
+            self.initializer(self.lookup_table_weight)
 
     def forward(self, x, height=None, width=None, pos=None, modis=False):
         """forward function for iRPE.
@@ -605,11 +591,7 @@ class iRPE(nn.Module):
 
         skip = 1 + int(modis)
         config = self.rpe_config
-        if (
-            RPEIndexFunction is not None
-            and self.mode == "contextual"
-            and self.transposed
-        ):
+        if RPEIndexFunction is not None and self.mode == "contextual" and self.transposed:
             # RPEIndexFunction uses int32 index.
             dtype = torch.int32
         else:
@@ -651,13 +633,11 @@ class iRPE(nn.Module):
                 dim=2,
             )
         rp_bucket = torch.cat(
-            [rp_bucket[:, :1, :]]
-            + [rp_bucket[:, 1:, :] for _ in range(self.n_modalities)],
+            [rp_bucket[:, :1, :]] + [rp_bucket[:, 1:, :] for _ in range(self.n_modalities)],
             dim=1,
         )
         rp_bucket = torch.cat(
-            [rp_bucket[:, :, :1]]
-            + [rp_bucket[:, :, 1:] for _ in range(self.n_modalities)],
+            [rp_bucket[:, :, :1]] + [rp_bucket[:, :, 1:] for _ in range(self.n_modalities)],
             dim=2,
         )
         assert num_buckets == self.num_buckets
@@ -797,9 +777,7 @@ class iRPE(nn.Module):
 
         B = len(x)  # batch_size
         L_query, L_key = rp_bucket.shape
-        assert (
-            self.mode == "contextual"
-        ), "Only support contextual \
+        assert self.mode == "contextual", "Only support contextual \
 version in non-transposed version"
         weight = self.lookup_table_weight[:, rp_bucket.flatten()].view(
             self.num_heads, L_query, L_key, self.head_dim
@@ -812,9 +790,7 @@ version in non-transposed version"
         return 'iRPE(head_dim={rpe.head_dim}, num_heads={rpe.num_heads}, \
 mode="{rpe.mode}", method={rpe.method}, transposed={rpe.transposed}, \
 num_buckets={rpe.num_buckets}, initializer={rpe.initializer}, \
-rpe_config={rpe.rpe_config})'.format(
-            rpe=self
-        )
+rpe_config={rpe.rpe_config})'.format(rpe=self)
 
 
 class iRPE_Cross(nn.Module):
@@ -888,9 +864,7 @@ class iRPE_Cross(nn.Module):
 num_heads={rpe.num_heads}, mode="{rpe.mode}", method={rpe.method}, \
 transposed={rpe.transposed}, num_buckets={rpe.num_buckets}, \
 initializer={rpe.initializer}, \
-rpe_config={rpe.rpe_config})'.format(
-            rpe=self.rp_rows
-        )
+rpe_config={rpe.rpe_config})'.format(rpe=self.rp_rows)
 
 
 def get_single_rpe_config(
@@ -1054,9 +1028,7 @@ def build_rpe(config, head_dim, num_heads, n_modalities=1):
             n_modalities=n_modalities,
         )
 
-    return [
-        _build_single_rpe(rpe, transposed) for rpe, transposed in zip(rpes, transposeds)
-    ]
+    return [_build_single_rpe(rpe, transposed) for rpe, transposed in zip(rpes, transposeds)]
 
 
 if __name__ == "__main__":

@@ -8,7 +8,6 @@ from aitlas.models.registries import ADAPTER_REGISTRY
 class TerraMindAdapter(BaseInputAdapter):
     def forward(self, x):
         if isinstance(x, torch.Tensor):
-
             # Replace NaNs and Infs
             x = torch.nan_to_num(x, nan=0.0, posinf=0.0, neginf=0.0)
 
@@ -55,13 +54,9 @@ class TerraMindAdapter(BaseInputAdapter):
                 ]
 
             # Get bands from the config safely, or fallback to defaults if the modality is active
-            bands_s1 = getattr(self.config, "bands_s1", None) or (
-                ["VV", "VH"] if s1_key else []
-            )
+            bands_s1 = getattr(self.config, "bands_s1", None) or (["VV", "VH"] if s1_key else [])
             bands_s2 = getattr(self.config, "bands_s2", None) or default_s2
-            bands_dem = getattr(self.config, "bands_dem", None) or (
-                ["DEM"] if dem_key else []
-            )
+            bands_dem = getattr(self.config, "bands_dem", None) or (["DEM"] if dem_key else [])
 
             # If input is just RGB images
             is_pure_rgb = (modalities == ["RGB"]) or (

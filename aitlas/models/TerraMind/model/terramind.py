@@ -116,14 +116,11 @@ class TerraMindModule(nn.Module):
         if shared_drop_path:
             dpr_encoder = [
                 x.item()
-                for x in torch.linspace(
-                    0, drop_path_rate_encoder, encoder_depth + decoder_depth
-                )
+                for x in torch.linspace(0, drop_path_rate_encoder, encoder_depth + decoder_depth)
             ][:encoder_depth]
         else:
             dpr_encoder = [
-                x.item()
-                for x in torch.linspace(0, drop_path_rate_encoder, encoder_depth)
+                x.item() for x in torch.linspace(0, drop_path_rate_encoder, encoder_depth)
             ]  # stochastic depth decay rule
 
         self.encoder = nn.ModuleList(
@@ -150,14 +147,11 @@ class TerraMindModule(nn.Module):
         if shared_drop_path:
             dpr_decoder = [
                 x.item()
-                for x in torch.linspace(
-                    0, drop_path_rate_decoder, encoder_depth + decoder_depth
-                )
+                for x in torch.linspace(0, drop_path_rate_decoder, encoder_depth + decoder_depth)
             ][encoder_depth:]
         else:
             dpr_decoder = [
-                x.item()
-                for x in torch.linspace(0, drop_path_rate_decoder, decoder_depth)
+                x.item() for x in torch.linspace(0, drop_path_rate_decoder, decoder_depth)
             ]  # stochastic depth decay rule
 
         # Projection of encoder tokens before adding the embeddings again
@@ -188,9 +182,7 @@ class TerraMindModule(nn.Module):
 
         # Additional register tokens that can be used by the encoder during fine-tuning
         if self.num_register_tokens > 0:
-            self.register_tokens = nn.Parameter(
-                torch.zeros(1, self.num_register_tokens, dim)
-            )
+            self.register_tokens = nn.Parameter(torch.zeros(1, self.num_register_tokens, dim))
             nn.init.normal_(self.register_tokens, std=self.init_std)
         else:
             self.register_tokens = None
@@ -215,22 +207,18 @@ class TerraMindModule(nn.Module):
             elif isinstance(m, nn.Linear):
                 if "qkv" in name:
                     # treat the weights of Q, K, V separately
-                    val = math.sqrt(
-                        6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1])
-                    )
+                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1]))
                     nn.init.uniform_(m.weight, -val, val)
                 elif "kv" in name:
                     # treat the weights of K, V separately
-                    val = math.sqrt(
-                        6.0 / float(m.weight.shape[0] // 2 + m.weight.shape[1])
-                    )
+                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 2 + m.weight.shape[1]))
                     nn.init.uniform_(m.weight, -val, val)
                 else:
                     nn.init.xavier_uniform_(m.weight)
                 if isinstance(m, nn.Linear) and m.bias is not None:
                     nn.init.constant_(m.bias, 0)
             # LayerNorm
-            elif isinstance(m, nn.LayerNorm) or isinstance(m, LayerNorm):
+            elif isinstance(m, LayerNorm | nn.LayerNorm):
                 nn.init.constant_(m.weight, 1.0)
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
@@ -271,9 +259,7 @@ class TerraMindModule(nn.Module):
 
         return no_wd_set
 
-    def cat_encoder_tensors(
-        self, mod_dict: dict[str, torch.Tensor]
-    ) -> tuple[torch.Tensor]:
+    def cat_encoder_tensors(self, mod_dict: dict[str, torch.Tensor]) -> tuple[torch.Tensor]:
         """Concatenate encoder tensors from different modalities.
 
         Args:
@@ -304,9 +290,7 @@ class TerraMindModule(nn.Module):
             emb_all.append(d["emb"])
             encoder_mask_all.append(d["input_mask"])
             mod_mask_all.append(
-                torch.full_like(
-                    d["input_mask"], self.modality_info[mod]["id"], dtype=torch.int
-                )
+                torch.full_like(d["input_mask"], self.modality_info[mod]["id"], dtype=torch.int)
             )
 
         encoder_tokens_all = torch.cat(encoder_tokens_all, dim=1)
@@ -353,10 +337,7 @@ class TerraMindModule(nn.Module):
 
         # Shuffle order in which modalities are provided (useful for modality causal mask)
         mod_dict = {
-            mod: d
-            for mod, d in random.sample(
-                [item for item in mod_dict.items()], len(mod_dict)
-            )
+            mod: d for mod, d in random.sample([item for item in mod_dict.items()], len(mod_dict))
         }
 
         for mod, d in mod_dict.items():
@@ -387,9 +368,7 @@ class TerraMindModule(nn.Module):
                 decoder_mask_all.append(d["target_mask"])
                 attention_mask_all.append(d["decoder_attention_mask"])
                 mod_mask_all.append(
-                    torch.full_like(
-                        d["ids"], self.modality_info[mod]["id"], dtype=torch.int
-                    )
+                    torch.full_like(d["ids"], self.modality_info[mod]["id"], dtype=torch.int)
                 )
 
         decoder_tokens_all = torch.cat(decoder_tokens_all, dim=1)
@@ -437,15 +416,13 @@ class TerraMindModule(nn.Module):
         """
         B = list(mod_dict.values())[0]["tensor"].shape[0]
 
-        encoder_tokens_all, emb_all, encoder_mask_all, mod_mask_all = (
-            self.cat_encoder_tensors(mod_dict)
+        encoder_tokens_all, emb_all, encoder_mask_all, mod_mask_all = self.cat_encoder_tensors(
+            mod_dict
         )
 
         # Add arange multiplied by small constant to mask so they get sorted in a deterministic way
         mask_arange = (
-            torch.arange(
-                encoder_mask_all.shape[1], device=encoder_mask_all.device
-            ).unsqueeze(0)
+            torch.arange(encoder_mask_all.shape[1], device=encoder_mask_all.device).unsqueeze(0)
             * 1e-6
         )
         ids_shuffle = torch.argsort(encoder_mask_all + mask_arange, dim=1)
@@ -467,9 +444,7 @@ class TerraMindModule(nn.Module):
             register_tokens = repeat(self.register_tokens, "() n d -> b n d", b=B)
             # We add register tokens at the beginning of the sequence
             encoder_tokens = torch.cat([register_tokens, encoder_tokens], dim=1)
-            encoder_emb = torch.cat(
-                [torch.zeros_like(register_tokens), encoder_emb], dim=1
-            )
+            encoder_emb = torch.cat([torch.zeros_like(register_tokens), encoder_emb], dim=1)
             encoder_mask = torch.cat(
                 [
                     torch.zeros(
@@ -544,9 +519,7 @@ class TerraMindModule(nn.Module):
 
         # Add arange multiplied by small constant to mask so they get sorted in a deterministic way
         mask_arange = (
-            torch.arange(
-                decoder_mask_all.shape[1], device=decoder_mask_all.device
-            ).unsqueeze(0)
+            torch.arange(decoder_mask_all.shape[1], device=decoder_mask_all.device).unsqueeze(0)
             * 1e-6
         )
         ids_shuffle = torch.argsort(decoder_mask_all + mask_arange, dim=1)
@@ -563,17 +536,13 @@ class TerraMindModule(nn.Module):
         )
         decoder_mask = torch.gather(decoder_mask_all, dim=1, index=ids_keep)
         target_ids = torch.gather(target_ids_all, dim=1, index=ids_keep)
-        decoder_attention_mask = torch.gather(
-            decoder_attention_mask_all, dim=1, index=ids_keep
-        )
+        decoder_attention_mask = torch.gather(decoder_attention_mask_all, dim=1, index=ids_keep)
         mod_mask = torch.gather(mod_mask_all, dim=1, index=ids_keep)
 
         decoder_tokens[decoder_mask] = 0.0
         decoder_emb[decoder_mask] = 0.0
         target_ids[decoder_mask] = 0
-        decoder_attention_mask = self.adapt_decoder_attention_mask(
-            decoder_attention_mask, mod_mask
-        )
+        decoder_attention_mask = self.adapt_decoder_attention_mask(decoder_attention_mask, mod_mask)
         mod_mask[decoder_mask] = -1
 
         # This means this mask can then be re-used for decoder cross-attention
@@ -631,9 +600,7 @@ class TerraMindModule(nn.Module):
 
         return adapted_attention_mask
 
-    def forward_encoder(
-        self, x: torch.Tensor, encoder_mask: torch.Tensor
-    ) -> torch.Tensor:
+    def forward_encoder(self, x: torch.Tensor, encoder_mask: torch.Tensor) -> torch.Tensor:
         """Forward pass for the encoder.
 
         Args:
@@ -701,9 +668,7 @@ class TerraMindModule(nn.Module):
             if return_all_logits:
                 logits = self.decoder_embeddings[mod].forward_logits(y)
             else:
-                logits = self.decoder_embeddings[mod].forward_logits(
-                    y[decoder_mod_mask == idx]
-                )
+                logits = self.decoder_embeddings[mod].forward_logits(y[decoder_mod_mask == idx])
             mod_logits[mod] = logits
         return mod_logits
 
@@ -761,9 +726,7 @@ class TerraMindModule(nn.Module):
         mod_loss = {}
         for mod, d in decoder_mod_dict.items():
             idx = self.modality_info[mod]["id"]
-            logits = self.decoder_embeddings[mod].forward_logits(
-                y[decoder_mod_mask == idx]
-            )
+            logits = self.decoder_embeddings[mod].forward_logits(y[decoder_mod_mask == idx])
             if logits.numel() == 0:
                 # If there are no logits / targets, set mod_loss to 0
                 mod_loss[mod] = torch.zeros(1, device=logits.device)
@@ -800,9 +763,7 @@ class TerraMindModule(nn.Module):
 
         for mod, d in decoder_mod_dict.items():
             idx = self.modality_info[mod]["id"]
-            logits = self.decoder_embeddings[mod].forward_logits(
-                y[decoder_mod_mask == idx]
-            )
+            logits = self.decoder_embeddings[mod].forward_logits(y[decoder_mod_mask == idx])
             if logits.numel() == 0:
                 # If there are no logits / targets, set mod_loss to 0
                 mod_loss[mod] = torch.zeros(1, device=logits.device)
@@ -848,8 +809,8 @@ class TerraMindModule(nn.Module):
             for mod, d in mod_dict.items()
             if mod in self.encoder_embeddings
         }
-        encoder_tokens, encoder_emb, encoder_mask, encoder_mod_mask = (
-            self.forward_mask_encoder(encoder_mod_dict, num_encoder_tokens)
+        encoder_tokens, encoder_emb, encoder_mask, encoder_mod_mask = self.forward_mask_encoder(
+            encoder_mod_dict, num_encoder_tokens
         )
 
         decoder_mod_dict = {
@@ -983,9 +944,7 @@ class TerraMindModule(nn.Module):
         self.unfreeze_decoder(unfreeze_embeddings=True)
 
 
-def build_tokenizer(
-    tokenizer_dict, input_modalities, output_modalities=None, pretrained=True
-):
+def build_tokenizer(tokenizer_dict, input_modalities, output_modalities=None, pretrained=True):
     # TODO: Add loading only encoder/decoder
     tokenizer = {}
     for modality in input_modalities:
@@ -1006,9 +965,7 @@ def build_tokenizer(
     return tokenizer
 
 
-def build_modality_embeddings(
-    modality_info, modalities, img_size=None, dim=None, patch_size=None
-):
+def build_modality_embeddings(modality_info, modalities, img_size=None, dim=None, patch_size=None):
     mod_embeddings = {}
     mod_name_mapping = {}
     for modality in modalities:
@@ -1077,9 +1034,7 @@ def build_modality_embeddings(
         mod_embeddings[key] = mod_info["encoder_embedding"](
             image_size=img_size, dim_tokens=dim, **mod_info
         )
-        mod_name_mapping[modality] = (
-            key  # Requires manual mapping for loading model weights
-        )
+        mod_name_mapping[modality] = key  # Requires manual mapping for loading model weights
 
     return mod_embeddings, mod_name_mapping
 
@@ -1128,8 +1083,6 @@ def build_output_modality_embeddings(
         mod_embeddings[key] = mod_info["decoder_embedding"](
             image_size=img_size, dim_tokens=dim, **mod_info
         )
-        mod_name_mapping[modality] = (
-            key  # Requires manual mapping for loading model weights
-        )
+        mod_name_mapping[modality] = key  # Requires manual mapping for loading model weights
 
     return mod_embeddings, mod_name_mapping

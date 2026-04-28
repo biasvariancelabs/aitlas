@@ -26,9 +26,7 @@ class BottleneckBlock(nn.Module):
     def __init__(self, thin, wide):
         super(BottleneckBlock, self).__init__()
 
-        self.block = nn.Sequential(
-            nn.Linear(thin, wide), nn.GELU(), nn.Linear(wide, thin)
-        )
+        self.block = nn.Sequential(nn.Linear(thin, wide), nn.GELU(), nn.Linear(wide, thin))
 
     def forward(self, x):
         out = self.block(x)

@@ -4,19 +4,15 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import torch
 from matplotlib.patches import Patch
 from skimage.transform import resize
-from torch.utils.data import DataLoader, Dataset
 
-from ..base import BaseDataset
-from ..utils import image_loader, tiff_loader
+from ..utils import image_loader
 from .schemas import CloudDatasets_AI4QCSchema
 from .semantic_segmentation import SemanticSegmentationDataset
 
 
 def interp_band(bands, img_shape=[512, 512]):
-
     bands_interp = np.zeros(img_shape).astype(np.float32)
     bands_interp = resize(
         bands, img_shape, mode="reflect"
@@ -35,7 +31,6 @@ model based on CNN.
 
 
 class KappaZetaDataset(SemanticSegmentationDataset):
-
     url = "https://zenodo.org/records/5095024#.Y-DWMnbMIuU"
 
     labels = [
@@ -141,82 +136,56 @@ class KappaZetaDataset(SemanticSegmentationDataset):
 
         ids = os.listdir(os.path.join(data_dir, "B02"))
         self.imagesB01 = [
-            os.path.join(
-                data_dir, "B01", image_id[: image_id.rfind("_B02.tif")] + "_B01.tif"
-            )
+            os.path.join(data_dir, "B01", image_id[: image_id.rfind("_B02.tif")] + "_B01.tif")
             for image_id in ids
         ]
         self.imagesB02 = [os.path.join(data_dir, "B02", image_id) for image_id in ids]
         self.imagesB03 = [
-            os.path.join(
-                data_dir, "B03", image_id[: image_id.rfind("_B02.tif")] + "_B03.tif"
-            )
+            os.path.join(data_dir, "B03", image_id[: image_id.rfind("_B02.tif")] + "_B03.tif")
             for image_id in ids
         ]
         self.imagesB04 = [
-            os.path.join(
-                data_dir, "B04", image_id[: image_id.rfind("_B02.tif")] + "_B04.tif"
-            )
+            os.path.join(data_dir, "B04", image_id[: image_id.rfind("_B02.tif")] + "_B04.tif")
             for image_id in ids
         ]
         self.imagesB05 = [
-            os.path.join(
-                data_dir, "B05", image_id[: image_id.rfind("_B02.tif")] + "_B05.tif"
-            )
+            os.path.join(data_dir, "B05", image_id[: image_id.rfind("_B02.tif")] + "_B05.tif")
             for image_id in ids
         ]
         self.imagesB06 = [
-            os.path.join(
-                data_dir, "B06", image_id[: image_id.rfind("_B02.tif")] + "_B06.tif"
-            )
+            os.path.join(data_dir, "B06", image_id[: image_id.rfind("_B02.tif")] + "_B06.tif")
             for image_id in ids
         ]
         self.imagesB07 = [
-            os.path.join(
-                data_dir, "B07", image_id[: image_id.rfind("_B02.tif")] + "_B07.tif"
-            )
+            os.path.join(data_dir, "B07", image_id[: image_id.rfind("_B02.tif")] + "_B07.tif")
             for image_id in ids
         ]
         self.imagesB08 = [
-            os.path.join(
-                data_dir, "B08", image_id[: image_id.rfind("_B02.tif")] + "_B08.tif"
-            )
+            os.path.join(data_dir, "B08", image_id[: image_id.rfind("_B02.tif")] + "_B08.tif")
             for image_id in ids
         ]
         self.imagesB8A = [
-            os.path.join(
-                data_dir, "B8A", image_id[: image_id.rfind("_B02.tif")] + "_B8A.tif"
-            )
+            os.path.join(data_dir, "B8A", image_id[: image_id.rfind("_B02.tif")] + "_B8A.tif")
             for image_id in ids
         ]
         self.imagesB09 = [
-            os.path.join(
-                data_dir, "B09", image_id[: image_id.rfind("_B02.tif")] + "_B09.tif"
-            )
+            os.path.join(data_dir, "B09", image_id[: image_id.rfind("_B02.tif")] + "_B09.tif")
             for image_id in ids
         ]
         self.imagesB10 = [
-            os.path.join(
-                data_dir, "B10", image_id[: image_id.rfind("_B02.tif")] + "_B10.tif"
-            )
+            os.path.join(data_dir, "B10", image_id[: image_id.rfind("_B02.tif")] + "_B10.tif")
             for image_id in ids
         ]
         self.imagesB11 = [
-            os.path.join(
-                data_dir, "B11", image_id[: image_id.rfind("_B02.tif")] + "_B11.tif"
-            )
+            os.path.join(data_dir, "B11", image_id[: image_id.rfind("_B02.tif")] + "_B11.tif")
             for image_id in ids
         ]
         self.imagesB12 = [
-            os.path.join(
-                data_dir, "B12", image_id[: image_id.rfind("_B02.tif")] + "_B12.tif"
-            )
+            os.path.join(data_dir, "B12", image_id[: image_id.rfind("_B02.tif")] + "_B12.tif")
             for image_id in ids
         ]
         self.masks = [
-            os.path.join(
-                data_dir, "labels", image_id[: image_id.rfind("_B02")] + "_label.tif"
-            )
+            os.path.join(data_dir, "labels", image_id[: image_id.rfind("_B02")] + "_label.tif")
             for image_id in ids
         ]
 

@@ -15,7 +15,6 @@ The object is black and the background is white
 
 
 class ChactunDataset(SemanticSegmentationDataset):
-
     labels = ["Aguada", "Building", "Platform"]
     color_mapping = [[255, 255, 0], [100, 100, 100], [0, 255, 0]]
     name = "Chactun"
@@ -26,9 +25,7 @@ class ChactunDataset(SemanticSegmentationDataset):
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
-        mask = np.zeros(
-            shape=(image.shape[0], image.shape[1], len(self.masks[index])), dtype=float
-        )
+        mask = np.zeros(shape=(image.shape[0], image.shape[1], len(self.masks[index])), dtype=float)
         for i, path in enumerate(self.masks[index]):
             mask[:, :, i] = image_invert(path, True) / 255
         return self.apply_transformations(image, mask)

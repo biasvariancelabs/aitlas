@@ -1,8 +1,7 @@
 import warnings
 
-import torch
 import torch.nn.functional as F  # noqa: N812
-from torch import Tensor, nn
+from torch import nn
 
 
 """
@@ -23,7 +22,6 @@ class ConvModule(nn.Module):
         transpose=False,
         scale_factor=None,
     ) -> None:
-
         super().__init__()
 
         if transpose:
@@ -34,7 +32,6 @@ class ConvModule(nn.Module):
         conv_name = f"Conv{kind}2d"
 
         if transpose:
-
             stride = scale_factor
             padding = (kernel_size - scale_factor) // 2
 
@@ -52,7 +49,6 @@ class ConvModule(nn.Module):
         self.act = nn.ReLU(inplace=inplace)
 
     def forward(self, x):
-
         return self.act(self.norm(self.conv(x)))
 
 

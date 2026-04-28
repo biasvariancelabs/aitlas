@@ -36,9 +36,7 @@ def _conv_upscale_block(
             padding=padding,
             output_padding=output_padding,
         ),
-        nn.Conv2d(
-            output_channels, output_channels, kernel_size=3, padding=1, bias=True
-        ),
+        nn.Conv2d(output_channels, output_channels, kernel_size=3, padding=1, bias=True),
         Norm2d(output_channels),
         nn.GELU(),
     )

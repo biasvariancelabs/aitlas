@@ -6,7 +6,7 @@ from itertools import repeat
 from typing import Optional, Tuple, Union
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 def _trunc_normal_(tensor, mean, std, a, b):
@@ -65,9 +65,7 @@ def trunc_normal_(tensor, mean=0.0, std=1.0, a=-2.0, b=2.0):
         return _trunc_normal_(tensor, mean, std, a, b)
 
 
-def drop_path(
-    x, drop_prob: float = 0.0, training: bool = False, scale_by_keep: bool = True
-):
+def drop_path(x, drop_prob: float = 0.0, training: bool = False, scale_by_keep: bool = True):
     """Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
 
     This is the same as the DropConnect impl I created for EfficientNet, etc networks, however,
@@ -80,9 +78,7 @@ def drop_path(
     if drop_prob == 0.0 or not training:
         return x
     keep_prob = 1 - drop_prob
-    shape = (x.shape[0],) + (1,) * (
-        x.ndim - 1
-    )  # work with diff dim tensors, not just 2D ConvNets
+    shape = (x.shape[0],) + (1,) * (x.ndim - 1)  # work with diff dim tensors, not just 2D ConvNets
     random_tensor = x.new_empty(shape).bernoulli_(keep_prob)
     if keep_prob > 0.0 and scale_by_keep:
         random_tensor.div_(keep_prob)
@@ -101,7 +97,7 @@ class DropPath(nn.Module):
         return drop_path(x, self.drop_prob, self.training, self.scale_by_keep)
 
     def extra_repr(self):
-        return f"drop_prob={round(self.drop_prob,3):0.3f}"
+        return f"drop_prob={round(self.drop_prob, 3):0.3f}"
 
 
 class PatchDropout(nn.Module):
@@ -121,15 +117,11 @@ class PatchDropout(nn.Module):
         super().__init__()
         assert 0 <= prob < 1.0
         self.prob = prob
-        self.num_prefix_tokens = (
-            num_prefix_tokens  # exclude CLS token (or other prefix tokens)
-        )
+        self.num_prefix_tokens = num_prefix_tokens  # exclude CLS token (or other prefix tokens)
         self.ordered = ordered
         self.return_indices = return_indices
 
-    def forward(
-        self, x
-    ) -> Union[torch.Tensor, Tuple[torch.Tensor, Optional[torch.Tensor]]]:
+    def forward(self, x) -> Union[torch.Tensor, Tuple[torch.Tensor, Optional[torch.Tensor]]]:
         if not self.training or self.prob == 0.0:
             if self.return_indices:
                 return x, None
@@ -146,9 +138,7 @@ class PatchDropout(nn.Module):
         B = x.shape[0]
         L = x.shape[1]
         num_keep = max(1, int(L * (1.0 - self.prob)))
-        keep_indices = torch.argsort(torch.randn(B, L, device=x.device), dim=-1)[
-            :, :num_keep
-        ]
+        keep_indices = torch.argsort(torch.randn(B, L, device=x.device), dim=-1)[:, :num_keep]
         if self.ordered:
             # NOTE does not need to maintain patch order in typical transformer use,
             # but possibly useful for debug / visualization
@@ -188,9 +178,7 @@ class Mlp(nn.Module):
         self.fc1 = linear_layer(in_features, hidden_features, bias=bias[0])
         self.act = act_layer()
         self.drop1 = nn.Dropout(drop_probs[0])
-        self.norm = (
-            norm_layer(hidden_features) if norm_layer is not None else nn.Identity()
-        )
+        self.norm = norm_layer(hidden_features) if norm_layer is not None else nn.Identity()
         self.fc2 = linear_layer(hidden_features, out_features, bias=bias[1])
         self.drop2 = nn.Dropout(drop_probs[1])
 

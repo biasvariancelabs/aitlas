@@ -181,9 +181,7 @@ class TransformerMulti(nn.Module):
         x = torch.cat([self.cls_token.expand(x.shape[0], -1, -1), x], dim=1)
 
         # -- add positional embedding to x tokens
-        x += self.predictor_pos_embed["_".join([dataset, str(scale)])][modality].to(
-            x.device
-        )
+        x += self.predictor_pos_embed["_".join([dataset, str(scale)])][modality].to(x.device)
 
         # -- fwd prop
         for blk in self.predictor_blocks:
@@ -234,7 +232,7 @@ class VisionTransformerPredictor(nn.Module):
         init_std=0.02,
         scale: int = 1,
         flash_attn: bool = True,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.predictor_embed = nn.Linear(embed_dim, predictor_embed_dim, bias=True)
@@ -327,9 +325,7 @@ class VisionTransformerPredictor(nn.Module):
         # --
         pred_tokens += pos_embs
         x = x.repeat(len(masks), 1, 1)
-        x = torch.cat(
-            [self.cls_token.expand(x.shape[0], -1, -1), x, pred_tokens], dim=1
-        )
+        x = torch.cat([self.cls_token.expand(x.shape[0], -1, -1), x, pred_tokens], dim=1)
         # mask_final = torch.cat([torch.cat(masks_x + [masks[i]], dim=1) for i in range (len(masks))], dim=0)
         # -- fwd prop
         for blk in self.predictor_blocks:
@@ -444,9 +440,7 @@ class VisionTransformerPredictorMulti(nn.Module):
         x = self.predictor_embed(x)
 
         # -- add positional embedding to x tokens
-        pos_embed = self.predictor_pos_embed["_".join([dataset, str(scale)])].to(
-            x.device
-        )
+        pos_embed = self.predictor_pos_embed["_".join([dataset, str(scale)])].to(x.device)
         x_pos_embed = pos_embed.repeat(B, 1, 1)
         x += apply_masks(x_pos_embed, masks_x)
 
@@ -461,9 +455,7 @@ class VisionTransformerPredictorMulti(nn.Module):
         # --
         pred_tokens += pos_embs
         x = x.repeat(len(masks), 1, 1)
-        x = torch.cat(
-            [self.cls_token.expand(x.shape[0], -1, -1), x, pred_tokens], dim=1
-        )
+        x = torch.cat([self.cls_token.expand(x.shape[0], -1, -1), x, pred_tokens], dim=1)
         mask_final = torch.cat(
             [torch.cat(masks_x + [masks[i]], dim=1) for i in range(len(masks))], dim=0
         )
@@ -482,10 +474,7 @@ class VisionTransformerPredictorMulti(nn.Module):
 def repeat_interleave_batch(x, B, repeat):
     N = len(x) // B
     x = torch.cat(
-        [
-            torch.cat([x[i * B : (i + 1) * B] for _ in range(repeat)], dim=0)
-            for i in range(N)
-        ],
+        [torch.cat([x[i * B : (i + 1) * B] for _ in range(repeat)], dim=0) for i in range(N)],
         dim=0,
     )
     return x

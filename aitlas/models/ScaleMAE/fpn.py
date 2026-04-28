@@ -32,9 +32,7 @@ class FPNHead(nn.Module):
                 nn.ConvTranspose2d(embed_dim, embed_dim, kernel_size=2, stride=2),
             )
 
-        self.fpn2 = nn.Sequential(
-            nn.ConvTranspose2d(embed_dim, embed_dim, kernel_size=2, stride=2)
-        )
+        self.fpn2 = nn.Sequential(nn.ConvTranspose2d(embed_dim, embed_dim, kernel_size=2, stride=2))
 
         # self.fpn3 = nn.Identity()
 
@@ -68,9 +66,7 @@ class HFFB(nn.Module):
         super().__init__()
         self.convs = nn.Sequential(
             nn.GELU(),
-            nn.Conv2d(
-                hidden_dim, hidden_dim // 2, 3, padding=1, groups=hidden_dim // 2
-            ),
+            nn.Conv2d(hidden_dim, hidden_dim // 2, 3, padding=1, groups=hidden_dim // 2),
             nn.GELU(),
             nn.Conv2d(hidden_dim // 2, hidden_dim, 1, padding=0),
         )
@@ -92,9 +88,7 @@ class FCNHead(nn.Module):
             Norm2d(hidden_dim),
             nn.ConvTranspose2d(hidden_dim, hidden_dim // 2, kernel_size=4, stride=4),
             nn.GELU(),
-            nn.Conv2d(
-                hidden_dim // 2, hidden_dim // 4, 3, padding=1, groups=hidden_dim // 4
-            ),
+            nn.Conv2d(hidden_dim // 2, hidden_dim // 4, 3, padding=1, groups=hidden_dim // 4),
             nn.GELU(),
             nn.Conv2d(hidden_dim // 4, hidden_dim // 2, 1, padding=0),
             nn.GELU(),

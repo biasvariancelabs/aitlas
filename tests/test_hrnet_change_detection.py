@@ -40,11 +40,14 @@ def test_unet_cd_forward_pass(unet_cd_model):
 
     try:
         outputs = unet_cd_model(img1, img2)
-        assert outputs.shape == (
-            batch_size,
-            unet_cd_model.num_classes,
-            height,
-            width,
+        assert (
+            outputs.shape
+            == (
+                batch_size,
+                unet_cd_model.num_classes,
+                height,
+                width,
+            )
         ), f"Expected output shape {(batch_size, unet_cd_model.num_classes, height, width)}, but got {outputs.shape}"
     except Exception as e:
         pytest.fail(f"Forward pass failed: {e}")

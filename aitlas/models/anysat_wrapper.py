@@ -2,13 +2,12 @@ import os
 import shutil
 
 import torch
-import torch.nn as nn
 from huggingface_hub import hf_hub_download
+from torch import nn
 
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
-from .AnySat.anysat import AnySatModule, anysat_base
 from .schemas import AnySatSchema
 
 
@@ -69,48 +68,39 @@ class AnySat(FoundationModel):
                         raise ValueError(
                             f"Unsupported or missing backbone: '{self.config.backbone_name}'. Supported names are: {list(self.BACKBONE_CHECKPOINTS.keys())}"
                         )
-                    else:
-                        # Check if backbone has weights available
-                        if self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
-                            raise ValueError(
-                                f"No pretrained weights are available for backbone '{self.config.backbone_name}'."
-                            )
-                        else:  # Download the weights and load the model
-                            # For now, just load the first checkpoint available for the backbone
-                            temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[
-                                self.config.backbone_name
-                            ][0]
-                            checkpoint_name = temp_checkpoint_name["filename"]
-                            repo_id = temp_checkpoint_name["repo_id"]
-                            downloaded_path = hf_hub_download(
-                                repo_id=repo_id,
-                                filename=checkpoint_name,
-                                subfolder="models",
-                                local_dir=os.path.dirname(self.config.local_model_path),
-                            )
-                            # Move the file from the subfolder to the desired location
-                            shutil.move(downloaded_path, self.config.local_model_path)
-                            # Clean up the empty 'models' directory
-                            os.rmdir(os.path.dirname(downloaded_path))
-                            # Load the checkpoint from the corrected local path
-                            checkpoint = torch.load(
-                                self.config.local_model_path, weights_only=False
-                            )
-                            state_dict = checkpoint["state_dict"]
-                            backbone = globals()[self.config.backbone_name](
-                                flash_attn=flash_attn
-                            )
-                            msg = backbone.model.load_state_dict(
-                                state_dict, strict=True
-                            )
-                            print("Successfully loaded checkpoint:", checkpoint_name)
+                    # Check if backbone has weights available
+                    elif self.BACKBONE_CHECKPOINTS[self.config.backbone_name] is None:
+                        raise ValueError(
+                            f"No pretrained weights are available for backbone '{self.config.backbone_name}'."
+                        )
+                    else:  # Download the weights and load the model
+                        # For now, just load the first checkpoint available for the backbone
+                        temp_checkpoint_name = self.BACKBONE_CHECKPOINTS[self.config.backbone_name][
+                            0
+                        ]
+                        checkpoint_name = temp_checkpoint_name["filename"]
+                        repo_id = temp_checkpoint_name["repo_id"]
+                        downloaded_path = hf_hub_download(
+                            repo_id=repo_id,
+                            filename=checkpoint_name,
+                            subfolder="models",
+                            local_dir=os.path.dirname(self.config.local_model_path),
+                        )
+                        # Move the file from the subfolder to the desired location
+                        shutil.move(downloaded_path, self.config.local_model_path)
+                        # Clean up the empty 'models' directory
+                        os.rmdir(os.path.dirname(downloaded_path))
+                        # Load the checkpoint from the corrected local path
+                        checkpoint = torch.load(self.config.local_model_path, weights_only=False)
+                        state_dict = checkpoint["state_dict"]
+                        backbone = globals()[self.config.backbone_name](flash_attn=flash_attn)
+                        msg = backbone.model.load_state_dict(state_dict, strict=True)
+                        print("Successfully loaded checkpoint:", checkpoint_name)
                 else:
                     print(
                         f"Loading weights from the provided local path: {self.config.local_model_path}"
                     )
-                    checkpoint = torch.load(
-                        self.config.local_model_path, weights_only=False
-                    )
+                    checkpoint = torch.load(self.config.local_model_path, weights_only=False)
                     state_dict = checkpoint["state_dict"]
                     checkpoint_name = os.path.basename(self.config.local_model_path)
                     # Find the backbone name corresponding to the checkpoint
@@ -126,9 +116,7 @@ class AnySat(FoundationModel):
                     msg = backbone.model.load_state_dict(state_dict, strict=True)
                     print("Successfully loaded checkpoint:", checkpoint_name)
         else:  # Load model without pretrained weights
-            raise NotImplementedError(
-                "Loading model without pretrained weights is not supported."
-            )
+            raise NotImplementedError("Loading model without pretrained weights is not supported.")
 
         # Replace the head with identity if it exists
         if hasattr(backbone, "head"):
@@ -179,9 +167,7 @@ class AnySat(FoundationModel):
         embedding = self.backbone(x, patch_size=p_size, output=out_mode, **kwargs)
 
         if out_mode in ["dense", "patch"]:
-            embedding = embedding.permute(
-                0, 3, 1, 2
-            )  # From (N, H, W, C) to (N, C, H, W)
+            embedding = embedding.permute(0, 3, 1, 2)  # From (N, H, W, C) to (N, C, H, W)
 
         return embedding
 

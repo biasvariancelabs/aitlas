@@ -36,7 +36,6 @@ LABELS = [
 
 
 class AIDDataset(MultiClassClassificationDataset):
-
     url = "https://www.kaggle.com/datasets/jiayuanchengala/aid-scene-classification-datasets"
 
     labels = LABELS

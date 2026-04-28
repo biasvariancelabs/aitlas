@@ -65,9 +65,5 @@ def test_dofa_model_has_backbone(dofa_model):
     Tests that the DOFA_v1 instance has a 'backbone' attribute
     which is a torch.nn.Module.
     """
-    assert hasattr(
-        dofa_model, "backbone"
-    ), "Model does not have a 'backbone' attribute."
-    assert isinstance(
-        dofa_model.backbone, torch.nn.Module
-    ), "'backbone' is not a torch.nn.Module."
+    assert hasattr(dofa_model, "backbone"), "Model does not have a 'backbone' attribute."
+    assert isinstance(dofa_model.backbone, torch.nn.Module), "'backbone' is not a torch.nn.Module."

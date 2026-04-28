@@ -40,11 +40,14 @@ def test_changeformer_v6_forward_pass(changeformer_v6_model):
 
     try:
         outputs = changeformer_v6_model(img1, img2)
-        assert outputs.shape == (
-            batch_size,
-            changeformer_v6_model.num_classes,
-            height,
-            width,
+        assert (
+            outputs.shape
+            == (
+                batch_size,
+                changeformer_v6_model.num_classes,
+                height,
+                width,
+            )
         ), f"Expected output shape {(batch_size, changeformer_v6_model.num_classes, height, width)}, but got {outputs.shape}"
     except Exception as e:
         pytest.fail(f"Forward pass failed: {e}")

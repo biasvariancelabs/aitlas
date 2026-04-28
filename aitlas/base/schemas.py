@@ -1,4 +1,4 @@
-from marshmallow import INCLUDE, Schema, ValidationError, fields, pre_load, validate
+from marshmallow import INCLUDE, Schema, fields, pre_load, validate
 
 
 class BaseDatasetSchema(Schema):
@@ -31,13 +31,9 @@ class BaseDatasetSchema(Schema):
     """
 
     batch_size = fields.Int(missing=64, description="Batch size", example=64)
-    shuffle = fields.Bool(
-        missing=True, description="Should shuffle dataset", example=False
-    )
+    shuffle = fields.Bool(missing=True, description="Should shuffle dataset", example=False)
     num_workers = fields.Int(missing=4, description="Number of workers", example=4)
-    pin_memory = fields.Bool(
-        missing=False, description="Whether to use page-locked memory"
-    )
+    pin_memory = fields.Bool(missing=False, description="Whether to use page-locked memory")
     transforms = fields.List(
         fields.String,
         missing=None,
@@ -161,9 +157,7 @@ class BaseClassifierSchema(BaseModelSchema):
         missing=None,
         description="Local path of the pre-trained model",
     )
-    threshold = fields.Float(
-        missing=0.5, description="Prediction threshold if needed", example=0.5
-    )
+    threshold = fields.Float(missing=0.5, description="Prediction threshold if needed", example=0.5)
     freeze = fields.Bool(
         missing=False,
         description="Whether to freeze all the layers except for the classifier layer(s).",
@@ -383,9 +377,7 @@ class CompositeClassificationSchema(CompositeModelSchema, BaseClassifierSchema):
     pass
 
 
-class CompositeSegmentationSchema(
-    CompositeModelSchema, BaseSegmentationClassifierSchema
-):
+class CompositeSegmentationSchema(CompositeModelSchema, BaseSegmentationClassifierSchema):
     """Merges Composite architecture rules with segmentation (and change detection) task rules."""
 
     pass

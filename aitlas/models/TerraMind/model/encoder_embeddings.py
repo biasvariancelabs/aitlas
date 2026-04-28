@@ -19,8 +19,8 @@
 # Source: https://github.com/apple/ml-4m/
 
 import torch
-import torch.nn as nn
 from einops import rearrange, repeat
+from torch import nn
 
 from .tm_utils import (
     build_1d_sincos_posemb,
@@ -84,13 +84,9 @@ class SequenceEncoderEmbedding(nn.Module):
             pos_emb = build_1d_sincos_posemb(
                 max_len=self.max_sincos_pos_emb, embed_dim=self.dim_tokens
             )[: self.max_length]
-            self.register_buffer(
-                "pos_emb", pos_emb
-            )  # self.pos_emb is now a buffer for FSDP
+            self.register_buffer("pos_emb", pos_emb)  # self.pos_emb is now a buffer for FSDP
         else:
-            self.pos_emb = nn.Parameter(
-                torch.zeros(1, self.max_length, self.dim_tokens)
-            )
+            self.pos_emb = nn.Parameter(torch.zeros(1, self.max_length, self.dim_tokens))
             nn.init.normal_(self.pos_emb, std=init_std)
 
         self.mod_emb = nn.Parameter(torch.zeros(1, 1, self.dim_tokens))
@@ -107,9 +103,7 @@ class SequenceEncoderEmbedding(nn.Module):
     def no_weight_decay(self):
         return set()
 
-    def forward(
-        self, d: torch.Tensor | dict[str, torch.Tensor]
-    ) -> dict[str, torch.Tensor]:
+    def forward(self, d: torch.Tensor | dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         """
         Forward pass through embedding module, transforming sequence of ids to sequence of embeddings.
         Creates corresponding modality and positional embeddings and adds them to the dict.
@@ -132,9 +126,7 @@ class SequenceEncoderEmbedding(nn.Module):
 
         ids = d["tensor"]
         B = ids.shape[0]
-        assert (
-            self.dim_tokens is not None
-        ), "Need to call init(dim_tokens) function first"
+        assert self.dim_tokens is not None, "Need to call init(dim_tokens) function first"
 
         # Map to embedding
         x = self.token_emb(ids)
@@ -178,16 +170,13 @@ class ImageTokenEncoderEmbedding(nn.Module):
         image_size: int | tuple[int] = 224,
         **kwargs,
     ):
-
         super().__init__()
         self.vocab_size = vocab_size
         self.patch_size = pair(patch_size)
         self.dim_tokens = dim_tokens
         self.sincos_pos_emb = sincos_pos_emb
         self.image_size = pair(image_size)
-        self.num_patches = (self.image_size[0] // patch_size) * (
-            self.image_size[1] // patch_size
-        )
+        self.num_patches = (self.image_size[0] // patch_size) * (self.image_size[1] // patch_size)
 
         if self.dim_tokens is not None:
             self.init(dim_tokens=dim_tokens)
@@ -208,33 +197,23 @@ class ImageTokenEncoderEmbedding(nn.Module):
         h_posemb = self.image_size[0] // self.patch_size[0]
         w_posemb = self.image_size[1] // self.patch_size[1]
         if self.sincos_pos_emb:
-            pos_emb = build_2d_sincos_posemb(
-                h=h_posemb, w=w_posemb, embed_dim=self.dim_tokens
-            )
-            self.register_buffer(
-                "pos_emb", pos_emb
-            )  # self.pos_emb is now a buffer for FSDP
+            pos_emb = build_2d_sincos_posemb(h=h_posemb, w=w_posemb, embed_dim=self.dim_tokens)
+            self.register_buffer("pos_emb", pos_emb)  # self.pos_emb is now a buffer for FSDP
         else:
-            self.pos_emb = nn.Parameter(
-                torch.zeros(1, (h_posemb * w_posemb), self.dim_tokens)
-            )
+            self.pos_emb = nn.Parameter(torch.zeros(1, (h_posemb * w_posemb), self.dim_tokens))
             nn.init.normal_(self.pos_emb, std=init_std)
 
         self.mod_emb = nn.Parameter(torch.zeros(1, 1, self.dim_tokens))
         nn.init.normal_(self.mod_emb, std=init_std)
 
         # Token embedding
-        self.token_emb = nn.Embedding(
-            num_embeddings=self.vocab_size, embedding_dim=self.dim_tokens
-        )
+        self.token_emb = nn.Embedding(num_embeddings=self.vocab_size, embedding_dim=self.dim_tokens)
 
     @torch.jit.ignore
     def no_weight_decay(self):
         return set()
 
-    def forward(
-        self, d: torch.Tensor | dict[str, torch.Tensor]
-    ) -> dict[str, torch.Tensor]:
+    def forward(self, d: torch.Tensor | dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         """
         Forward pass through embedding module, transforming image tokens to a sequence of embeddings.
         Creates corresponding modality and positional embeddings and adds them to the dict.
@@ -306,16 +285,13 @@ class ImageEncoderEmbedding(nn.Module):
         image_size: int | tuple[int] = 224,
         **kwargs,
     ):
-
         super().__init__()
         self.num_channels = num_channels
         self.patch_size = pair(patch_size)
         self.dim_tokens = dim_tokens
         self.sincos_pos_emb = sincos_pos_emb
         self.image_size = pair(image_size)
-        self.num_patches = (self.image_size[0] // patch_size) * (
-            self.image_size[1] // patch_size
-        )
+        self.num_patches = (self.image_size[0] // patch_size) * (self.image_size[1] // patch_size)
 
         if self.dim_tokens is not None:
             self.init(dim_tokens=dim_tokens)
@@ -336,16 +312,10 @@ class ImageEncoderEmbedding(nn.Module):
         h_posemb = self.image_size[0] // self.patch_size[0]
         w_posemb = self.image_size[1] // self.patch_size[1]
         if self.sincos_pos_emb:
-            pos_emb = build_2d_sincos_posemb(
-                h=h_posemb, w=w_posemb, embed_dim=self.dim_tokens
-            )
-            self.register_buffer(
-                "pos_emb", pos_emb
-            )  # self.pos_emb is now a buffer for FSDP
+            pos_emb = build_2d_sincos_posemb(h=h_posemb, w=w_posemb, embed_dim=self.dim_tokens)
+            self.register_buffer("pos_emb", pos_emb)  # self.pos_emb is now a buffer for FSDP
         else:
-            self.pos_emb = nn.Parameter(
-                torch.zeros(1, (h_posemb * w_posemb), self.dim_tokens)
-            )
+            self.pos_emb = nn.Parameter(torch.zeros(1, (h_posemb * w_posemb), self.dim_tokens))
             nn.init.normal_(self.pos_emb, std=init_std)
 
         self.mod_emb = nn.Parameter(torch.zeros(1, 1, self.dim_tokens))
@@ -363,9 +333,7 @@ class ImageEncoderEmbedding(nn.Module):
     def no_weight_decay(self):
         return set()
 
-    def forward(
-        self, d: torch.Tensor | dict[str, torch.Tensor]
-    ) -> dict[str, torch.Tensor]:
+    def forward(self, d: torch.Tensor | dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         """
         Forward pass through embedding module, transforming image to sequence of tokens.
         Creates corresponding modality and positional embeddings and adds them to the dict.
@@ -385,11 +353,9 @@ class ImageEncoderEmbedding(nn.Module):
 
         x = d["tensor"]
         B, C, H, W = x.shape
+        assert self.dim_tokens is not None, "Need to call init(dim_tokens) function first"
         assert (
-            self.dim_tokens is not None
-        ), "Need to call init(dim_tokens) function first"
-        assert (H % self.patch_size[0] == 0) and (
-            W % self.patch_size[1] == 0
+            (H % self.patch_size[0] == 0) and (W % self.patch_size[1] == 0)
         ), f"Image sizes {H}x{W} must be divisible by patch sizes {self.patch_size[0]}x{self.patch_size[1]}"
 
         # Create patches [B, C, H, W] -> [B, (H*W), C]
@@ -479,13 +445,9 @@ class SequenceEmbEncoderEmbedding(nn.Module):
             pos_emb = build_1d_sincos_posemb(
                 max_len=self.max_sincos_pos_emb, embed_dim=self.dim_tokens
             )[: self.max_length]
-            self.register_buffer(
-                "pos_emb", pos_emb
-            )  # self.pos_emb is now a buffer for FSDP
+            self.register_buffer("pos_emb", pos_emb)  # self.pos_emb is now a buffer for FSDP
         else:
-            self.pos_emb = nn.Parameter(
-                torch.zeros(1, self.max_length, self.dim_tokens)
-            )
+            self.pos_emb = nn.Parameter(torch.zeros(1, self.max_length, self.dim_tokens))
             nn.init.normal_(self.pos_emb, std=init_std)
 
         self.mod_emb = nn.Parameter(torch.zeros(1, 1, self.dim_tokens))
@@ -527,9 +489,7 @@ class SequenceEmbEncoderEmbedding(nn.Module):
 
         orig_emb = d["tensor"]
         B = orig_emb.shape[0]
-        assert (
-            self.dim_tokens is not None
-        ), "Need to call init(dim_tokens) function first"
+        assert self.dim_tokens is not None, "Need to call init(dim_tokens) function first"
 
         # Map to embedding
         x = self.emb_proj(orig_emb)

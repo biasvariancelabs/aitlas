@@ -6,8 +6,8 @@
 from functools import partial
 
 import torch
-import torch.nn as nn
 from timm.models.vision_transformer import Block, PatchEmbed
+from torch import nn
 
 from .pos_embed import get_1d_sincos_pos_embed_from_grid, get_2d_sincos_pos_embed
 
@@ -39,18 +39,13 @@ class MaskedAutoencoderGroupChannelViT(nn.Module):
         self.in_c = in_chans
         self.patch_size = patch_size
         self.channel_groups = channel_groups
-        self.spatial_mask = (
-            spatial_mask  # Whether to mask all channels of same spatial location
-        )
+        self.spatial_mask = spatial_mask  # Whether to mask all channels of same spatial location
         num_groups = len(channel_groups)
 
         # --------------------------------------------------------------------------
         # MAE encoder specifics
         self.patch_embed = nn.ModuleList(
-            [
-                PatchEmbed(img_size, patch_size, len(group), embed_dim)
-                for group in channel_groups
-            ]
+            [PatchEmbed(img_size, patch_size, len(group), embed_dim) for group in channel_groups]
         )
         # self.patch_embed = PatchEmbed(img_size, patch_size, 1, embed_dim)
         num_patches = self.patch_embed[0].num_patches
@@ -111,10 +106,7 @@ class MaskedAutoencoderGroupChannelViT(nn.Module):
         self.decoder_norm = norm_layer(decoder_embed_dim)
 
         self.decoder_pred = nn.ModuleList(
-            [
-                nn.Linear(decoder_embed_dim, len(group) * patch_size**2)
-                for group in channel_groups
-            ]
+            [nn.Linear(decoder_embed_dim, len(group) * patch_size**2) for group in channel_groups]
         )
         # self.decoder_pred = nn.Linear(decoder_embed_dim, patch_size ** 2, bias=True)  # decoder to patch
         # --------------------------------------------------------------------------
@@ -136,18 +128,14 @@ class MaskedAutoencoderGroupChannelViT(nn.Module):
         channel_embed = get_1d_sincos_pos_embed_from_grid(
             self.channel_embed.shape[-1], torch.arange(len(self.channel_groups)).numpy()
         )
-        self.channel_embed.data.copy_(
-            torch.from_numpy(channel_embed).float().unsqueeze(0)
-        )
+        self.channel_embed.data.copy_(torch.from_numpy(channel_embed).float().unsqueeze(0))
 
         decoder_pos_embed = get_2d_sincos_pos_embed(
             self.decoder_pos_embed.shape[-1],
             int(self.patch_embed[0].num_patches ** 0.5),
             cls_token=True,
         )
-        self.decoder_pos_embed.data.copy_(
-            torch.from_numpy(decoder_pos_embed).float().unsqueeze(0)
-        )
+        self.decoder_pos_embed.data.copy_(torch.from_numpy(decoder_pos_embed).float().unsqueeze(0))
 
         dec_channel_embed = get_1d_sincos_pos_embed_from_grid(
             self.decoder_channel_embed.shape[-1],
@@ -225,9 +213,7 @@ class MaskedAutoencoderGroupChannelViT(nn.Module):
         noise = torch.rand(N, L, device=x.device)  # noise in [0, 1]
 
         # sort noise for each sample
-        ids_shuffle = torch.argsort(
-            noise, dim=1
-        )  # ascend: small is keep, large is remove
+        ids_shuffle = torch.argsort(noise, dim=1)  # ascend: small is keep, large is remove
         ids_restore = torch.argsort(ids_shuffle, dim=1)
 
         # keep the first subset
@@ -259,12 +245,8 @@ class MaskedAutoencoderGroupChannelViT(nn.Module):
         pos_embed = self.pos_embed[:, 1:, :].unsqueeze(1)  # (1, 1, L, pD)
 
         # Channel embed same across (x,y) position, and pos embed same across channel (c)
-        channel_embed = channel_embed.expand(
-            -1, -1, pos_embed.shape[2], -1
-        )  # (1, G, L, cD)
-        pos_embed = pos_embed.expand(
-            -1, channel_embed.shape[1], -1, -1
-        )  # (1, G, L, pD)
+        channel_embed = channel_embed.expand(-1, -1, pos_embed.shape[2], -1)  # (1, G, L, cD)
+        pos_embed = pos_embed.expand(-1, channel_embed.shape[1], -1, -1)  # (1, G, L, pD)
         pos_channel = torch.cat((pos_embed, channel_embed), dim=-1)  # (1, G, L, D)
 
         # add pos embed w/o cls token
@@ -273,9 +255,7 @@ class MaskedAutoencoderGroupChannelViT(nn.Module):
         if self.spatial_mask:
             # Mask spatial location across all channels (i.e. spatial location as either all/no channels)
             x = x.permute(0, 2, 1, 3).reshape(b, L, -1)  # (N, L, G*D)
-            x, mask, ids_restore = self.random_masking(
-                x, mask_ratio
-            )  # (N, 0.25*L, G*D)
+            x, mask, ids_restore = self.random_masking(x, mask_ratio)  # (N, 0.25*L, G*D)
             x = (
                 x.view(b, x.shape[1], G, D).permute(0, 2, 1, 3).reshape(b, -1, D)
             )  # (N, 0.25*G*L, D)
@@ -308,9 +288,7 @@ class MaskedAutoencoderGroupChannelViT(nn.Module):
         if self.spatial_mask:
             N, L = ids_restore.shape
 
-            x_ = (
-                x[:, 1:, :].view(N, G, -1, x.shape[2]).permute(0, 2, 1, 3)
-            )  # (N, 0.25*L, G, D)
+            x_ = x[:, 1:, :].view(N, G, -1, x.shape[2]).permute(0, 2, 1, 3)  # (N, 0.25*L, G, D)
             _, ml, _, D = x_.shape
             x_ = x_.reshape(N, ml, G * D)  # (N, 0.25*L, G*D)
 
@@ -319,9 +297,7 @@ class MaskedAutoencoderGroupChannelViT(nn.Module):
             x_ = torch.gather(
                 x_, dim=1, index=ids_restore.unsqueeze(-1).expand(-1, -1, x_.shape[2])
             )  # (N, L, G*D)
-            x_ = (
-                x_.view(N, L, G, D).permute(0, 2, 1, 3).reshape(N, -1, D)
-            )  # (N, G*L, D)
+            x_ = x_.view(N, L, G, D).permute(0, 2, 1, 3).reshape(N, -1, D)  # (N, G*L, D)
             x = torch.cat((x[:, :1, :], x_), dim=1)  # append cls token  (N, 1 + G*L, D)
         else:
             mask_tokens = self.mask_token.repeat(
@@ -334,17 +310,11 @@ class MaskedAutoencoderGroupChannelViT(nn.Module):
             x = torch.cat([x[:, :1, :], x_], dim=1)  # append cls token  (N, 1 + c*L, D)
 
         # add pos and channel embed
-        channel_embed = self.decoder_channel_embed[:, :-1, :].unsqueeze(
-            2
-        )  # (1, G, 1, cD)
+        channel_embed = self.decoder_channel_embed[:, :-1, :].unsqueeze(2)  # (1, G, 1, cD)
         pos_embed = self.decoder_pos_embed[:, 1:, :].unsqueeze(1)  # (1, 1, L, pD)
 
-        channel_embed = channel_embed.expand(
-            -1, -1, pos_embed.shape[2], -1
-        )  # (1, G, L, cD)
-        pos_embed = pos_embed.expand(
-            -1, channel_embed.shape[1], -1, -1
-        )  # (1, G, L, pD)
+        channel_embed = channel_embed.expand(-1, -1, pos_embed.shape[2], -1)  # (1, G, L, cD)
+        pos_embed = pos_embed.expand(-1, channel_embed.shape[1], -1, -1)  # (1, G, L, pD)
         pos_channel = torch.cat((pos_embed, channel_embed), dim=-1)  # (1, G, L, D)
         pos_channel = pos_channel.view(1, -1, pos_channel.shape[-1])  # (1, G*L, D)
 
@@ -373,9 +343,7 @@ class MaskedAutoencoderGroupChannelViT(nn.Module):
         for i, group in enumerate(self.channel_groups):
             x_c = x[:, i]  # (N, L, D)
             dec = self.decoder_pred[i](x_c)  # (N, L, g_c * p^2)
-            dec = dec.view(
-                N, x_c.shape[1], -1, int(self.patch_size**2)
-            )  # (N, L, g_c, p^2)
+            dec = dec.view(N, x_c.shape[1], -1, int(self.patch_size**2))  # (N, L, g_c, p^2)
             dec = torch.einsum("nlcp->nclp", dec)  # (N, g_c, L, p^2)
             x_c_patch.append(dec)
 
@@ -388,9 +356,7 @@ class MaskedAutoencoderGroupChannelViT(nn.Module):
         pred: [N, L, c*p*p]
         mask: [N, L], 0 is keep, 1 is remove,
         """
-        target = self.patchify(
-            imgs, self.patch_embed[0].patch_size[0], self.in_c
-        )  # (N, L, C*P*P)
+        target = self.patchify(imgs, self.patch_embed[0].patch_size[0], self.in_c)  # (N, L, C*P*P)
 
         if self.norm_pix_loss:
             mean = target.mean(dim=-1, keepdim=True)
@@ -431,7 +397,7 @@ def mae_vit_base_patch16_dec512d8b(**kwargs):
         decoder_num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -448,7 +414,7 @@ def mae_vit_large_patch16_dec512d8b(**kwargs):
         decoder_num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -465,18 +431,12 @@ def mae_vit_huge_patch14_dec512d8b(**kwargs):
         decoder_num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
 
 # set recommended archs
-satmae_vit_base_multispectral = (
-    mae_vit_base_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
-)
-satmae_vit_large_multispectral = (
-    mae_vit_large_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
-)
-satmae_vit_huge_multispectral = (
-    mae_vit_huge_patch14_dec512d8b  # decoder: 512 dim, 8 blocks
-)
+satmae_vit_base_multispectral = mae_vit_base_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
+satmae_vit_large_multispectral = mae_vit_large_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
+satmae_vit_huge_multispectral = mae_vit_huge_patch14_dec512d8b  # decoder: 512 dim, 8 blocks

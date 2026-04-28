@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import logging
-import os
 import warnings
 
 import torch
@@ -33,7 +32,7 @@ except Exception as e:
     import_error = e
 
 try:
-    from .text.text_tokenizer import CaptionTokenizer, CoordsTokenizer
+    from .text.text_tokenizer import CoordsTokenizer
 
     tokenizers_available = True
     import_error_tokenizers = None
@@ -82,11 +81,10 @@ def build_vqvae(
     ckpt_path: str | None = None,
     **kwargs,
 ):
-
     if not vqvae_available:
         warnings.warn(
-            f"Cannot import VQVAE/DiVAE from terramind. "
-            f"\nMake sure to install `pip install diffusers==0.30.0`."
+            "Cannot import VQVAE/DiVAE from terramind. "
+            "\nMake sure to install `pip install diffusers==0.30.0`."
         )
         raise import_error
 
@@ -102,13 +100,9 @@ def build_vqvae(
         state_dict = torch.load(ckpt_path, map_location="cpu", weights_only=True)
         loaded_keys = model.load_state_dict(state_dict, strict=False)
         if loaded_keys.missing_keys:
-            logger.warning(
-                f"Missing keys in ckpt_path {ckpt_path}: {loaded_keys.missing_keys}"
-            )
+            logger.warning(f"Missing keys in ckpt_path {ckpt_path}: {loaded_keys.missing_keys}")
         if loaded_keys.unexpected_keys:
-            logger.warning(
-                f"Missing keys in ckpt_path {ckpt_path}: {loaded_keys.missing_keys}"
-            )
+            logger.warning(f"Missing keys in ckpt_path {ckpt_path}: {loaded_keys.missing_keys}")
 
     elif pretrained:
         # Load model from Hugging Face
@@ -282,22 +276,15 @@ def terramind_v1_tokenizer_ndvi(**kwargs):
     return tokenizer
 
 
-def terramind_v1_coords_tokenizer(
-    pretrained=True, tokenizer_file=None, *args, **kwargs
-):
+def terramind_v1_coords_tokenizer(pretrained=True, tokenizer_file=None, *args, **kwargs):
     if not tokenizers_available:
-        warnings.warn(
-            f"Cannot import tokenizers. "
-            f"\nMake sure to install `pip install tokenizers`."
-        )
+        warnings.warn("Cannot import tokenizers. \nMake sure to install `pip install tokenizers`.")
         raise import_error_tokenizers
 
     if pretrained and tokenizer_file is None:
         tokenizer_file = hf_hub_download(
             repo_id=pretrained_weights["terramind_v1_coords_tokenizer"]["hf_hub_id"],
-            filename=pretrained_weights["terramind_v1_coords_tokenizer"][
-                "hf_hub_filename"
-            ],
+            filename=pretrained_weights["terramind_v1_coords_tokenizer"]["hf_hub_filename"],
         )
 
     return CoordsTokenizer(tokenizer_file=tokenizer_file, *args, **kwargs)

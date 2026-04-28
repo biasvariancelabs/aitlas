@@ -20,13 +20,11 @@
 
 # DISCLAIMER: This code is strongly influenced by https://github.com/lucidrains/vector-quantize-pytorch
 
-from contextlib import contextmanager
 
 import torch
-import torch.distributed as distributed
 import torch.nn.functional as F
 from einops import rearrange, repeat
-from torch import einsum, nn
+from torch import distributed, einsum, nn
 from torch.amp import autocast
 
 
@@ -134,9 +132,7 @@ def sample_vectors_distributed(local_samples, num):
     all_num_samples = all_gather_sizes(local_samples, dim=0)
 
     if rank == 0:
-        samples_per_rank = sample_multinomial(
-            num, all_num_samples / all_num_samples.sum()
-        )
+        samples_per_rank = sample_multinomial(num, all_num_samples / all_num_samples.sum())
     else:
         samples_per_rank = torch.empty_like(all_num_samples)
 
@@ -176,9 +172,7 @@ def kmeans(
         if use_cosine_sim:
             dists = samples @ means.t()
         else:
-            diffs = rearrange(samples, "n d -> n () d") - rearrange(
-                means, "c d -> () c d"
-            )
+            diffs = rearrange(samples, "n d -> n () d") - rearrange(means, "c d -> () c d")
             dists = -(diffs**2).sum(dim=-1)
 
         buckets = torch.argmax(dists, dim=-1)
@@ -477,9 +471,7 @@ class CosineSimCodebook(nn.Module):
 
             embed_normalized = (embed_sum / bins.unsqueeze(0)).t()
             embed_normalized = l2norm(embed_normalized)
-            embed_normalized = torch.where(
-                zero_mask[..., None], embed, embed_normalized
-            )
+            embed_normalized = torch.where(zero_mask[..., None], embed, embed_normalized)
             ema_inplace(self.embed, embed_normalized, self.decay)
             self.expire_codes_(x)
 
@@ -636,9 +628,7 @@ class VectorQuantize(nn.Module):
 
         if self.accept_image_fmap:
             quantize = rearrange(quantize, "b (h w) c -> b c h w", h=height, w=width)
-            embed_ind = rearrange(
-                embed_ind, "b (h w) ... -> b h w ...", h=height, w=width
-            )
+            embed_ind = rearrange(embed_ind, "b (h w) ... -> b h w ...", h=height, w=width)
             if is_multiheaded:
                 embed_ind = rearrange(embed_ind, "b h w ... -> b ... h w")
 

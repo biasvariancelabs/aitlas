@@ -2,7 +2,7 @@ from functools import partial
 from typing import Callable, Optional
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from .utils.pos_embed import get_2d_sincos_pos_embed_with_scale
 from .utils.utils import PatchDropout, trunc_normal_
@@ -58,7 +58,6 @@ class OmniSatModule(nn.Module):
         modality_keep: str = "",
         flash_attn: bool = True,
     ):
-
         super(OmniSatModule, self).__init__()
         self.modalities = modalities
 
@@ -71,9 +70,7 @@ class OmniSatModule(nn.Module):
         self.keep_subpatch = keep_subpatch
         self.modality_keep = modality_keep
 
-        self.cls_token = (
-            nn.Parameter(torch.zeros(1, 1, embed_dim)) if class_token else None
-        )
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim)) if class_token else None
         self.pos_embed = get_2d_sincos_pos_embed_with_scale(
             embed_dim, int(num_patches**0.5), cls_token=class_token, scale=scale
         )
@@ -151,23 +148,20 @@ class OmniSatModule(nn.Module):
                     torch.zeros(x[modality].shape[0], 1).to(x[modality].device) + 120,
                 )
                 token = token.view(token.shape[0], token.shape[1], -1).permute(0, 2, 1)
+            elif "_".join([modality, "mask"]) in list(x.keys()):
+                token = getattr(self, "_".join(["projector", modality]))(
+                    x[modality],
+                    x["_".join([modality, "dates"])],
+                    x["_".join([modality, "mask"])],
+                )
             else:
-                if "_".join([modality, "mask"]) in list(x.keys()):
-                    token = getattr(self, "_".join(["projector", modality]))(
-                        x[modality],
-                        x["_".join([modality, "dates"])],
-                        x["_".join([modality, "mask"])],
-                    )
-                else:
-                    token = getattr(self, "_".join(["projector", modality]))(
-                        x[modality], x["_".join([modality, "dates"])]
-                    )
+                token = getattr(self, "_".join(["projector", modality]))(
+                    x[modality], x["_".join([modality, "dates"])]
+                )
             token = self.spatial_encoder(token, modality)
             token = token.view(-1, self.height * self.width, self.embed_dim)
             out["_".join(["tokens", modality])] = token
-            tokens.append(
-                out["_".join(["tokens", modality])] + self.pos_embed[:, 1:, :]
-            )
+            tokens.append(out["_".join(["tokens", modality])] + self.pos_embed[:, 1:, :])
         tokens = torch.cat(tokens, dim=1)
         return tokens, out
 
@@ -176,9 +170,7 @@ class OmniSatModule(nn.Module):
         Forward function after masking used during pretraining
         """
         if self.cls_token is not None:
-            cls_tokens = (self.cls_token + self.pos_embed[:, :1, :]).expand(
-                x.shape[0], -1, -1
-            )
+            cls_tokens = (self.cls_token + self.pos_embed[:, :1, :]).expand(x.shape[0], -1, -1)
             tokens = torch.cat((cls_tokens, x), dim=1)
         else:
             tokens = x
@@ -205,17 +197,16 @@ class OmniSatModule(nn.Module):
                     torch.zeros(x[modality].shape[0], 1).to(x[modality].device) + 120,
                 )
                 token = token.view(token.shape[0], token.shape[1], -1).permute(0, 2, 1)
+            elif "_".join([modality, "mask"]) in list(x.keys()):
+                token = getattr(self, "_".join(["projector", modality]))(
+                    x[modality],
+                    x["_".join([modality, "dates"])],
+                    x["_".join([modality, "mask"])],
+                )
             else:
-                if "_".join([modality, "mask"]) in list(x.keys()):
-                    token = getattr(self, "_".join(["projector", modality]))(
-                        x[modality],
-                        x["_".join([modality, "dates"])],
-                        x["_".join([modality, "mask"])],
-                    )
-                else:
-                    token = getattr(self, "_".join(["projector", modality]))(
-                        x[modality], x["_".join([modality, "dates"])]
-                    )
+                token = getattr(self, "_".join(["projector", modality]))(
+                    x[modality], x["_".join([modality, "dates"])]
+                )
             if self.keep_subpatch and modality == self.modality_keep:
                 token, subs = self.spatial_encoder(token, modality, keep_subpatch=True)
                 out["_".join(["subpatches"])] = subs.view(
@@ -231,9 +222,7 @@ class OmniSatModule(nn.Module):
 
         tokens = torch.cat(tokens, dim=1)
         if self.cls_token is not None:
-            cls_tokens = (self.cls_token + self.pos_embed[:, :1, :]).expand(
-                token.shape[0], -1, -1
-            )
+            cls_tokens = (self.cls_token + self.pos_embed[:, :1, :]).expand(token.shape[0], -1, -1)
             tokens = torch.cat((cls_tokens, tokens), dim=1)
         tokens = self.patch_drop(tokens)
         tokens = self.norm_pre(tokens)

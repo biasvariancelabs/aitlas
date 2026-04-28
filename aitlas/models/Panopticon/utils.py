@@ -69,9 +69,7 @@ def resize_abs_pos_embed(
 
     # Interpolate position embedding
     pos_embed = pos_embed.reshape(1, old_size[0], old_size[1], -1).permute(0, 3, 1, 2)
-    pos_embed = F.interpolate(
-        pos_embed, size=new_size, mode=interpolation, antialias=antialias
-    )
+    pos_embed = F.interpolate(pos_embed, size=new_size, mode=interpolation, antialias=antialias)
     pos_embed = pos_embed.permute(0, 2, 3, 1).reshape(1, new_ntok, -1)
 
     # Add back extra prefix tokens

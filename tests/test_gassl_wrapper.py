@@ -1,9 +1,7 @@
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-import torch.nn as nn
 
 from aitlas.models import GASSL
 from aitlas.models.GASSL import (
@@ -117,9 +115,7 @@ def test_forward_pass_restores_fc_layer(config_moco):
 @patch("aitlas.models.gassl_wrapper.gassl_moco_resnet50")
 @patch("aitlas.models.gassl_wrapper.GASSL._download_from_zenodo")
 @patch("torch.load")
-def test_fallback_to_zenodo_download(
-    mock_torch_load, mock_download, mock_model_factory
-):
+def test_fallback_to_zenodo_download(mock_torch_load, mock_download, mock_model_factory):
     """Tests the fallback to Zenodo download if local_model_path is invalid."""
     mock_model_instance = MagicMock()
     mock_model_factory.return_value = mock_model_instance
@@ -150,9 +146,7 @@ def test_raises_error_if_pretrained_is_false():
         GASSL(config)
 
 
-@pytest.mark.parametrize(
-    "backbone_name", ["unsupported_gassl_model", "gassl_moco_resnet18"]
-)
+@pytest.mark.parametrize("backbone_name", ["unsupported_gassl_model", "gassl_moco_resnet18"])
 def test_raises_error_for_invalid_backbones_on_download(backbone_name):
     """Tests that a ValueError is raised for invalid backbones when downloading."""
     config = {

@@ -18,11 +18,9 @@
 # licensed under the Apache License, Version 2.0.
 # Source: https://github.com/apple/ml-4m/
 
-import logging
 import math
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
 from diffusers.models.embeddings import (
@@ -31,11 +29,12 @@ from diffusers.models.embeddings import (
     Timesteps,
 )
 from einops import rearrange, repeat
+from torch import nn
 
 
 try:
     from diffusers.models.unets.unet_2d_blocks import DownBlock2D, UpBlock2D
-except:
+except ImportError:
     # Fall back for diffusers ~0.20.0
     from diffusers.models.unet_2d_blocks import DownBlock2D, UpBlock2D
 
@@ -86,9 +85,7 @@ def drop_path(x, drop_prob: float = 0.0, training: bool = False):
     if drop_prob == 0.0 or not training:
         return x
     keep_prob = 1 - drop_prob
-    shape = (x.shape[0],) + (1,) * (
-        x.ndim - 1
-    )  # work with diff dim tensors, not just 2D ConvNets
+    shape = (x.shape[0],) + (1,) * (x.ndim - 1)  # work with diff dim tensors, not just 2D ConvNets
     random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()  # binarize
     output = x.div(keep_prob) * random_tensor
@@ -353,9 +350,7 @@ class DecoderBlock(nn.Module):
             nn.init.zeros_(self.adaLN_gate.bias)
         self.skip_linear = nn.Linear(2 * dim, dim) if skip else None
 
-    def forward(
-        self, x, context, temb=None, sa_mask=None, xa_mask=None, skip_connection=None
-    ):
+    def forward(self, x, context, temb=None, sa_mask=None, xa_mask=None, skip_connection=None):
         gate_msa, gate_mxa, gate_mlp = (
             self.adaLN_gate(F.silu(temb)).unsqueeze(1).chunk(3, dim=-1)
             if hasattr(self, "adaLN_gate")
@@ -422,16 +417,12 @@ class TransformerConcatCond(nn.Module):
     ):
         super().__init__()
 
-        self.mid_pos_emb = build_2d_sincos_posemb(
-            h=hw_posemb, w=hw_posemb, embed_dim=mid_dim
-        )
+        self.mid_pos_emb = build_2d_sincos_posemb(h=hw_posemb, w=hw_posemb, embed_dim=mid_dim)
         self.mid_pos_emb = nn.Parameter(self.mid_pos_emb, requires_grad=False)
 
         self.use_long_skip = use_long_skip
         if use_long_skip:
-            assert (
-                mid_layers % 2 == 1
-            ), "mid_layers must be odd when using long skip connection"
+            assert mid_layers % 2 == 1, "mid_layers must be odd when using long skip connection"
 
         dpr = [
             x.item() for x in torch.linspace(0, mid_drop_path_rate, mid_layers)
@@ -496,10 +487,7 @@ class TransformerConcatCond(nn.Module):
         # Wherever cond_mask is True, the condition gets replaced by the mask token
         if cond_mask is not None:
             cond_mask = (
-                F.interpolate(
-                    cond_mask.unsqueeze(1).float(), (H_mid, W_mid), mode="nearest"
-                )
-                > 0.5
+                F.interpolate(cond_mask.unsqueeze(1).float(), (H_mid, W_mid), mode="nearest") > 0.5
             )
             cond_mask = rearrange(cond_mask, "b 1 h w -> b (h w)")
             cond[cond_mask] = self.mask_token.to(dtype=cond.dtype)
@@ -573,16 +561,12 @@ class TransformerXattnCond(nn.Module):
     ):
         super().__init__()
 
-        self.mid_pos_emb = build_2d_sincos_posemb(
-            h=hw_posemb, w=hw_posemb, embed_dim=mid_dim
-        )
+        self.mid_pos_emb = build_2d_sincos_posemb(h=hw_posemb, w=hw_posemb, embed_dim=mid_dim)
         self.mid_pos_emb = nn.Parameter(self.mid_pos_emb, requires_grad=False)
 
         self.use_long_skip = use_long_skip
         if use_long_skip:
-            assert (
-                mid_layers % 2 == 1
-            ), "mid_layers must be odd when using long skip connection"
+            assert mid_layers % 2 == 1, "mid_layers must be odd when using long skip connection"
 
         dpr = [
             x.item() for x in torch.linspace(0, mid_drop_path_rate, mid_layers)
@@ -645,9 +629,7 @@ class TransformerXattnCond(nn.Module):
 
         # Prepare the conditioning cross-attention mask
         xa_mask = (
-            repeat(cond_mask, "b h w -> b n (h w)", n=x.shape[1])
-            if cond_mask is not None
-            else None
+            repeat(cond_mask, "b h w -> b n (h w)", n=x.shape[1]) if cond_mask is not None else None
         )
 
         # Transformer forward pass with or without long skip connections.
@@ -767,7 +749,6 @@ class UViT(ModelMixin, ConfigMixin):
         # Original resolution embedding settings
         res_embedding: bool = False,
     ):
-
         super().__init__()
 
         self.sample_size = sample_size
@@ -802,9 +783,7 @@ class UViT(ModelMixin, ConfigMixin):
         elif time_embedding_type == "positional":
             time_embed_dim = time_embedding_dim or block_out_channels[0] * 4
 
-            self.time_proj = Timesteps(
-                block_out_channels[0], flip_sin_to_cos, freq_shift
-            )
+            self.time_proj = Timesteps(block_out_channels[0], flip_sin_to_cos, freq_shift)
             timestep_input_dim = block_out_channels[0]
         else:
             raise ValueError(
@@ -830,9 +809,7 @@ class UViT(ModelMixin, ConfigMixin):
         elif time_embedding_act_fn == "gelu":
             self.time_embed_act = nn.GELU()
         else:
-            raise ValueError(
-                f"Unsupported activation function: {time_embedding_act_fn}"
-            )
+            raise ValueError(f"Unsupported activation function: {time_embedding_act_fn}")
 
         # original resolution embedding
         if res_embedding:
@@ -850,12 +827,8 @@ class UViT(ModelMixin, ConfigMixin):
                     flip_sin_to_cos=flip_sin_to_cos,
                 )
             elif time_embedding_type == "positional":
-                self.height_proj = Timesteps(
-                    block_out_channels[0], flip_sin_to_cos, freq_shift
-                )
-                self.width_proj = Timesteps(
-                    block_out_channels[0], flip_sin_to_cos, freq_shift
-                )
+                self.height_proj = Timesteps(block_out_channels[0], flip_sin_to_cos, freq_shift)
+                self.width_proj = Timesteps(block_out_channels[0], flip_sin_to_cos, freq_shift)
 
             self.height_embedding = TimestepEmbedding(
                 timestep_input_dim,
@@ -945,9 +918,7 @@ class UViT(ModelMixin, ConfigMixin):
 
         # up
         if downsample_before_mid:
-            self.upsample_mid = Upsample2D(
-                self.mid_dim, use_conv=True, out_channels=self.mid_dim
-            )
+            self.upsample_mid = Upsample2D(self.mid_dim, use_conv=True, out_channels=self.mid_dim)
 
         reversed_block_out_channels = list(reversed(block_out_channels))
         reversed_layers_per_block = list(reversed(layers_per_block))
@@ -958,9 +929,7 @@ class UViT(ModelMixin, ConfigMixin):
 
             prev_output_channel = output_channel
             output_channel = reversed_block_out_channels[i]
-            input_channel = reversed_block_out_channels[
-                min(i + 1, len(block_out_channels) - 1)
-            ]
+            input_channel = reversed_block_out_channels[min(i + 1, len(block_out_channels) - 1)]
 
             # add upsample block for all BUT final layer
             if not is_final_block:
@@ -1033,15 +1002,11 @@ class UViT(ModelMixin, ConfigMixin):
             elif isinstance(m, nn.Linear):
                 if "qkv" in name:
                     # treat the weights of Q, K, V separately
-                    val = math.sqrt(
-                        6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1])
-                    )
+                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1]))
                     nn.init.uniform_(m.weight, -val, val)
                 elif "kv" in name:
                     # treat the weights of K, V separately
-                    val = math.sqrt(
-                        6.0 / float(m.weight.shape[0] // 2 + m.weight.shape[1])
-                    )
+                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 2 + m.weight.shape[1]))
                     nn.init.uniform_(m.weight, -val, val)
                 else:
                     nn.init.xavier_uniform_(m.weight)
@@ -1131,12 +1096,12 @@ class UViT(ModelMixin, ConfigMixin):
             if not torch.is_tensor(orig_res):
                 h_orig, w_orig = orig_res
                 dtype = torch.int if is_mps else torch.int64
-                h_orig = torch.tensor(
-                    [h_orig], dtype=dtype, device=sample.device
-                ).expand(sample.shape[0])
-                w_orig = torch.tensor(
-                    [w_orig], dtype=dtype, device=sample.device
-                ).expand(sample.shape[0])
+                h_orig = torch.tensor([h_orig], dtype=dtype, device=sample.device).expand(
+                    sample.shape[0]
+                )
+                w_orig = torch.tensor([w_orig], dtype=dtype, device=sample.device).expand(
+                    sample.shape[0]
+                )
             else:
                 h_orig, w_orig = orig_res[:, 0], orig_res[:, 1]
 
@@ -1170,9 +1135,7 @@ class UViT(ModelMixin, ConfigMixin):
             is_final_block = i == len(self.up_blocks) - 1
 
             res_samples = down_block_res_samples[-len(upsample_block.resnets) :]
-            down_block_res_samples = down_block_res_samples[
-                : -len(upsample_block.resnets)
-            ]
+            down_block_res_samples = down_block_res_samples[: -len(upsample_block.resnets)]
 
             # if we have not reached the final block and need to forward the
             # upsample size, we do it here

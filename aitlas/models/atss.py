@@ -7,9 +7,9 @@ from typing import List, Optional
 
 import requests
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
+from torch import nn
 from torchvision.models._utils import IntermediateLayerGetter
 from torchvision.ops.boxes import box_area
 from torchvision.ops.feature_pyramid_network import FeaturePyramidNetwork
@@ -81,9 +81,7 @@ def nested_tensor_from_tensor_list(tensor_list: List[torch.Tensor]):
 # -----------------------------------------------------------------------------
 
 
-def sigmoid_focal_loss(
-    inputs, targets, num_boxes, alpha: float = 0.25, gamma: float = 2.0
-):
+def sigmoid_focal_loss(inputs, targets, num_boxes, alpha: float = 0.25, gamma: float = 2.0):
     """
     Standard PyTorch focal loss implementation
     """
@@ -126,9 +124,7 @@ def giou_loss(pred_boxes, target_boxes, weight=None):
     y1_enclosing = torch.min(pred_y1, target_y1)
     x2_enclosing = torch.max(pred_x2, target_x2)
     y2_enclosing = torch.max(pred_y2, target_y2)
-    area_enclosing = (x2_enclosing - x1_enclosing) * (
-        y2_enclosing - y1_enclosing
-    ) + 1e-7
+    area_enclosing = (x2_enclosing - x1_enclosing) * (y2_enclosing - y1_enclosing) + 1e-7
 
     area_union = pred_area + target_area - area_intersect + 1e-7
     ious = area_intersect / area_union
@@ -220,17 +216,11 @@ class AnchorGenerator(nn.Module):
 
     def forward(self, feature_maps):
         anchors = []
-        for size, stride, feat in zip(
-            self.anchor_sizes, self.anchor_strides, feature_maps
-        ):
+        for size, stride, feat in zip(self.anchor_sizes, self.anchor_strides, feature_maps):
             h, w = feat.shape[-2:]
             device = feat.device
-            shifts_x = torch.arange(
-                0, w * stride, step=stride, dtype=torch.float32, device=device
-            )
-            shifts_y = torch.arange(
-                0, h * stride, step=stride, dtype=torch.float32, device=device
-            )
+            shifts_x = torch.arange(0, w * stride, step=stride, dtype=torch.float32, device=device)
+            shifts_y = torch.arange(0, h * stride, step=stride, dtype=torch.float32, device=device)
             shift_y, shift_x = (
                 torch.meshgrid(shifts_y, shifts_x, indexing="ij")
                 if int(torch.__version__.split(".")[1]) >= 10
@@ -238,9 +228,7 @@ class AnchorGenerator(nn.Module):
             )
             shift_x = shift_x.reshape(-1)
             shift_y = shift_y.reshape(-1)
-            shifts = (
-                torch.stack((shift_x, shift_y, shift_x, shift_y), dim=1) + stride // 2
-            )
+            shifts = torch.stack((shift_x, shift_y, shift_x, shift_y), dim=1) + stride // 2
             base_anchor = torch.tensor(
                 [-size / 2, -size / 2, size / 2, size / 2],
                 dtype=torch.float32,
@@ -271,22 +259,16 @@ class BackboneWithFPN(nn.Module):
                 padding=old_conv.padding,
                 bias=old_conv.bias is not None,
             )
-            nn.init.kaiming_normal_(
-                new_conv.weight, mode="fan_out", nonlinearity="relu"
-            )
+            nn.init.kaiming_normal_(new_conv.weight, mode="fan_out", nonlinearity="relu")
             backbone.conv1 = new_conv
 
         return_layers = {"layer2": "0", "layer3": "1", "layer4": "2"}
         self.body = IntermediateLayerGetter(backbone, return_layers=return_layers)
 
         in_channels_list = (
-            [512, 1024, 2048]
-            if backbone_name not in ["resnet18", "resnet34"]
-            else [128, 256, 512]
+            [512, 1024, 2048] if backbone_name not in ["resnet18", "resnet34"] else [128, 256, 512]
         )
-        self.fpn = FeaturePyramidNetwork(
-            in_channels_list=in_channels_list, out_channels=256
-        )
+        self.fpn = FeaturePyramidNetwork(in_channels_list=in_channels_list, out_channels=256)
 
         # ATSS generates P6 and P7 on top of P5
         self.p6 = nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1)
@@ -334,9 +316,7 @@ class ATSSHead(nn.Module):
         self.cls_logits = nn.Conv2d(
             in_channels, num_anchors * num_classes, kernel_size=3, stride=1, padding=1
         )
-        self.bbox_pred = nn.Conv2d(
-            in_channels, num_anchors * 4, kernel_size=3, stride=1, padding=1
-        )
+        self.bbox_pred = nn.Conv2d(in_channels, num_anchors * 4, kernel_size=3, stride=1, padding=1)
         self.centerness = nn.Conv2d(
             in_channels, num_anchors * 1, kernel_size=3, stride=1, padding=1
         )
@@ -382,9 +362,7 @@ class ATSSHead(nn.Module):
 
 
 class ATSSModel(nn.Module):
-    def __init__(
-        self, num_classes, pretrained=True, backbone_name="resnet50", in_channels=3
-    ):
+    def __init__(self, num_classes, pretrained=True, backbone_name="resnet50", in_channels=3):
         super().__init__()
         self.backbone = BackboneWithFPN(
             backbone_name, pretrained=pretrained, in_channels=in_channels
@@ -429,9 +407,7 @@ def compute_atss_targets(anchors, gt_boxes, gt_labels, num_anchors_per_level, to
     anchors_cy = (anchors[:, 3] + anchors[:, 1]) / 2.0
     anchor_points = torch.stack((anchors_cx, anchors_cy), dim=1)  # [N, 2]
 
-    distances = (
-        (anchor_points[:, None, :] - gt_points[None, :, :]).pow(2).sum(-1).sqrt()
-    )  # [N, M]
+    distances = (anchor_points[:, None, :] - gt_points[None, :, :]).pow(2).sum(-1).sqrt()  # [N, M]
 
     # Select candidates based on L2 distance
     candidate_idxs = []
@@ -440,9 +416,7 @@ def compute_atss_targets(anchors, gt_boxes, gt_labels, num_anchors_per_level, to
         end_idx = start_idx + num_anchors_in_level
         distances_per_level = distances[start_idx:end_idx, :]
         topk_level = min(topk, num_anchors_in_level)
-        _, topk_idxs_per_level = distances_per_level.topk(
-            topk_level, dim=0, largest=False
-        )
+        _, topk_idxs_per_level = distances_per_level.topk(topk_level, dim=0, largest=False)
         candidate_idxs.append(topk_idxs_per_level + start_idx)
         start_idx = end_idx
     candidate_idxs = torch.cat(candidate_idxs, dim=0)  # [L*topk, M]
@@ -598,9 +572,7 @@ class ATSS(BaseObjectDetection):
 
         # Step 2: Second request with the token (if we found one)
         if token and token != "already_handled":
-            response = session.get(
-                url, params={"id": file_id, "confirm": token}, stream=True
-            )
+            response = session.get(url, params={"id": file_id, "confirm": token}, stream=True)
 
         # Step 3: The modern User-Content Fallback
         # If we are STILL getting HTML, try Google's newer direct-download format
@@ -624,9 +596,7 @@ class ATSS(BaseObjectDetection):
                 if chunk:
                     f.write(chunk)
 
-        print(
-            f"Successfully downloaded weights: {os.path.getsize(destination) / 1024**2:.2f} MB"
-        )
+        print(f"Successfully downloaded weights: {os.path.getsize(destination) / 1024**2:.2f} MB")
 
     def load_atss_weights(self, checkpoint_path):
         """
@@ -662,25 +632,13 @@ class ATSS(BaseObjectDetection):
             # 2. Map FPN
             if "backbone.fpn" in name:
                 # Original fpn_inner2, 3, 4 -> torchvision inner_blocks.0, 1, 2
-                name = name.replace(
-                    "backbone.fpn.fpn_inner2", "backbone.fpn.inner_blocks.0"
-                )
-                name = name.replace(
-                    "backbone.fpn.fpn_inner3", "backbone.fpn.inner_blocks.1"
-                )
-                name = name.replace(
-                    "backbone.fpn.fpn_inner4", "backbone.fpn.inner_blocks.2"
-                )
+                name = name.replace("backbone.fpn.fpn_inner2", "backbone.fpn.inner_blocks.0")
+                name = name.replace("backbone.fpn.fpn_inner3", "backbone.fpn.inner_blocks.1")
+                name = name.replace("backbone.fpn.fpn_inner4", "backbone.fpn.inner_blocks.2")
                 # Original fpn_layer2, 3, 4 -> torchvision layer_blocks.0, 1, 2
-                name = name.replace(
-                    "backbone.fpn.fpn_layer2", "backbone.fpn.layer_blocks.0"
-                )
-                name = name.replace(
-                    "backbone.fpn.fpn_layer3", "backbone.fpn.layer_blocks.1"
-                )
-                name = name.replace(
-                    "backbone.fpn.fpn_layer4", "backbone.fpn.layer_blocks.2"
-                )
+                name = name.replace("backbone.fpn.fpn_layer2", "backbone.fpn.layer_blocks.0")
+                name = name.replace("backbone.fpn.fpn_layer3", "backbone.fpn.layer_blocks.1")
+                name = name.replace("backbone.fpn.fpn_layer4", "backbone.fpn.layer_blocks.2")
 
             # 3. Map P6/P7 (Extra levels)
             if "backbone.fpn.top_blocks.p6" in name:
@@ -694,18 +652,14 @@ class ATSS(BaseObjectDetection):
 
             # Filter: Skip first conv if in_channels != 3
             if in_channels != 3 and "backbone.body.conv1.weight" in name:
-                print(
-                    f"Skipping {name} due to input channel mismatch ({in_channels} vs 3)"
-                )
+                print(f"Skipping {name} due to input channel mismatch ({in_channels} vs 3)")
                 continue
 
             # Filter: Skip class-specific weights if num_classes != 80 (COCO)
             if self.num_classes != 80 and (
                 "cls_logits.weight" in name or "cls_logits.bias" in name
             ):
-                print(
-                    f"Skipping {name} due to class count mismatch ({self.num_classes} vs 80)"
-                )
+                print(f"Skipping {name} due to class count mismatch ({self.num_classes} vs 80)")
                 continue
 
             new_state_dict[name] = v
@@ -718,10 +672,7 @@ class ATSS(BaseObjectDetection):
     def forward(self, inputs, targets=None):
         if isinstance(inputs, list):
             target_sizes = torch.stack(
-                [
-                    torch.tensor([img.shape[-2], img.shape[-1]], device=self.device)
-                    for img in inputs
-                ]
+                [torch.tensor([img.shape[-2], img.shape[-1]], device=self.device) for img in inputs]
             )
             samples = nested_tensor_from_tensor_list(inputs).to(self.device)
         else:
@@ -732,16 +683,11 @@ class ATSS(BaseObjectDetection):
             samples = nested_tensor_from_tensor_list(list(inputs)).to(self.device)
 
         if self.model.training and targets is not None:
-            logits, bbox_reg, centerness, anchors_per_level = self.model(
-                samples.tensors
-            )
+            logits, bbox_reg, centerness, anchors_per_level = self.model(samples.tensors)
 
             B = samples.tensors.shape[0]
             logits_concat = torch.cat(
-                [
-                    l.permute(0, 2, 3, 1).reshape(B, -1, self.num_classes)
-                    for l in logits
-                ],
+                [l.permute(0, 2, 3, 1).reshape(B, -1, self.num_classes) for l in logits],
                 dim=1,
             )
             bbox_reg_concat = torch.cat(
@@ -777,9 +723,7 @@ class ATSS(BaseObjectDetection):
                 target_boxes_batch.append(target_boxes[pos_inds])
 
             num_pos_total = max(sum(p.sum().item() for p in pos_inds_batch), 1.0)
-            cls_loss = sigmoid_focal_loss(
-                logits_concat, targets_one_hot_batch, num_pos_total
-            )
+            cls_loss = sigmoid_focal_loss(logits_concat, targets_one_hot_batch, num_pos_total)
 
             reg_loss = 0.0
             centerness_loss = 0.0
@@ -819,9 +763,7 @@ class ATSS(BaseObjectDetection):
                     )
                     centerness_loss += c_loss
 
-            reg_loss = (
-                reg_loss / sum_centerness_targets * 2.0
-            )  # ATSS Default REG_LOSS_WEIGHT = 2.0
+            reg_loss = reg_loss / sum_centerness_targets * 2.0  # ATSS Default REG_LOSS_WEIGHT = 2.0
             centerness_loss = centerness_loss / num_pos_total
 
             return {
@@ -831,9 +773,7 @@ class ATSS(BaseObjectDetection):
 
         else:
             # Inference mode
-            logits, bbox_reg, centerness, anchors_per_level = self.model(
-                samples.tensors
-            )
+            logits, bbox_reg, centerness, anchors_per_level = self.model(samples.tensors)
 
             final_outputs = []
             B = samples.tensors.shape[0]
@@ -843,13 +783,9 @@ class ATSS(BaseObjectDetection):
                 labels_all = []
 
                 for level in range(len(logits)):
-                    l_logits = (
-                        logits[level][i].permute(1, 2, 0).reshape(-1, self.num_classes)
-                    )
+                    l_logits = logits[level][i].permute(1, 2, 0).reshape(-1, self.num_classes)
                     l_bbox_reg = bbox_reg[level][i].permute(1, 2, 0).reshape(-1, 4)
-                    l_centerness = (
-                        centerness[level][i].permute(1, 2, 0).reshape(-1).sigmoid()
-                    )
+                    l_centerness = centerness[level][i].permute(1, 2, 0).reshape(-1).sigmoid()
                     l_anchors = anchors_per_level[level]
 
                     l_scores = l_logits.sigmoid() * l_centerness[:, None]
@@ -884,9 +820,7 @@ class ATSS(BaseObjectDetection):
                         {
                             "boxes": torch.zeros((0, 4), device=self.device),
                             "scores": torch.zeros((0,), device=self.device),
-                            "labels": torch.zeros(
-                                (0,), dtype=torch.long, device=self.device
-                            ),
+                            "labels": torch.zeros((0,), dtype=torch.long, device=self.device),
                         }
                     )
                     continue
@@ -909,9 +843,7 @@ class ATSS(BaseObjectDetection):
                 labels_all = labels_all[keep_size]
 
                 # Batched NMS (Post-NMS Filter)
-                keep = torchvision.ops.batched_nms(
-                    boxes_all, scores_all, labels_all, 0.6
-                )
+                keep = torchvision.ops.batched_nms(boxes_all, scores_all, labels_all, 0.6)
                 keep = keep[:100]
 
                 final_outputs.append(

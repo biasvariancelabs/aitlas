@@ -3,7 +3,7 @@
 import math
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torchvision.models.detection import FCOS_ResNet50_FPN_Weights, fcos_resnet50_fpn
 
 from ..base import BaseObjectDetection
@@ -21,9 +21,7 @@ class FCOS(BaseObjectDetection):
 
         # Load an object detection model pre-trained on COCO
         self.model = fcos_resnet50_fpn(
-            weights=(
-                FCOS_ResNet50_FPN_Weights.COCO_V1 if self.config.pretrained else None
-            )
+            weights=(FCOS_ResNet50_FPN_Weights.COCO_V1 if self.config.pretrained else None)
         )
 
         # Access the internal classification head

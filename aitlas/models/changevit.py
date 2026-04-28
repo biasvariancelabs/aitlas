@@ -1,14 +1,13 @@
 """ChangeViT: Unleashing Plain Vision Transformers for Change Detection"""
 
 import math
-import warnings
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Union
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
+from torch import nn
 from torch.hub import load_state_dict_from_url
 from torch.nn.init import trunc_normal_
 from torchvision import models
@@ -148,9 +147,7 @@ class PatchEmbed(nn.Module):
         self.embed_dim = embed_dim
         self.flatten_embedding = flatten_embedding
 
-        self.proj = nn.Conv2d(
-            in_chans, embed_dim, kernel_size=patch_HW, stride=patch_HW
-        )
+        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_HW, stride=patch_HW)
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
 
     def forward(self, x):
@@ -213,9 +210,7 @@ class Attention(nn.Module):
     def forward(self, x):
         B, N, C = x.shape
         qkv = (
-            self.qkv(x)
-            .reshape(B, N, 3, self.num_heads, C // self.num_heads)
-            .permute(2, 0, 3, 1, 4)
+            self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         )
         q, k, v = qkv[0] * self.scale, qkv[1], qkv[2]
         attn = (q @ k.transpose(-2, -1)).softmax(dim=-1)
@@ -256,9 +251,7 @@ class ViTBlock(nn.Module):
             attn_drop=attn_drop,
             proj_drop=drop,
         )
-        self.ls1 = (
-            LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
-        )
+        self.ls1 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
         self.drop_path1 = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
         self.norm2 = norm_layer(dim)
@@ -270,9 +263,7 @@ class ViTBlock(nn.Module):
             drop=drop,
             bias=ffn_bias,
         )
-        self.ls2 = (
-            LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
-        )
+        self.ls2 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
         self.drop_path2 = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
     def forward(self, x):
@@ -390,9 +381,7 @@ class DinoVisionTransformer(nn.Module):
         sqrt_N = math.sqrt(N)
         sx, sy = float(w0) / sqrt_N, float(h0) / sqrt_N
         patch_pos_embed = F.interpolate(
-            patch_pos_embed.reshape(1, int(sqrt_N), int(sqrt_N), dim).permute(
-                0, 3, 1, 2
-            ),
+            patch_pos_embed.reshape(1, int(sqrt_N), int(sqrt_N), dim).permute(0, 3, 1, 2),
             scale_factor=(sx, sy),
             mode="bicubic",
             antialias=self.interpolate_antialias,
@@ -456,17 +445,15 @@ class ChangeViTEncoder(nn.Module):
             if model_type == "tiny":
                 url = "https://dl.fbaipublicfiles.com/deit/deit_tiny_patch16_224-a1311bcf.pth"
                 print(f"Loading DeiT-Tiny weights from {url}...")
-                checkpoint = load_state_dict_from_url(
-                    url, map_location="cpu", check_hash=True
-                )
+                checkpoint = load_state_dict_from_url(url, map_location="cpu", check_hash=True)
                 # DeiT checkpoints usually have the state dict under 'model'
                 state_dict = checkpoint["model"]
             elif model_type == "small":
-                url = "https://dl.fbaipublicfiles.com/dinov2/dinov2_vits14/dinov2_vits14_pretrain.pth"
-                print(f"Loading DINOv2-Small weights from {url}...")
-                checkpoint = load_state_dict_from_url(
-                    url, map_location="cpu", check_hash=True
+                url = (
+                    "https://dl.fbaipublicfiles.com/dinov2/dinov2_vits14/dinov2_vits14_pretrain.pth"
                 )
+                print(f"Loading DINOv2-Small weights from {url}...")
+                checkpoint = load_state_dict_from_url(url, map_location="cpu", check_hash=True)
                 # DINOv2 checkpoints often contain the state dict directly at the root level
                 state_dict = checkpoint
 
@@ -480,16 +467,12 @@ class ChangeViTEncoder(nn.Module):
                     "patch_embed.proj.bias",
                 ]:
                     if k in state_dict:
-                        print(
-                            f"Removing key {k} from pretrained weights to avoid shape mismatch."
-                        )
+                        print(f"Removing key {k} from pretrained weights to avoid shape mismatch.")
                         del state_dict[k]
 
                 # Load the remaining weights
                 msg = self.vit.load_state_dict(state_dict, strict=False)
-                print(
-                    f"Loaded pretrained {model_type} weights. Missing keys: {msg.missing_keys}"
-                )
+                print(f"Loaded pretrained {model_type} weights. Missing keys: {msg.missing_keys}")
 
         # ResNet Backbone for Detail Capture (Standard ImageNet pretrained if True)
         self.resnet = models.resnet18(pretrained=pretrained)
@@ -506,9 +489,7 @@ class ChangeViTEncoder(nn.Module):
                 bias=old_conv.bias,
             )
 
-            nn.init.kaiming_normal_(
-                new_conv.weight, mode="fan_out", nonlinearity="relu"
-            )
+            nn.init.kaiming_normal_(new_conv.weight, mode="fan_out", nonlinearity="relu")
             self.resnet.conv1 = new_conv
 
         self.drop = nn.Dropout(p=0.01)
@@ -548,9 +529,7 @@ class ChangeViTEncoder(nn.Module):
 
 
 class CrossAttention(nn.Module):
-    def __init__(
-        self, dim1, dim2, num_heads=8, qkv_bias=False, attn_drop=0.0, proj_drop=0.0
-    ):
+    def __init__(self, dim1, dim2, num_heads=8, qkv_bias=False, attn_drop=0.0, proj_drop=0.0):
         super().__init__()
         self.num_heads = num_heads
         head_dim = dim1 // num_heads
@@ -567,11 +546,7 @@ class CrossAttention(nn.Module):
         B1, N1, C1 = x.shape
         B2, N2, C2 = y.shape
 
-        q = (
-            self.q(x)
-            .reshape(B1, N1, self.num_heads, C1 // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        q = self.q(x).reshape(B1, N1, self.num_heads, C1 // self.num_heads).permute(0, 2, 1, 3)
         kv = (
             self.kv(y)
             .reshape(B2, N2, 2, self.num_heads, C1 // self.num_heads)
@@ -730,27 +705,19 @@ class ChangeViTDecoder(nn.Module):
 
         self.up_c5 = nn.Sequential(
             nn.Conv2d(c5_channel, c4_channel, 1, bias=False),
-            nn.ConvTranspose2d(
-                c4_channel, c4_channel, kernel_size=4, stride=2, padding=1
-            ),
+            nn.ConvTranspose2d(c4_channel, c4_channel, kernel_size=4, stride=2, padding=1),
         )
         self.up_c4 = nn.Sequential(
             nn.Conv2d(c4_channel, c3_channel, 1, bias=False),
-            nn.ConvTranspose2d(
-                c3_channel, c3_channel, kernel_size=4, stride=2, padding=1
-            ),
+            nn.ConvTranspose2d(c3_channel, c3_channel, kernel_size=4, stride=2, padding=1),
         )
         self.up_c3 = nn.Sequential(
             nn.Conv2d(c3_channel, c2_channel, 1, bias=False),
-            nn.ConvTranspose2d(
-                c2_channel, c2_channel, kernel_size=4, stride=2, padding=1
-            ),
+            nn.ConvTranspose2d(c2_channel, c2_channel, kernel_size=4, stride=2, padding=1),
         )
 
         self.classifier = nn.Sequential(
-            nn.ConvTranspose2d(
-                c2_channel, c2_channel, kernel_size=4, stride=2, padding=1
-            ),
+            nn.ConvTranspose2d(c2_channel, c2_channel, kernel_size=4, stride=2, padding=1),
             nn.Conv2d(c2_channel, num_classes, 3, 1, padding=1, bias=False),
         )
 
@@ -834,9 +801,7 @@ class ChangeViTModel(nn.Module):
             embed_dim=embed_dim,
             img_size=img_size,
         )
-        self.decoder = ChangeViTDecoder(
-            in_dim=[64, 128, 256, embed_dim], num_classes=num_classes
-        )
+        self.decoder = ChangeViTDecoder(in_dim=[64, 128, 256, embed_dim], num_classes=num_classes)
 
     def forward(self, x1, x2):
         fx, fy = self.encoder(x1, x2)

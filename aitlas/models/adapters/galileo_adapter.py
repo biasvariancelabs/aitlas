@@ -10,7 +10,6 @@ class GalileoAdapter(BaseInputAdapter):
         kwargs = {}
 
         if isinstance(x, torch.Tensor):
-
             # Replace NaNs and Infs
             x = torch.nan_to_num(x, nan=0.0, posinf=0.0, neginf=0.0)
 

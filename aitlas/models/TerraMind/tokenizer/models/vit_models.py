@@ -18,15 +18,14 @@
 # licensed under the Apache License, Version 2.0.
 # Source: https://github.com/apple/ml-4m/
 
-import logging
 import math
 import warnings
 from functools import partial
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
+from torch import nn
 from torch.amp import autocast
 
 
@@ -124,9 +123,7 @@ def drop_path(x, drop_prob: float = 0.0, training: bool = False):
     if drop_prob == 0.0 or not training:
         return x
     keep_prob = 1 - drop_prob
-    shape = (x.shape[0],) + (1,) * (
-        x.ndim - 1
-    )  # work with diff dim tensors, not just 2D ConvNets
+    shape = (x.shape[0],) + (1,) * (x.ndim - 1)  # work with diff dim tensors, not just 2D ConvNets
     random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()  # binarize
     output = x.div(keep_prob) * random_tensor
@@ -222,11 +219,7 @@ class CrossAttention(nn.Module):
         B, N, C = x.shape
         _, M, _ = context.shape
 
-        q = (
-            self.q(x)
-            .reshape(B, N, self.num_heads, C // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         kv = (
             self.kv(context)
             .reshape(B, M, 2, self.num_heads, C // self.num_heads)
@@ -325,9 +318,7 @@ class DecoderBlock(nn.Module):
 
     def forward(self, x, context, **kwargs):
         x = x + self.drop_path(self.self_attn(self.norm1(x)))
-        x = x + self.drop_path(
-            self.cross_attn(self.query_norm(x), self.context_norm(context))
-        )
+        x = x + self.drop_path(self.cross_attn(self.query_norm(x), self.context_norm(context)))
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
 
@@ -353,9 +344,7 @@ class LayerNorm(nn.Module):
 
     def forward(self, x):
         if self.data_format == "channels_last":
-            return F.layer_norm(
-                x, self.normalized_shape, self.weight, self.bias, self.eps
-            )
+            return F.layer_norm(x, self.normalized_shape, self.weight, self.bias, self.eps)
         elif self.data_format == "channels_first":
             u = x.mean(1, keepdim=True)
             s = (x - u).pow(2).mean(1, keepdim=True)
@@ -380,9 +369,7 @@ class ConvNeXtBlock(nn.Module):
 
     def __init__(self, dim, drop_path=0.0, layer_scale_init_value=1e-6):
         super().__init__()
-        self.dwconv = nn.Conv2d(
-            dim, dim, kernel_size=7, padding=3, groups=dim
-        )  # depthwise conv
+        self.dwconv = nn.Conv2d(dim, dim, kernel_size=7, padding=3, groups=dim)  # depthwise conv
         self.norm = nn.LayerNorm(dim, eps=1e-6)
         self.pwconv1 = nn.Linear(
             dim, 4 * dim
@@ -474,9 +461,7 @@ class ViTEncoder(nn.Module):
         N_W = self.W // self.P_W
 
         if sincos_pos_emb:
-            self.pos_emb = build_2d_sincos_posemb(
-                h=N_H, w=N_W, embed_dim=self.dim_tokens
-            )
+            self.pos_emb = build_2d_sincos_posemb(h=N_H, w=N_W, embed_dim=self.dim_tokens)
             self.pos_emb = nn.Parameter(self.pos_emb, requires_grad=learnable_pos_emb)
         else:
             self.pos_emb = nn.Parameter(torch.zeros(1, self.dim_tokens, N_H, N_W))
@@ -520,24 +505,18 @@ class ViTEncoder(nn.Module):
 
         if post_mlp:
             self.norm_mlp = norm_layer(dim_tokens)
-            self.post_mlp = Mlp(
-                dim_tokens, int(mlp_ratio * dim_tokens), act_layer=nn.Tanh
-            )
+            self.post_mlp = Mlp(dim_tokens, int(mlp_ratio * dim_tokens), act_layer=nn.Tanh)
 
         self.apply(self._init_weights)
         for name, m in self.named_modules():
             if isinstance(m, nn.Linear):
                 if "qkv" in name:
                     # treat the weights of Q, K, V separately
-                    val = math.sqrt(
-                        6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1])
-                    )
+                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1]))
                     nn.init.uniform_(m.weight, -val, val)
                 elif "kv" in name:
                     # treat the weights of K, V separately
-                    val = math.sqrt(
-                        6.0 / float(m.weight.shape[0] // 2 + m.weight.shape[1])
-                    )
+                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 2 + m.weight.shape[1]))
                     nn.init.uniform_(m.weight, -val, val)
 
             if isinstance(m, nn.Conv2d):
@@ -709,9 +688,7 @@ class ViTDecoder(nn.Module):
         N_W = self.W // self.P_W
 
         if sincos_pos_emb:
-            self.pos_emb = build_2d_sincos_posemb(
-                h=N_H, w=N_W, embed_dim=self.dim_tokens
-            )
+            self.pos_emb = build_2d_sincos_posemb(h=N_H, w=N_W, embed_dim=self.dim_tokens)
             self.pos_emb = nn.Parameter(self.pos_emb, requires_grad=learnable_pos_emb)
         else:
             self.pos_emb = nn.Parameter(torch.zeros(1, self.dim_tokens, N_H, N_W))
@@ -740,13 +717,9 @@ class ViTDecoder(nn.Module):
         # Tokens -> image output projection
         if post_mlp:
             self.norm_mlp = norm_layer(dim_tokens)
-            self.post_mlp = Mlp(
-                dim_tokens, int(mlp_ratio * dim_tokens), act_layer=nn.Tanh
-            )
+            self.post_mlp = Mlp(dim_tokens, int(mlp_ratio * dim_tokens), act_layer=nn.Tanh)
         if patch_proj:
-            self.out_proj = nn.Linear(
-                dim_tokens, self.out_channels * self.P_H * self.P_W
-            )
+            self.out_proj = nn.Linear(dim_tokens, self.out_channels * self.P_H * self.P_W)
         else:
             self.out_proj = nn.Linear(dim_tokens, self.out_channels)
         if out_conv:
@@ -760,15 +733,11 @@ class ViTDecoder(nn.Module):
             if isinstance(m, nn.Linear):
                 if "qkv" in name:
                     # treat the weights of Q, K, V separately
-                    val = math.sqrt(
-                        6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1])
-                    )
+                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 3 + m.weight.shape[1]))
                     nn.init.uniform_(m.weight, -val, val)
                 elif "kv" in name:
                     # treat the weights of K, V separately
-                    val = math.sqrt(
-                        6.0 / float(m.weight.shape[0] // 2 + m.weight.shape[1])
-                    )
+                    val = math.sqrt(6.0 / float(m.weight.shape[0] // 2 + m.weight.shape[1]))
                     nn.init.uniform_(m.weight, -val, val)
 
             if isinstance(m, nn.Conv2d):

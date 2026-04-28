@@ -5,11 +5,10 @@ import math
 from typing import Dict, List, Optional
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 import torchvision
 from scipy.optimize import linear_sum_assignment
+from torch import nn, optim
 from torchvision.models._utils import IntermediateLayerGetter
 from torchvision.ops.boxes import box_area
 
@@ -234,9 +233,7 @@ class Backbone(BackboneBase):
                 padding=old_conv.padding,
                 bias=old_conv.bias,
             )
-            nn.init.kaiming_normal_(
-                new_conv.weight, mode="fan_out", nonlinearity="relu"
-            )
+            nn.init.kaiming_normal_(new_conv.weight, mode="fan_out", nonlinearity="relu")
             backbone.conv1 = new_conv
 
         num_channels = 512 if name in ("resnet18", "resnet34") else 2048
@@ -263,9 +260,7 @@ class Joiner(nn.Sequential):
 
 
 class PositionEmbeddingSine(nn.Module):
-    def __init__(
-        self, num_pos_feats=64, temperature=10000, normalize=False, scale=None
-    ):
+    def __init__(self, num_pos_feats=64, temperature=10000, normalize=False, scale=None):
         super().__init__()
         self.num_pos_feats = num_pos_feats
         self.temperature = temperature
@@ -327,9 +322,7 @@ class Transformer(nn.Module):
             d_model, nhead, dim_feedforward, dropout, activation, normalize_before
         )
         encoder_norm = nn.LayerNorm(d_model) if normalize_before else None
-        self.encoder = TransformerEncoder(
-            encoder_layer, num_encoder_layers, encoder_norm
-        )
+        self.encoder = TransformerEncoder(encoder_layer, num_encoder_layers, encoder_norm)
 
         decoder_layer = TransformerDecoderLayer(
             d_model, nhead, dim_feedforward, dropout, activation, normalize_before
@@ -649,16 +642,12 @@ def _get_clones(module, N):
 
 
 class HungarianMatcher(nn.Module):
-    def __init__(
-        self, cost_class: float = 1, cost_bbox: float = 1, cost_giou: float = 1
-    ):
+    def __init__(self, cost_class: float = 1, cost_bbox: float = 1, cost_giou: float = 1):
         super().__init__()
         self.cost_class = cost_class
         self.cost_bbox = cost_bbox
         self.cost_giou = cost_giou
-        assert (
-            cost_class != 0 or cost_bbox != 0 or cost_giou != 0
-        ), "all costs cant be 0"
+        assert cost_class != 0 or cost_bbox != 0 or cost_giou != 0, "all costs cant be 0"
 
     @torch.no_grad()
     def forward(self, outputs, targets):
@@ -671,26 +660,18 @@ class HungarianMatcher(nn.Module):
 
         cost_class = -out_prob[:, tgt_ids]
         cost_bbox = torch.cdist(out_bbox, tgt_bbox, p=1)
-        cost_giou = -generalized_box_iou(
-            box_cxcywh_to_xyxy(out_bbox), box_cxcywh_to_xyxy(tgt_bbox)
-        )
+        cost_giou = -generalized_box_iou(box_cxcywh_to_xyxy(out_bbox), box_cxcywh_to_xyxy(tgt_bbox))
 
         # Replace any NaN or Inf values with large finite numbers
         cost_class = torch.nan_to_num(cost_class, nan=1.0, posinf=1.0, neginf=-1.0)
         cost_bbox = torch.nan_to_num(cost_bbox, nan=1.0, posinf=1.0, neginf=0.0)
         cost_giou = torch.nan_to_num(cost_giou, nan=1.0, posinf=1.0, neginf=-1.0)
 
-        C = (
-            self.cost_bbox * cost_bbox
-            + self.cost_class * cost_class
-            + self.cost_giou * cost_giou
-        )
+        C = self.cost_bbox * cost_bbox + self.cost_class * cost_class + self.cost_giou * cost_giou
         C = C.view(bs, num_queries, -1).cpu()
 
         sizes = [len(v["boxes"]) for v in targets]
-        indices = [
-            linear_sum_assignment(c[i]) for i, c in enumerate(C.split(sizes, -1))
-        ]
+        indices = [linear_sum_assignment(c[i]) for i, c in enumerate(C.split(sizes, -1))]
         return [
             (
                 torch.as_tensor(i, dtype=torch.int64),
@@ -725,9 +706,7 @@ class DETRModel(nn.Module):
 
         src, mask = features[-1].decompose()
         assert mask is not None
-        hs = self.transformer(
-            self.input_proj(src), mask, self.query_embed.weight, pos[-1]
-        )[0]
+        hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
 
         outputs_class = self.class_embed(hs)
         outputs_coord = self.bbox_embed(hs).sigmoid()
@@ -774,9 +753,7 @@ class SetCriterion(nn.Module):
     def loss_labels(self, outputs, targets, indices, num_boxes, log=True):
         src_logits = outputs["pred_logits"]
         idx = self._get_src_permutation_idx(indices)
-        target_classes_o = torch.cat(
-            [t["labels"][J] for t, (_, J) in zip(targets, indices)]
-        )
+        target_classes_o = torch.cat([t["labels"][J] for t, (_, J) in zip(targets, indices)])
         target_classes = torch.full(
             src_logits.shape[:2],
             self.num_classes,
@@ -785,9 +762,7 @@ class SetCriterion(nn.Module):
         )
         target_classes[idx] = target_classes_o
 
-        loss_ce = F.cross_entropy(
-            src_logits.transpose(1, 2), target_classes, self.empty_weight
-        )
+        loss_ce = F.cross_entropy(src_logits.transpose(1, 2), target_classes, self.empty_weight)
         losses = {"loss_ce": loss_ce}
 
         if log:
@@ -798,9 +773,7 @@ class SetCriterion(nn.Module):
     def loss_cardinality(self, outputs, targets, indices, num_boxes):
         pred_logits = outputs["pred_logits"]
         device = pred_logits.device
-        tgt_lengths = torch.as_tensor(
-            [len(v["labels"]) for v in targets], device=device
-        )
+        tgt_lengths = torch.as_tensor([len(v["labels"]) for v in targets], device=device)
         card_pred = (pred_logits.argmax(-1) != pred_logits.shape[-1] - 1).sum(1)
         card_err = F.l1_loss(card_pred.float(), tgt_lengths.float())
         losses = {"cardinality_error": card_err}
@@ -809,33 +782,25 @@ class SetCriterion(nn.Module):
     def loss_boxes(self, outputs, targets, indices, num_boxes):
         idx = self._get_src_permutation_idx(indices)
         src_boxes = outputs["pred_boxes"][idx]
-        target_boxes = torch.cat(
-            [t["boxes"][i] for t, (_, i) in zip(targets, indices)], dim=0
-        )
+        target_boxes = torch.cat([t["boxes"][i] for t, (_, i) in zip(targets, indices)], dim=0)
 
         loss_bbox = F.l1_loss(src_boxes, target_boxes, reduction="none")
         losses = {}
         losses["loss_bbox"] = loss_bbox.sum() / num_boxes
 
         loss_giou = 1 - torch.diag(
-            generalized_box_iou(
-                box_cxcywh_to_xyxy(src_boxes), box_cxcywh_to_xyxy(target_boxes)
-            )
+            generalized_box_iou(box_cxcywh_to_xyxy(src_boxes), box_cxcywh_to_xyxy(target_boxes))
         )
         losses["loss_giou"] = loss_giou.sum() / num_boxes
         return losses
 
     def _get_src_permutation_idx(self, indices):
-        batch_idx = torch.cat(
-            [torch.full_like(src, i) for i, (src, _) in enumerate(indices)]
-        )
+        batch_idx = torch.cat([torch.full_like(src, i) for i, (src, _) in enumerate(indices)])
         src_idx = torch.cat([src for (src, _) in indices])
         return batch_idx, src_idx
 
     def _get_tgt_permutation_idx(self, indices):
-        batch_idx = torch.cat(
-            [torch.full_like(tgt, i) for i, (_, tgt) in enumerate(indices)]
-        )
+        batch_idx = torch.cat([torch.full_like(tgt, i) for i, (_, tgt) in enumerate(indices)])
         tgt_idx = torch.cat([tgt for (_, tgt) in indices])
         return batch_idx, tgt_idx
 
@@ -871,9 +836,7 @@ class SetCriterion(nn.Module):
                     kwargs = {}
                     if loss == "labels":
                         kwargs = {"log": False}
-                    l_dict = self.get_loss(
-                        loss, aux_outputs, targets, indices, num_boxes, **kwargs
-                    )
+                    l_dict = self.get_loss(loss, aux_outputs, targets, indices, num_boxes, **kwargs)
                     l_dict = {k + f"_{i}": v for k, v in l_dict.items()}
                     losses.update(l_dict)
 
@@ -895,10 +858,7 @@ class PostProcess(nn.Module):
         scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
         boxes = boxes * scale_fct[:, None, :]
 
-        results = [
-            {"scores": s, "labels": l, "boxes": b}
-            for s, l, b in zip(scores, labels, boxes)
-        ]
+        results = [{"scores": s, "labels": l, "boxes": b} for s, l, b in zip(scores, labels, boxes)]
         return results
 
 
@@ -952,9 +912,7 @@ class DETR(BaseObjectDetection):
             dropout=self.config.dropout if hasattr(self.config, "dropout") else 0.1,
             nhead=self.config.nheads if hasattr(self.config, "nheads") else 8,
             dim_feedforward=(
-                self.config.dim_feedforward
-                if hasattr(self.config, "dim_feedforward")
-                else 2048
+                self.config.dim_feedforward if hasattr(self.config, "dim_feedforward") else 2048
             ),
             num_encoder_layers=(
                 self.config.enc_layers if hasattr(self.config, "enc_layers") else 6
@@ -962,9 +920,7 @@ class DETR(BaseObjectDetection):
             num_decoder_layers=(
                 self.config.dec_layers if hasattr(self.config, "dec_layers") else 6
             ),
-            normalize_before=(
-                self.config.pre_norm if hasattr(self.config, "pre_norm") else False
-            ),
+            normalize_before=(self.config.pre_norm if hasattr(self.config, "pre_norm") else False),
             return_intermediate_dec=True,
         )
 
@@ -986,9 +942,7 @@ class DETR(BaseObjectDetection):
         for p in self.model.parameters():
             if p.requires_grad:
                 p.register_hook(
-                    lambda grad: (
-                        torch.clamp(grad, -0.1, 0.1) if grad is not None else None
-                    )
+                    lambda grad: torch.clamp(grad, -0.1, 0.1) if grad is not None else None
                 )
 
         # 2. Handle full weight loading if pretrained is True
@@ -998,27 +952,15 @@ class DETR(BaseObjectDetection):
         # Build Criterion (Loss logic)
         matcher = HungarianMatcher(
             cost_class=(
-                self.config.set_cost_class
-                if hasattr(self.config, "set_cost_class")
-                else 1
+                self.config.set_cost_class if hasattr(self.config, "set_cost_class") else 1
             ),
-            cost_bbox=(
-                self.config.set_cost_bbox
-                if hasattr(self.config, "set_cost_bbox")
-                else 5
-            ),
-            cost_giou=(
-                self.config.set_cost_giou
-                if hasattr(self.config, "set_cost_giou")
-                else 2
-            ),
+            cost_bbox=(self.config.set_cost_bbox if hasattr(self.config, "set_cost_bbox") else 5),
+            cost_giou=(self.config.set_cost_giou if hasattr(self.config, "set_cost_giou") else 2),
         )
         weight_dict = {
             "loss_ce": 1,
             "loss_bbox": (
-                self.config.bbox_loss_coef
-                if hasattr(self.config, "bbox_loss_coef")
-                else 5
+                self.config.bbox_loss_coef if hasattr(self.config, "bbox_loss_coef") else 5
             ),
         }
         weight_dict["loss_giou"] = (
@@ -1028,8 +970,7 @@ class DETR(BaseObjectDetection):
         if aux_loss:
             aux_weight_dict = {}
             for i in range(
-                (self.config.dec_layers if hasattr(self.config, "dec_layers") else 6)
-                - 1
+                (self.config.dec_layers if hasattr(self.config, "dec_layers") else 6) - 1
             ):
                 aux_weight_dict.update({k + f"_{i}": v for k, v in weight_dict.items()})
             weight_dict.update(aux_weight_dict)
@@ -1069,8 +1010,7 @@ class DETR(BaseObjectDetection):
                     for n, p in self.model.named_parameters()
                     if "backbone" in n and p.requires_grad
                 ],
-                "lr": base_lr
-                * 0.1,  # Critical: 10x smaller learning rate for the backbone
+                "lr": base_lr * 0.1,  # Critical: 10x smaller learning rate for the backbone
             },
         ]
         return optim.Adam(param_dicts, lr=base_lr)
@@ -1095,16 +1035,12 @@ class DETR(BaseObjectDetection):
 
             # Filter: Skip first conv if in_channels != 3
             if in_channels != 3 and "backbone.0.body.conv1.weight" in name:
-                print(
-                    f"Skipping {name} due to input channel mismatch ({in_channels} vs 3)"
-                )
+                print(f"Skipping {name} due to input channel mismatch ({in_channels} vs 3)")
                 continue
 
             # Filter: Skip class-specific weights if num_classes != 91 (COCO)
             if self.num_classes != 91 and "class_embed" in name:
-                print(
-                    f"Skipping {name} due to class count mismatch ({self.num_classes} vs 91)"
-                )
+                print(f"Skipping {name} due to class count mismatch ({self.num_classes} vs 91)")
                 continue
 
             new_state_dict[name] = v
@@ -1120,18 +1056,12 @@ class DETR(BaseObjectDetection):
 
         if isinstance(inputs, list):
             target_sizes = torch.stack(
-                [
-                    torch.tensor([img.shape[1], img.shape[2]], device=self.device)
-                    for img in inputs
-                ]
+                [torch.tensor([img.shape[1], img.shape[2]], device=self.device) for img in inputs]
             )
             samples = nested_tensor_from_tensor_list(inputs).to(self.device)
         else:
             target_sizes = torch.stack(
-                [
-                    torch.tensor([img.shape[1], img.shape[2]], device=self.device)
-                    for img in inputs
-                ]
+                [torch.tensor([img.shape[1], img.shape[2]], device=self.device) for img in inputs]
             )
             samples = nested_tensor_from_tensor_list(list(inputs)).to(self.device)
 
@@ -1148,9 +1078,7 @@ class DETR(BaseObjectDetection):
                 # ---------------------------------------------------------------------------------
                 if boxes.shape[0] > 0:
                     # Explicitly remove boxes with <= 0 width or height caused by float precision
-                    valid_mask = (boxes[:, 2] > boxes[:, 0]) & (
-                        boxes[:, 3] > boxes[:, 1]
-                    )
+                    valid_mask = (boxes[:, 2] > boxes[:, 0]) & (boxes[:, 3] > boxes[:, 1])
                     boxes = boxes[valid_mask]
                     labels = labels[valid_mask]
 
@@ -1179,12 +1107,8 @@ class DETR(BaseObjectDetection):
                     # Provide an empty tensor shaped exactly as DETR expects to avoid breaking the matcher
                     detr_targets.append(
                         {
-                            "labels": torch.zeros(
-                                (0,), dtype=torch.int64, device=self.device
-                            ),
-                            "boxes": torch.zeros(
-                                (0, 4), dtype=torch.float32, device=self.device
-                            ),
+                            "labels": torch.zeros((0,), dtype=torch.int64, device=self.device),
+                            "boxes": torch.zeros((0, 4), dtype=torch.float32, device=self.device),
                         }
                     )
 

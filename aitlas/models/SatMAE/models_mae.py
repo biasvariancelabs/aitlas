@@ -8,8 +8,8 @@
 from functools import partial
 
 import torch
-import torch.nn as nn
 from timm.models.vision_transformer import Block, PatchEmbed
+from torch import nn
 
 from .pos_embed import get_2d_sincos_pos_embed
 
@@ -109,9 +109,7 @@ class MaskedAutoencoderViT(nn.Module):
             int(self.patch_embed.num_patches**0.5),
             cls_token=True,
         )
-        self.decoder_pos_embed.data.copy_(
-            torch.from_numpy(decoder_pos_embed).float().unsqueeze(0)
-        )
+        self.decoder_pos_embed.data.copy_(torch.from_numpy(decoder_pos_embed).float().unsqueeze(0))
 
         # initialize patch_embed like nn.Linear (instead of nn.Conv2d)
         w = self.patch_embed.proj.weight.data
@@ -180,9 +178,7 @@ class MaskedAutoencoderViT(nn.Module):
         noise = torch.rand(N, L, device=x.device)  # noise in [0, 1]
 
         # sort noise for each sample
-        ids_shuffle = torch.argsort(
-            noise, dim=1
-        )  # ascend: small is keep, large is remove
+        ids_shuffle = torch.argsort(noise, dim=1)  # ascend: small is keep, large is remove
         ids_restore = torch.argsort(ids_shuffle, dim=1)
 
         # keep the first subset
@@ -224,9 +220,7 @@ class MaskedAutoencoderViT(nn.Module):
         x = self.decoder_embed(x)
 
         # append mask tokens to sequence
-        mask_tokens = self.mask_token.repeat(
-            x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1
-        )
+        mask_tokens = self.mask_token.repeat(x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1)
         x_ = torch.cat([x[:, 1:, :], mask_tokens], dim=1)  # no cls token
         x_ = torch.gather(
             x_, dim=1, index=ids_restore.unsqueeze(-1).repeat(1, 1, x.shape[2])
@@ -288,7 +282,7 @@ def mae_vit_base_patch16_dec512d8b(**kwargs):
         decoder_num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -303,7 +297,7 @@ def mae_vit_large_patch16_dec512d8b(**kwargs):
         decoder_num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 
@@ -318,7 +312,7 @@ def mae_vit_huge_patch14_dec512d8b(**kwargs):
         decoder_num_heads=16,
         mlp_ratio=4,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
-        **kwargs
+        **kwargs,
     )
     return model
 

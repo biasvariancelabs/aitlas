@@ -3,13 +3,11 @@ import os
 import random
 from xml.etree import ElementTree as et
 
-import cv2
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 import torch
+from matplotlib import patches
 
 from ..base import BaseDataset
 from ..utils import collate_fn, image_loader
@@ -84,9 +82,7 @@ class BaseObjectDetectionDataset(BaseDataset):
         if size % 5:
             raise ValueError("The provided size should be divided by 5!")
         image_indices = random.sample(range(0, len(self)), size)
-        figure, ax = plt.subplots(
-            int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5))
-        )
+        figure, ax = plt.subplots(int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5)))
 
         for axes, image_index in zip(ax.flatten(), image_indices):
             img, target = self[image_index]
@@ -223,9 +219,7 @@ class ObjectDetectionPascalDataset(BaseObjectDetectionDataset):
         objects_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=objects_count, ax=ax)
-        ax.set_title(
-            "Number of instances for {}".format(self.get_name()), pad=20, fontsize=18
-        )
+        ax.set_title("Number of instances for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig
 
 
@@ -244,9 +238,7 @@ class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
         self.add_for_background = self.config.hardcode_background
 
         # load the data
-        self.labels, self.data, self.annotations = self.load_dataset(
-            self.data_dir, self.json_file
-        )
+        self.labels, self.data, self.annotations = self.load_dataset(self.data_dir, self.json_file)
 
     def __getitem__(self, index):
         """
@@ -321,9 +313,7 @@ class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
         df_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=df_count, ax=ax)
-        ax.set_title(
-            "Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18
-        )
+        ax.set_title("Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig
 
     def show_samples(self):
@@ -336,9 +326,7 @@ class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
 
             # read labels
             labels = [None]  # add none for background
-            labels += [
-                y["name"] for y in sorted(coco["categories"], key=lambda x: x["id"])
-            ]
+            labels += [y["name"] for y in sorted(coco["categories"], key=lambda x: x["id"])]
             # create data
             data = [
                 {
@@ -366,14 +354,12 @@ class ObjectDetectionCocoDataset(BaseObjectDetectionDataset):
                 key = data_inverted[annotation["image_id"]]
                 data[key]["annotations"].append(annotation)
         else:
-            raise ValueError(
-                "Please provide the `json_file` path to the Coco annotation format."
-            )
+            raise ValueError("Please provide the `json_file` path to the Coco annotation format.")
 
         # eliminate empty annotations
         to_delete = []
         for key, d in enumerate(data):
-            if len(data[key]["annotations"]) == 0:
+            if len(d["annotations"]) == 0:
                 to_delete.append(key)
 
         for key in sorted(to_delete, reverse=True):
@@ -424,9 +410,7 @@ class BaseObjectDetectionRotatedBboxDataset(BaseDataset):
         ax = plt.subplot(1, 2, 2)
         plt.imshow(img)
         plt.axis("off")
-        for box, label, rotation in zip(
-            target["boxes"], target["labels"], target["rotation"]
-        ):
+        for box, label, rotation in zip(target["boxes"], target["labels"], target["rotation"]):
             x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
             rect = patches.Rectangle(
                 (x, y),
@@ -457,16 +441,12 @@ class BaseObjectDetectionRotatedBboxDataset(BaseDataset):
         if size % 5:
             raise ValueError("The provided size should be divided by 5!")
         image_indices = random.sample(range(0, len(self)), size)
-        figure, ax = plt.subplots(
-            int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5))
-        )
+        figure, ax = plt.subplots(int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5)))
 
         for axes, image_index in zip(ax.flatten(), image_indices):
             img, target = self[image_index]
             axes.imshow(img)
-            for box, label, rotation in zip(
-                target["boxes"], target["labels"], target["rotation"]
-            ):
+            for box, label, rotation in zip(target["boxes"], target["labels"], target["rotation"]):
                 x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
                 rect = patches.Rectangle(
                     (x, y),

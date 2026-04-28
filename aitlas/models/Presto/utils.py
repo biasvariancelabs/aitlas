@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import torch
 
@@ -21,9 +21,7 @@ _PRESTO_S2_BANDS_ALL = [
 ]
 ERA5_BANDS = ["temperature_2m", "total_precipitation"]
 SRTM_BANDS = ["elevation", "slope"]
-_PRESTO_BANDS_ALL = (
-    PRESTO_S1_BANDS + _PRESTO_S2_BANDS_ALL + ERA5_BANDS + SRTM_BANDS + ["NDVI"]
-)
+_PRESTO_BANDS_ALL = PRESTO_S1_BANDS + _PRESTO_S2_BANDS_ALL + ERA5_BANDS + SRTM_BANDS + ["NDVI"]
 
 # The actual bands used by the model (B09 is excluded)
 INPUT_PRESTO_S2_BANDS = [b for b in _PRESTO_S2_BANDS_ALL if b != "B09"]
@@ -153,9 +151,7 @@ def prepare_presto_input(
 
     # Prepare `dynamic_world`
     if dynamic_world is None:
-        dynamic_world = torch.full(
-            (b, t, h, w), NUM_DYNAMIC_WORLD_CLASSES, device=device
-        )
+        dynamic_world = torch.full((b, t, h, w), NUM_DYNAMIC_WORLD_CLASSES, device=device)
 
     # Prepare `months`
     final_months: torch.Tensor

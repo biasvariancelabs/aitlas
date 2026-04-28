@@ -1,4 +1,3 @@
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -74,9 +73,7 @@ def test_forward_features_pass_no_flash_attn_output_type_tile(base_config):
 
     try:
         # Call the method with the dictionary and patch size
-        output = model.forward_features(
-            dummy_input, patch_size=patch_size, output="tile"
-        )
+        output = model.forward_features(dummy_input, patch_size=patch_size, output="tile")
         assert output.shape == expected_shape
 
     except Exception as e:
@@ -94,12 +91,8 @@ def test_forward_features_pass_with_flash_attn_output_type_tile(base_config):
 
     # Create a dummy input dictionary for a single modality (e.g., Sentinel-2)
     dummy_input = {
-        "s2": torch.randn(
-            1, 5, 10, 64, 64, device="cuda", dtype=torch.float16
-        ),  # B, T, C, H, W
-        "s2_dates": torch.randint(
-            0, 365, (1, 5), device="cuda", dtype=torch.int16
-        ),  # B, T
+        "s2": torch.randn(1, 5, 10, 64, 64, device="cuda", dtype=torch.float16),  # B, T, C, H, W
+        "s2_dates": torch.randint(0, 365, (1, 5), device="cuda", dtype=torch.int16),  # B, T
     }
 
     # patch_size is the ground size in meters (e.g., 640 m for a 64 x 64 S2 tile)
@@ -111,9 +104,7 @@ def test_forward_features_pass_with_flash_attn_output_type_tile(base_config):
     try:
         # Call the method with the dictionary and patch size
         with torch.autocast(device_type="cuda", dtype=torch.float16):
-            output = model.forward_features(
-                dummy_input, patch_size=patch_size, output="tile"
-            )
+            output = model.forward_features(dummy_input, patch_size=patch_size, output="tile")
             assert output.shape == expected_shape
             assert output.dtype == torch.float16
 
@@ -141,9 +132,7 @@ def test_forward_features_pass_no_flash_attn_output_type_patch(base_config):
 
     try:
         # Call the method with the dictionary and patch size
-        output = model.forward_features(
-            dummy_input, patch_size=patch_size, output="patch"
-        )
+        output = model.forward_features(dummy_input, patch_size=patch_size, output="patch")
         assert output.shape == expected_shape
 
     except Exception as e:
@@ -161,12 +150,8 @@ def test_forward_features_pass_with_flash_attn_output_type_patch(base_config):
 
     # Create a dummy input dictionary for a single modality (e.g., Sentinel-2)
     dummy_input = {
-        "s2": torch.randn(
-            1, 5, 10, 64, 64, device="cuda", dtype=torch.float16
-        ),  # B, T, C, H, W
-        "s2_dates": torch.randint(
-            0, 365, (1, 5), device="cuda", dtype=torch.int16
-        ),  # B, T
+        "s2": torch.randn(1, 5, 10, 64, 64, device="cuda", dtype=torch.float16),  # B, T, C, H, W
+        "s2_dates": torch.randint(0, 365, (1, 5), device="cuda", dtype=torch.int16),  # B, T
     }
 
     # patch_size is the ground size in meters (e.g., 640 m for a 64 x 64 S2 tile)
@@ -178,9 +163,7 @@ def test_forward_features_pass_with_flash_attn_output_type_patch(base_config):
     try:
         # Call the method with the dictionary and patch size
         with torch.autocast(device_type="cuda", dtype=torch.float16):
-            output = model.forward_features(
-                dummy_input, patch_size=patch_size, output="patch"
-            )
+            output = model.forward_features(dummy_input, patch_size=patch_size, output="patch")
             assert output.shape == expected_shape
             assert output.dtype == torch.float16
 
@@ -228,12 +211,8 @@ def test_forward_features_pass_with_flash_attn_output_type_dense(base_config):
 
     # Create a dummy input dictionary for a single modality (e.g., Sentinel-2)
     dummy_input = {
-        "s2": torch.randn(
-            1, 5, 10, 64, 64, device="cuda", dtype=torch.float16
-        ),  # B, T, C, H, W
-        "s2_dates": torch.randint(
-            0, 365, (1, 5), device="cuda", dtype=torch.int16
-        ),  # B, T
+        "s2": torch.randn(1, 5, 10, 64, 64, device="cuda", dtype=torch.float16),  # B, T, C, H, W
+        "s2_dates": torch.randint(0, 365, (1, 5), device="cuda", dtype=torch.int16),  # B, T
     }
 
     # patch_size is the ground size in meters (e.g., 640 m for a 64 x 64 S2 tile)
@@ -249,9 +228,7 @@ def test_forward_features_pass_with_flash_attn_output_type_dense(base_config):
                 dummy_input, patch_size=patch_size, output="dense", output_modality="s2"
             )  # 'dense' also requires 'output_modality'
             assert output.shape == expected_shape
-            assert (
-                output.dtype == torch.float32
-            )  # A different output dtype than previously
+            assert output.dtype == torch.float32  # A different output dtype than previously
 
     except Exception as e:
         pytest.fail(f"Model forward_features pass failed: {e}")
@@ -277,9 +254,7 @@ def test_forward_features_pass_no_flash_attn_output_type_all(base_config):
 
     try:
         # Call the method with the dictionary and patch size
-        output = model.forward_features(
-            dummy_input, patch_size=patch_size, output="all"
-        )
+        output = model.forward_features(dummy_input, patch_size=patch_size, output="all")
         assert output.shape == expected_shape
 
     except Exception as e:
@@ -297,12 +272,8 @@ def test_forward_features_pass_with_flash_attn_output_type_all(base_config):
 
     # Create a dummy input dictionary for a single modality (e.g., Sentinel-2)
     dummy_input = {
-        "s2": torch.randn(
-            1, 5, 10, 64, 64, device="cuda", dtype=torch.float16
-        ),  # B, T, C, H, W
-        "s2_dates": torch.randint(
-            0, 365, (1, 5), device="cuda", dtype=torch.int16
-        ),  # B, T
+        "s2": torch.randn(1, 5, 10, 64, 64, device="cuda", dtype=torch.float16),  # B, T, C, H, W
+        "s2_dates": torch.randint(0, 365, (1, 5), device="cuda", dtype=torch.int16),  # B, T
     }
 
     # patch_size is the ground size in meters (e.g., 640 m for a 64 x 64 S2 tile)
@@ -314,13 +285,9 @@ def test_forward_features_pass_with_flash_attn_output_type_all(base_config):
     try:
         # Call the method with the dictionary and patch size
         with torch.autocast(device_type="cuda", dtype=torch.float16):
-            output = model.forward_features(
-                dummy_input, patch_size=patch_size, output="all"
-            )
+            output = model.forward_features(dummy_input, patch_size=patch_size, output="all")
             assert output.shape == expected_shape
-            assert (
-                output.dtype == torch.float16
-            )  # A different output dtype than previously
+            assert output.dtype == torch.float16  # A different output dtype than previously
 
     except Exception as e:
         pytest.fail(f"Model forward_features pass failed: {e}")

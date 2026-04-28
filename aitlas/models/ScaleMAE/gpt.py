@@ -1,5 +1,5 @@
-import torch.nn as nn
 from timm.models.vision_transformer import DropPath, Mlp
+from torch import nn
 
 
 class Attention(nn.Module):
@@ -26,9 +26,7 @@ class Attention(nn.Module):
     def forward(self, x, mask=None):
         B, N, C = x.shape
         qkv = (
-            self.qkv(x)
-            .reshape(B, N, 3, self.num_heads, C // self.num_heads)
-            .permute(2, 0, 3, 1, 4)
+            self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         )
         q, k, v = (
             qkv[0],

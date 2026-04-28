@@ -5,9 +5,8 @@ LSTM model
 
 """
 
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
+from torch import nn, optim
 
 from ..base import BaseMulticlassClassifier
 from .schemas import LSTMSchema
@@ -28,10 +27,7 @@ class LSTM(BaseMulticlassClassifier):
         if self.config.use_layernorm:
             self.model.inlayernorm = nn.LayerNorm(self.config.input_dim)
             self.model.clayernorm = nn.LayerNorm(
-                (
-                    self.config.hidden_dims
-                    + self.config.hidden_dims * self.config.bidirectional
-                )
+                (self.config.hidden_dims + self.config.hidden_dims * self.config.bidirectional)
                 * self.config.num_layers
             )
 

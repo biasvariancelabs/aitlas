@@ -4,10 +4,10 @@ import copy
 import math
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torchvision import models
-from torchvision.ops.boxes import batched_nms, box_iou, nms
+from torchvision.ops.boxes import batched_nms, box_iou
 
 from ..base import BaseObjectDetection
 
@@ -90,9 +90,9 @@ def quality_focal_loss(pred, target, beta=2.0, reduction="none"):
 
     pred_sigmoid = pred.sigmoid()
     zerolabel = pred.new_zeros(pred.shape)
-    loss = F.binary_cross_entropy_with_logits(
-        pred, zerolabel, reduction="none"
-    ) * pred_sigmoid.pow(beta)
+    loss = F.binary_cross_entropy_with_logits(pred, zerolabel, reduction="none") * pred_sigmoid.pow(
+        beta
+    )
 
     if labels is not None:
         num_classes = pred.shape[1]
@@ -117,9 +117,7 @@ def quality_focal_loss(pred, target, beta=2.0, reduction="none"):
     return loss
 
 
-def distribution_focal_loss(
-    pred, label, weight=None, reduction="none", avg_factor=None
-):
+def distribution_focal_loss(pred, label, weight=None, reduction="none", avg_factor=None):
     """Distribution Focal Loss (DFL) for regression."""
     dis_left = label.long()
     dis_right = dis_left + 1
@@ -343,9 +341,7 @@ class InvertedResidualLeaky(nn.Module):
             self.branch1 = nn.Sequential()
 
         self.branch2 = nn.Sequential(
-            nn.Conv2d(
-                inp if stride > 1 else branch_features, branch_features, 1, bias=False
-            ),
+            nn.Conv2d(inp if stride > 1 else branch_features, branch_features, 1, bias=False),
             nn.BatchNorm2d(branch_features),
             act,
             self._depthwise_conv(branch_features, branch_features, 3, stride, 1),
@@ -367,9 +363,7 @@ class InvertedResidualLeaky(nn.Module):
             out = torch.cat((self.branch1(x), self.branch2(x)), dim=1)
         # Channel shuffle
         b, c, h, w = out.size()
-        out = (
-            out.view(b, 2, c // 2, h, w).transpose(1, 2).contiguous().view(b, -1, h, w)
-        )
+        out = out.view(b, 2, c // 2, h, w).transpose(1, 2).contiguous().view(b, -1, h, w)
         return out
 
 
@@ -401,9 +395,7 @@ class ShuffleNetV2(nn.Module):
 
         stage_names = ["stage2", "stage3", "stage4"]
         input_channels = stages_out_channels[0]
-        for name, repeats, out_ch in zip(
-            stage_names, [4, 8, 4], stages_out_channels[1:]
-        ):
+        for name, repeats, out_ch in zip(stage_names, [4, 8, 4], stages_out_channels[1:]):
             seq = [InvertedResidualLeaky(input_channels, out_ch, 2, act)]
             for _ in range(repeats - 1):
                 seq.append(InvertedResidualLeaky(out_ch, out_ch, 1, act))
@@ -430,9 +422,7 @@ class ShuffleNetV2(nn.Module):
                 }
                 self.load_state_dict(pretrained_state, strict=False)
         except Exception:
-            print(
-                f"Warning: Could not load pretrained weights for ShuffleNetV2 {model_size}"
-            )
+            print(f"Warning: Could not load pretrained weights for ShuffleNetV2 {model_size}")
 
     def forward(self, x):
         x = self.conv1(x)
@@ -505,9 +495,7 @@ class GhostModule(nn.Module):
         self.primary_conv = nn.Sequential(*layers_primary)
 
         layers_cheap = [
-            nn.Conv2d(
-                init_channels, init_channels, 3, 1, 1, groups=init_channels, bias=False
-            ),
+            nn.Conv2d(init_channels, init_channels, 3, 1, 1, groups=init_channels, bias=False),
             nn.BatchNorm2d(init_channels),
         ]
         if act is not None:
@@ -525,9 +513,7 @@ class GhostModule(nn.Module):
 class GhostBottleneck(nn.Module):
     """GhostBottleneck used in GhostPAN."""
 
-    def __init__(
-        self, in_chs, mid_chs, out_chs, stride=1, act=nn.LeakyReLU(0.1, inplace=True)
-    ):
+    def __init__(self, in_chs, mid_chs, out_chs, stride=1, act=nn.LeakyReLU(0.1, inplace=True)):
         super().__init__()
         self.ghost1 = GhostModule(in_chs, mid_chs, act)
 
@@ -583,18 +569,12 @@ class GhostPAN(nn.Module):
         )
 
         # Top-down path
-        self.upsample = nn.Upsample(
-            scale_factor=2, mode="bilinear", align_corners=False
-        )
+        self.upsample = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
         self.top_down_blocks = nn.ModuleList(
             [
                 nn.Sequential(
                     nn.ModuleList(
-                        [
-                            GhostBottleneck(
-                                out_channels * 2, out_channels, out_channels, act=act
-                            )
-                        ]
+                        [GhostBottleneck(out_channels * 2, out_channels, out_channels, act=act)]
                     )
                 )
                 for _ in range(len(in_channels) - 1)
@@ -620,11 +600,7 @@ class GhostPAN(nn.Module):
             [
                 nn.Sequential(
                     nn.ModuleList(
-                        [
-                            GhostBottleneck(
-                                out_channels * 2, out_channels, out_channels, act=act
-                            )
-                        ]
+                        [GhostBottleneck(out_channels * 2, out_channels, out_channels, act=act)]
                     )
                 )
                 for _ in range(len(in_channels) - 1)
@@ -669,9 +645,7 @@ class GhostPAN(nn.Module):
         inner_outs = [inputs[-1]]
         for i, block in enumerate(self.top_down_blocks):
             idx = len(self.in_channels) - 2 - i
-            inner_out = block[0][0](
-                torch.cat([self.upsample(inner_outs[0]), inputs[idx]], 1)
-            )
+            inner_out = block[0][0](torch.cat([self.upsample(inner_outs[0]), inputs[idx]], 1))
             inner_outs.insert(0, inner_out)
 
         # Bottom-up
@@ -738,9 +712,7 @@ class NanoDetPlusHead(nn.Module):
                 ]
             )
             self.cls_convs.append(cls_convs)
-            self.gfl_cls.append(
-                nn.Conv2d(self.feat_channels, num_classes + 4 * (reg_max + 1), 1)
-            )
+            self.gfl_cls.append(nn.Conv2d(self.feat_channels, num_classes + 4 * (reg_max + 1), 1))
 
         self.init_weights()
 
@@ -780,9 +752,7 @@ class NanoDetPlusHead(nn.Module):
         ]
         center_priors = torch.cat(mlvl_center_priors, dim=1)
 
-        cls_preds, reg_preds = preds.split(
-            [self.num_classes, 4 * (self.reg_max + 1)], dim=-1
-        )
+        cls_preds, reg_preds = preds.split([self.num_classes, 4 * (self.reg_max + 1)], dim=-1)
         dis_preds = self.distribution_project(reg_preds) * center_priors[..., 2, None]
         decoded_bboxes = distance2bbox(center_priors[..., :2], dis_preds)
 
@@ -790,9 +760,7 @@ class NanoDetPlusHead(nn.Module):
             aux_cls_preds, aux_reg_preds = aux_preds.split(
                 [self.num_classes, 4 * (self.reg_max + 1)], dim=-1
             )
-            aux_dis_preds = (
-                self.distribution_project(aux_reg_preds) * center_priors[..., 2, None]
-            )
+            aux_dis_preds = self.distribution_project(aux_reg_preds) * center_priors[..., 2, None]
             aux_decoded_bboxes = distance2bbox(center_priors[..., :2], aux_dis_preds)
             batch_assign_res = self.target_assign(
                 aux_cls_preds.detach(),
@@ -870,9 +838,7 @@ class NanoDetPlusHead(nn.Module):
             loss_qfl=loss_qfl, loss_bbox=loss_bbox, loss_dfl=loss_dfl
         )
 
-    def target_assign(
-        self, cls_preds, center_priors, decoded_bboxes, gt_bboxes, gt_labels
-    ):
+    def target_assign(self, cls_preds, center_priors, decoded_bboxes, gt_bboxes, gt_labels):
         """Assign targets for a batch of images."""
         (
             all_labels,
@@ -913,9 +879,7 @@ class NanoDetPlusHead(nn.Module):
         if len(gt_bboxes) == 0:
             num_priors = center_priors.size(0)
             return (
-                center_priors.new_full(
-                    (num_priors,), self.num_classes, dtype=torch.long
-                ),
+                center_priors.new_full((num_priors,), self.num_classes, dtype=torch.long),
                 center_priors.new_zeros(num_priors, dtype=torch.float),
                 torch.zeros_like(center_priors),
                 torch.zeros_like(center_priors),
@@ -923,17 +887,13 @@ class NanoDetPlusHead(nn.Module):
             )
 
         assigned_gt_inds, assigned_labels, max_overlaps, pos_inds, neg_inds, num_pos = (
-            self.assigner(
-                cls_preds, center_priors, decoded_bboxes, gt_bboxes, gt_labels
-            )
+            self.assigner(cls_preds, center_priors, decoded_bboxes, gt_bboxes, gt_labels)
         )
 
         num_priors = center_priors.size(0)
         bbox_targets = torch.zeros_like(center_priors)
         dist_targets = torch.zeros_like(center_priors)
-        labels = center_priors.new_full(
-            (num_priors,), self.num_classes, dtype=torch.long
-        )
+        labels = center_priors.new_full((num_priors,), self.num_classes, dtype=torch.long)
         label_weights = center_priors.new_zeros(num_priors, dtype=torch.float)
 
         if len(pos_inds) > 0:
@@ -949,9 +909,7 @@ class NanoDetPlusHead(nn.Module):
 
         return labels, label_weights, bbox_targets, dist_targets, num_pos
 
-    def get_single_level_center_priors(
-        self, batch_size, featmap_size, stride, dtype, device
-    ):
+    def get_single_level_center_priors(self, batch_size, featmap_size, stride, dtype, device):
         """Generate center priors for a single level feature map."""
         h, w = featmap_size
         x_range = (torch.arange(w, dtype=dtype, device=device) + 0.5) * stride
@@ -959,11 +917,7 @@ class NanoDetPlusHead(nn.Module):
         y, x = torch.meshgrid(y_range, x_range, indexing="ij")
         y, x = y.flatten(), x.flatten()
         strides = x.new_full((x.numel(),), stride)
-        return (
-            torch.stack([x, y, strides, strides], dim=-1)
-            .unsqueeze(0)
-            .repeat(batch_size, 1, 1)
-        )
+        return torch.stack([x, y, strides, strides], dim=-1).unsqueeze(0).repeat(batch_size, 1, 1)
 
 
 class SimpleConvHead(nn.Module):
@@ -1025,9 +979,9 @@ class SimpleConvHead(nn.Module):
                 reg_feat = conv(reg_feat)
             reg_feat = reg_feat * self.scales[i]
             outputs.append(
-                torch.cat(
-                    [self.gfl_cls(cls_feat), self.gfl_reg(reg_feat)], dim=1
-                ).flatten(start_dim=2)
+                torch.cat([self.gfl_cls(cls_feat), self.gfl_reg(reg_feat)], dim=1).flatten(
+                    start_dim=2
+                )
             )
         return torch.cat(outputs, dim=2).permute(0, 2, 1)
 
@@ -1045,8 +999,7 @@ class NanoDetModel(nn.Module):
         fpn_features = self.fpn(feats)
         aux_fpn_features = self.aux_fpn(feats)
         dual_fpn_features = tuple(
-            torch.cat([f, aux_f], dim=1)
-            for f, aux_f in zip(fpn_features, aux_fpn_features)
+            torch.cat([f, aux_f], dim=1) for f, aux_f in zip(fpn_features, aux_fpn_features)
         )
 
         # Heads
@@ -1132,9 +1085,7 @@ class NanoDetPlus(BaseObjectDetection):
 
             # Skip first conv if in_channels != 3
             if in_channels != 3 and "backbone.conv1.0.weight" in name:
-                print(
-                    f"Skipping {name} due to input channel mismatch ({in_channels} vs 3)"
-                )
+                print(f"Skipping {name} due to input channel mismatch ({in_channels} vs 3)")
                 continue
 
             # Skip class-specific weights if num_classes != 80 (COCO)
@@ -1156,7 +1107,7 @@ class NanoDetPlus(BaseObjectDetection):
 
         msg = self.model.load_state_dict(new_state_dict, strict=False)
 
-        print(f"Loaded pretrained NanoDet weights.")
+        print("Loaded pretrained NanoDet weights.")
         print(
             f"  - Loaded: {len(new_state_dict) - len([k for k in new_state_dict.keys() if k in msg.missing_keys])} keys"
         )
@@ -1196,8 +1147,7 @@ class NanoDetPlus(BaseObjectDetection):
         else:
             aux_fpn_features = self.model.aux_fpn(feats)
             dual_fpn_features = tuple(
-                torch.cat([f, aux_f], dim=1)
-                for f, aux_f in zip(fpn_features, aux_fpn_features)
+                torch.cat([f, aux_f], dim=1) for f, aux_f in zip(fpn_features, aux_fpn_features)
             )
 
         # Heads
@@ -1206,14 +1156,11 @@ class NanoDetPlus(BaseObjectDetection):
 
         # Decode
         batch_size = inputs.size(0)
-        cls_scores, reg_preds = head_out.split(
-            [self.num_classes, 4 * (self.reg_max + 1)], dim=-1
-        )
+        cls_scores, reg_preds = head_out.split([self.num_classes, 4 * (self.reg_max + 1)], dim=-1)
 
         input_height, input_width = inputs.shape[2:]
         featmap_sizes = [
-            (math.ceil(input_height / s), math.ceil(input_width / s))
-            for s in self.strides
+            (math.ceil(input_height / s), math.ceil(input_width / s)) for s in self.strides
         ]
         device = inputs.device
         center_priors = torch.cat(
@@ -1226,19 +1173,12 @@ class NanoDetPlus(BaseObjectDetection):
             dim=1,
         )
 
-        dis_preds = (
-            self.model.distribution_project(reg_preds) * center_priors[..., 2, None]
-        )
+        dis_preds = self.model.distribution_project(reg_preds) * center_priors[..., 2, None]
         decoded_bboxes = distance2bbox(center_priors[..., :2], dis_preds)
 
         if self.model.training and targets is not None:
-            gt_meta = [
-                {"boxes": t["boxes"], "labels": t["labels"], "img": inputs}
-                for t in targets
-            ]
-            loss, loss_states = self.model.head.loss(
-                head_out, gt_meta, aux_preds=aux_head_out
-            )
+            gt_meta = [{"boxes": t["boxes"], "labels": t["labels"], "img": inputs} for t in targets]
+            loss, loss_states = self.model.head.loss(head_out, gt_meta, aux_preds=aux_head_out)
             return {
                 "classification_loss": loss_states.get("loss_qfl", loss * 0),
                 "regression_loss": loss_states.get("loss_bbox", loss * 0),

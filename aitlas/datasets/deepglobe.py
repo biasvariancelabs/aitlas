@@ -1,7 +1,5 @@
-import math
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -60,11 +58,7 @@ class DeepGlobeDataset(SemanticSegmentationDataset):
                     single_band_mask[i, j] = 3
                 if mask[i, j, 0] == 0 and mask[i, j, 1] == 0 and mask[i, j, 2] == 255:
                     single_band_mask[i, j] = 4
-                if (
-                    mask[i, j, 0] == 255
-                    and mask[i, j, 1] == 255
-                    and mask[i, j, 2] == 255
-                ):
+                if mask[i, j, 0] == 255 and mask[i, j, 1] == 255 and mask[i, j, 2] == 255:
                     single_band_mask[i, j] = 5
                 if mask[i, j, 0] == 0 and mask[i, j, 1] == 0 and mask[i, j, 2] == 0:
                     single_band_mask[i, j] = 6
@@ -80,9 +74,7 @@ class DeepGlobeDataset(SemanticSegmentationDataset):
         ids = os.listdir(os.path.join(data_dir, "images"))
         self.images = [os.path.join(data_dir, "images", image_id) for image_id in ids]
         self.masks = [
-            os.path.join(
-                data_dir, "masks", image_id[: image_id.rfind("_")] + "_mask.png"
-            )
+            os.path.join(data_dir, "masks", image_id[: image_id.rfind("_")] + "_mask.png")
             for image_id in ids
         ]
 

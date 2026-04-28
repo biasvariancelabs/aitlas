@@ -8,10 +8,10 @@ from functools import partial
 from typing import Callable
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from einops import repeat
 from timm.models.layers import DropPath, trunc_normal_
+from torch import nn
 from torch.utils.checkpoint import checkpoint
 
 from ..base import BaseChangeDetection
@@ -37,11 +37,7 @@ def selective_scan_chunk(us, dts, As, Bs, Cs, hprefix):
         # dA = exp(dt * A): [1,B,G,D,1] * [1,1,G,D,N] -> [1, B, G, D, N]
         dA = (dts[t : t + 1].unsqueeze(-1) * As_expanded).exp()
         # dt*u*B: [1,B,G,D,1] * [1,B,G,D,1] * [1,B,G,1,N] -> [1, B, G, D, N]
-        dB = (
-            dts[t : t + 1].unsqueeze(-1)
-            * us[t : t + 1].unsqueeze(-1)
-            * Bs[t : t + 1].unsqueeze(3)
-        )
+        dB = dts[t : t + 1].unsqueeze(-1) * us[t : t + 1].unsqueeze(-1) * Bs[t : t + 1].unsqueeze(3)
         h = dA * h + dB
         # y = C * h: [1,B,G,1,N] * [1,B,G,D,N] -> [1, B, G, D, N], then sum over N
         y = (Cs[t : t + 1].unsqueeze(3) * h).sum(dim=-1)  # [1, B, G, D]
@@ -113,12 +109,8 @@ class LayerNorm2d(nn.Module):
 
     def __init__(self, normalized_shape, eps=1e-6, elementwise_affine=True):
         super().__init__()
-        self.weight = (
-            nn.Parameter(torch.ones(normalized_shape)) if elementwise_affine else None
-        )
-        self.bias = (
-            nn.Parameter(torch.zeros(normalized_shape)) if elementwise_affine else None
-        )
+        self.weight = nn.Parameter(torch.ones(normalized_shape)) if elementwise_affine else None
+        self.bias = nn.Parameter(torch.zeros(normalized_shape)) if elementwise_affine else None
         self.eps = eps
         self.normalized_shape = (normalized_shape,)
 
@@ -208,9 +200,7 @@ class SS2D(nn.Module):
         self.dt_rank = math.ceil(self.d_model / 16) if dt_rank == "auto" else dt_rank
 
         # Input projection: projects input to 2 * d_inner (for x and z branches)
-        self.in_proj = nn.Linear(
-            self.d_model, self.d_inner * 2, bias=bias, **factory_kwargs
-        )
+        self.in_proj = nn.Linear(self.d_model, self.d_inner * 2, bias=bias, **factory_kwargs)
 
         # Depthwise convolution before SSM (captures local context)
         self.conv2d = nn.Conv2d(
@@ -317,9 +307,7 @@ class SS2D(nn.Module):
         self.forward_core = self.forward_corev0
 
         self.out_norm = nn.LayerNorm(self.d_inner)
-        self.out_proj = nn.Linear(
-            self.d_inner, self.d_model, bias=bias, **factory_kwargs
-        )
+        self.out_proj = nn.Linear(self.d_inner, self.d_model, bias=bias, **factory_kwargs)
         self.dropout = nn.Dropout(dropout) if dropout > 0.0 else nn.Identity()
 
     @staticmethod
@@ -344,8 +332,7 @@ class SS2D(nn.Module):
 
         # Initialize dt so it's in a reasonable range
         dt = torch.exp(
-            torch.rand(d_inner, **factory_kwargs)
-            * (math.log(dt_max) - math.log(dt_min))
+            torch.rand(d_inner, **factory_kwargs) * (math.log(dt_max) - math.log(dt_min))
             + math.log(dt_min)
         ).clamp(min=dt_init_floor)
         inv_dt = dt + torch.log(-torch.expm1(-dt))
@@ -403,16 +390,10 @@ class SS2D(nn.Module):
 
         # 2. Project inputs to get Delta, B, C for each view
         xs = x_hwwh
-        x_dbl = torch.einsum(
-            "b k d l, k c d -> b k c l", xs.view(B, K, -1, L), self.x_proj_weight
-        )
+        x_dbl = torch.einsum("b k d l, k c d -> b k c l", xs.view(B, K, -1, L), self.x_proj_weight)
 
-        dts, Bs, Cs = torch.split(
-            x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=2
-        )
-        dts = torch.einsum(
-            "b k r l, k d r -> b k d l", dts.view(B, K, -1, L), self.dt_projs_weight
-        )
+        dts, Bs, Cs = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=2)
+        dts = torch.einsum("b k r l, k d r -> b k d l", dts.view(B, K, -1, L), self.dt_projs_weight)
 
         # Reshape for scan
         xs = xs.float().view(B, -1, L)  # (B, K*D, L)
@@ -532,9 +513,7 @@ class VSSLayer(nn.Module):
             [
                 VSSBlock(
                     hidden_dim=dim,
-                    drop_path=(
-                        drop_path[i] if isinstance(drop_path, list) else drop_path
-                    ),
+                    drop_path=(drop_path[i] if isinstance(drop_path, list) else drop_path),
                     norm_layer=norm_layer,
                     attn_drop_rate=attn_drop,
                     d_state=d_state,
@@ -617,9 +596,7 @@ class VSSM(nn.Module):
 
         # 1. Patch Embedding (Images -> Tokens)
         self.patch_embed = nn.Sequential(
-            nn.Conv2d(
-                in_chans, dims[0], kernel_size=patch_size, stride=patch_size, bias=True
-            ),
+            nn.Conv2d(in_chans, dims[0], kernel_size=patch_size, stride=patch_size, bias=True),
             Permute(0, 2, 3, 1),
             (norm_layer(dims[0]) if patch_norm else nn.Identity()),
         )
@@ -750,9 +727,7 @@ class ChangeDecoder(nn.Module):
     - A "Smooth Layer" refines the result.
     """
 
-    def __init__(
-        self, in_channels, num_classes=2, embed_dim=128, d_state=16, drop_path=0.1
-    ):
+    def __init__(self, in_channels, num_classes=2, embed_dim=128, d_state=16, drop_path=0.1):
         super().__init__()
 
         encoder_dims = in_channels  # e.g., [96, 192, 384, 768]
@@ -761,48 +736,24 @@ class ChangeDecoder(nn.Module):
         # We need 3 blocks per scale for the 3 interaction types.
 
         # Scale 4 (Deepest)
-        self.st_block_41 = self._make_st_block(
-            encoder_dims[-1] * 2, embed_dim, drop_path, d_state
-        )
-        self.st_block_42 = self._make_st_block(
-            encoder_dims[-1], embed_dim, drop_path, d_state
-        )
-        self.st_block_43 = self._make_st_block(
-            encoder_dims[-1], embed_dim, drop_path, d_state
-        )
+        self.st_block_41 = self._make_st_block(encoder_dims[-1] * 2, embed_dim, drop_path, d_state)
+        self.st_block_42 = self._make_st_block(encoder_dims[-1], embed_dim, drop_path, d_state)
+        self.st_block_43 = self._make_st_block(encoder_dims[-1], embed_dim, drop_path, d_state)
 
         # Scale 3
-        self.st_block_31 = self._make_st_block(
-            encoder_dims[-2] * 2, embed_dim, drop_path, d_state
-        )
-        self.st_block_32 = self._make_st_block(
-            encoder_dims[-2], embed_dim, drop_path, d_state
-        )
-        self.st_block_33 = self._make_st_block(
-            encoder_dims[-2], embed_dim, drop_path, d_state
-        )
+        self.st_block_31 = self._make_st_block(encoder_dims[-2] * 2, embed_dim, drop_path, d_state)
+        self.st_block_32 = self._make_st_block(encoder_dims[-2], embed_dim, drop_path, d_state)
+        self.st_block_33 = self._make_st_block(encoder_dims[-2], embed_dim, drop_path, d_state)
 
         # Scale 2
-        self.st_block_21 = self._make_st_block(
-            encoder_dims[-3] * 2, embed_dim, drop_path, d_state
-        )
-        self.st_block_22 = self._make_st_block(
-            encoder_dims[-3], embed_dim, drop_path, d_state
-        )
-        self.st_block_23 = self._make_st_block(
-            encoder_dims[-3], embed_dim, drop_path, d_state
-        )
+        self.st_block_21 = self._make_st_block(encoder_dims[-3] * 2, embed_dim, drop_path, d_state)
+        self.st_block_22 = self._make_st_block(encoder_dims[-3], embed_dim, drop_path, d_state)
+        self.st_block_23 = self._make_st_block(encoder_dims[-3], embed_dim, drop_path, d_state)
 
         # Scale 1 (Shallowest)
-        self.st_block_11 = self._make_st_block(
-            encoder_dims[-4] * 2, embed_dim, drop_path, d_state
-        )
-        self.st_block_12 = self._make_st_block(
-            encoder_dims[-4], embed_dim, drop_path, d_state
-        )
-        self.st_block_13 = self._make_st_block(
-            encoder_dims[-4], embed_dim, drop_path, d_state
-        )
+        self.st_block_11 = self._make_st_block(encoder_dims[-4] * 2, embed_dim, drop_path, d_state)
+        self.st_block_12 = self._make_st_block(encoder_dims[-4], embed_dim, drop_path, d_state)
+        self.st_block_13 = self._make_st_block(encoder_dims[-4], embed_dim, drop_path, d_state)
 
         # Fusion layers: Combine 5 inputs (result of ST blocks + split components)
         self.fuse_layer_4 = self._make_fuse_layer(embed_dim)

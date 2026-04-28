@@ -66,18 +66,11 @@ def split_images(imgs_dir, masks_dir, output_dir):
                 img_tile = img[y : y + target_size, x : x + target_size]
                 mask_tile = mask[y : y + target_size, x : x + target_size]
 
-                if (
-                    img_tile.shape[0] == target_size
-                    and img_tile.shape[1] == target_size
-                ):
-                    out_img_path = os.path.join(
-                        output_dir, "{}_{}.jpg".format(img_filename, k)
-                    )
+                if img_tile.shape[0] == target_size and img_tile.shape[1] == target_size:
+                    out_img_path = os.path.join(output_dir, "{}_{}.jpg".format(img_filename, k))
                     cv2.imwrite(out_img_path, img_tile)
 
-                    out_mask_path = os.path.join(
-                        output_dir, "{}_{}_m.png".format(mask_filename, k)
-                    )
+                    out_mask_path = os.path.join(output_dir, "{}_{}_m.png".format(mask_filename, k))
                     cv2.imwrite(out_mask_path, mask_tile)
 
                 k += 1

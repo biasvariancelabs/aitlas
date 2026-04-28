@@ -62,9 +62,7 @@ class ObjectDetectionRotatedParallaxDataset(BaseObjectDetectionRotatedBboxDatase
         image = image_loader(os.path.join(self.data_dir, img_name + ".jpg")) / 255.0
 
         # annotation file
-        annotations_file_path = os.path.join(
-            self.annotation_dir, img_name + "_LABEL.json"
-        )
+        annotations_file_path = os.path.join(self.annotation_dir, img_name + "_LABEL.json")
         annotations = json.load(open(annotations_file_path, "r"))
 
         boxes = []
@@ -88,10 +86,8 @@ class ObjectDetectionRotatedParallaxDataset(BaseObjectDetectionRotatedBboxDatase
                 ymin = bbox[1]
                 ymax = bbox[1] + bbox[3]
 
-                if xmax > 2196:
-                    xmax = 2196
-                if ymax > 2196:
-                    ymax = 2196
+                xmax = min(xmax, 2196)
+                ymax = min(ymax, 2196)
 
                 xmin_corr = xmin
                 xmax_corr = xmax
@@ -130,9 +126,7 @@ class ObjectDetectionRotatedParallaxDataset(BaseObjectDetectionRotatedBboxDatase
             coco = json.load(open(annotation_dir + json_file, "r"))
 
             # read labels
-            labels += [
-                y["name"] for y in sorted(coco["categories"], key=lambda x: x["id"])
-            ]
+            labels += [y["name"] for y in sorted(coco["categories"], key=lambda x: x["id"])]
             # create data
             dataf = [
                 {
@@ -181,9 +175,7 @@ class ObjectDetectionRotatedParallaxDataset(BaseObjectDetectionRotatedBboxDatase
         df_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=df_count, ax=ax)
-        ax.set_title(
-            "Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18
-        )
+        ax.set_title("Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig
 
     def show_samples(self):
@@ -267,9 +259,7 @@ class ObjectDetectionStraightParallaxDataset(BaseObjectDetectionDataset):
             bbox_params={"format": "pascal_voc", "label_fields": ["labels"]},
         )
 
-        transformed = data_transforms(
-            image=image, bboxes=target["boxes"], labels=target["labels"]
-        )
+        transformed = data_transforms(image=image, bboxes=target["boxes"], labels=target["labels"])
         target["boxes"] = torch.as_tensor(transformed["bboxes"], dtype=torch.float32)
         target["labels"] = torch.as_tensor(transformed["labels"], dtype=torch.int64)
         image = transformed["image"]
@@ -285,9 +275,7 @@ class ObjectDetectionStraightParallaxDataset(BaseObjectDetectionDataset):
             coco = json.load(open(annotation_dir + json_file, "r"))
 
             # read labels
-            labels += [
-                y["name"] for y in sorted(coco["categories"], key=lambda x: x["id"])
-            ]
+            labels += [y["name"] for y in sorted(coco["categories"], key=lambda x: x["id"])]
             # create data
             dataf = [
                 {
@@ -333,9 +321,7 @@ class ObjectDetectionStraightParallaxDataset(BaseObjectDetectionDataset):
         df_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=df_count, ax=ax)
-        ax.set_title(
-            "Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18
-        )
+        ax.set_title("Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig
 
     def show_samples(self):

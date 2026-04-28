@@ -53,14 +53,10 @@ class BaseDataset(Dataset, Configurable):
 
     def __getitem__(self, index):
         """Implement here what you want to return"""
-        raise NotImplementedError(
-            "Please implement the `__getittem__` method for your dataset"
-        )
+        raise NotImplementedError("Please implement the `__getittem__` method for your dataset")
 
     def __len__(self):
-        raise NotImplementedError(
-            "Please implement the `__len__` method for your dataset"
-        )
+        raise NotImplementedError("Please implement the `__len__` method for your dataset")
 
     def get_name(self):
         if self.name:
@@ -85,27 +81,19 @@ class BaseDataset(Dataset, Configurable):
 
     def get_labels(self):
         """Implement this if you want to return the complete set of labels of the dataset"""
-        raise NotImplementedError(
-            "Please implement the `labels` method for your dataset"
-        )
+        raise NotImplementedError("Please implement the `labels` method for your dataset")
 
     def show_batch(self, size):
         """Implement this if you want to return a random batch of images from the dataset"""
-        raise NotImplementedError(
-            "Please implement the `show_batch` method for your dataset"
-        )
+        raise NotImplementedError("Please implement the `show_batch` method for your dataset")
 
     def show_samples(self):
         """Implement this if you want to return a random samples from the dataset"""
-        raise NotImplementedError(
-            "Please implement the `show_samples` method for your dataset"
-        )
+        raise NotImplementedError("Please implement the `show_samples` method for your dataset")
 
     def show_image(self, index):
         """Implement this if you want to return an image with a given index from the dataset"""
-        raise NotImplementedError(
-            "Please implement the `show_image` method for your dataset"
-        )
+        raise NotImplementedError("Please implement the `show_image` method for your dataset")
 
     def data_distribution_table(self):
         """Implement this if you want to return the label distribution of the dataset"""

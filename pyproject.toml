@@ -92,3 +92,39 @@ dev = [
     "pytest>=8.0.0",
     "pytest-cov>=7.1.0",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort (automatically sorts imports)
+    "PL",  # pylint rules
+]
+
+ignore = [
+    "D",       # Ignore all missing docstring errors
+    "PLR0913", # Ignore "too many arguments" warnings
+    "PLR0911", # Ignore "too many return statements" warnings
+    "E741", # Ignore "ambiguous variable name"
+    "F841", # Ignore "unused variables"
+    "E501", # Ignore "line too long"
+    "PLR0912", # Ignore "too many branches"
+    "PLR0915", # Ignore "too many statements"
+    "PLR2004", # Ignore "magic value used in comparison"
+    "PLW2901", # Ignore "for loop variable overwritten by assignment target"
+    "PLW0127", # Ignore "self-assignment of variable"
+    "PLR1714", # Ignore "consider merging multiple comparisons"
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["kenny"]
+lines-after-imports = 2
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

@@ -13,13 +13,12 @@
 from functools import partial
 
 import torch
-import torch.nn as nn
 from timm.models.vision_transformer import Block, PatchEmbed
+from torch import nn
 
 from .fpn import FCNHead, FPNHead
 from .gpt import Block as GPTBlock
 from .pos_embed import get_2d_sincos_pos_embed, get_2d_sincos_pos_embed_with_resolution
-from .transformer import MAEDecoder
 
 
 class PatchEmbedUnSafe(PatchEmbed):
@@ -118,9 +117,7 @@ class MaskedAutoencoderViT(nn.Module):
         )  # fixed sin-cos embedding
         self.project_pos_emb = project_pos_emb
         if project_pos_emb:
-            self.pos_emb_projection = nn.Linear(
-                decoder_embed_dim, decoder_embed_dim, bias=True
-            )
+            self.pos_emb_projection = nn.Linear(decoder_embed_dim, decoder_embed_dim, bias=True)
         self.fpn = FPNHead(decoder_embed_dim, share_weights=progressive)
         if independent_fcn_head:
             self.fcn_high = FCNHead(decoder_embed_dim, fcn_dim, fcn_layers, 3)
@@ -250,21 +247,17 @@ class MaskedAutoencoderViT(nn.Module):
         patch_size = self.patch_embed.patch_size[0]
         embed_dim = self.decoder_embed_dim
 
-        output_raster = torch.zeros(
-            B, num_patches_per_axis * embed_dim, num_patches_per_axis
-        )
+        output_raster = torch.zeros(B, num_patches_per_axis * embed_dim, num_patches_per_axis)
 
-        data = x.reshape(
-            B, num_patches_per_axis, num_patches_per_axis, embed_dim
-        )  # 4, 7, 7, 512
+        data = x.reshape(B, num_patches_per_axis, num_patches_per_axis, embed_dim)  # 4, 7, 7, 512
 
         data = data.permute(0, 3, 1, 2)  # 4, 512, 7, 7
 
         for img in range(B):
             for i in range(embed_dim):
-                output_raster[
-                    img, i * num_patches_per_axis : (i + 1) * num_patches_per_axis, :
-                ] = data[img, i, :, :]
+                output_raster[img, i * num_patches_per_axis : (i + 1) * num_patches_per_axis, :] = (
+                    data[img, i, :, :]
+                )
 
         return output_raster
 
@@ -280,9 +273,7 @@ class MaskedAutoencoderViT(nn.Module):
         noise = torch.rand(N, L, device=x.device)  # noise in [0, 1]
 
         # sort noise for each sample
-        ids_shuffle = torch.argsort(
-            noise, dim=1
-        )  # ascend: small is keep, large is remove
+        ids_shuffle = torch.argsort(noise, dim=1)  # ascend: small is keep, large is remove
         ids_restore = torch.argsort(ids_shuffle, dim=1)
 
         # keep the first subset
@@ -362,9 +353,7 @@ class MaskedAutoencoderViT(nn.Module):
         )
 
         # append mask tokens to sequence
-        mask_tokens = self.mask_token.repeat(
-            x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1
-        )
+        mask_tokens = self.mask_token.repeat(x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1)
         x_ = torch.cat([x[:, 1:, :], mask_tokens], dim=1)  # no cls token
         x_ = torch.gather(
             x_, dim=1, index=ids_restore.unsqueeze(-1).repeat(1, 1, x.shape[2])
@@ -384,7 +373,7 @@ class MaskedAutoencoderViT(nn.Module):
         # pos_emb = torch.from_numpy(pos_emb).float().to(x.device) # n X ( L_t + 1) X d_emb
         pos_embed_raw = pos_embed
         if self.project_pos_emb:
-            pos_emb = self.pos_emb_projection(pos_emb)
+            pos_emb = self.pos_emb_projection(pos_embed)
         # TODO: Consider adding a projection layer?
         ids = None
         x = x[:, 1:, :]
@@ -469,7 +458,7 @@ class MaskedAutoencoderViT(nn.Module):
         return seq
 
     def set_fix_decoding_size(self, fixed_output_size):
-        if type(fixed_output_size) == list:
+        if isinstance(fixed_output_size, list):
             fixed_output_size = fixed_output_size[0]
         assert fixed_output_size % self.patch_size == 0
         self.fixed_output_size = fixed_output_size // self.patch_size
@@ -493,11 +482,7 @@ class MaskedAutoencoderViT(nn.Module):
         # At the start, our array is [x, pos_embed]
         # We want this to be [x, pos_embed1, pos_embed2, ...]
         # We also want to return the sizes of each positional embedding (length_pos_embeds)
-        atten_mask = [
-            torch.ones(
-                (l_x + length_pos_embed, l_x + length_pos_embed), device=x.device
-            )
-        ]
+        atten_mask = [torch.ones((l_x + length_pos_embed, l_x + length_pos_embed), device=x.device)]
         length_pos_embeds = [length_pos_embed]
         ids = [mask]
         target_sizes = [x for x in self.target_size if x != max(self.target_size)]
@@ -507,26 +492,20 @@ class MaskedAutoencoderViT(nn.Module):
                 x.shape[-1], d, base_res * d / base_dim, cls_token=True, device=x.device
             )
             _, length_pos_embed, _ = pos_emb.shape
-            mask_tokens = self.mask_token_decoder.repeat(
-                x.shape[0], length_pos_embed, 1
-            )
+            mask_tokens = self.mask_token_decoder.repeat(x.shape[0], length_pos_embed, 1)
             mask_tokens += pos_emb
             mask_tokens = mask_tokens[:, 1:]
             length_pos_embed = length_pos_embed - 1
 
             if self.fixed_output_size > 0:
-                mask_tokens, mask = self.random_crop(
-                    mask_tokens, self.fixed_output_size
-                )
+                mask_tokens, mask = self.random_crop(mask_tokens, self.fixed_output_size)
                 _, length_pos_embed, _ = mask_tokens.shape
             else:
                 mask = None
             new_x.append(mask_tokens)
             length_pos_embeds.append(length_pos_embed)
             ids.append(mask)
-            atten_mask.append(
-                torch.ones((length_pos_embed, length_pos_embed), device=x.device)
-            )
+            atten_mask.append(torch.ones((length_pos_embed, length_pos_embed), device=x.device))
 
         x = torch.cat(new_x, dim=1)
         atten_mask = torch.block_diag(*atten_mask)  # L X L
@@ -547,9 +526,7 @@ class MaskedAutoencoderViT(nn.Module):
         pred_high, pred_low = pred
         n, _, _, _ = imgs.shape
         if dim2 != 224:
-            target_low = nn.functional.interpolate(
-                imgs, pred_low.shape[-2:], mode="area"
-            )
+            target_low = nn.functional.interpolate(imgs, pred_low.shape[-2:], mode="area")
         else:
             target_low = nn.functional.interpolate(
                 nn.functional.interpolate(imgs, (dim2, dim2), mode="area"),
@@ -570,9 +547,7 @@ class MaskedAutoencoderViT(nn.Module):
         loss_l2 = loss_l2.sum() / (mask_low.sum() + 1e-9)
 
         if self.use_l1_loss:
-            loss_l1 = (
-                mask_high * torch.abs(target_high - pred_high) * self.l1_loss_weight
-            )
+            loss_l1 = mask_high * torch.abs(target_high - pred_high) * self.l1_loss_weight
         else:
             loss_l1 = mask_high * (target_high - pred_high) ** 2
         loss_l1 = loss_l1.sum() / (mask_high.sum() + 1e-9)
@@ -599,9 +574,7 @@ class MaskedAutoencoderViT(nn.Module):
             assert (
                 source_size % self.patch_size == 0
             ), "Source size must be a valid multiple of patch size"
-            assert (
-                source_size <= input_size
-            ), "source size but be no greater than image size"
+            assert source_size <= input_size, "source size but be no greater than image size"
             if source_size < input_size:
                 imgs = nn.functional.interpolate(
                     imgs, (source_size, source_size), mode="area"
@@ -691,7 +664,5 @@ def mae_vit_huge_patch14_dec512d8b(**kwargs):
 
 # set recommended archs
 scalemae_vit_base_patch16 = mae_vit_base_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
-scalemae_vit_large_patch16 = (
-    mae_vit_large_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
-)
+scalemae_vit_large_patch16 = mae_vit_large_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
 scalemae_vit_huge_patch14 = mae_vit_huge_patch14_dec512d8b  # decoder: 512 dim, 8 blocks

@@ -7,9 +7,7 @@ from aitlas.models.registries import ADAPTER_REGISTRY
 @ADAPTER_REGISTRY.register("PrestoAdapter")
 class PrestoAdapter(BaseInputAdapter):
     def forward(self, x):
-
         if isinstance(x, torch.Tensor):
-
             # Replace NaNs and Infs
             x = torch.nan_to_num(x, nan=0.0, posinf=0.0, neginf=0.0)
 
@@ -68,16 +66,12 @@ class PrestoAdapter(BaseInputAdapter):
 
             if has_s1:
                 # Slice -> Unsqueeze temporal dim -> Shape: (B, 1, 2, H, W)
-                inputs_dict["s1"] = x[
-                    :, current_idx : current_idx + num_s1, ...
-                ].unsqueeze(1)
+                inputs_dict["s1"] = x[:, current_idx : current_idx + num_s1, ...].unsqueeze(1)
                 current_idx += num_s1
 
             if has_s2:
                 # Slice -> Unsqueeze temporal dim -> Shape: (B, 1, 10, H, W)
-                inputs_dict["s2"] = x[
-                    :, current_idx : current_idx + num_s2, ...
-                ].unsqueeze(1)
+                inputs_dict["s2"] = x[:, current_idx : current_idx + num_s2, ...].unsqueeze(1)
 
             # Extract spatial dimensions
             H, W = x.shape[-2], x.shape[-1]
@@ -94,6 +88,4 @@ class PrestoAdapter(BaseInputAdapter):
             return None, kwargs
 
         else:
-            raise ValueError(
-                f"PrestoAdapter expects a torch.Tensor, but got {type(x)}."
-            )
+            raise ValueError(f"PrestoAdapter expects a torch.Tensor, but got {type(x)}.")

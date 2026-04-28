@@ -29,9 +29,7 @@ class ActivationsAndGradients:
         self.reshape_transform = reshape_transform
         self.handles = []
         for target_layer in target_layers:
-            self.handles.append(
-                target_layer.register_forward_hook(self.save_activation)
-            )
+            self.handles.append(target_layer.register_forward_hook(self.save_activation))
             # Because of https://github.com/pytorch/pytorch/issues/61519,
             # we don't use backward hook to record gradients.
             self.handles.append(target_layer.register_forward_hook(self.save_gradient))
@@ -85,9 +83,7 @@ def get_2d_projection(activation_batch):
     activation_batch[np.isnan(activation_batch)] = 0
     projections = []
     for activations in activation_batch:
-        reshaped_activations = (
-            (activations).reshape(activations.shape[0], -1).transpose()
-        )
+        reshaped_activations = (activations).reshape(activations.shape[0], -1).transpose()
         # Centering before the SVD seems to be important here,
         # Otherwise the image returned is negative
         reshaped_activations = reshaped_activations - reshaped_activations.mean(axis=0)
@@ -212,9 +208,7 @@ class BaseCAM:
         grads: torch.Tensor,
         eigen_smooth: bool = False,
     ) -> np.ndarray:
-        weights = self.get_cam_weights(
-            input_tensor, target_layer, targets, activations, grads
-        )
+        weights = self.get_cam_weights(input_tensor, target_layer, targets, activations, grads)
         weighted_activations = weights[:, :, None, None] * activations
         if eigen_smooth:
             cam = get_2d_projection(weighted_activations)
@@ -237,9 +231,7 @@ class BaseCAM:
         outputs = self.activations_and_grads(input_tensor)
         if targets is None:
             target_categories = np.argmax(outputs.cpu().data.numpy(), axis=-1)
-            targets = [
-                ClassifierOutputTarget(category) for category in target_categories
-            ]
+            targets = [ClassifierOutputTarget(category) for category in target_categories]
 
         if self.uses_gradients:
             self.model.zero_grad()
@@ -268,12 +260,8 @@ class BaseCAM:
         targets: List[torch.nn.Module],
         eigen_smooth: bool,
     ) -> np.ndarray:
-        activations_list = [
-            a.cpu().data.numpy() for a in self.activations_and_grads.activations
-        ]
-        grads_list = [
-            g.cpu().data.numpy() for g in self.activations_and_grads.gradients
-        ]
+        activations_list = [a.cpu().data.numpy() for a in self.activations_and_grads.activations]
+        grads_list = [g.cpu().data.numpy() for g in self.activations_and_grads.gradients]
         target_size = self.get_target_width_height(input_tensor)
 
         cam_per_target_layer = []
@@ -346,9 +334,7 @@ class BaseCAM:
     ) -> np.ndarray:
         # Smooth the CAM result with test time augmentation
         if aug_smooth is True:
-            return self.forward_augmentation_smoothing(
-                input_tensor, targets, eigen_smooth
-            )
+            return self.forward_augmentation_smoothing(input_tensor, targets, eigen_smooth)
 
         return self.forward(input_tensor, targets, eigen_smooth)
 
@@ -362,9 +348,7 @@ class BaseCAM:
         self.activations_and_grads.release()
         if isinstance(exc_value, IndexError):
             # Handle IndexError here...
-            print(
-                f"An exception occurred in CAM with block: {exc_type}. Message: {exc_value}"
-            )
+            print(f"An exception occurred in CAM with block: {exc_type}. Message: {exc_value}")
             return True
 
 
@@ -381,7 +365,5 @@ class GradCAM(BaseCAM):
     def __init__(self, model, target_layers, use_cuda=False, reshape_transform=None):
         super(GradCAM, self).__init__(model, target_layers, use_cuda, reshape_transform)
 
-    def get_cam_weights(
-        self, input_tensor, target_layer, target_category, activations, grads
-    ):
+    def get_cam_weights(self, input_tensor, target_layer, target_category, activations, grads):
         return np.mean(grads, axis=(2, 3))

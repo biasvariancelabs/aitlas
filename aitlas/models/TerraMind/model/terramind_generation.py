@@ -18,7 +18,6 @@ from functools import partial
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 from einops import rearrange
 from torch import nn
 
@@ -110,13 +109,13 @@ class TerraMindGeneration(nn.Module):
             modalities = [modalities]
         elif not isinstance(modalities, list):
             raise ValueError(
-                f"Modalities must be a list of modality keys or a dict with embedding layers."
+                "Modalities must be a list of modality keys or a dict with embedding layers."
             )
 
         if output_modalities is None or len(output_modalities) == 0:
             raise ValueError("Output modalities not provided.")
         elif not isinstance(output_modalities, list):
-            raise ValueError(f"Output modalities must be a list of modality keys.")
+            raise ValueError("Output modalities must be a list of modality keys.")
 
         # Parameters for generation schedule
         self.top_p = top_p
@@ -129,25 +128,20 @@ class TerraMindGeneration(nn.Module):
         self.encoder_embeddings, mod_name_mapping = build_modality_embeddings(
             MODALITY_INFO, modalities, img_size=img_size, dim=dim, patch_size=patch_size
         )
-        self.decoder_embeddings, decoder_name_mapping = (
-            build_output_modality_embeddings(
-                MODALITY_INFO,
-                output_modalities,
-                img_size=img_size,
-                dim=dim,
-                patch_size=patch_size,
-            )
+        self.decoder_embeddings, decoder_name_mapping = build_output_modality_embeddings(
+            MODALITY_INFO,
+            output_modalities,
+            img_size=img_size,
+            dim=dim,
+            patch_size=patch_size,
         )
-        self.output_modalities = list(
-            decoder_name_mapping.values()
-        )  # Update output modality names
+        self.output_modalities = list(decoder_name_mapping.values())  # Update output modality names
         self.mod_name_mapping = decoder_name_mapping | mod_name_mapping  # Merging dicts
         self.modalities = list(mod_name_mapping.keys())  # Further code expects list
         self.image_modalities = [
             key
             for key, value in self.encoder_embeddings.items()
-            if isinstance(value, ImageEncoderEmbedding)
-            or isinstance(value, ImageTokenEncoderEmbedding)
+            if isinstance(value, ImageEncoderEmbedding | ImageTokenEncoderEmbedding)
         ]
         self.output_image_modalities = [
             key
@@ -160,7 +154,7 @@ class TerraMindGeneration(nn.Module):
         if len(modalities) == 1 and self.mod_name_mapping[modalities[0]] == "caption":
             # TODO Debug why text to image generations don't work.
             raise NotImplementedError(
-                f"TerraMind v0.1 generations with only text input don't work yet."
+                "TerraMind v0.1 generations with only text input don't work yet."
             )
 
         if offset is not None:
@@ -172,8 +166,7 @@ class TerraMindGeneration(nn.Module):
                     )
                     continue
                 pretraining_mean[self.mod_name_mapping[mod]] = (
-                    np.array(pretraining_mean[self.mod_name_mapping[mod]], dtype=float)
-                    + o
+                    np.array(pretraining_mean[self.mod_name_mapping[mod]], dtype=float) + o
                 )
 
         self.pretraining_mean = (
@@ -303,12 +296,9 @@ class TerraMindGeneration(nn.Module):
 
             if self.mod_name_mapping[mod] in self.image_modalities:
                 # Get image size and num tokens
-                patch_size = self.encoder_embeddings[
-                    self.mod_name_mapping[mod]
-                ].patch_size
+                patch_size = self.encoder_embeddings[self.mod_name_mapping[mod]].patch_size
                 img_num_tokens = int(
-                    (input_shape[-1] / patch_size[-1])
-                    * (input_shape[-2] / patch_size[-2])
+                    (input_shape[-1] / patch_size[-1]) * (input_shape[-2] / patch_size[-2])
                 )
                 image_size = (input_shape[-1], input_shape[-2])
 
@@ -401,26 +391,18 @@ class TerraMindGeneration(nn.Module):
                     nw=image_size[1] // patch_size,
                 )
 
-                out[self.output_mod_name_mapping[mod]] = self.tokenizer[
-                    mod
-                ].decode_tokens(
+                out[self.output_mod_name_mapping[mod]] = self.tokenizer[mod].decode_tokens(
                     tok, image_size=image_size, timesteps=timesteps, verbose=verbose
                 )
 
             elif mod in self.output_modalities and mod in ["caption", "coords"]:
-                out[self.output_mod_name_mapping[mod]] = self.tokenizer[
-                    mod
-                ].decode_text(out_dict)
+                out[self.output_mod_name_mapping[mod]] = self.tokenizer[mod].decode_text(out_dict)
 
         if standardize:
             for mod, value in out.items():
                 if self.mod_name_mapping[mod] in self.pretraining_mean:
-                    mean_tensor = self.pretraining_mean[self.mod_name_mapping[mod]].to(
-                        value.device
-                    )
-                    std_tensor = self.pretraining_std[self.mod_name_mapping[mod]].to(
-                        value.device
-                    )
+                    mean_tensor = self.pretraining_mean[self.mod_name_mapping[mod]].to(value.device)
+                    std_tensor = self.pretraining_std[self.mod_name_mapping[mod]].to(value.device)
                     # Apply de-standardization
                     out[mod] = value * std_tensor + mean_tensor
 

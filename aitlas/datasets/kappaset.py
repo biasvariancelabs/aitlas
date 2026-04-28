@@ -4,19 +4,15 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import torch
 from matplotlib.patches import Patch
 from skimage.transform import resize
-from torch.utils.data import DataLoader, Dataset
 
-from ..base import BaseDataset
-from ..utils import image_loader, tiff_loader
+from ..utils import image_loader
 from .schemas import CloudDatasets_AI4QCSchema
 from .semantic_segmentation import SemanticSegmentationDataset
 
 
 def interp_band(bands, img_shape=[512, 512]):
-
     bands_interp = np.zeros(img_shape).astype(np.float32)
     bands_interp = resize(
         bands, img_shape, mode="reflect"
@@ -32,7 +28,6 @@ KappaSet is a cloud mask dataset of 9251 labeled subscenes distributed over the 
 
 
 class KappaSetDataset(SemanticSegmentationDataset):
-
     url = "https://drive.google.com/drive/folders/1H18RIitlVvhmlY63_lj_BrtYPwzN8tgr?usp=sharing"
 
     labels = [
@@ -137,9 +132,7 @@ class KappaSetDataset(SemanticSegmentationDataset):
             raise ValueError("You need to provide the list of labels for the dataset")
 
         ids = os.listdir(os.path.join(data_dir, "Sentinel_2_B02/B02"))
-        self.images = [
-            os.path.join(data_dir, "Sentinel_2_B02/B02", image_id) for image_id in ids
-        ]
+        self.images = [os.path.join(data_dir, "Sentinel_2_B02/B02", image_id) for image_id in ids]
         self.imagesB01 = [
             os.path.join(
                 data_dir,

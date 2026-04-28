@@ -1,6 +1,5 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from torch import nn
 from torch.jit import Final
 
 from .irpe import build_rpe, get_rpe_config
@@ -49,11 +48,7 @@ class Attention(nn.Module):
 
     def forward(self, x):
         B, N, C = x.shape
-        qkv = (
-            self.qkv(x)
-            .reshape(B, N, 3, self.num_heads, self.head_dim)
-            .permute(2, 0, 3, 1, 4)
-        )
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, self.head_dim).permute(2, 0, 3, 1, 4)
         q, k, v = qkv.unbind(0)
         q, k = self.q_norm(q), self.k_norm(k)
 
@@ -82,7 +77,6 @@ class LayerScale(nn.Module):
 
 
 class Block(nn.Module):
-
     def __init__(
         self,
         dim,
@@ -110,9 +104,7 @@ class Block(nn.Module):
             norm_layer=norm_layer,
             use_flash_attn=flash_attn,
         )
-        self.ls1 = (
-            LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
-        )
+        self.ls1 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
         self.drop_path1 = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
         self.norm2 = norm_layer(dim)
@@ -122,9 +114,7 @@ class Block(nn.Module):
             act_layer=act_layer,
             drop=proj_drop,
         )
-        self.ls2 = (
-            LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
-        )
+        self.ls2 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
         self.drop_path2 = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
     def forward(self, x):
@@ -184,9 +174,7 @@ class RPEAttention(nn.Module):
             height = mask.shape[-1]
 
         qkv = (
-            self.qkv(x)
-            .reshape(B, N, 3, self.num_heads, C // self.num_heads)
-            .permute(2, 0, 3, 1, 4)
+            self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         )
         q, k, v = (
             qkv[0],
@@ -221,7 +209,6 @@ class RPEAttention(nn.Module):
 
 
 class BlockTransformer(nn.Module):
-
     def __init__(
         self,
         dim,
@@ -334,16 +321,12 @@ class CrossRPEAttention(nn.Module):
         attn = (q @ k.transpose(-2, -1)) * self.scale
 
         if self.rpe_k is not None:
-            rpe = self.rpe_k(
-                q, height=self.height, width=self.width, pos=mask, modis=self.modis
-            )
+            rpe = self.rpe_k(q, height=self.height, width=self.width, pos=mask, modis=self.modis)
             if rpe is not None:
                 attn += torch.cat(
                     [
                         rpe[:, :, :, : (1 + self.modis)],
-                        rpe[:, :, :, (1 + self.modis) :].repeat(
-                            1, 1, 1, self.n_modalities
-                        ),
+                        rpe[:, :, :, (1 + self.modis) :].repeat(1, 1, 1, self.n_modalities),
                     ],
                     dim=-1,
                 )
@@ -355,13 +338,9 @@ class CrossRPEAttention(nn.Module):
         B, N, C = self._validate_input(x, mask)
         self.pos_embed = self.pos_embed.to(x.device)
         # Compute number of patches and prepare query
-        num_patches = (
-            N // self.n_modalities + int(N % self.n_modalities > 0) + self.modis
-        )
+        num_patches = N // self.n_modalities + int(N % self.n_modalities > 0) + self.modis
         if mask is None:
-            q_ = self.q_learned.expand(B, num_patches, -1) + self.pos_embed.expand(
-                B, -1, -1
-            )
+            q_ = self.q_learned.expand(B, num_patches, -1) + self.pos_embed.expand(B, -1, -1)
         else:
             mask_pos = mask.unsqueeze(-1).repeat(1, 1, self.pos_embed.shape[-1])
             pos_embed = self.pos_embed.expand(B, -1, -1)
@@ -372,19 +351,9 @@ class CrossRPEAttention(nn.Module):
             q_ = self.q_learned.expand(B, num_patches, -1) + pos_embed
 
         # Reshape for attention
-        q = q_.reshape(B, num_patches, self.num_heads, C // self.num_heads).permute(
-            0, 2, 1, 3
-        )
-        k = (
-            self.wk(x)
-            .reshape(B, N, self.num_heads, C // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
-        v = (
-            self.wv(x)
-            .reshape(B, N, self.num_heads, C // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        q = q_.reshape(B, num_patches, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        k = self.wk(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        v = self.wv(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
 
         # Compute attention and output
         attn = self._compute_attention(q, k, v, mask)
@@ -396,7 +365,6 @@ class CrossRPEAttention(nn.Module):
 
 
 class CrossRPEBlock(nn.Module):
-
     def __init__(
         self,
         dim,
@@ -476,10 +444,7 @@ class CrossRPEAttentionMulti(nn.Module):
         self.q_learned = nn.Parameter(torch.zeros(1, 1, dim))
         if not release:
             self.datasets = list(modalities.keys())
-            self.modis = {
-                dataset: int("modis" in modalities[dataset])
-                for dataset in self.datasets
-            }
+            self.modis = {dataset: int("modis" in modalities[dataset]) for dataset in self.datasets}
             self.len_modalities = {}
             self.pos_embed = {}
             for dataset in self.datasets:
@@ -535,25 +500,13 @@ class CrossRPEAttentionMulti(nn.Module):
             masked_pos_embed = torch.gather(
                 pos_embed.expand(B, -1, -1)[:, 1:], dim=1, index=mask_pos
             )
-            pos_embed = torch.cat(
-                [pos_embed_e[:, : (1 + modis)], masked_pos_embed], dim=1
-            )
+            pos_embed = torch.cat([pos_embed_e[:, : (1 + modis)], masked_pos_embed], dim=1)
             q_ = self.q_learned.expand(B, num_patches, -1) + pos_embed
-        q = q_.reshape(B, num_patches, self.num_heads, C // self.num_heads).permute(
-            0, 2, 1, 3
-        )
+        q = q_.reshape(B, num_patches, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         # BNC -> BNH(C/H) -> BHN(C/H)
-        k = (
-            self.wk(x)
-            .reshape(B, N, self.num_heads, C // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        k = self.wk(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         # BNC -> BNH(C/H) -> BHN(C/H)
-        v = (
-            self.wv(x)
-            .reshape(B, N, self.num_heads, C // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        v = self.wv(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
 
         attn = (q @ k.transpose(-2, -1)) * self.scale  # BH1(C/H) @ BH(C/H)N -> BH1N
 
@@ -564,9 +517,7 @@ class CrossRPEAttentionMulti(nn.Module):
             attn += torch.cat(
                 [
                     rpe[:, :, :, : (1 + modis)],
-                    rpe[:, :, :, (1 + modis) :].repeat(
-                        1, 1, 1, self.len_modalities[dataset]
-                    ),
+                    rpe[:, :, :, (1 + modis) :].repeat(1, 1, 1, self.len_modalities[dataset]),
                 ],
                 dim=-1,
             )
@@ -588,9 +539,7 @@ class CrossRPEAttentionMulti(nn.Module):
 
     def forward_release(self, x, mask=None, n_modalities=1, modis=False, scale=1):
         B, N, C = x.shape
-        num_patches = (
-            N // n_modalities + int((N - int(modis)) % n_modalities > 0) + int(modis)
-        )
+        num_patches = N // n_modalities + int((N - int(modis)) % n_modalities > 0) + int(modis)
         pos_embed = get_2d_sincos_pos_embed_with_scale(
             C, int(num_patches**0.5), scale, cls_token=True, modis=modis
         ).to(x.device)
@@ -604,25 +553,13 @@ class CrossRPEAttentionMulti(nn.Module):
             masked_pos_embed = torch.gather(
                 pos_embed.expand(B, -1, -1)[:, 1:], dim=1, index=mask_pos
             )
-            pos_embed = torch.cat(
-                [pos_embed_e[:, : (1 + modis)], masked_pos_embed], dim=1
-            )
+            pos_embed = torch.cat([pos_embed_e[:, : (1 + modis)], masked_pos_embed], dim=1)
             q_ = self.q_learned.expand(B, num_patches, -1) + pos_embed
-        q = q_.reshape(B, num_patches, self.num_heads, C // self.num_heads).permute(
-            0, 2, 1, 3
-        )
+        q = q_.reshape(B, num_patches, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         # BNC -> BNH(C/H) -> BHN(C/H)
-        k = (
-            self.wk(x)
-            .reshape(B, N, self.num_heads, C // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        k = self.wk(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         # BNC -> BNH(C/H) -> BHN(C/H)
-        v = (
-            self.wv(x)
-            .reshape(B, N, self.num_heads, C // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        v = self.wv(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
 
         attn = (q @ k.transpose(-2, -1)) * self.scale  # BH1(C/H) @ BH(C/H)N -> BH1N
 
@@ -655,7 +592,6 @@ class CrossRPEAttentionMulti(nn.Module):
 
 
 class CrossBlockMulti(nn.Module):
-
     def __init__(
         self,
         dim,
@@ -699,9 +635,7 @@ class CrossBlockMulti(nn.Module):
         )
 
     def forward(self, x, mask=None, dataset="", scale=1):
-        x = self.drop_path(
-            self.attn(self.norm1(x), mask=mask, dataset=dataset, scale=scale)
-        )
+        x = self.drop_path(self.attn(self.norm1(x), mask=mask, dataset=dataset, scale=scale))
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
 
@@ -754,12 +688,8 @@ class CrossAttention(nn.Module):
         self.pos_embed = self.pos_embed.to(x.device)
         # B1C -> B1H(C/H) -> BH1(C/H)
         if mask is None:
-            num_patches = (
-                N // self.n_modalities + int(N % self.n_modalities > 0) + self.modis
-            )
-            q_ = self.q_learned.expand(B, num_patches, -1) + self.pos_embed.expand(
-                B, -1, -1
-            )
+            num_patches = N // self.n_modalities + int(N % self.n_modalities > 0) + self.modis
+            q_ = self.q_learned.expand(B, num_patches, -1) + self.pos_embed.expand(B, -1, -1)
         else:
             num_patches = mask.shape[1] + 1
             mask_pos = mask.unsqueeze(-1).repeat(1, 1, self.pos_embed.shape[-1])
@@ -769,21 +699,11 @@ class CrossAttention(nn.Module):
             )
             pos_embed = torch.cat([pos_embed[:, :1], masked_pos_embed], dim=1)
             q_ = self.q_learned.expand(B, num_patches, -1) + pos_embed
-        q = q_.reshape(B, num_patches, self.num_heads, C // self.num_heads).permute(
-            0, 2, 1, 3
-        )
+        q = q_.reshape(B, num_patches, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         # BNC -> BNH(C/H) -> BHN(C/H)
-        k = (
-            self.wk(x)
-            .reshape(B, N, self.num_heads, C // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        k = self.wk(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
         # BNC -> BNH(C/H) -> BHN(C/H)
-        v = (
-            self.wv(x)
-            .reshape(B, N, self.num_heads, C // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        v = self.wv(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
 
         attn = (q @ k.transpose(-2, -1)) * self.scale  # BH1(C/H) @ BH(C/H)N -> BH1N
 
@@ -799,7 +719,6 @@ class CrossAttention(nn.Module):
 
 
 class CrossBlock(nn.Module):
-
     def __init__(
         self,
         dim,

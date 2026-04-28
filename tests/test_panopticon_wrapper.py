@@ -1,9 +1,9 @@
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
 from aitlas.models import Panopticon
 

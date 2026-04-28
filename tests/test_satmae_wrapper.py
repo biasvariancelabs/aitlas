@@ -1,9 +1,8 @@
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
 from aitlas.models import SatMAE
 from aitlas.models.SatMAE import (
@@ -99,9 +98,7 @@ def config_temporal(dummy_temporal_checkpoint):
 def test_instantiation_standard(config_standard):
     """Tests instantiation for the standard (RGB) backbone."""
     model = SatMAE(config_standard)
-    assert isinstance(model, SatMAE) and isinstance(
-        model.backbone, MaskedAutoencoderViT
-    )
+    assert isinstance(model, SatMAE) and isinstance(model.backbone, MaskedAutoencoderViT)
 
 
 def test_instantiation_multispectral(config_multispectral):
@@ -115,9 +112,7 @@ def test_instantiation_multispectral(config_multispectral):
 def test_instantiation_temporal(config_temporal):
     """Tests that the temporal backbone can be instantiated (error is raised on forward pass)."""
     model = SatMAE(config_temporal)
-    assert isinstance(model, SatMAE) and isinstance(
-        model.backbone, MaskedAutoencoderTemporalViT
-    )
+    assert isinstance(model, SatMAE) and isinstance(model.backbone, MaskedAutoencoderTemporalViT)
 
 
 # Forward pass tests

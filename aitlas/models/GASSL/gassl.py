@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import torch
-import torch.nn as nn
-import torchvision.models as models
+from torch import nn
+from torchvision import models
 
 
 class MoCo(nn.Module):
@@ -37,9 +37,7 @@ class MoCo(nn.Module):
                 nn.Linear(dim_mlp, dim_mlp), nn.ReLU(), self.encoder_k.fc
             )
 
-        for param_q, param_k in zip(
-            self.encoder_q.parameters(), self.encoder_k.parameters()
-        ):
+        for param_q, param_k in zip(self.encoder_q.parameters(), self.encoder_k.parameters()):
             param_k.data.copy_(param_q.data)  # initialize
             param_k.requires_grad = False  # not update by gradient
 
@@ -54,9 +52,7 @@ class MoCo(nn.Module):
         """
         Momentum update of the key encoder
         """
-        for param_q, param_k in zip(
-            self.encoder_q.parameters(), self.encoder_k.parameters()
-        ):
+        for param_q, param_k in zip(self.encoder_q.parameters(), self.encoder_k.parameters()):
             param_k.data = param_k.data * self.m + param_q.data * (1.0 - self.m)
 
     @torch.no_grad()
@@ -177,9 +173,7 @@ def concat_all_gather(tensor):
     Performs all_gather operation on the provided tensors.
     *** Warning ***: torch.distributed.all_gather has no gradient.
     """
-    tensors_gather = [
-        torch.ones_like(tensor) for _ in range(torch.distributed.get_world_size())
-    ]
+    tensors_gather = [torch.ones_like(tensor) for _ in range(torch.distributed.get_world_size())]
     torch.distributed.all_gather(tensors_gather, tensor, async_op=False)
 
     output = torch.cat(tensors_gather, dim=0)
@@ -187,9 +181,7 @@ def concat_all_gather(tensor):
 
 
 def moco_resnet50_model(**kwargs):
-    model = MoCo(
-        base_encoder=models.resnet50, dim=128, K=65536, m=0.999, T=0.07, mlp=True
-    )
+    model = MoCo(base_encoder=models.resnet50, dim=128, K=65536, m=0.999, T=0.07, mlp=True)
     return model
 
 

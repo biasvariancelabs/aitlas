@@ -13,7 +13,6 @@ detection of new anomalies through unsupervised learning (unlabeled data). It co
 
 
 class S1NewAnomaliesDataset(ClusteringDataset):
-
     url = "https://zenodo.org/records/13789234"
     name = "S1 New Anomalies dataset"
     schema = ClusteringDatasetSchema

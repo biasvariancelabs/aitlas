@@ -7,9 +7,7 @@ from aitlas.models.registries import ADAPTER_REGISTRY
 @ADAPTER_REGISTRY.register("AnySatAdapter")
 class AnySatAdapter(BaseInputAdapter):
     def forward(self, x):
-
         if isinstance(x, torch.Tensor):
-
             # Replace NaNs and Infs
             x = torch.nan_to_num(x, nan=0.0, posinf=0.0, neginf=0.0)
 
@@ -109,9 +107,7 @@ class AnySatAdapter(BaseInputAdapter):
 
             if has_s2:
                 # Slice -> unsqueeze temporal dim -> (B, 1, 10, H, W), where T=1
-                x_dict["s2"] = x[:, current_idx : current_idx + num_s2, ...].unsqueeze(
-                    1
-                )
+                x_dict["s2"] = x[:, current_idx : current_idx + num_s2, ...].unsqueeze(1)
                 # Complementary dates tensor -> Shape: (B, 1)
                 x_dict["s2_dates"] = torch.zeros(
                     (batch_size, 1), dtype=torch.float32, device=x.device
@@ -120,9 +116,7 @@ class AnySatAdapter(BaseInputAdapter):
 
             if has_l8:
                 # Slice -> Unsqueeze temporal dim -> (B, 1, 11, H, W), where T=1
-                x_dict["l8"] = x[:, current_idx : current_idx + num_l8, ...].unsqueeze(
-                    1
-                )
+                x_dict["l8"] = x[:, current_idx : current_idx + num_l8, ...].unsqueeze(1)
                 # Complementary dates tensor -> Shape: (B, 1)
                 x_dict["l8_dates"] = torch.zeros(
                     (batch_size, 1), dtype=torch.float32, device=x.device

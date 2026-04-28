@@ -4,9 +4,9 @@ import math
 import warnings
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from einops import einsum, rearrange, repeat
+from torch import nn
 
 from ..base import BaseChangeDetection
 
@@ -23,9 +23,7 @@ class RMSNorm(nn.Module):
         self.weight = nn.Parameter(torch.ones(d_model))
 
     def forward(self, x):
-        output = (
-            x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps) * self.weight
-        )
+        output = x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps) * self.weight
         return output
 
 
@@ -135,9 +133,7 @@ class MambaBlock_CD(nn.Module):
         )
         return y
 
-    def selective_scan(
-        self, t1, t2, delta, delta_prim, A, B, C, D, A_prim, B_prim, C_prim, D_prim
-    ):
+    def selective_scan(self, t1, t2, delta, delta_prim, A, B, C, D, A_prim, B_prim, C_prim, D_prim):
         """
         Perform the discrete selective scan.
 
@@ -160,12 +156,8 @@ class MambaBlock_CD(nn.Module):
         deltaA = torch.exp(einsum(delta, A, "b l d_in, d_in n -> b l d_in n"))
         deltaB_u = einsum(delta, B, t1, "b l d_in, b l n, b l d_in -> b l d_in n")
 
-        deltaA_prim = torch.exp(
-            einsum(delta_prim, A_prim, "b l d_in, d_in n -> b l d_in n")
-        )
-        deltaB_u_prim = einsum(
-            delta_prim, B_prim, t2, "b l d_in, b l n, b l d_in -> b l d_in n"
-        )
+        deltaA_prim = torch.exp(einsum(delta_prim, A_prim, "b l d_in, d_in n -> b l d_in n"))
+        deltaB_u_prim = einsum(delta_prim, B_prim, t2, "b l d_in, b l n, b l d_in -> b l d_in n")
 
         # --- Scan 1 (Pre-Change representation) ---
         x = torch.zeros((b, d_in, n), device=deltaA.device)
@@ -272,9 +264,7 @@ class CSSMModel(nn.Module):
         feature_size = img_size // 16
         mamba_d_model = feature_size * feature_size
 
-        self.mamba = MambaCSSM(
-            num_layers=4, d_model=mamba_d_model, d_conv=4, d_state=16
-        )
+        self.mamba = MambaCSSM(num_layers=4, d_model=mamba_d_model, d_conv=4, d_state=16)
 
         # --- Decoder Deconv ---
         self.mpu_block_4 = nn.MaxUnpool2d(2, 2)

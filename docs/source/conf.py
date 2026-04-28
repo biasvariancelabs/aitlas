@@ -6,12 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 import os
-import shutil
 import sys
-from collections import defaultdict
-from typing import Any, Dict, Optional
-
-import sphinx.ext.autodoc
 
 
 sys.path.insert(0, os.path.abspath("../../aitlas"))
@@ -53,7 +48,6 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
-#
 autosummary_generate = True
 
 # Include typehints in descriptions

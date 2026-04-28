@@ -25,14 +25,13 @@ def load_transforms(class_names, config):
         args = TRANSFORMS_PARAMS.get(name, None)  # get params, if specified
         if args:
             transfrm = cls(args)
+        elif getattr(cls, "configurables", None):
+            kwargs = {}
+            for key in cls.configurables:
+                kwargs[key] = getattr(config, key)
+            transfrm = cls(**kwargs)
         else:
-            if getattr(cls, "configurables", None):
-                kwargs = {}
-                for key in cls.configurables:
-                    kwargs[key] = getattr(config, key)
-                transfrm = cls(**kwargs)
-            else:
-                transfrm = cls()
+            transfrm = cls()
 
         lst_transforms.append(transfrm)
 

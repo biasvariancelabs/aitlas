@@ -5,9 +5,9 @@ import warnings
 from functools import partial
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+from torch import nn
 
 # Assuming BaseChangeDetection is available in your environment
 from ..base import BaseChangeDetection
@@ -168,9 +168,7 @@ class Attention(nn.Module):
         sr_ratio=1,
     ):
         super().__init__()
-        assert (
-            dim % num_heads == 0
-        ), f"dim {dim} should be divided by num_heads {num_heads}."
+        assert dim % num_heads == 0, f"dim {dim} should be divided by num_heads {num_heads}."
 
         self.dim = dim
         self.num_heads = num_heads
@@ -207,11 +205,7 @@ class Attention(nn.Module):
 
     def forward(self, x, H, W):
         B, N, C = x.shape
-        q = (
-            self.q(x)
-            .reshape(B, N, self.num_heads, C // self.num_heads)
-            .permute(0, 2, 1, 3)
-        )
+        q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
 
         if self.sr_ratio > 1:
             x_ = x.permute(0, 2, 1).reshape(B, C, H, W)
@@ -597,9 +591,7 @@ class DecoderTransformer_v3(nn.Module):
         self.in_channels = in_channels
         self.embedding_dim = embedding_dim
         self.output_nc = output_nc
-        c1_in_channels, c2_in_channels, c3_in_channels, c4_in_channels = (
-            self.in_channels
-        )
+        c1_in_channels, c2_in_channels, c3_in_channels, c4_in_channels = self.in_channels
 
         # MLP decoder heads
         self.linear_c4 = MLP(input_dim=c4_in_channels, embed_dim=self.embedding_dim)
@@ -697,32 +689,16 @@ class DecoderTransformer_v3(nn.Module):
 
         # outputs = []
         # Stage 4: x1/32 scale
-        _c4_1 = (
-            self.linear_c4(c4_1)
-            .permute(0, 2, 1)
-            .reshape(n, -1, c4_1.shape[2], c4_1.shape[3])
-        )
-        _c4_2 = (
-            self.linear_c4(c4_2)
-            .permute(0, 2, 1)
-            .reshape(n, -1, c4_2.shape[2], c4_2.shape[3])
-        )
+        _c4_1 = self.linear_c4(c4_1).permute(0, 2, 1).reshape(n, -1, c4_1.shape[2], c4_1.shape[3])
+        _c4_2 = self.linear_c4(c4_2).permute(0, 2, 1).reshape(n, -1, c4_2.shape[2], c4_2.shape[3])
         _c4 = self.diff_c4(torch.cat((_c4_1, _c4_2), dim=1))
         # p_c4 = self.make_pred_c4(_c4)
         # outputs.append(p_c4)
         _c4_up = resize(_c4, size=c1_2.size()[2:], mode="bilinear", align_corners=False)
 
         # Stage 3: x1/16 scale
-        _c3_1 = (
-            self.linear_c3(c3_1)
-            .permute(0, 2, 1)
-            .reshape(n, -1, c3_1.shape[2], c3_1.shape[3])
-        )
-        _c3_2 = (
-            self.linear_c3(c3_2)
-            .permute(0, 2, 1)
-            .reshape(n, -1, c3_2.shape[2], c3_2.shape[3])
-        )
+        _c3_1 = self.linear_c3(c3_1).permute(0, 2, 1).reshape(n, -1, c3_1.shape[2], c3_1.shape[3])
+        _c3_2 = self.linear_c3(c3_2).permute(0, 2, 1).reshape(n, -1, c3_2.shape[2], c3_2.shape[3])
         _c3 = self.diff_c3(torch.cat((_c3_1, _c3_2), dim=1)) + F.interpolate(
             _c4, scale_factor=2, mode="bilinear"
         )
@@ -731,16 +707,8 @@ class DecoderTransformer_v3(nn.Module):
         _c3_up = resize(_c3, size=c1_2.size()[2:], mode="bilinear", align_corners=False)
 
         # Stage 2: x1/8 scale
-        _c2_1 = (
-            self.linear_c2(c2_1)
-            .permute(0, 2, 1)
-            .reshape(n, -1, c2_1.shape[2], c2_1.shape[3])
-        )
-        _c2_2 = (
-            self.linear_c2(c2_2)
-            .permute(0, 2, 1)
-            .reshape(n, -1, c2_2.shape[2], c2_2.shape[3])
-        )
+        _c2_1 = self.linear_c2(c2_1).permute(0, 2, 1).reshape(n, -1, c2_1.shape[2], c2_1.shape[3])
+        _c2_2 = self.linear_c2(c2_2).permute(0, 2, 1).reshape(n, -1, c2_2.shape[2], c2_2.shape[3])
         _c2 = self.diff_c2(torch.cat((_c2_1, _c2_2), dim=1)) + F.interpolate(
             _c3, scale_factor=2, mode="bilinear"
         )
@@ -749,16 +717,8 @@ class DecoderTransformer_v3(nn.Module):
         _c2_up = resize(_c2, size=c1_2.size()[2:], mode="bilinear", align_corners=False)
 
         # Stage 1: x1/4 scale
-        _c1_1 = (
-            self.linear_c1(c1_1)
-            .permute(0, 2, 1)
-            .reshape(n, -1, c1_1.shape[2], c1_1.shape[3])
-        )
-        _c1_2 = (
-            self.linear_c1(c1_2)
-            .permute(0, 2, 1)
-            .reshape(n, -1, c1_2.shape[2], c1_2.shape[3])
-        )
+        _c1_1 = self.linear_c1(c1_1).permute(0, 2, 1).reshape(n, -1, c1_1.shape[2], c1_1.shape[3])
+        _c1_2 = self.linear_c1(c1_2).permute(0, 2, 1).reshape(n, -1, c1_2.shape[2], c1_2.shape[3])
         _c1 = self.diff_c1(torch.cat((_c1_1, _c1_2), dim=1)) + F.interpolate(
             _c2, scale_factor=2, mode="bilinear"
         )

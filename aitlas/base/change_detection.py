@@ -8,8 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import segmentation_models_pytorch as smp
 import torch
-import torch.nn as nn
-import torch.optim as optim
+from torch import nn, optim
 from tqdm import tqdm
 
 from .metrics import SegmentationRunningScore
@@ -56,9 +55,7 @@ class CombinedFocalDiceLoss(nn.Module):
 class BaseChangeDetection(BaseModel):
     """Base class for a change detection model."""
 
-    schema = (
-        BaseSegmentationClassifierSchema  # Can reuse the segmentation schema for now
-    )
+    schema = BaseSegmentationClassifierSchema  # Can reuse the segmentation schema for now
 
     def __init__(self, config):
         super().__init__(config)
@@ -134,9 +131,7 @@ class BaseChangeDetection(BaseModel):
             running_items += image1.size(0)
             total_loss += loss.item() * image1.size(0)
             if i % iterations_log == iterations_log - 1:
-                logging.info(
-                    f"[{epoch + 1}, {i + 1}], loss: {running_loss / running_items : .5f}"
-                )
+                logging.info(f"[{epoch + 1}, {i + 1}], loss: {running_loss / running_items: .5f}")
                 running_loss = 0.0
                 running_items = 0
 
@@ -182,9 +177,7 @@ class BaseChangeDetection(BaseModel):
         # initialize loss if applicable
         total_loss = 0.0
 
-        for inputs, outputs, labels in self.predict_output_per_batch(
-            dataloader, description
-        ):
+        for inputs, outputs, labels in self.predict_output_per_batch(dataloader, description):
             image1, image2 = inputs
             if criterion:
                 batch_loss = criterion(outputs, labels)
@@ -244,16 +237,12 @@ class BaseChangeDetection(BaseModel):
         if torch.is_tensor(image1):
             inputs1 = image1.unsqueeze(0).to(self.device)
         else:
-            inputs1 = (
-                torch.from_numpy(image1.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
-            )
+            inputs1 = torch.from_numpy(image1.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
 
         if torch.is_tensor(image2):
             inputs2 = image2.unsqueeze(0).to(self.device)
         else:
-            inputs2 = (
-                torch.from_numpy(image2.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
-            )
+            inputs2 = torch.from_numpy(image2.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
             with torch.amp.autocast("cuda", enabled=self.use_amp):
@@ -267,9 +256,7 @@ class BaseChangeDetection(BaseModel):
         predicted = list(predicted.cpu().detach().numpy())
 
         """Display image pair and predicted masks from model"""
-        fig = plt.figure(
-            figsize=(15, 7)
-        )  # Adjust figsize for three plots (image1, image2, mask)
+        fig = plt.figure(figsize=(15, 7))  # Adjust figsize for three plots (image1, image2, mask)
 
         # Plot pre-event image
         plt.subplot(1, len(labels) + 2, 1)  # +2 for image1, image2, then labels
@@ -288,9 +275,7 @@ class BaseChangeDetection(BaseModel):
             plt.subplot(
                 1, len(labels) + 2, i + 3
             )  # Offset by 3 for image1, image2, and 1-based indexing
-            plt.imshow(
-                predicted[0][i].astype(np.uint8) * 255, cmap="gray", vmin=0, vmax=255
-            )
+            plt.imshow(predicted[0][i].astype(np.uint8) * 255, cmap="gray", vmin=0, vmax=255)
             plt.title(labels[i])
             plt.axis("off")
 
@@ -302,9 +287,7 @@ class BaseChangeDetection(BaseModel):
     def get_predicted(self, outputs, threshold=None):
         """Get predicted classes from the model outputs."""
         predicted_probs = torch.sigmoid(outputs)
-        predicted = (
-            predicted_probs >= (threshold if threshold else self.config.threshold)
-        ).long()
+        predicted = (predicted_probs >= (threshold if threshold else self.config.threshold)).long()
         return predicted_probs, predicted
 
     def load_optimizer(self):

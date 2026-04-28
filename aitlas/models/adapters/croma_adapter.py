@@ -59,9 +59,7 @@ class CROMAAdapter(BaseInputAdapter):
 
             else:
                 expected_channels = (
-                    (num_s1 + num_s2)
-                    if (has_s1 and has_s2)
-                    else (num_s1 if has_s1 else num_s2)
+                    (num_s1 + num_s2) if (has_s1 and has_s2) else (num_s1 if has_s1 else num_s2)
                 )
                 raise ValueError(
                     f"Config expects {'S1 + S2' if has_s1 and has_s2 else 'S1' if has_s1 else 'S2'} "

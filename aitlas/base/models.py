@@ -8,12 +8,12 @@ import logging
 import os
 from shutil import copyfile
 
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
+from matplotlib import patches
+from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
@@ -61,9 +61,7 @@ class EarlyStopping:
             self.counter = 0
         elif self.best_loss - val_loss < self.min_delta:
             self.counter += 1
-            logging.info(
-                f"INFO: Early stopping counter {self.counter} of {self.patience}"
-            )
+            logging.info(f"INFO: Early stopping counter {self.counter} of {self.patience}")
             if self.counter >= self.patience:
                 logging.info("INFO: Early stopping")
                 self.early_stop = True
@@ -98,9 +96,7 @@ class BaseModel(nn.Module, Configurable):
         self.metrics = self.config.metrics
         self.num_classes = self.config.num_classes
         self.weights = (
-            torch.tensor(self.config.weights, dtype=torch.float32)
-            if self.config.weights
-            else None
+            torch.tensor(self.config.weights, dtype=torch.float32) if self.config.weights else None
         )
 
         # Auto-detect if AMP is beneficial
@@ -191,9 +187,7 @@ class BaseModel(nn.Module, Configurable):
 
         # load the model if needs to resume training
         if resume_model:
-            start_epoch, loss, start, run_id = self.load_model(
-                resume_model, self.optimizer
-            )
+            start_epoch, loss, start, run_id = self.load_model(resume_model, self.optimizer)
 
         # allocate device
         self.allocate_device()
@@ -218,9 +212,7 @@ class BaseModel(nn.Module, Configurable):
 
             self.writer.add_scalar("Loss/train", loss, epoch + 1)
             if epoch % save_epochs == 0:
-                self.save_model(
-                    model_directory, epoch, self.optimizer, loss, start, run_id
-                )
+                self.save_model(model_directory, epoch, self.optimizer, loss, start, run_id)
 
             # evaluate against the train set based on the specified frequency
             if (epoch + 1) % self.config.evaluate_train_every_n_epochs == 0:
@@ -286,11 +278,10 @@ class BaseModel(nn.Module, Configurable):
                         break
 
                     self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
-            else:
-                if self.lr_scheduler and not isinstance(
-                    self.lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
-                ):
-                    self.lr_scheduler.step()
+            elif self.lr_scheduler and not isinstance(
+                self.lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
+            ):
+                self.lr_scheduler.step()
 
         self.writer.close()
 
@@ -378,19 +369,13 @@ class BaseModel(nn.Module, Configurable):
             running_items += inputs.size(0)
             total_loss += loss.item() * inputs.size(0)
 
-            if (
-                i % iterations_log == iterations_log - 1
-            ):  # print every iterations_log mini-batches
-                logging.info(
-                    f"[{epoch + 1}, {i + 1}], loss: {running_loss / running_items : .5f}"
-                )
+            if i % iterations_log == iterations_log - 1:  # print every iterations_log mini-batches
+                logging.info(f"[{epoch + 1}, {i + 1}], loss: {running_loss / running_items: .5f}")
                 running_loss = 0.0
                 running_items = 0
 
         total_loss = total_loss / len(dataloader.dataset)
-        logging.info(
-            f"epoch: {epoch + 1}, time: {current_ts() - start}, loss: {total_loss: .5f}"
-        )
+        logging.info(f"epoch: {epoch + 1}, time: {current_ts() - start}, loss: {total_loss: .5f}")
         return total_loss
 
     def evaluate(
@@ -435,9 +420,7 @@ class BaseModel(nn.Module, Configurable):
         # initialize loss if applicable
         total_loss = 0.0
 
-        for inputs, outputs, labels in self.predict_output_per_batch(
-            dataloader, description
-        ):
+        for inputs, outputs, labels in self.predict_output_per_batch(dataloader, description):
             if criterion:
                 batch_loss = criterion(outputs, labels)
                 total_loss += batch_loss.item() * inputs.size(0)
@@ -570,9 +553,7 @@ class BaseModel(nn.Module, Configurable):
         if torch.is_tensor(image):
             inputs = image.unsqueeze(0).to(self.device)
         else:
-            inputs = (
-                torch.from_numpy(image.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
-            )
+            inputs = torch.from_numpy(image.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
             with torch.amp.autocast("cuda", enabled=self.use_amp):
@@ -605,9 +586,7 @@ class BaseModel(nn.Module, Configurable):
         # plot masks
         for i in range(len(labels)):
             plt.subplot(1, len(labels) + 1, i + 2)
-            plt.imshow(
-                predicted[0][i].astype(np.uint8) * 255, cmap="gray", vmin=0, vmax=255
-            )
+            plt.imshow(predicted[0][i].astype(np.uint8) * 255, cmap="gray", vmin=0, vmax=255)
             plt.title(labels[i])
             plt.axis("off")
 
@@ -639,12 +618,7 @@ class BaseModel(nn.Module, Configurable):
         if torch.is_tensor(image):
             inputs = image.unsqueeze(0).to(self.device)
         else:
-            inputs = (
-                torch.from_numpy(image)
-                .type(torch.FloatTensor)
-                .unsqueeze(0)
-                .to(self.device)
-            )
+            inputs = torch.from_numpy(image).type(torch.FloatTensor).unsqueeze(0).to(self.device)
 
         outputs = self(inputs)
 
@@ -727,7 +701,7 @@ class BaseModel(nn.Module, Configurable):
             for cm in calculated_metrics:
                 for key in cm:
                     metric = cm[key]
-                    if isinstance(metric, list) or isinstance(metric, np.ndarray):
+                    if isinstance(metric, list | np.ndarray):
                         for i, sub in enumerate(metric):
                             writer.add_scalar(f"{key}/{labels[i]}/{tag}", sub, epoch)
                     else:
@@ -744,9 +718,7 @@ class BaseModel(nn.Module, Configurable):
         if self.criterion:
             self.criterion = self.criterion.to(self.device)
         if self.config.use_ddp:
-            self.model = nn.parallel.DistributedDataParallel(
-                self.model, device_ids=[self.device]
-            )
+            self.model = nn.parallel.DistributedDataParallel(self.model, device_ids=[self.device])
         return self.model
 
     def save_model(self, model_directory, epoch, optimizer, loss, start, run_id):
@@ -766,9 +738,7 @@ class BaseModel(nn.Module, Configurable):
             os.makedirs(os.path.join(model_directory, run_id))
 
         timestamp = current_ts()
-        checkpoint = os.path.join(
-            model_directory, run_id, f"checkpoint_{timestamp}.pth.tar"
-        )
+        checkpoint = os.path.join(model_directory, run_id, f"checkpoint_{timestamp}.pth.tar")
 
         # create timestamped checkpoint
         torch.save(
@@ -784,9 +754,7 @@ class BaseModel(nn.Module, Configurable):
                     "best_loss": self.early_stopping.best_loss,
                     "early_stop": self.early_stopping.early_stop,
                 },
-                "lr_scheduler": (
-                    self.lr_scheduler.state_dict() if self.lr_scheduler else None
-                ),
+                "lr_scheduler": (self.lr_scheduler.state_dict() if self.lr_scheduler else None),
             },
             checkpoint,
         )
@@ -807,9 +775,7 @@ class BaseModel(nn.Module, Configurable):
         """Loads a model from a checkpoint"""
         if os.path.isfile(file_path):
             logging.info(f"Loading checkpoint {file_path}")
-            checkpoint = torch.load(
-                file_path, map_location=self.device
-            )  # Can be either CPU or GPU
+            checkpoint = torch.load(file_path, map_location=self.device)  # Can be either CPU or GPU
 
             if "state_dict" in checkpoint:
                 self.model.load_state_dict(checkpoint["state_dict"], strict=False)
@@ -839,9 +805,7 @@ class BaseModel(nn.Module, Configurable):
                 # Reset counter if early stopping was triggered, otherwise restore it
                 if es_state.get("early_stop", False):
                     self.early_stopping.counter = 0
-                    logging.info(
-                        "Early stopping was triggered in previous run - resetting counter"
-                    )
+                    logging.info("Early stopping was triggered in previous run - resetting counter")
                 else:
                     self.early_stopping.counter = es_state.get("counter", 0)
 
@@ -867,9 +831,7 @@ class BaseModel(nn.Module, Configurable):
         raise NotImplementedError("Please implement `load_criterion` for your model. ")
 
     def load_lr_scheduler(self, optimizer):
-        raise NotImplementedError(
-            "Please implement `load_lr_scheduler` for your model. "
-        )
+        raise NotImplementedError("Please implement `load_lr_scheduler` for your model. ")
 
     def train_model(
         self,

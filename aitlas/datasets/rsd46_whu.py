@@ -56,7 +56,6 @@ LABELS = [
 
 
 class RSD46WHUDataset(MultiClassClassificationDataset):
-
     url = "https://github.com/RSIA-LIESMARS-WHU/RSD46-WHU"
     labels = LABELS
 
@@ -75,9 +74,7 @@ class RSD46WHUDataset(MultiClassClassificationDataset):
             tuple: (image, target) where target is index of the target class.
         """
         # load image
-        img = np.asarray(
-            Image.fromarray(image_loader(self.data[index][0])).convert("RGB")
-        )
+        img = np.asarray(Image.fromarray(image_loader(self.data[index][0])).convert("RGB"))
 
         # apply transformations
         if self.transform:

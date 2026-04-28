@@ -3,7 +3,6 @@ import os
 import urllib
 
 import h5py
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from eolearn.core import EOPatch, FeatureType
@@ -32,13 +31,9 @@ def download_file(url, output_path, overwrite=False):
         with DownloadProgressBar(
             unit="B", unit_scale=True, miniters=1, desc=url.split("/")[-1]
         ) as t:
-            urllib.request.urlretrieve(
-                url, filename=output_path, reporthook=t.update_to
-            )
+            urllib.request.urlretrieve(url, filename=output_path, reporthook=t.update_to)
     else:
-        logging.info(
-            f"file exists in {output_path}. specify overwrite=True if intended"
-        )
+        logging.info(f"file exists in {output_path}. specify overwrite=True if intended")
 
 
 BANDS = ["B3", "B4", "B5", "B6", "B7", "B8", "B11", "B12", "NDVI", "NDWI", "Brightness"]
@@ -83,9 +78,7 @@ class EOPatchCrops(CropsDataset):
 
     def preprocess(self):
         self.eopatches = [
-            f.name
-            for f in os.scandir(os.path.join(self.root, "eopatches"))
-            if f.is_dir()
+            f.name for f in os.scandir(os.path.join(self.root, "eopatches")) if f.is_dir()
         ]
         self.indexfile = os.path.join(self.root, "index.csv")
         columns = [
@@ -156,9 +149,7 @@ class EOPatchCrops(CropsDataset):
                 polygon_indicator_mask_ts = np.repeat(
                     polygon_indicator_mask[np.newaxis, :, :, :], seq_length, axis=0
                 )
-                polygon_indicator_mask_ts = np.repeat(
-                    polygon_indicator_mask_ts, num_bands, axis=3
-                )
+                polygon_indicator_mask_ts = np.repeat(polygon_indicator_mask_ts, num_bands, axis=3)
 
                 temp_X = np.sum(
                     np.multiply(polygon_indicator_mask_ts, eop.data["FEATURES_S2"]),

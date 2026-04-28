@@ -73,10 +73,7 @@ class BCL(nn.Module):
         loss_1 = torch.sum((1 + label) / 2 * torch.pow(distance, 2)) / pos_num
         loss_2 = (
             torch.sum(
-                (1 - label)
-                / 2
-                * mask
-                * torch.pow(torch.clamp(self.margin - distance, min=0.0), 2)
+                (1 - label) / 2 * mask * torch.pow(torch.clamp(self.margin - distance, min=0.0), 2)
             )
             / neg_num
         )

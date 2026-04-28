@@ -5,9 +5,9 @@ import math
 from typing import List, Optional
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from scipy.optimize import linear_sum_assignment
+from torch import nn
 from torch.hub import load_state_dict_from_url
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 from torchvision.ops import MultiScaleRoIAlign
@@ -143,9 +143,7 @@ def nested_tensor_from_tensor_list(tensor_list: List[torch.Tensor]):
     return NestedTensor(tensor, mask)
 
 
-def sigmoid_focal_loss(
-    inputs, targets, num_boxes, alpha: float = 0.25, gamma: float = 2.0
-):
+def sigmoid_focal_loss(inputs, targets, num_boxes, alpha: float = 0.25, gamma: float = 2.0):
     """
     Standard PyTorch focal loss implementation
     """
@@ -173,9 +171,7 @@ class DynamicConv(nn.Module):
         self.dim_dynamic = dim_dynamic
         self.num_dynamic = num_dynamic
         self.num_params = self.hidden_dim * self.dim_dynamic
-        self.dynamic_layer = nn.Linear(
-            self.hidden_dim, self.num_dynamic * self.num_params
-        )
+        self.dynamic_layer = nn.Linear(self.hidden_dim, self.num_dynamic * self.num_params)
 
         self.norm1 = nn.LayerNorm(self.dim_dynamic)
         self.norm2 = nn.LayerNorm(self.hidden_dim)
@@ -194,12 +190,8 @@ class DynamicConv(nn.Module):
         features = roi_features.permute(1, 0, 2)
         parameters = self.dynamic_layer(pro_features).permute(1, 0, 2)
 
-        param1 = parameters[:, :, : self.num_params].view(
-            -1, self.hidden_dim, self.dim_dynamic
-        )
-        param2 = parameters[:, :, self.num_params :].view(
-            -1, self.dim_dynamic, self.hidden_dim
-        )
+        param1 = parameters[:, :, : self.num_params].view(-1, self.hidden_dim, self.dim_dynamic)
+        param2 = parameters[:, :, self.num_params :].view(-1, self.dim_dynamic, self.hidden_dim)
 
         features = torch.bmm(features, param1)
         features = self.norm1(features)
@@ -238,9 +230,7 @@ class RCNNHead(nn.Module):
 
         # Dynamic
         self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
-        self.inst_interact = DynamicConv(
-            d_model, dim_dynamic, num_dynamic, pooler_resolution
-        )
+        self.inst_interact = DynamicConv(d_model, dim_dynamic, num_dynamic, pooler_resolution)
 
         self.linear1 = nn.Linear(d_model, dim_feedforward)
         self.dropout = nn.Dropout(dropout)
@@ -283,15 +273,11 @@ class RCNNHead(nn.Module):
         # roi_feature (Standard Torchvision RoI Pooler Interface)
         proposal_boxes = list(bboxes)
         roi_features = pooler(features, proposal_boxes, image_shapes)
-        roi_features = roi_features.view(N * nr_boxes, self.d_model, -1).permute(
-            2, 0, 1
-        )
+        roi_features = roi_features.view(N * nr_boxes, self.d_model, -1).permute(2, 0, 1)
 
         # self_att
         pro_features = pro_features.view(N, nr_boxes, self.d_model).permute(1, 0, 2)
-        pro_features2 = self.self_attn(pro_features, pro_features, value=pro_features)[
-            0
-        ]
+        pro_features2 = self.self_attn(pro_features, pro_features, value=pro_features)[0]
         pro_features = pro_features + self.dropout1(pro_features2)
         pro_features = self.norm1(pro_features)
 
@@ -306,9 +292,7 @@ class RCNNHead(nn.Module):
         obj_features = self.norm2(pro_features)
 
         # obj_feature
-        obj_features2 = self.linear2(
-            self.dropout(self.activation(self.linear1(obj_features)))
-        )
+        obj_features2 = self.linear2(self.dropout(self.activation(self.linear1(obj_features))))
         obj_features = obj_features + self.dropout3(obj_features2)
         obj_features = self.norm3(obj_features)
 
@@ -477,16 +461,12 @@ class HungarianMatcher(nn.Module):
 
         alpha = self.focal_alpha
         gamma = self.focal_gamma
-        neg_cost_class = (
-            (1 - alpha) * (out_prob**gamma) * (-(1 - out_prob + 1e-8).log())
-        )
+        neg_cost_class = (1 - alpha) * (out_prob**gamma) * (-(1 - out_prob + 1e-8).log())
         pos_cost_class = alpha * ((1 - out_prob) ** gamma) * (-(out_prob + 1e-8).log())
         cost_class = pos_cost_class[:, tgt_ids] - neg_cost_class[:, tgt_ids]
 
         image_size_out = torch.cat([v["image_size_xyxy"].unsqueeze(0) for v in targets])
-        image_size_out = (
-            image_size_out.unsqueeze(1).repeat(1, num_queries, 1).flatten(0, 1)
-        )
+        image_size_out = image_size_out.unsqueeze(1).repeat(1, num_queries, 1).flatten(0, 1)
         image_size_tgt = torch.cat([v["image_size_xyxy_tgt"] for v in targets])
 
         out_bbox_ = out_bbox / image_size_out
@@ -500,17 +480,11 @@ class HungarianMatcher(nn.Module):
         cost_bbox = torch.nan_to_num(cost_bbox, nan=1.0, posinf=1.0, neginf=0.0)
         cost_giou = torch.nan_to_num(cost_giou, nan=1.0, posinf=1.0, neginf=-1.0)
 
-        C = (
-            self.cost_bbox * cost_bbox
-            + self.cost_class * cost_class
-            + self.cost_giou * cost_giou
-        )
+        C = self.cost_bbox * cost_bbox + self.cost_class * cost_class + self.cost_giou * cost_giou
         C = C.view(bs, num_queries, -1).cpu()
 
         sizes = [len(v["boxes"]) for v in targets]
-        indices = [
-            linear_sum_assignment(c[i]) for i, c in enumerate(C.split(sizes, -1))
-        ]
+        indices = [linear_sum_assignment(c[i]) for i, c in enumerate(C.split(sizes, -1))]
         return [
             (
                 torch.as_tensor(i, dtype=torch.int64),
@@ -541,9 +515,7 @@ class SetCriterion(nn.Module):
     def loss_labels(self, outputs, targets, indices, num_boxes):
         src_logits = outputs["pred_logits"]
         idx = self._get_src_permutation_idx(indices)
-        target_classes_o = torch.cat(
-            [t["labels"][J] for t, (_, J) in zip(targets, indices)]
-        )
+        target_classes_o = torch.cat([t["labels"][J] for t, (_, J) in zip(targets, indices)])
         target_classes = torch.full(
             src_logits.shape[:2],
             self.num_classes,
@@ -570,9 +542,7 @@ class SetCriterion(nn.Module):
     def loss_boxes(self, outputs, targets, indices, num_boxes):
         idx = self._get_src_permutation_idx(indices)
         src_boxes = outputs["pred_boxes"][idx]
-        target_boxes = torch.cat(
-            [t["boxes_xyxy"][i] for t, (_, i) in zip(targets, indices)], dim=0
-        )
+        target_boxes = torch.cat([t["boxes_xyxy"][i] for t, (_, i) in zip(targets, indices)], dim=0)
 
         losses = {}
         loss_giou = 1 - torch.diag(generalized_box_iou(src_boxes, target_boxes))
@@ -588,9 +558,7 @@ class SetCriterion(nn.Module):
         return losses
 
     def _get_src_permutation_idx(self, indices):
-        batch_idx = torch.cat(
-            [torch.full_like(src, i) for i, (src, _) in enumerate(indices)]
-        )
+        batch_idx = torch.cat([torch.full_like(src, i) for i, (src, _) in enumerate(indices)])
         src_idx = torch.cat([src for (src, _) in indices])
         return batch_idx, src_idx
 
@@ -616,9 +584,7 @@ class SetCriterion(nn.Module):
             for i, aux_outputs in enumerate(outputs["aux_outputs"]):
                 indices = self.matcher(aux_outputs, targets)
                 for loss in self.losses:
-                    l_dict = self.get_loss(
-                        loss, aux_outputs, targets, indices, num_boxes
-                    )
+                    l_dict = self.get_loss(loss, aux_outputs, targets, indices, num_boxes)
                     l_dict = {k + f"_{i}": v for k, v in l_dict.items()}
                     losses.update(l_dict)
 
@@ -735,7 +701,9 @@ class SparseRCNN(BaseObjectDetection):
 
         backbone_name = getattr(self.config, "backbone", "resnet50")
         pretrained = self.config.pretrained
-        model_url = "https://github.com/PeizeSun/SparseR-CNN/releases/download/v0.1/r50_300pro_3x_model.pth"
+        model_url = (
+            "https://github.com/PeizeSun/SparseR-CNN/releases/download/v0.1/r50_300pro_3x_model.pth"
+        )
 
         # Determine backbone initialization strategy
         if pretrained and not model_url:
@@ -744,9 +712,7 @@ class SparseRCNN(BaseObjectDetection):
             backbone_weights = None
 
         # 1. Build Backbone (using Torchvision standard FPN identical structurally)
-        backbone = resnet_fpn_backbone(
-            backbone_name=backbone_name, weights=backbone_weights
-        )
+        backbone = resnet_fpn_backbone(backbone_name=backbone_name, weights=backbone_weights)
 
         # 2. Initialize Main Sparse R-CNN Component
         self.model = SparseRCNNModel(
@@ -823,14 +789,12 @@ class SparseRCNN(BaseObjectDetection):
                 name = name.replace(
                     "backbone.bottom_up.stem.conv1.weight", "backbone.body.conv1.weight"
                 )
-                name = name.replace(
-                    "backbone.bottom_up.stem.conv1.norm", "backbone.body.bn1"
-                )
+                name = name.replace("backbone.bottom_up.stem.conv1.norm", "backbone.body.bn1")
 
                 # Layers mapping: res2, res3, res4, res5 -> layer1, layer2, layer3, layer4
                 for i in range(2, 6):
                     name = name.replace(
-                        f"backbone.bottom_up.res{i}.", f"backbone.body.layer{i-1}."
+                        f"backbone.bottom_up.res{i}.", f"backbone.body.layer{i - 1}."
                     )
 
                 # Detectron2 ResNet naming vs Torchvision
@@ -851,70 +815,40 @@ class SparseRCNN(BaseObjectDetection):
                 # Mapping: fpn_lateral -> inner_blocks.0.0, fpn_output -> layer_blocks.0.0
 
                 # fpn_lateral2,3,4,5 -> inner_blocks.0,1,2,3.0 (both are 1x1 convs)
-                name = name.replace(
-                    "backbone.fpn_lateral2", "backbone.fpn.inner_blocks.0.0"
-                )
-                name = name.replace(
-                    "backbone.fpn_lateral3", "backbone.fpn.inner_blocks.1.0"
-                )
-                name = name.replace(
-                    "backbone.fpn_lateral4", "backbone.fpn.inner_blocks.2.0"
-                )
-                name = name.replace(
-                    "backbone.fpn_lateral5", "backbone.fpn.inner_blocks.3.0"
-                )
+                name = name.replace("backbone.fpn_lateral2", "backbone.fpn.inner_blocks.0.0")
+                name = name.replace("backbone.fpn_lateral3", "backbone.fpn.inner_blocks.1.0")
+                name = name.replace("backbone.fpn_lateral4", "backbone.fpn.inner_blocks.2.0")
+                name = name.replace("backbone.fpn_lateral5", "backbone.fpn.inner_blocks.3.0")
 
                 # fpn_output2,3,4,5 -> layer_blocks.0,1,2,3.0 (both are 3x3 convs)
-                name = name.replace(
-                    "backbone.fpn_output2", "backbone.fpn.layer_blocks.0.0"
-                )
-                name = name.replace(
-                    "backbone.fpn_output3", "backbone.fpn.layer_blocks.1.0"
-                )
-                name = name.replace(
-                    "backbone.fpn_output4", "backbone.fpn.layer_blocks.2.0"
-                )
-                name = name.replace(
-                    "backbone.fpn_output5", "backbone.fpn.layer_blocks.3.0"
-                )
+                name = name.replace("backbone.fpn_output2", "backbone.fpn.layer_blocks.0.0")
+                name = name.replace("backbone.fpn_output3", "backbone.fpn.layer_blocks.1.0")
+                name = name.replace("backbone.fpn_output4", "backbone.fpn.layer_blocks.2.0")
+                name = name.replace("backbone.fpn_output5", "backbone.fpn.layer_blocks.3.0")
 
                 # Also handle fpn_inner* aliases (some checkpoints use this naming)
-                name = name.replace(
-                    "backbone.fpn_inner2", "backbone.fpn.inner_blocks.0.0"
-                )
-                name = name.replace(
-                    "backbone.fpn_inner3", "backbone.fpn.inner_blocks.1.0"
-                )
-                name = name.replace(
-                    "backbone.fpn_inner4", "backbone.fpn.inner_blocks.2.0"
-                )
-                name = name.replace(
-                    "backbone.fpn_inner5", "backbone.fpn.inner_blocks.3.0"
-                )
+                name = name.replace("backbone.fpn_inner2", "backbone.fpn.inner_blocks.0.0")
+                name = name.replace("backbone.fpn_inner3", "backbone.fpn.inner_blocks.1.0")
+                name = name.replace("backbone.fpn_inner4", "backbone.fpn.inner_blocks.2.0")
+                name = name.replace("backbone.fpn_inner5", "backbone.fpn.inner_blocks.3.0")
 
             # Map Heads - checkpoint already has "head." prefix, no mapping needed
             # The checkpoint uses: head.head_series.X.* which matches our structure
 
             # Filter: Skip first conv if in_channels != 3
             if in_channels != 3 and "backbone.body.conv1.weight" in name:
-                print(
-                    f"Skipping {name} due to input channel mismatch ({in_channels} vs 3)"
-                )
+                print(f"Skipping {name} due to input channel mismatch ({in_channels} vs 3)")
                 continue
 
             # Filter: Skip class-specific weights if num_classes != 80 (COCO)
             if self.num_classes != 80 and "class_logits" in name:
-                print(
-                    f"Skipping {name} due to class count mismatch ({self.num_classes} vs 80)"
-                )
+                print(f"Skipping {name} due to class count mismatch ({self.num_classes} vs 80)")
                 continue
 
             new_state_dict[name] = v
 
         msg = self.model.load_state_dict(new_state_dict, strict=False)
-        print(
-            f"Loaded pretrained Sparse R-CNN weights. Missing keys: {len(msg.missing_keys)}"
-        )
+        print(f"Loaded pretrained Sparse R-CNN weights. Missing keys: {len(msg.missing_keys)}")
         if len(msg.missing_keys) < 20 and len(msg.missing_keys) > 0:
             print(f"Missing keys: {msg.missing_keys}")
 
@@ -922,10 +856,7 @@ class SparseRCNN(BaseObjectDetection):
         # 1. Standardize Inputs
         if isinstance(inputs, list):
             target_sizes = torch.stack(
-                [
-                    torch.tensor([img.shape[-2], img.shape[-1]], device=self.device)
-                    for img in inputs
-                ]
+                [torch.tensor([img.shape[-2], img.shape[-1]], device=self.device) for img in inputs]
             )
             samples = nested_tensor_from_tensor_list(inputs).to(self.device)
         else:
@@ -957,9 +888,7 @@ class SparseRCNN(BaseObjectDetection):
                 if gt_boxes_xyxy.shape[0] > 0:
                     gt_boxes = box_xyxy_to_cxcywh(gt_boxes_xyxy) / image_size_xyxy
                 else:
-                    gt_boxes = torch.zeros(
-                        (0, 4), dtype=torch.float32, device=self.device
-                    )
+                    gt_boxes = torch.zeros((0, 4), dtype=torch.float32, device=self.device)
 
                 new_targets.append(
                     {
@@ -1018,9 +947,7 @@ class SparseRCNN(BaseObjectDetection):
                 )
                 labels_per_image = labels[topk_indices]
                 box_pred_per_image = (
-                    box_pred_per_image.view(-1, 1, 4)
-                    .repeat(1, self.num_classes, 1)
-                    .view(-1, 4)
+                    box_pred_per_image.view(-1, 1, 4).repeat(1, self.num_classes, 1).view(-1, 4)
                 )
                 box_pred_per_image = box_pred_per_image[topk_indices]
 

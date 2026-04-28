@@ -1,9 +1,8 @@
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
 from aitlas.models import TerraMind
 
@@ -145,9 +144,7 @@ def config_tim():
     "aitlas.models.terramind_wrapper.terramind_v1_tiny",
     side_effect=MockTerraMindBackbone,
 )
-def test_standard_instantiation(
-    mock_cls, mock_filter, mock_exists, mock_load, config_standard
-):
+def test_standard_instantiation(mock_cls, mock_filter, mock_exists, mock_load, config_standard):
     """Test initializing the standard feature extraction model."""
     mock_exists.return_value = True
     mock_load.return_value = {}
@@ -216,9 +213,7 @@ def test_generate_images_failure_on_standard_model(
     "aitlas.models.terramind_wrapper.terramind_v1_tiny_generate",
     side_effect=MockTerraMindGenerateBackbone,
 )
-def test_generate_instantiation(
-    mock_cls, mock_filter_gen, mock_exists, mock_load, config_generate
-):
+def test_generate_instantiation(mock_cls, mock_filter_gen, mock_exists, mock_load, config_generate):
     """Test initializing the any-to-any image generation model."""
     mock_exists.return_value = True
     mock_load.return_value = {}
@@ -303,9 +298,7 @@ def test_forward_features_failure_on_generate_model(
     "aitlas.models.terramind_wrapper.terramind_v1_tiny_tim",
     side_effect=MockTerraMindTiMBackbone,
 )
-def test_tim_instantiation(
-    mock_cls, mock_filter_tim, mock_exists, mock_load, config_tim
-):
+def test_tim_instantiation(mock_cls, mock_filter_tim, mock_exists, mock_load, config_tim):
     """Test initializing the Thinking in Modalities (TiM) model."""
     mock_exists.return_value = True
     mock_load.return_value = {}

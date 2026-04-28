@@ -6,18 +6,14 @@ import numpy as np
 import pandas as pd
 import torch
 from matplotlib.patches import Patch
-from PIL import Image
 from skimage.transform import resize
-from torch.utils.data import DataLoader, Dataset
 
-from ..base import BaseDataset, BaseTransforms
 from ..utils import image_loader
 from .schemas import CloudDatasets_AI4QCSchema
 from .semantic_segmentation import SemanticSegmentationDataset
 
 
 def interp_band(bands, img_shape=[509, 509]):
-
     bands_interp = np.zeros([bands.shape[2]] + img_shape).astype(np.float32)
 
     for i in range(bands.shape[2]):

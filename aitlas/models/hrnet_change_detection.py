@@ -4,7 +4,7 @@ HRNet model for change detection
 
 import timm
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.nn import functional as F
 
 from ..base import BaseChangeDetection

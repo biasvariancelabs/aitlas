@@ -3,8 +3,7 @@
 from typing import List, Optional
 
 import torch
-import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, nn
 from torchvision import models
 
 # Assuming BaseChangeDetection is available in your environment
@@ -31,11 +30,7 @@ class PixelwiseLinear(nn.Module):
             *[
                 nn.Sequential(
                     nn.Conv2d(fin[i], fout[i], kernel_size=1, bias=True),
-                    (
-                        nn.PReLU()
-                        if i < n - 1 or last_activation is None
-                        else last_activation
-                    ),
+                    (nn.PReLU() if i < n - 1 or last_activation is None else last_activation),
                 )
                 for i in range(n)
             ]
@@ -63,9 +58,7 @@ class MixingBlock(nn.Module):
         # Packing the tensors and interleaving the channels:
         # x, y: (B, C, H, W)
         mixed = torch.stack((x, y), dim=2)  # (B, C, 2, H, W)
-        mixed = torch.reshape(
-            mixed, (x.shape[0], -1, x.shape[2], x.shape[3])
-        )  # (B, 2*C, H, W)
+        mixed = torch.reshape(mixed, (x.shape[0], -1, x.shape[2], x.shape[3]))  # (B, 2*C, H, W)
 
         # Mixing:
         return self._convmix(mixed)
@@ -85,9 +78,7 @@ class MixingMaskAttentionBlock(nn.Module):
         super().__init__()
         self._mixing = MixingBlock(ch_in, ch_out)
         self._linear = PixelwiseLinear(fin, fout)
-        self._final_normalization = (
-            nn.InstanceNorm2d(ch_out) if generate_masked else None
-        )
+        self._final_normalization = nn.InstanceNorm2d(ch_out) if generate_masked else None
         self._mixing_out = MixingBlock(ch_in, ch_out) if generate_masked else None
 
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
@@ -113,9 +104,7 @@ class UpMask(nn.Module):
         nout: int,
     ):
         super().__init__()
-        self._upsample = nn.Upsample(
-            scale_factor=scale_factor, mode="bilinear", align_corners=True
-        )
+        self._upsample = nn.Upsample(scale_factor=scale_factor, mode="bilinear", align_corners=True)
         self._convolution = nn.Sequential(
             nn.Conv2d(nin, nin, 3, 1, groups=nin, padding=1),
             nn.PReLU(),

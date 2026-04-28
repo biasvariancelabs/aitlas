@@ -215,16 +215,12 @@ def select_modality_patch_embed_weights(
 
         # Reshape to [dim, pixel, band]
         temp_weight = temp_weight.view(temp_weight.shape[0], pixel_count, -1)
-        pretrained_weight = pretrained_weight.view(
-            pretrained_weight.shape[0], pixel_count, -1
-        )
+        pretrained_weight = pretrained_weight.view(pretrained_weight.shape[0], pixel_count, -1)
 
         # Copy weights of bands
         for index, band in enumerate(mod_bands):
             if band in pretrained_bands[mod]:
-                logging.info(
-                    f"Loaded weights for {band} in position {index} of patch embed"
-                )
+                logging.info(f"Loaded weights for {band} in position {index} of patch embed")
                 pretrained_index = pretrained_bands[mod].index(band)
                 temp_weight[..., index] = pretrained_weight[..., pretrained_index]
 

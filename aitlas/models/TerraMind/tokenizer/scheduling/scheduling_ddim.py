@@ -169,9 +169,7 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
         # For the final step, there is no previous alphas_cumprod because we are already at 0
         # `set_alpha_to_one` decides whether we set this parameter simply to one or
         # whether we use the final alpha of the "non-previous" one.
-        self.final_alpha_cumprod = (
-            torch.tensor(1.0) if set_alpha_to_one else self.alphas_cumprod[0]
-        )
+        self.final_alpha_cumprod = torch.tensor(1.0) if set_alpha_to_one else self.alphas_cumprod[0]
 
         # standard deviation of the initial noise distribution
         self.init_noise_sigma = 1.0
@@ -201,16 +199,12 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
     def _get_variance(self, timestep, prev_timestep):
         alpha_prod_t = self.alphas_cumprod[timestep]
         alpha_prod_t_prev = (
-            self.alphas_cumprod[prev_timestep]
-            if prev_timestep >= 0
-            else self.final_alpha_cumprod
+            self.alphas_cumprod[prev_timestep] if prev_timestep >= 0 else self.final_alpha_cumprod
         )
         beta_prod_t = 1 - alpha_prod_t
         beta_prod_t_prev = 1 - alpha_prod_t_prev
 
-        variance = (beta_prod_t_prev / beta_prod_t) * (
-            1 - alpha_prod_t / alpha_prod_t_prev
-        )
+        variance = (beta_prod_t_prev / beta_prod_t) * (1 - alpha_prod_t / alpha_prod_t_prev)
 
         return variance
 
@@ -289,16 +283,12 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
             )
         elif mode == "trailing":
             timesteps = (
-                np.arange(self.config.num_train_timesteps, 0, -step_ratio)
-                .round()
-                .astype(np.int64)
+                np.arange(self.config.num_train_timesteps, 0, -step_ratio).round().astype(np.int64)
                 - 1
             )
         elif mode == "linspace":
             timesteps = (
-                np.linspace(
-                    self.config.num_train_timesteps, 1, self.num_inference_steps
-                )
+                np.linspace(self.config.num_train_timesteps, 1, self.num_inference_steps)
                 .round()
                 .astype(np.int64)
                 - 1
@@ -363,16 +353,12 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
         # - pred_prev_sample -> "x_t-1"
 
         # 1. get previous step value (=t-1)
-        prev_timestep = (
-            timestep - self.config.num_train_timesteps // self.num_inference_steps
-        )
+        prev_timestep = timestep - self.config.num_train_timesteps // self.num_inference_steps
 
         # 2. compute alphas, betas
         alpha_prod_t = self.alphas_cumprod[timestep]
         alpha_prod_t_prev = (
-            self.alphas_cumprod[prev_timestep]
-            if prev_timestep >= 0
-            else self.final_alpha_cumprod
+            self.alphas_cumprod[prev_timestep] if prev_timestep >= 0 else self.final_alpha_cumprod
         )
 
         beta_prod_t = 1 - alpha_prod_t
@@ -390,12 +376,8 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
                 sample - alpha_prod_t ** (0.5) * pred_original_sample
             ) / beta_prod_t ** (0.5)
         elif self.config.prediction_type == "v_prediction":
-            pred_original_sample = (alpha_prod_t**0.5) * sample - (
-                beta_prod_t**0.5
-            ) * model_output
-            pred_epsilon = (alpha_prod_t**0.5) * model_output + (
-                beta_prod_t**0.5
-            ) * sample
+            pred_original_sample = (alpha_prod_t**0.5) * sample - (beta_prod_t**0.5) * model_output
+            pred_epsilon = (alpha_prod_t**0.5) * model_output + (beta_prod_t**0.5) * sample
         else:
             raise ValueError(
                 f"prediction_type given as {self.config.prediction_type} must be one of `epsilon`, `sample`, or"
@@ -422,14 +404,10 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
             ) / beta_prod_t ** (0.5)
 
         # 6. compute "direction pointing to x_t" of formula (12) from https://arxiv.org/pdf/2010.02502.pdf
-        pred_sample_direction = (1 - alpha_prod_t_prev - std_dev_t**2) ** (
-            0.5
-        ) * pred_epsilon
+        pred_sample_direction = (1 - alpha_prod_t_prev - std_dev_t**2) ** (0.5) * pred_epsilon
 
         # 7. compute x_t without "random noise" of formula (12) from https://arxiv.org/pdf/2010.02502.pdf
-        prev_sample = (
-            alpha_prod_t_prev ** (0.5) * pred_original_sample + pred_sample_direction
-        )
+        prev_sample = alpha_prod_t_prev ** (0.5) * pred_original_sample + pred_sample_direction
 
         if eta > 0:
             if variance_noise is not None and generator is not None:
@@ -456,9 +434,7 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
             prev_sample=prev_sample, pred_original_sample=pred_original_sample
         )
 
-    def get_alpha_sigma_sqrts(
-        self, timesteps, device, dtype, shape
-    ) -> torch.FloatTensor:
+    def get_alpha_sigma_sqrts(self, timesteps, device, dtype, shape) -> torch.FloatTensor:
         # Make sure alphas_cumprod and timestep have same device and dtype as original_samples
         alphas_cumprod = self.alphas_cumprod.to(device=device, dtype=dtype)
         timesteps = timesteps.to(device)
@@ -487,9 +463,7 @@ class DDIMScheduler(SchedulerMixin, ConfigMixin):
             original_samples.dtype,
             original_samples.shape,
         )
-        noisy_samples = (
-            sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
-        )
+        noisy_samples = sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
         return noisy_samples
 
     def get_velocity(

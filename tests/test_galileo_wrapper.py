@@ -1,12 +1,10 @@
 import json
 import os
-import shutil
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-import torch.nn as nn
 
 from aitlas.models import Galileo
 from aitlas.models.Galileo import Encoder
@@ -125,9 +123,7 @@ def dummy_galileo_input():
     }
 
 
-def test_forward_pass_galileo_nano_average_features(
-    config_galileo_nano, dummy_galileo_input
-):
+def test_forward_pass_galileo_nano_average_features(config_galileo_nano, dummy_galileo_input):
     """Tests the forward pass for averaged features (Nano)."""
     model = Galileo(config_galileo_nano)
 
@@ -145,9 +141,7 @@ def test_forward_pass_galileo_nano_average_features(
     assert output_tensor.shape == (B, D_NANO)
 
 
-def test_forward_pass_galileo_nano_raw_features(
-    config_galileo_nano, dummy_galileo_input
-):
+def test_forward_pass_galileo_nano_raw_features(config_galileo_nano, dummy_galileo_input):
     """Tests the forward pass for raw, non-averaged features (Nano)."""
     model = Galileo(config_galileo_nano)
 
@@ -262,9 +256,7 @@ def test_raises_error_if_pretrained_is_false_galileo():
     ["unsupported_galileo_model", "vit_base", "prithvi"],  # Test invalid names
 )
 @patch("aitlas.models.galileo_wrapper.os.path.exists")
-def test_raises_error_for_invalid_backbones_on_download_galileo(
-    mock_os_exists, backbone_name
-):
+def test_raises_error_for_invalid_backbones_on_download_galileo(mock_os_exists, backbone_name):
     """Tests that a ValueError is raised for invalid backbones when download is triggered."""
     mock_os_exists.return_value = False  # Trigger download
 

@@ -31,7 +31,6 @@ LABELS = [
 
 
 class CLRSDataset(MultiClassClassificationDataset):
-
     url = "https://github.com/lehaifeng/CLRS"
     labels = LABELS
     name = "CLRS dataset"

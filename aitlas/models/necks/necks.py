@@ -1,7 +1,6 @@
 # Copyright contributors to the Terratorch project
 
 import math
-import pdb
 import warnings
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -31,9 +30,7 @@ class Neck(ABC, nn.Module):
         return channel_list
 
     @abstractmethod
-    def forward(
-        self, channel_list: list[torch.Tensor], **kwargs
-    ) -> list[torch.Tensor]: ...
+    def forward(self, channel_list: list[torch.Tensor], **kwargs) -> list[torch.Tensor]: ...
 
 
 class NeckSequential(nn.Sequential):
@@ -164,9 +161,7 @@ class PermuteDims(Neck):
 
 @NECK_REGISTRY.register("InterpolateToPyramidal")
 class InterpolateToPyramidal(Neck):
-    def __init__(
-        self, channel_list: list[int], scale_factor: int = 2, mode: str = "nearest"
-    ):
+    def __init__(self, channel_list: list[int], scale_factor: int = 2, mode: str = "nearest"):
         """Spatially interpolate embeddings so that embedding[i - 1] is scale_factor times larger than embedding[i]
 
         Useful to make non-pyramidal backbones compatible with hierarachical ones
@@ -182,11 +177,7 @@ class InterpolateToPyramidal(Neck):
         out = []
         scale_exponents = list(range(len(features), 0, -1))
         for x, exponent in zip(features, scale_exponents, strict=True):
-            out.append(
-                F.interpolate(
-                    x, scale_factor=self.scale_factor**exponent, mode=self.mode
-                )
-            )
+            out.append(F.interpolate(x, scale_factor=self.scale_factor**exponent, mode=self.mode))
 
         return out
 
@@ -323,9 +314,7 @@ class AddBottleneckLayer(Neck):
 
     def __init__(self, channel_list: list[int]):
         super().__init__(channel_list)
-        self.bottleneck = nn.Conv2d(
-            channel_list[-1], channel_list[-1] // 2, kernel_size=1
-        )
+        self.bottleneck = nn.Conv2d(channel_list[-1], channel_list[-1] // 2, kernel_size=1)
 
     def forward(self, features: list[torch.Tensor], **kwargs) -> list[torch.Tensor]:
         new_embedding = self.bottleneck(features[-1])
@@ -354,9 +343,7 @@ class LearnedInterpolateToPyramidal(Neck):
             nn.GELU(),
             nn.ConvTranspose2d(channel_list[0] // 2, channel_list[0] // 4, 2, 2),
         )
-        self.fpn2 = nn.Sequential(
-            nn.ConvTranspose2d(channel_list[1], channel_list[1] // 2, 2, 2)
-        )
+        self.fpn2 = nn.Sequential(nn.ConvTranspose2d(channel_list[1], channel_list[1] // 2, 2, 2))
         self.fpn3 = nn.Sequential(nn.Identity())
         self.fpn4 = nn.Sequential(nn.MaxPool2d(kernel_size=2, stride=2))
         self.embedding_dim = [
@@ -405,7 +392,7 @@ class FeaturePyramidNetworkNeck(Neck):
 
         reconstructed_features = self.fpn(features)
 
-        if self.output_ordered_dict == False:
+        if not self.output_ordered_dict:
             reconstructed_features = list(reconstructed_features.values())
 
         return reconstructed_features
@@ -417,9 +404,7 @@ class FeaturePyramidNetworkNeck(Neck):
 
 @NECK_REGISTRY.register("ExpandToFeatureMap")
 class ExpandToFeatureMap(Neck):
-    def __init__(
-        self, channel_list: list[int], target_size: tuple[int, int] = (224, 224)
-    ):
+    def __init__(self, channel_list: list[int], target_size: tuple[int, int] = (224, 224)):
         """Expands a (B, D) vector into a (B, D, H, W) feature map by broadcasting.
 
         Args:

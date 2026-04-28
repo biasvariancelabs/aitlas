@@ -66,9 +66,7 @@ class BaseSplitTask(BaseTask):
 
     def split(self):
         if not self.is_split_valid():
-            raise ValueError(
-                "The defined split is invalid. The sum should be equal to 100."
-            )
+            raise ValueError("The defined split is invalid. The sum should be equal to 100.")
         # split the dataset
         self.make_splits()
 
@@ -102,9 +100,7 @@ class BaseSplitTask(BaseTask):
             with open(csv_file, "rb") as f:
                 self.header = f.readline().decode("utf-8").strip().split("\t")
 
-        except (
-            TypeError
-        ):  # it's not in VOC format, then let's try aitlas (CSV) internal one
+        except TypeError:  # it's not in VOC format, then let's try aitlas (CSV) internal one
             if csv_file is not None:
                 images = load_aitlas_format_dataset(csv_file)
             else:
@@ -130,9 +126,7 @@ class BaseSplitTask(BaseTask):
                 / (self.config.split.val.ratio + self.config.split.train.ratio)
             )
 
-            X_train, y_train, X_val, y_val = self.perform_split(
-                X_train, y_train, val_size
-            )
+            X_train, y_train, X_val, y_val = self.perform_split(X_train, y_train, val_size)
 
             # save split
             self.save_split(X_val, y_val, self.config.split.val.file)
@@ -181,9 +175,7 @@ class StratifiedSplitTask(BaseSplitTask):
         if self.is_multilabel:
             X = X.reshape(X.shape[0], 1)  # it needs this reshape for the split to work
 
-            X_train, y_train, X_test, y_test = iterative_train_test_split(
-                X, y, test_size=test_size
-            )
+            X_train, y_train, X_test, y_test = iterative_train_test_split(X, y, test_size=test_size)
         else:
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, test_size=test_size, stratify=y

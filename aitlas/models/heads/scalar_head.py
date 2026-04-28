@@ -47,9 +47,7 @@ class ScalarHead(nn.Module):
         else:
 
             def block(in_dim, out_dim):
-                return nn.Sequential(
-                    nn.Linear(in_features=in_dim, out_features=out_dim), nn.ReLU()
-                )
+                return nn.Sequential(nn.Linear(in_features=in_dim, out_features=out_dim), nn.ReLU())
 
             dim_list = [in_dim, *dim_list]
             pre_head = nn.Sequential(

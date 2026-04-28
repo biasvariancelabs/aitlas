@@ -1,23 +1,15 @@
 import torch
 import torchvision
 from pytorch_lightning import LightningModule
-from torch import nn, optim
+from torch import nn
 
 
 MINUSINF = -100000000
 
 
 class MoCoV2CACoModule(LightningModule):
-
     def __init__(
-        self,
-        base_encoder,
-        emb_dim,
-        num_negatives,
-        emb_spaces=1,
-        datamodule=None,
-        *args,
-        **kwargs
+        self, base_encoder, emb_dim, num_negatives, emb_spaces=1, datamodule=None, *args, **kwargs
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -29,16 +21,10 @@ class MoCoV2CACoModule(LightningModule):
         self.encoder_k = template_model(num_classes=self.hparams.emb_dim)
 
         # remove fc layer
-        self.encoder_q = nn.Sequential(
-            *list(self.encoder_q.children())[:-1], nn.Flatten()
-        )
-        self.encoder_k = nn.Sequential(
-            *list(self.encoder_k.children())[:-1], nn.Flatten()
-        )
+        self.encoder_q = nn.Sequential(*list(self.encoder_q.children())[:-1], nn.Flatten())
+        self.encoder_k = nn.Sequential(*list(self.encoder_k.children())[:-1], nn.Flatten())
 
-        for param_q, param_k in zip(
-            self.encoder_q.parameters(), self.encoder_k.parameters()
-        ):
+        for param_q, param_k in zip(self.encoder_q.parameters(), self.encoder_k.parameters()):
             param_k.data.copy_(param_q.data)  # initialize
             param_k.requires_grad = False  # not update by gradient
 
@@ -65,9 +51,7 @@ class MoCoV2CACoModule(LightningModule):
             ]
         )
 
-        for param_q, param_k in zip(
-            self.heads_q.parameters(), self.heads_k.parameters()
-        ):
+        for param_q, param_k in zip(self.heads_q.parameters(), self.heads_k.parameters()):
             param_k.data.copy_(param_q.data)  # initialize
             param_k.requires_grad = False  # not update by gradient
 

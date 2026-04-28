@@ -38,9 +38,7 @@ def rescale_noise_cfg(noise_cfg, noise_pred_conditional, guidance_rescale=0.0):
     # rescale the results from guidance (fixes overexposure)
     noise_pred_rescaled = noise_cfg * (std_text / std_cfg)
     # mix with the original results from guidance by factor guidance_rescale to avoid "plain looking" images
-    noise_cfg = (
-        guidance_rescale * noise_pred_rescaled + (1 - guidance_rescale) * noise_cfg
-    )
+    noise_cfg = guidance_rescale * noise_pred_rescaled + (1 - guidance_rescale) * noise_cfg
     return noise_cfg
 
 
@@ -55,9 +53,7 @@ class PipelineCond(DiffusionPipeline):
         scheduler: A diffusion scheduler, e.g. see scheduling_ddpm.py
     """
 
-    def __init__(
-        self, model: torch.nn.Module, scheduler: SchedulerMixin, n_channels: int
-    ):
+    def __init__(self, model: torch.nn.Module, scheduler: SchedulerMixin, n_channels: int):
         super().__init__()
         self.register_modules(model=model, scheduler=scheduler)
         self.n_channels = n_channels
@@ -74,7 +70,7 @@ class PipelineCond(DiffusionPipeline):
         verbose: bool = True,
         scheduler_timesteps_mode: str = "trailing",
         orig_res: torch.LongTensor | tuple[int, int] | None = None,
-        **kwargs
+        **kwargs,
     ) -> torch.Tensor:
         """The call function to the pipeline for conditional image generation.
 
@@ -98,11 +94,7 @@ class PipelineCond(DiffusionPipeline):
             The generated image.
         """
 
-        timesteps = (
-            self.scheduler.config.num_train_timesteps
-            if timesteps is None
-            else timesteps
-        )
+        timesteps = self.scheduler.config.num_train_timesteps if timesteps is None else timesteps
         batch_size, _, _, _ = cond.shape
 
         # Sample gaussian noise to begin loop
@@ -127,9 +119,7 @@ class PipelineCond(DiffusionPipeline):
             model_output = self.model(image, t, cond, orig_res=orig_res, **kwargs)
 
             if do_cfg:
-                model_output_uncond = self.model(
-                    image, t, cond, unconditional=True, **kwargs
-                )
+                model_output_uncond = self.model(image, t, cond, unconditional=True, **kwargs)
 
                 if callable(guidance_scale):
                     guidance_scale_value = guidance_scale(

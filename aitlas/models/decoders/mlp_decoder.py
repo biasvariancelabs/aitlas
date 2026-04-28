@@ -1,7 +1,6 @@
 # Copyright contributors to the Terratorch project
 
-"""Pass the features straight through
-"""
+"""Pass the features straight through"""
 
 import torch
 from torch import Tensor, nn
@@ -34,9 +33,7 @@ class MLPDecoder(nn.Module):
         self.dim = out_index
         self.n_inputs = len(self.embed_dim)
         self.out_channels = self.embed_dim[self.dim]
-        self.hidden_layer = torch.nn.Linear(
-            self.out_channels * self.n_inputs, self.out_channels
-        )
+        self.hidden_layer = torch.nn.Linear(self.out_channels * self.n_inputs, self.out_channels)
         self.activation = getattr(nn, activation)()
 
     def forward(self, x: list[Tensor]):

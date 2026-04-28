@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import fields, validate
 
 from ..base.schemas import (
     BaseClassifierSchema,
@@ -83,9 +83,7 @@ class LSTMSchema(BaseClassifierSchema):
 
     use_layernorm = fields.Bool(required=False, missing=True, description="None")
 
-    dropout = fields.Float(
-        required=False, missing=0.5713020228087161, description="None"
-    )
+    dropout = fields.Float(required=False, missing=0.5713020228087161, description="None")
 
     weight_decay = fields.Float(
         required=False,
@@ -105,9 +103,7 @@ class MSResNetSchema(BaseClassifierSchema):
         validate=validate.OneOf([13, 10, 11]),
     )
 
-    layers = fields.List(
-        fields.Int, missing=[1, 1, 1, 1], required=False, description="None"
-    )
+    layers = fields.List(fields.Int, missing=[1, 1, 1, 1], required=False, description="None")
 
     hidden_dims = fields.Int(required=False, missing=32, description="None")
 
@@ -135,9 +131,7 @@ class TempCNNSchema(BaseClassifierSchema):
 
     kernel_size = fields.Int(required=False, missing=7, description="None")
 
-    dropout = fields.Float(
-        required=False, missing=0.18203942949809093, description="None"
-    )
+    dropout = fields.Float(required=False, missing=0.18203942949809093, description="None")
 
     weight_decay = fields.Float(
         required=False,
@@ -202,9 +196,7 @@ class OmniScaleCNNSchema(BaseClassifierSchema):
 
     kernel_size = fields.Int(required=False, missing=7, description="None")
 
-    dropout = fields.Float(
-        required=False, missing=0.18203942949809093, description="None"
-    )
+    dropout = fields.Float(required=False, missing=0.18203942949809093, description="None")
 
     weight_decay = fields.Float(
         required=False,
@@ -214,16 +206,12 @@ class OmniScaleCNNSchema(BaseClassifierSchema):
 
 
 class UnsupervisedDeepMulticlassClassifierSchema(BaseModelSchema):
-    learning_rate = fields.Float(
-        missing=0.05, description="Learning rate used in training."
-    )
+    learning_rate = fields.Float(missing=0.05, description="Learning rate used in training.")
     weight_decay = fields.Float(missing=-5, description="Weight decay for optimizer.")
     number_of_clusters = fields.Integer(
         missing=100, description="Number of clusters to use during traning."
     )
-    sobel = fields.Boolean(
-        missing=False, description="Whether to turn on on sobel filtering."
-    )
+    sobel = fields.Boolean(missing=False, description="Whether to turn on on sobel filtering.")
 
 
 class UNetEfficientNetModelSchema(BaseSegmentationClassifierSchema):
@@ -251,9 +239,7 @@ class CNNRNNModelSchema(BaseModelSchema):
     hidden_size = fields.Int(
         required=False, missing=512, description="Dimension of hidden LSTM states."
     )
-    num_layers = fields.Int(
-        required=False, missing=1, description="Number of LSTM layers."
-    )
+    num_layers = fields.Int(required=False, missing=1, description="Number of LSTM layers.")
     threshold = fields.Float(
         required=False, missing=0.5, description="Label probability threshold."
     )

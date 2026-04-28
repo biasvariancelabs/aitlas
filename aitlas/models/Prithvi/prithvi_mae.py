@@ -24,10 +24,10 @@ from operator import mul
 
 import numpy as np
 import torch
-import torch.nn as nn
 from einops import rearrange
 from timm.layers import to_2tuple
 from timm.models.vision_transformer import Block
+from torch import nn
 
 from .utils import (
     PRETRAINED_BANDS,
@@ -164,18 +164,14 @@ def _interpolate_pos_encoding(
         new_pos_embed = get_3d_sincos_pos_embed(
             pos_embed.shape[-1], new_grid_size, add_cls_token=True
         )
-        new_pos_embed = (
-            torch.from_numpy(new_pos_embed).float().unsqueeze(0).to(pos_embed.device)
-        )
+        new_pos_embed = torch.from_numpy(new_pos_embed).float().unsqueeze(0).to(pos_embed.device)
     else:
         new_grid_size = grid_size
         new_pos_embed = pos_embed
 
     class_pos_embed, patch_pos_embed = new_pos_embed[:, :1], new_pos_embed[:, 1:]
 
-    patch_pos_embed = patch_pos_embed.reshape(*new_grid_size, embed_dim).permute(
-        0, 3, 1, 2
-    )
+    patch_pos_embed = patch_pos_embed.reshape(*new_grid_size, embed_dim).permute(0, 3, 1, 2)
 
     patch_pos_embed = nn.functional.interpolate(
         patch_pos_embed,
@@ -217,11 +213,7 @@ class PatchEmbed(nn.Module):
     def forward(self, x):
         B, C, T, H, W = x.shape
 
-        if (
-            T / self.patch_size[0] % 1
-            or H / self.patch_size[1] % 1
-            or W / self.patch_size[2] % 1
-        ):
+        if T / self.patch_size[0] % 1 or H / self.patch_size[1] % 1 or W / self.patch_size[2] % 1:
             warnings.warn(
                 f"Input {x.shape[-3:]} is not divisible by patch size {self.patch_size}."
                 f"The border will be ignored, add backbone_padding for pixel-wise tasks."
@@ -247,9 +239,7 @@ class TemporalEncoder(nn.Module):
         else:
             self.register_buffer("scale", torch.ones(1))
 
-    def forward(
-        self, temporal_coords: torch.Tensor, tokens_per_frame: int | None = None
-    ):
+    def forward(self, temporal_coords: torch.Tensor, tokens_per_frame: int | None = None):
         """
         Args:
             temporal_coords: year and day-of-year info with shape (B, T, 2).
@@ -387,14 +377,9 @@ class PrithviViT(nn.Module):
                 msg = "vpt_n_tokens must be provided when using VPT"
                 raise ValueError(msg)
             self.vpt_prompt_embeddings = nn.ParameterList(
-                [
-                    nn.Parameter(torch.zeros(1, self.vpt_n_tokens, embed_dim))
-                    for _ in range(depth)
-                ]
+                [nn.Parameter(torch.zeros(1, self.vpt_n_tokens, embed_dim)) for _ in range(depth)]
             )
-            self.vpt_dropout_layers = nn.ModuleList(
-                [nn.Dropout(vpt_dropout) for _ in range(depth)]
-            )
+            self.vpt_dropout_layers = nn.ModuleList([nn.Dropout(vpt_dropout) for _ in range(depth)])
 
         self.initialize_weights()
 
@@ -417,10 +402,7 @@ class PrithviViT(nn.Module):
         if self.vpt:
             # extracted from https://github.com/KMnP/vpt/blob/4410440ec1b489f24f66b9fad3d9b10ff3443567/src/models/vit_prompt/vit.py#L57
             val = np.sqrt(
-                6.0
-                / float(
-                    3 * reduce(mul, self.patch_embed.patch_size[1:], 1) + self.embed_dim
-                )
+                6.0 / float(3 * reduce(mul, self.patch_embed.patch_size[1:], 1) + self.embed_dim)
             )
             for emb in self.vpt_prompt_embeddings:
                 nn.init.uniform_(emb, -val, val)
@@ -440,9 +422,7 @@ class PrithviViT(nn.Module):
         len_keep = int(seq_length * (1 - mask_ratio))
 
         if noise is None:
-            noise = torch.rand(
-                batch_size, seq_length, device=sequence.device
-            )  # noise in [0, 1]
+            noise = torch.rand(batch_size, seq_length, device=sequence.device)  # noise in [0, 1]
 
         # sort noise for each sample
         ids_shuffle = torch.argsort(noise, dim=1).to(
@@ -465,7 +445,6 @@ class PrithviViT(nn.Module):
         return sequence_unmasked, mask, ids_restore
 
     def interpolate_pos_encoding(self, sample_shape: tuple[int, int, int]):
-
         pos_embed = _interpolate_pos_encoding(
             pos_embed=self.pos_embed,
             grid_size=self.patch_embed.grid_size,
@@ -496,9 +475,7 @@ class PrithviViT(nn.Module):
 
         if self.temporal_encoding and temporal_coords is not None:
             num_tokens_per_frame = x.shape[1] // sample_shape[0]  # Fixed that
-            temporal_encoding = self.temporal_embed_enc(
-                temporal_coords, num_tokens_per_frame
-            )
+            temporal_encoding = self.temporal_embed_enc(temporal_coords, num_tokens_per_frame)
             x = x + temporal_encoding
         if self.location_encoding and location_coords is not None:
             location_encoding = self.location_embed_enc(location_coords)
@@ -556,9 +533,7 @@ class PrithviViT(nn.Module):
 
         if self.temporal_encoding and temporal_coords is not None:
             num_tokens_per_frame = x.shape[1] // sample_shape[0]  # Fixed that
-            temporal_encoding = self.temporal_embed_enc(
-                temporal_coords, num_tokens_per_frame
-            )
+            temporal_encoding = self.temporal_embed_enc(temporal_coords, num_tokens_per_frame)
             x = x + temporal_encoding
         if self.location_encoding and location_coords is not None:
             location_encoding = self.location_embed_enc(location_coords)
@@ -596,9 +571,7 @@ class PrithviViT(nn.Module):
         out[-1] = x
         return out
 
-    def prepare_features_for_image_model(
-        self, features: list[torch.Tensor]
-    ) -> list[torch.Tensor]:
+    def prepare_features_for_image_model(self, features: list[torch.Tensor]) -> list[torch.Tensor]:
         out = []
 
         # Fixed that: Get the correct spatial grid dimensions from the patch_embed
@@ -666,13 +639,9 @@ class MAEDecoder(nn.Module):
         self.temporal_encoding = "time" in coords_encoding
         self.location_encoding = "location" in coords_encoding
         if self.temporal_encoding:
-            self.temporal_embed_dec = TemporalEncoder(
-                decoder_embed_dim, coords_scale_learn
-            )
+            self.temporal_embed_dec = TemporalEncoder(decoder_embed_dim, coords_scale_learn)
         if self.location_encoding:
-            self.location_embed_dec = LocationEncoder(
-                decoder_embed_dim, coords_scale_learn
-            )
+            self.location_embed_dec = LocationEncoder(decoder_embed_dim, coords_scale_learn)
 
         self.mask_token = nn.Parameter(torch.zeros(1, 1, decoder_embed_dim))
 
@@ -707,16 +676,13 @@ class MAEDecoder(nn.Module):
         decoder_pos_embed = get_3d_sincos_pos_embed(
             self.decoder_pos_embed.shape[-1], self.grid_size, add_cls_token=True
         )
-        self.decoder_pos_embed.data.copy_(
-            torch.from_numpy(decoder_pos_embed).float().unsqueeze(0)
-        )
+        self.decoder_pos_embed.data.copy_(torch.from_numpy(decoder_pos_embed).float().unsqueeze(0))
 
         # timm's trunc_normal_(std=.02) is effectively normal_(std=0.02) as cutoff is too big (2.)
         torch.nn.init.normal_(self.mask_token, std=0.02)
         self.apply(_init_weights)
 
     def interpolate_pos_encoding(self, sample_shape: tuple[int, int, int]):
-
         pos_embed = _interpolate_pos_encoding(
             pos_embed=self.decoder_pos_embed,
             grid_size=self.grid_size,
@@ -740,9 +706,7 @@ class MAEDecoder(nn.Module):
         cls_token = x[:, :1, :]
 
         # append mask tokens to sequence
-        mask_tokens = self.mask_token.repeat(
-            x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1
-        )
+        mask_tokens = self.mask_token.repeat(x.shape[0], ids_restore.shape[1] + 1 - x.shape[1], 1)
         x = torch.cat([x[:, 1:, :], mask_tokens], dim=1)  # no cls token
         # unshuffle
         x = torch.gather(
@@ -760,9 +724,7 @@ class MAEDecoder(nn.Module):
             num_tokens_per_frame = (
                 x.shape[1] // self.num_frames
             )  # TODO: fix the decoder to process more than num_frames=4 time steps
-            temporal_encoding = self.temporal_embed_dec(
-                temporal_coords, num_tokens_per_frame
-            )
+            temporal_encoding = self.temporal_embed_dec(temporal_coords, num_tokens_per_frame)
             # Add temporal encoding w/o cls token
             x = x + temporal_encoding
         if self.location_encoding and location_coords is not None:
@@ -897,9 +859,7 @@ class PrithviMAE(nn.Module):
 
         return patchified_pixel_values
 
-    def unpatchify(
-        self, patchified_pixel_values, image_size: tuple[int, int] | None = None
-    ):
+    def unpatchify(self, patchified_pixel_values, image_size: tuple[int, int] | None = None):
         """
         Args:
             patchified_pixel_values (`torch.FloatTensor` of shape
@@ -914,9 +874,7 @@ class PrithviMAE(nn.Module):
         """
         batch_size = patchified_pixel_values.shape[0]
         patch_size_t, patch_size_h, patch_size_w = self.encoder.patch_embed.patch_size
-        image_size = (
-            to_2tuple(image_size) if image_size is not None else self.encoder.img_size
-        )
+        image_size = to_2tuple(image_size) if image_size is not None else self.encoder.img_size
         original_height, original_width = image_size
         num_patches_h = original_height // patch_size_h
         num_patches_w = original_width // patch_size_w
@@ -973,7 +931,6 @@ class PrithviMAE(nn.Module):
         location_coords: None | torch.Tensor = None,
         mask_ratio: float = None,
     ):
-
         if len(pixel_values.shape) == 4 and self.encoder.patch_embed.input_size[0] == 1:
             # add time dim
             pixel_values = pixel_values.unsqueeze(2)

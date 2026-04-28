@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import logging
-import os
 import warnings
 
 import torch
@@ -87,11 +86,10 @@ def build_vqvae(
     ckpt_path: str | None = None,
     **kwargs,
 ):
-
     if not vqvae_available:
         warnings.warn(
-            f"Cannot import VQBackbone from terramind. "
-            f"\nMake sure to install `pip install diffusers==0.30.0`."
+            "Cannot import VQBackbone from terramind. "
+            "\nMake sure to install `pip install diffusers==0.30.0`."
         )
         raise import_error
 
@@ -103,13 +101,9 @@ def build_vqvae(
         state_dict = checkpoint_filter_fn(state_dict)
         loaded_keys = model.load_state_dict(state_dict, strict=False)
         if loaded_keys.missing_keys:
-            logger.warning(
-                f"Missing keys in ckpt_path {ckpt_path}: {loaded_keys.missing_keys}"
-            )
+            logger.warning(f"Missing keys in ckpt_path {ckpt_path}: {loaded_keys.missing_keys}")
         if loaded_keys.unexpected_keys:
-            logger.warning(
-                f"Missing keys in ckpt_path {ckpt_path}: {loaded_keys.missing_keys}"
-            )
+            logger.warning(f"Missing keys in ckpt_path {ckpt_path}: {loaded_keys.missing_keys}")
 
     elif pretrained:
         # Load model from Hugging Face

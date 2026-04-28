@@ -4,8 +4,8 @@ import time
 import faiss
 import numpy as np
 import torch
-import torch.utils.data as data
 from scipy.sparse import csr_matrix
+from torch.utils import data
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

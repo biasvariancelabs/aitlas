@@ -19,8 +19,8 @@
 # Source: https://github.com/apple/ml-4m/
 
 import torch
-import torch.nn as nn
 from einops import repeat
+from torch import nn
 
 from .tm_utils import (
     build_1d_sincos_posemb,
@@ -90,9 +90,7 @@ class SequenceDecoderEmbedding(nn.Module):
             )[: self.max_length]
             self.register_buffer("pos_emb", pos_emb)
         else:
-            self.pos_emb = nn.Parameter(
-                torch.zeros(1, self.max_length, self.dim_tokens)
-            )
+            self.pos_emb = nn.Parameter(torch.zeros(1, self.max_length, self.dim_tokens))
             nn.init.normal_(self.pos_emb, std=init_std)
 
         self.mod_emb = nn.Parameter(torch.zeros(1, 1, self.dim_tokens))
@@ -134,9 +132,7 @@ class SequenceDecoderEmbedding(nn.Module):
         """
         ids = d["tensor"]
         B = ids.shape[0]
-        assert (
-            self.dim_tokens is not None
-        ), "Need to call init(dim_tokens) function first"
+        assert self.dim_tokens is not None, "Need to call init(dim_tokens) function first"
 
         # Map to embedding
         x = self.token_emb(ids)
@@ -230,23 +226,17 @@ class ImageTokenDecoderEmbedding(nn.Module):
         h_posemb = self.image_size[0] // self.patch_size[0]
         w_posemb = self.image_size[1] // self.patch_size[1]
         if self.sincos_pos_emb:
-            pos_emb = build_2d_sincos_posemb(
-                h=h_posemb, w=w_posemb, embed_dim=self.dim_tokens
-            )
+            pos_emb = build_2d_sincos_posemb(h=h_posemb, w=w_posemb, embed_dim=self.dim_tokens)
             self.register_buffer("pos_emb", pos_emb)
         else:
-            self.pos_emb = nn.Parameter(
-                torch.zeros(1, (h_posemb * w_posemb), self.dim_tokens)
-            )
+            self.pos_emb = nn.Parameter(torch.zeros(1, (h_posemb * w_posemb), self.dim_tokens))
             nn.init.normal_(self.pos_emb, std=init_std)
 
         self.mod_emb = nn.Parameter(torch.zeros(1, 1, self.dim_tokens))
         nn.init.normal_(self.mod_emb, std=init_std)
 
         # Token embedding (not needed if only masked tokens are given as input, but can be useful to train Token Critic)
-        self.token_emb = nn.Embedding(
-            num_embeddings=self.vocab_size, embedding_dim=self.dim_tokens
-        )
+        self.token_emb = nn.Embedding(num_embeddings=self.vocab_size, embedding_dim=self.dim_tokens)
 
         # Output projection layer
         self.to_logits = nn.Linear(self.dim_tokens, self.vocab_size, bias=False)

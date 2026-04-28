@@ -67,9 +67,7 @@ class MultiLabelClassificationDataset(BaseDataset):
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
-        ax.set_title(
-            "Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18
-        )
+        ax.set_title("Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig
 
     def show_samples(self):
@@ -92,9 +90,7 @@ class MultiLabelClassificationDataset(BaseDataset):
         if size % 4:
             raise ValueError("The provided size should be divided by 4!")
         image_indices = random.sample(range(0, len(self.data)), size)
-        figure, ax = plt.subplots(
-            int(size / 4), 4, figsize=(13.75, 2.0 * int(size / 4))
-        )
+        figure, ax = plt.subplots(int(size / 4), 4, figsize=(13.75, 2.0 * int(size / 4)))
         if show_title:
             figure.suptitle(
                 "Example images with labels from {}".format(self.get_name()),
@@ -149,17 +145,15 @@ class MultiLabelClassificationDataset(BaseDataset):
         max_number = float("-inf")
         average_number = 0
         for img, labels in self.data:
-            if sum(labels) < min_number:
-                min_number = sum(labels)
+            min_number = min(min_number, sum(labels))
 
-            if sum(labels) > max_number:
-                max_number = sum(labels)
+            max_number = max(max_number, sum(labels))
 
             average_number += sum(labels)
 
         return (
             f"Minimum number of labels: {min_number}, Maximum number of labels: {max_number}, "
-            f"Average number of labels: {average_number/len(self.data)}"
+            f"Average number of labels: {average_number / len(self.data)}"
         )
 
     def re_map_labels(self, labels_remapping, map_size):

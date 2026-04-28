@@ -1,9 +1,8 @@
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
 from aitlas.models import DOFA_v2
 from aitlas.models.DOFA.dofa_v2 import OFAViT, dofa_v1_vit_base_patch16

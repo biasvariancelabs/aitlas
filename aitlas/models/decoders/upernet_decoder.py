@@ -1,8 +1,7 @@
 import warnings
 
 import torch
-import torch.nn.functional as F  # noqa: N812
-from torch import Tensor, nn
+from torch import nn
 
 from aitlas.models.registries import DECODER_REGISTRY
 
@@ -50,9 +49,7 @@ class UPerNetDecoder(nn.Module):
                 nn.GELU(),
                 nn.ConvTranspose2d(embed_dim[0] // 2, embed_dim[0] // 4, 2, 2),
             )
-            self.fpn2 = nn.Sequential(
-                nn.ConvTranspose2d(embed_dim[1], embed_dim[1] // 2, 2, 2)
-            )
+            self.fpn2 = nn.Sequential(nn.ConvTranspose2d(embed_dim[1], embed_dim[1] // 2, 2, 2))
             self.fpn3 = nn.Sequential(nn.Identity())
             self.fpn4 = nn.Sequential(nn.MaxPool2d(kernel_size=2, stride=2))
             self.embed_dim = [
@@ -137,9 +134,7 @@ class UPerNetDecoder(nn.Module):
             scaled_inputs.append(self.fpn4(inputs[3]))
             inputs = scaled_inputs
         # build laterals
-        laterals = [
-            lateral_conv(inputs[i]) for i, lateral_conv in enumerate(self.lateral_convs)
-        ]
+        laterals = [lateral_conv(inputs[i]) for i, lateral_conv in enumerate(self.lateral_convs)]
         laterals.append(self.psp_forward(inputs))
 
         # build top-down path
@@ -154,9 +149,7 @@ class UPerNetDecoder(nn.Module):
             )
 
         # build outputs
-        fpn_outs = [
-            self.fpn_convs[i](laterals[i]) for i in range(used_backbone_levels - 1)
-        ]
+        fpn_outs = [self.fpn_convs[i](laterals[i]) for i in range(used_backbone_levels - 1)]
         # append psp feature
         fpn_outs.append(laterals[-1])
 

@@ -39,9 +39,7 @@ def test_sparsercnn_eval_forward_pass(sparsercnn_model):
         outputs = sparsercnn_model(inputs)
 
         assert isinstance(outputs, list), "Output should be a list"
-        assert (
-            len(outputs) == batch_size
-        ), f"Expected {batch_size} outputs, got {len(outputs)}"
+        assert len(outputs) == batch_size, f"Expected {batch_size} outputs, got {len(outputs)}"
 
         for output in outputs:
             assert isinstance(output, dict), "Each output should be a dictionary"
@@ -91,8 +89,7 @@ def test_sparsercnn_train_forward_pass(sparsercnn_model):
             and outputs["classification_loss"].shape[0] == 1
         )
         assert outputs["regression_loss"].dim() == 0 or (
-            outputs["regression_loss"].dim() == 1
-            and outputs["regression_loss"].shape[0] == 1
+            outputs["regression_loss"].dim() == 1 and outputs["regression_loss"].shape[0] == 1
         )
 
     except Exception as e:
