@@ -5,6 +5,33 @@
 
 The AiTLAS toolbox (Artificial Intelligence Toolbox for Earth Observation) includes state-of-the-art machine learning methods for exploratory and predictive analysis of satellite imagery as well as repository of AI-ready Earth Observation (EO) datasets. It can be easily applied for a variety of Earth Observation tasks, such as land use and cover classification, crop type prediction, localization of specific objects (semantic segmentation), etc. The main goal of AiTLAS is to facilitate better usability and adoption of novel AI methods (and models) by EO experts, while offering easy access and standardized format of EO datasets to AI experts which allows benchmarking of various existing and novel AI methods tailored for EO data.
 
+# 📢 Latest updates
+🔥🔥🔥 AiTLAS 2.0.0 is out now! [2026-04-30] 🔥🔥🔥
+
+## 🛰️ New foundation models & adapters
+Added comprehensive support the following foundation models:
+- AnySat, CACo, Copernicus-FM, CROMA, DOFA (v2)
+- Galileo, GASSL, Panopticon, Presto, Prithvi (v2)
+- SatMAE, SatMAE++, Scale-MAE, SeCo, TerraFM, TerraMind
+
+## 🧠 New model architectures
+- **Change detection**: Added ChangeMamba, TinyCD, ChangeFormerV6, SiamCRNN, BIT, and STANet.
+- **Object detection**: Added Sparse R-CNN, DETR, CenterNet, EfficientDet, FCOS, and NanoDet-Plus.
+- **Segmentation**: Added SegFormer, UNet++, FPN, PSPNet, and UPerNet.
+
+## 🛠️ Key improvements & features
+- **New build system**: Complete migration to `uv` and `pyproject.toml` for faster, reproducible builds.
+- **Modern infrastructure**: Switched to `ruff` for ultra-fast linting and formatting.
+- **Foundation model architecture**: Implemented `CompositeModel`, allowing for dynamic building of backbones, adapters, necks, decoders and heads.
+- **Training**: Added Automatic Mixed Precision (AMP), Early Stopping on NaN loss, and state preservation (LR scheduler/checkpoints) for restarts.
+- **Adapters**: Implemented specific data-model adapters for foundation models, such as Terramind, AnySat, Galileo, and Panopticon.
+- **Examples**: Overhauled Jupyter notebook examples for new foundation models and downstream tasks.
+
+## ⚠️ Breaking changes
+- Minimum Python version is now **3.12**.
+- Removed `requirements.txt` in favor of `pyproject.toml` dependencies.
+- Namespaced foundation model classes in `aitlas.models` to resolve implementation collisions.
+
 # Getting started
 
 AiTLAS Introduction https://youtu.be/-3Son1NhdDg
@@ -41,14 +68,11 @@ uv pip install -e .
 ```
 
 - Verify the installation
-Check that the toolbox is correctly installed and showing the correct version:
 ```bash
 python -c "import aitlas; print(f'AiTLAS version: {aitlas.__version__}')"
 ```
 
 - Running AiTLAS
-You can verify the setup by running an example configuration:
-
 ```bash
 python -m aitlas.run configs/example_config.json
 ```
