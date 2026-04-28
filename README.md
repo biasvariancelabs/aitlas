@@ -1,4 +1,4 @@
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg?style=for-the-badge)](https://www.repostatus.org/#active) [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/release/python-370/) [![License: Apache License 2.0](https://img.shields.io/badge/License-Apache%202.0-olivegreen.svg)](https://github.com/biasvariancelabs/aitlas/blob/master/LICENSE) [![Documentation Status](https://readthedocs.org/projects/aitlas/badge/?version=latest)](https://pyrelational.readthedocs.io/en/stable/?badge=stable)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg?style=for-the-badge)](https://www.repostatus.org/#active) [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/release/python-3120/) [![License: Apache License 2.0](https://img.shields.io/badge/License-Apache%202.0-olivegreen.svg)](https://github.com/biasvariancelabs/aitlas/blob/master/LICENSE) [![Documentation Status](https://readthedocs.org/projects/aitlas/badge/?version=latest)](https://aitlas.readthedocs.io/en/latest/?badge=latest)
 
 ![logo](media/AiTALS_horizontal_gradient_subtitle.png)
 
@@ -9,15 +9,15 @@ The AiTLAS toolbox (Artificial Intelligence Toolbox for Earth Observation) inclu
 🔥🔥🔥 AiTLAS 2.0.0 is out now! [2026-04-30] 🔥🔥🔥
 
 ## 🛰️ New foundation models & adapters
-Added comprehensive support the following foundation models:
+Added comprehensive support for the following foundation models:
 - AnySat, CACo, Copernicus-FM, CROMA, DOFA (v2)
 - Galileo, GASSL, Panopticon, Presto, Prithvi (v2)
 - SatMAE, SatMAE++, Scale-MAE, SeCo, TerraFM, TerraMind
 
 ## 🧠 New model architectures
-- **Change detection**: Added ChangeMamba, TinyCD, ChangeFormerV6, SiamCRNN, BIT, and STANet.
-- **Object detection**: Added Sparse R-CNN, DETR, CenterNet, EfficientDet, FCOS, and NanoDet-Plus.
-- **Segmentation**: Added SegFormer, UNet++, FPN, PSPNet, and UPerNet.
+- **Change detection**: Added BIT, CGNet, ChangeFormer V6, ChangeMamba, ChangeVIT, CSSM, HRNet SiamConc, SiamCRNN, STANet, TinyCD, and U-Net SiamConc.
+- **Object detection**: ATSS, CenterNet, DETR, EfficientDet, NanoDet-Plus, and Sparse R-CNN.
+- **Segmentation**: Added FPN, MaNet, PSPNet, SegFormer, UNet++, and UPerNet.
 
 ## 🛠️ Key improvements & features
 - **New build system**: Complete migration to `uv` and `pyproject.toml` for faster, reproducible builds.
