@@ -130,6 +130,12 @@ indent-style = "space"
 [tool.hatch.build.targets.wheel]
 packages = ["aitlas"]
 
+[tool.hatch.build]
+directory = "dist"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.setuptools]
 packages = ["aitlas"]
 package-dir = {"" = "."}
