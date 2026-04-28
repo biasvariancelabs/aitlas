@@ -128,5 +128,5 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.setuptools]
-packages = ["aitlas]
+packages = ["aitlas"]
 package-dir = {"" = "."}
