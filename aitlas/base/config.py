@@ -33,14 +33,14 @@ class RunConfig(Schema):
     """Top level configuration schema"""
 
     model = fields.Nested(
-        ObjectConfig, missing=None, metadata={"description": "Model configuration"}
+        ObjectConfig, load_default=None, metadata={"description": "Model configuration"}
     )
     task = fields.Nested(
         ObjectConfig, required=True, metadata={"description": "Task configuration"}
     )
     use_ddp = fields.Boolean(
         required=False,
-        missing=False,
+        load_default=False,
         metadata={"description": "Turn on distributed data processing"},
     )
 
