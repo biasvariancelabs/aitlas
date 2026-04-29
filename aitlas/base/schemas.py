@@ -30,29 +30,35 @@ class BaseDatasetSchema(Schema):
     :type labels: List[str], optional
     """
 
-    batch_size = fields.Int(missing=64, description="Batch size", example=64)
-    shuffle = fields.Bool(missing=True, description="Should shuffle dataset", example=False)
-    num_workers = fields.Int(missing=4, description="Number of workers", example=4)
-    pin_memory = fields.Bool(missing=False, description="Whether to use page-locked memory")
+    batch_size = fields.Int(load_default=64, metadata={"description": "Batch size", "example": 64})
+    shuffle = fields.Bool(
+        load_default=True, metadata={"description": "Should shuffle dataset", "example": False}
+    )
+    num_workers = fields.Int(
+        load_default=4, metadata={"description": "Number of workers", "example": 4}
+    )
+    pin_memory = fields.Bool(
+        load_default=False, metadata={"description": "Whether to use page-locked memory"}
+    )
     transforms = fields.List(
         fields.String,
-        missing=None,
-        description="Classes to run transformations over the input data.",
+        load_default=None,
+        metadata={"description": "Classes to run transformations over the input data."},
     )
     target_transforms = fields.List(
         fields.String,
-        missing=None,
-        description="Classes to run transformations over the target data.",
+        load_default=None,
+        metadata={"description": "Classes to run transformations over the target data."},
     )
     joint_transforms = fields.List(
         fields.String,
-        missing=None,
-        description="Classes to run transformations over the input and target data.",
+        load_default=None,
+        metadata={"description": "Classes to run transformations over the input and target data."},
     )
     labels = fields.List(
         fields.String,
-        missing=None,
-        description="Labels for the dataset",
+        load_default=None,
+        metadata={"description": "Labels for the dataset"},
     )
 
 
@@ -79,13 +85,19 @@ class BaseModelSchema(Schema):
     :type use_ddp: bool, optional
     """
 
-    num_classes = fields.Int(missing=2, description="Number of classes", example=2)
-    use_cuda = fields.Bool(missing=True, description="Whether to use CUDA if possible")
+    num_classes = fields.Int(
+        load_default=2, metadata={"description": "Number of classes", "example": 2}
+    )
+    use_cuda = fields.Bool(
+        load_default=True, metadata={"description": "Whether to use CUDA if possible"}
+    )
     metrics = fields.List(
         fields.String,
-        missing=["f1_score"],
-        description="Metrics you want to calculate",
-        example=["accuracy", "precision", "iou"],
+        load_default=["f1_score"],
+        metadata={
+            "description": "Metrics you want to calculate",
+            "example": ["accuracy", "precision", "iou"],
+        },
         validate=validate.ContainsOnly(
             [
                 "accuracy",
@@ -102,22 +114,28 @@ class BaseModelSchema(Schema):
     )
     weights = fields.List(
         fields.Float,
-        missing=None,
-        description="Classes weights you want to apply for the loss",
-        example=[1.0, 2.3, 1.0],
+        load_default=None,
+        metadata={
+            "description": "Classes weights you want to apply for the loss",
+            "example": [1.0, 2.3, 1.0],
+        },
     )
-    rank = fields.Integer(required=False, missing=0)
+    rank = fields.Integer(required=False, load_default=0)
     use_ddp = fields.Boolean(
-        required=False, missing=False, description="Turn on distributed data processing"
+        required=False,
+        load_default=False,
+        metadata={"description": "Turn on distributed data processing"},
     )
     evaluate_train_every_n_epochs = fields.Int(
-        missing=1,
-        description="Evaluate on training set every N epochs (default 1 means every epoch)",
-        example=5,
+        load_default=1,
+        metadata={
+            "description": "Evaluate on training set every N epochs (default 1 means every epoch)",
+            "example": 5,
+        },
         validate=validate.Range(min=1),
     )
     automatic_mixed_precision = fields.Bool(
-        missing=False, description="Turn on automatic mixed precision"
+        load_default=False, metadata={"description": "Turn on automatic mixed precision"}
     )
 
 
@@ -145,22 +163,28 @@ class BaseClassifierSchema(BaseModelSchema):
     """
 
     learning_rate = fields.Float(
-        missing=0.01, description="Learning rate used in training.", example=0.01
+        load_default=0.01,
+        metadata={"description": "Learning rate used in training.", "example": 0.01},
     )
     weight_decay = fields.Float(
-        missing=0.0, description="Learning rate used in training.", example=0.01
+        load_default=0.0,
+        metadata={"description": "Learning rate used in training.", "example": 0.01},
     )
     pretrained = fields.Bool(
-        missing=True, description="Whether to use a pretrained network or not."
+        load_default=True, metadata={"description": "Whether to use a pretrained network or not."}
     )
     local_model_path = fields.String(
-        missing=None,
-        description="Local path of the pre-trained model",
+        load_default=None,
+        metadata={"description": "Local path of the pre-trained model"},
     )
-    threshold = fields.Float(missing=0.5, description="Prediction threshold if needed", example=0.5)
+    threshold = fields.Float(
+        load_default=0.5, metadata={"description": "Prediction threshold if needed", "example": 0.5}
+    )
     freeze = fields.Bool(
-        missing=False,
-        description="Whether to freeze all the layers except for the classifier layer(s).",
+        load_default=False,
+        metadata={
+            "description": "Whether to freeze all the layers except for the classifier layer(s)."
+        },
     )
 
 
@@ -175,15 +199,19 @@ class BaseSegmentationClassifierSchema(BaseClassifierSchema):
 
     metrics = fields.List(
         fields.String,
-        missing=["iou", "f1_score", "accuracy"],
-        description="Classes of metrics you want to calculate",
-        example=["accuracy", "precision", "recall", "f1_score", "iou"],
+        load_default=["iou", "f1_score", "accuracy"],
+        metadata={
+            "description": "Classes of metrics you want to calculate",
+            "example": ["accuracy", "precision", "recall", "f1_score", "iou"],
+        },
     )
     mode = fields.String(
-        missing="multiclass",
-        description="Segmentation mode: 'binary', 'multiclass', or 'multilabel'",
+        load_default="multiclass",
+        metadata={
+            "description": "Segmentation mode: 'binary', 'multiclass', or 'multilabel'",
+            "example": "multiclass",
+        },
         validate=validate.OneOf(["binary", "multiclass", "multilabel"]),
-        example="multiclass",
     )
 
 
@@ -204,17 +232,19 @@ class BaseObjectDetectionSchema(BaseClassifierSchema):
 
     metrics = fields.List(
         fields.String,
-        missing=["map"],
-        description="Classes of metrics you want to calculate",
-        example=["accuracy", "precision", "recall", "f1_score", "iou"],
+        load_default=["map"],
+        metadata={
+            "description": "Classes of metrics you want to calculate",
+            "example": ["accuracy", "precision", "recall", "f1_score", "iou"],
+        },
     )
     step_size = fields.Integer(
-        missing=15,
-        description="Step size for LR scheduler.",
+        load_default=15,
+        metadata={"description": "Step size for LR scheduler."},
     )
     gamma = fields.Float(
-        missing=0.1,
-        description="Gamma (multiplier) for LR scheduler.",
+        load_default=0.1,
+        metadata={"description": "Gamma (multiplier) for LR scheduler."},
     )
 
 
@@ -232,8 +262,8 @@ class BaseFoundationModelSchema(BaseModelSchema):
     :param backbone_name: Name of the model to use as a backbone. Required.
     :type backbone_name: str, required
 
-    :param local_model_path: Local path of the pretrained model. Default is None.
-    :type local_model_path: str, optional
+    :param local_model_path: Local path of the pretrained model (existing or to be downloaded from Huggingface). Required.
+    :type local_model_path: str, required
 
     :param use_cuda: Flag indicating whether to use CUDA if available. Default is True.
     :type use_cuda: bool, optional
@@ -243,21 +273,29 @@ class BaseFoundationModelSchema(BaseModelSchema):
     """
 
     pretrained = fields.Bool(
-        missing=True, description="Whether to use a pretrained network or not."
+        load_default=True, metadata={"description": "Whether to use a pretrained network or not."}
     )
     backbone_name = fields.String(
         required=True,
-        description="Name of the model to use as a backbone.",
-        example="vit_base_patch16",
+        metadata={
+            "description": "Name of the model to use as a backbone.",
+            "example": "vit_base_patch16",
+        },
     )
     local_model_path = fields.String(
         required=True,
-        description="Local path of the pre-trained model (existing or to be downloaded from Huggingface).",
+        metadata={
+            "description": "Local path of the pre-trained model (existing or to be downloaded from Huggingface)."
+        },
     )
-    use_cuda = fields.Bool(missing=True, description="Whether to use CUDA if possible")
+    use_cuda = fields.Bool(
+        load_default=True, metadata={"description": "Whether to use CUDA if possible"}
+    )
     flash_attn = fields.Bool(
-        missing=False,
-        description="Whether to use flash attention (if cuda and flash attention are available)",
+        load_default=False,
+        metadata={
+            "description": "Whether to use flash attention (if cuda and flash attention are available)"
+        },
     )
 
     pass
@@ -301,7 +339,6 @@ class CompositeModelSchema(BaseFoundationModelSchema):
 
     task_type = fields.String(
         required=True,
-        description="Type of task for the composite model.",
         validate=validate.OneOf(
             [
                 "feature extraction",
@@ -312,52 +349,71 @@ class CompositeModelSchema(BaseFoundationModelSchema):
                 "change detection",
             ]
         ),
-        example="segmentation",
+        metadata={
+            "description": "Type of task for the composite model.",
+            "example": "segmentation",
+        },
     )
     necks = fields.List(
         fields.Dict(),
-        missing=None,
-        description="List of (optional) neck configurations to execute sequentially.",
-        example=[
-            {"name": "SelectIndices", "indices": [2, 5, 8, 11]},
-            {"name": "ReshapeTokensToImage", "remove_cls_token": False},
-        ],
+        load_default=None,
+        metadata={
+            "description": "List of (optional) neck configurations to execute sequentially.",
+            "example": [
+                {"name": "SelectIndices", "indices": [2, 5, 8, 11]},
+                {"name": "ReshapeTokensToImage", "remove_cls_token": False},
+            ],
+        },
     )
     decoder_name = fields.String(
-        missing=None,
-        description="Name of the model to use as a decoder.",
-        example="UPerNetDecoder",
+        load_default=None,
+        metadata={
+            "description": "Name of the model to use as a decoder.",
+            "example": "UPerNetDecoder",
+        },
     )
     decoder_params = fields.Dict(
-        missing={},
-        description="Parameters passed to the decoder (e.g., {'pool_scales': [1,2,3,6]}).",
+        load_default={},
+        metadata={
+            "description": "Parameters passed to the decoder (e.g., {'pool_scales': [1,2,3,6]})."
+        },
     )
     head_name = fields.String(
-        missing=None,
-        description="Name of the component to use as a head (optional).",
-        example="SegmentationHead",
+        load_default=None,
+        metadata={
+            "description": "Name of the component to use as a head (optional).",
+            "example": "SegmentationHead",
+        },
     )
     head_params = fields.Dict(
-        missing={},
-        description="Parameters passed to the head (e.g., {'dropout': 0.1}).",
+        load_default={},
+        metadata={"description": "Parameters passed to the head (e.g., {'dropout': 0.1})."},
     )
     freeze_modules = fields.List(
         fields.String(),
-        missing=[],
-        description="List of components to freeze. Options: 'backbone', 'necks', 'decoder', 'head'.",
+        load_default=[],
+        metadata={
+            "description": "List of components to freeze. Options: 'backbone', 'necks', 'decoder', 'head'."
+        },
     )
     backbone_setup_calls = fields.List(
         fields.Dict(),
-        missing=list,
-        description="List of dicts defining methods to call on the backbone after instantiation (e.g., [{'method': 'select_input_bands', 'params': {'bands': ...}}]).",
+        load_default=list,
+        metadata={
+            "description": "List of dicts defining methods to call on the backbone after instantiation (e.g., [{'method': 'select_input_bands', 'params': {'bands': ...}}])."
+        },
     )
     forward_params = fields.Dict(
-        missing=dict,
-        description="Additional parameters to pass to the forward method (e.g., {'wave_list': [0.443, 0.490, 0.560]} for DOFA).",
+        load_default=dict,
+        metadata={
+            "description": "Additional parameters to pass to the forward method (e.g., {'wave_list': [0.443, 0.490, 0.560]} for DOFA)."
+        },
     )
     adapter_name = fields.String(
-        missing=None,
-        description="Name of the model-specific adapter in the ADAPTER_REGISTRY (e.g., 'CopernicusFMAdapter').",
+        load_default=None,
+        metadata={
+            "description": "Name of the model-specific adapter in the ADAPTER_REGISTRY (e.g., 'CopernicusFMAdapter')."
+        },
     )
 
     @pre_load

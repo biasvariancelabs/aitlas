@@ -9,22 +9,20 @@ class MatDatasetSchema(BaseDatasetSchema):
     """
 
     mat_file = fields.String(
-        missing=None,
-        description="mat file on disk",
-        example="./data/dataset.mat",
+        load_default=None,
+        metadata={"description": "mat file on disk", "example": "./data/dataset.mat"},
     )
     mode = fields.String(
-        missing="train",
-        description="Which split to use, train or test.",
-        example="train",
+        load_default="train",
+        metadata={"description": "Which split to use, train or test.", "example": "train"},
     )
     csv_file = fields.String(
-        missing=None,
-        description="CSV file on disk",
-        example="./data/train.csv",
+        load_default=None,
+        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
     )
     download = fields.Bool(
-        missing=False, description="Whether to download the dataset", example=True
+        load_default=False,
+        metadata={"description": "Whether to download the dataset", "example": True},
     )
 
 
@@ -34,20 +32,18 @@ class NPZDatasetSchema(BaseDatasetSchema):
     """
 
     npz_file = fields.String(
-        missing=None,
-        description="npz file on disk",
-        example="./data/dataset.npz",
+        load_default=None,
+        metadata={"description": "npz file on disk", "example": "./data/dataset.npz"},
     )
     mode = fields.String(
-        missing="train",
-        description="Which split to use, train or test.",
-        example="train",
+        load_default="train",
+        metadata={"description": "Which split to use, train or test.", "example": "train"},
     )
     labels = fields.List(
         fields.String,
-        missing=None,
+        load_default=None,
         required=False,
-        description="List of labels",
+        metadata={"description": "List of labels"},
     )
 
 
@@ -57,12 +53,12 @@ class ClassificationDatasetSchema(BaseDatasetSchema):
     """
 
     data_dir = fields.String(
-        missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
+        load_default="/",
+        metadata={"description": "Dataset path on disk", "example": "./data/BigEarthNet/"},
     )
     csv_file = fields.String(
-        missing=None,
-        description="CSV file on disk",
-        example="./data/train.csv",
+        load_default=None,
+        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
     )
 
 
@@ -72,12 +68,12 @@ class SegmentationDatasetSchema(BaseDatasetSchema):
     """
 
     data_dir = fields.String(
-        missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
+        load_default="/",
+        metadata={"description": "Dataset path on disk", "example": "./data/BigEarthNet/"},
     )
     csv_file = fields.String(
-        missing=None,
-        description="CSV file on disk",
-        example="./data/train.csv",
+        load_default=None,
+        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
     )
 
 
@@ -87,17 +83,22 @@ class ObjectDetectionPascalDatasetSchema(BaseDatasetSchema):
     """
 
     imageset_file = fields.String(
-        missing="/",
-        description="File with the image ids in the set",
-        example="./data/DIOR/train.txt",
+        load_default="/",
+        metadata={
+            "description": "File with the image ids in the set",
+            "example": "./data/DIOR/train.txt",
+        },
     )
     image_dir = fields.String(
-        missing="/", description="Folder to the images on disk", example="./data/DIOR/"
+        load_default="/",
+        metadata={"description": "Folder to the images on disk", "example": "./data/DIOR/"},
     )
     annotations_dir = fields.String(
-        missing="/",
-        description="Folder with the XML annotations in VOC format",
-        example="./data/DIOR/Annons/",
+        load_default="/",
+        metadata={
+            "description": "Folder with the XML annotations in VOC format",
+            "example": "./data/DIOR/Annons/",
+        },
     )
 
 
@@ -107,15 +108,16 @@ class ObjectDetectionCocoDatasetSchema(BaseDatasetSchema):
     """
 
     data_dir = fields.String(
-        missing="/", description="Dataset path on disk", example="./data/DIOR/"
+        load_default="/",
+        metadata={"description": "Dataset path on disk", "example": "./data/DIOR/"},
     )
     json_file = fields.String(
-        missing=None,
-        description="JSON Coco file format on disk",
-        example="./data/train.json",
+        load_default=None,
+        metadata={"description": "JSON Coco file format on disk", "example": "./data/train.json"},
     )
     hardcode_background = fields.Bool(
-        missing=True, description="Do we need to hardcode the background as a class?"
+        load_default=True,
+        metadata={"description": "Do we need to hardcode the background as a class?"},
     )
 
 
@@ -125,12 +127,12 @@ class ObjectDetectionRfiCocoDatasetSchema(BaseDatasetSchema):
     """
 
     data_dir = fields.String(
-        missing="/", description="Dataset path on disk", example="./data/DIOR/"
+        load_default="/",
+        metadata={"description": "Dataset path on disk", "example": "./data/DIOR/"},
     )
     annotation_dir = fields.String(
-        missing="/",
-        description="JSON Coco files path on disk",
-        example="./data/annotations/",
+        load_default="/",
+        metadata={"description": "JSON Coco files path on disk", "example": "./data/annotations/"},
     )
 
 
@@ -140,32 +142,38 @@ class BigEarthNetSchema(BaseDatasetSchema):
     """
 
     csv_file = fields.String(
-        missing=None, description="CSV file on disk", example="./data/train.csv"
+        load_default=None,
+        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
     )
-    lmdb_path = fields.String(missing=None, description="Path to the lmdb storage")
+    lmdb_path = fields.String(
+        load_default=None, metadata={"description": "Path to the lmdb storage"}
+    )
     data_dir = fields.String(
-        missing=None, description="Dataset path on disk", example="./data/BigEarthNet/"
+        load_default=None,
+        metadata={"description": "Dataset path on disk", "example": "./data/BigEarthNet/"},
     )
     selection = fields.String(
-        missing="rgb", description="Read RGB channels or 13 channels", example="all/rgb"
+        load_default="rgb",
+        metadata={"description": "Read RGB channels or 13 channels", "example": "all/rgb"},
     )
     version = fields.String(
-        missing="19 labels",
-        description="43 or 19 labels",
-        example="43 labels/19 labels",
+        load_default="19 labels",
+        metadata={"description": "43 or 19 labels", "example": "43 labels/19 labels"},
     )
-    import_to_lmdb = fields.Bool(missing=False, description="Should the data be moved to LMDB")
+    import_to_lmdb = fields.Bool(
+        load_default=False, metadata={"description": "Should the data be moved to LMDB"}
+    )
     bands10_mean = fields.List(
         fields.Float,
-        missing=(429.9430203, 614.21682446, 590.23569706),
+        load_default=(429.9430203, 614.21682446, 590.23569706),
         required=False,
-        description="List of mean values for the 3 channels",
+        metadata={"description": "List of mean values for the 3 channels"},
     )
     bands10_std = fields.List(
         fields.Float,
-        missing=(572.41639287, 582.87945694, 675.88746967),
+        load_default=(572.41639287, 582.87945694, 675.88746967),
         required=False,
-        description="List of std values for the 3 channels",
+        metadata={"description": "List of std values for the 3 channels"},
     )
 
 
@@ -176,90 +184,113 @@ class SpaceNet6DatasetSchema(BaseDatasetSchema):
 
     orients = fields.String(
         required=False,
-        example="path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.csv",
-        description="Absolute path pointing to the SAR orientations text file "
-        "(output of the pre-processing task",
+        metadata={
+            "description": "Absolute path pointing to the SAR orientations text file "
+            "(output of the pre-processing task",
+            "example": "path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.csv",
+        },
     )
     root_directory = fields.String(
         required=False,
-        example="path/to/data/train/AOI_11_Rotterdam/",
-        description="Root directory for the raw SpaceNet6 data set",
+        metadata={
+            "description": "Root directory for the raw SpaceNet6 data set",
+            "example": "path/to/data/train/AOI_11_Rotterdam/",
+        },
     )
     start_val_epoch = fields.Int(
         required=False,
-        description="From which epoch should the validation period start",
+        metadata={"description": "From which epoch should the validation period start"},
     )
     # Train & val
     folds_path = fields.String(
         required=False,
-        example="path/to/results/folds",
-        description="Path to the fold csv files",
+        metadata={"description": "Path to the fold csv files", "example": "path/to/results/folds"},
     )
     segmentation_directory = fields.String(
         required=False,
-        example="path/to/results/segmentation",
-        description="Source directory with the target segmentation masks",
+        metadata={
+            "description": "Source directory with the target segmentation masks",
+            "example": "path/to/results/segmentation",
+        },
     )
     gt_csv = fields.String(
         required=False,
-        description="Source file containing the ground truth segmentation data on the buildings",
+        metadata={
+            "description": "Source file containing the ground truth segmentation data on the buildings"
+        },
     )
     pred_csv = fields.String(
         required=False,
-        description="Destination file for saving the predictions from the current fold",
+        metadata={
+            "description": "Destination file for saving the predictions from the current fold"
+        },
     )
     pred_folder = fields.String(
         required=False,
-        description="Destination directory for saving the predictions from all folds",
+        metadata={"description": "Destination directory for saving the predictions from all folds"},
     )
-    edge_weight = fields.Int(required=False, description="Weight for the building edges pixels")
+    edge_weight = fields.Int(
+        required=False, metadata={"description": "Weight for the building edges pixels"}
+    )
     contact_weight = fields.Int(
-        required=False, description="Weight for the building contact pixels"
+        required=False, metadata={"description": "Weight for the building contact pixels"}
     )
     # Test
     test_directory = fields.String(
         required=False,
-        example="path/to/data/train/AOI_11_Rotterdam/",
-        description="Root directory for the raw SpaceNet6 data set",
+        metadata={
+            "description": "Root directory for the raw SpaceNet6 data set",
+            "example": "path/to/data/train/AOI_11_Rotterdam/",
+        },
     )
     merged_pred_dir = fields.String(
         required=False,
-        example="path/to/data/train/AOI_11_Rotterdam/",
-        description="Destination directory for merging the predictions from all folds",
+        metadata={
+            "description": "Destination directory for merging the predictions from all folds",
+            "example": "path/to/data/train/AOI_11_Rotterdam/",
+        },
     )
     solution_file = fields.String(
         required=False,
-        example="path/to/data/results/solution.csv",
-        description="SpaceNet6-compliant csv destination file used for grading the challenge",
+        metadata={
+            "description": "SpaceNet6-compliant csv destination file used for grading the challenge",
+            "example": "path/to/data/results/solution.csv",
+        },
     )
     # Prepare
     num_folds = fields.Int(
-        required=False, missing=10, description="Number of fold splits for the data set"
+        required=False,
+        load_default=10,
+        metadata={"description": "Number of fold splits for the data set"},
     )
     orients_output = fields.String(
         required=False,
-        example="path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.txt",
-        description="Absolute path pointing to the output SAR orientations csv file",
+        metadata={
+            "description": "Absolute path pointing to the output SAR orientations csv file",
+            "example": "path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.txt",
+        },
     )
     num_threads = fields.Int(
         required=False,
-        missing=1,
-        description="Number of threads for parallel execution",
+        load_default=1,
+        metadata={"description": "Number of threads for parallel execution", "example": "1"},
     )
     edge_width = fields.Int(
         required=False,
-        default=3,
-        description="Width of the edge of buildings (in pixels)",
+        load_default=3,
+        metadata={"description": "Width of the edge of buildings (in pixels)", "example": "3"},
     )
     contact_width = fields.Int(
         required=False,
-        default=9,
-        description="Width of the contact between (in pixels)",
+        load_default=9,
+        metadata={"description": "Width of the contact between (in pixels)", "example": "9"},
     )
     folds_dir = fields.String(
         required=False,
-        example="path/to/results/folds",
-        description="Source directory with the fold csv files",
+        metadata={
+            "description": "Source directory with the fold csv files",
+            "example": "path/to/results/folds",
+        },
     )
 
 
@@ -271,27 +302,33 @@ class BreizhCropsSchema(BaseDatasetSchema):
     regions = fields.List(
         fields.String,
         required=True,
-        description="Brittany region (frh01..frh04)",
-        example="['frh01','frh01']",
+        metadata={"description": "Brittany region (frh01..frh04)", "example": "['frh01','frh01']"},
     )
 
     root = fields.String(
         required=True,
-        description="Dataset path on disk",
-        example="./breizhcrops_dataset",
+        metadata={"description": "Dataset path on disk", "example": "./breizhcrops_dataset"},
     )
-    year = fields.Integer(missing=2017, description="year", validate=validate.OneOf([2017, 2018]))
-    filter_length = fields.Integer(missing=0, description="filter_length")
+    year = fields.Integer(
+        load_default=2017,
+        validate=validate.OneOf([2017, 2018]),
+        metadata={"description": "year", "example": "2017"},
+    )
+    filter_length = fields.Integer(
+        load_default=0,
+        metadata={"description": "filter_length"},
+    )
     level = fields.String(
         required=True,
-        description="L1C or L2A",
-        example="L1C",
         validate=validate.OneOf(["L1C", "L2A"]),
+        metadata={"description": "L1C or L2A", "example": "L1C"},
     )
-    verbose = fields.Bool(missing=False, description="verbose")  # change to true
-    load_timeseries = fields.Bool(missing=True, description="load_timeseries")
-    recompile_h5_from_csv = fields.Bool(missing=False, description="recompile_h5_from_csv")
-    preload_ram = fields.Bool(missing=False, description="preload_ram")
+    verbose = fields.Bool(load_default=False, metadata={"description": "verbose"})
+    load_timeseries = fields.Bool(load_default=True, metadata={"description": "load_timeseries"})
+    recompile_h5_from_csv = fields.Bool(
+        load_default=False, metadata={"description": "recompile_h5_from_csv"}
+    )
+    preload_ram = fields.Bool(load_default=False, metadata={"description": "preload_ram"})
 
 
 class CropsDatasetSchema(BaseDatasetSchema):
@@ -300,23 +337,26 @@ class CropsDatasetSchema(BaseDatasetSchema):
     """
 
     csv_file_path = fields.String(
-        missing=None, description="CSV file on disk", example="./data/train.csv"
+        load_default=None,
+        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
     )
     root = fields.String(
-        required=True, description="Dataset path on disk", example="./slovenia-crops"
+        required=True,
+        metadata={"description": "Dataset path on disk", "example": "./slovenia-crops"},
     )
-    verbose = fields.Bool(missing=False, description="verbose")
+    verbose = fields.Bool(load_default=False, metadata={"description": "verbose"})
     level = fields.String(
-        missing="L1C",
-        description="L1C or L2A",
-        example="L1C",
+        load_default="L1C",
         validate=validate.OneOf(["L1C", "L2A"]),
+        metadata={"description": "L1C or L2A", "example": "L1C"},
     )
     regions = fields.List(
         fields.String,
         required=True,
-        description="Brittany region (frh01..frh04) or train/val/test",
-        example="['frh01','frh01']",
+        metadata={
+            "description": "Brittany region (frh01..frh04) or train/val/test",
+            "example": "['frh01','frh01']",
+        },
     )
 
 
@@ -325,7 +365,9 @@ class So2SatDatasetSchema(BaseDatasetSchema):
     Schema for configuring the So2Sat dataset.
     """
 
-    h5_file = fields.String(required=True, description="H5 file on disk", example="./data/train.h5")
+    h5_file = fields.String(
+        required=True, metadata={"description": "H5 file on disk", "example": "./data/train.h5"}
+    )
 
 
 class CloudDatasets_AI4QCSchema(BaseDatasetSchema):
@@ -334,13 +376,16 @@ class CloudDatasets_AI4QCSchema(BaseDatasetSchema):
     """
 
     csv_file = fields.String(
-        missing=None, description="CSV file on disk", example="./data/train.csv"
+        load_default=None,
+        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
     )
     data_dir = fields.String(
-        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+        load_default="/",
+        metadata={"description": "Dataset path on disk", "example": "./data/CESBIO/"},
     )
     selection = fields.String(
-        missing="rgb", description="Read RGB channels or 13 channels", example="all/rgb"
+        load_default="rgb",
+        metadata={"description": "Read RGB channels or 13 channels", "example": "all/rgb"},
     )
 
 
@@ -350,10 +395,10 @@ class ClusteringDatasetSchema(BaseDatasetSchema):
     """
 
     data_dir = fields.String(
-        missing="/", description="Dataset path on disk", example="./data/New_anomalies/"
+        load_default="/",
+        metadata={"description": "Dataset path on disk", "example": "./data/New_anomalies/"},
     )
     csv_file = fields.String(
-        missing=None,
-        description="CSV file on disk",
-        example="./data/train.csv",
+        load_default=None,
+        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
     )

@@ -13,6 +13,5 @@ from .utils import (
     save_best_model,
     split_images,
     stringify,
-    submit_inria_results,
     tiff_loader,
 )
