@@ -227,18 +227,20 @@ class ReshapeTokensToImage(Neck):
             remove_cls_token (bool, optional): Whether to remove the cls token from the first position.
                 Defaults to True.
             effective_time_dim (int, optional): The effective temporal dimension the transformer processes.
-                For a ViT, his will be given by `num_frames // tubelet size`. This is used to determine
+                For a ViT, this will be given by ``num_frames // tubelet size``. This is used to determine
                 the temporal dimension of the embedding, which is concatenated with the embedding dimension.
+
                 For example:
+
                 - A model which processes 1 frame with a tubelet size of 1 has an effective_time_dim of 1.
-                    The embedding produced by this model has embedding size embed_dim * 1.
+                  The embedding produced by this model has embedding size ``embed_dim * 1``.
                 - A model which processes 3 frames with a tubelet size of 1 has an effective_time_dim of 3.
-                    The embedding produced by this model has embedding size embed_dim * 3.
+                  The embedding produced by this model has embedding size ``embed_dim * 3``.
                 - A model which processes 12 frames with a tubelet size of 4 has an effective_time_dim of 3.
-                    The embedding produced by this model has an embedding size embed_dim * 3.
+                  The embedding produced by this model has an embedding size ``embed_dim * 3``.
+
                 Defaults to 1.
-            h (int | None):
-                You can choose a value for the height of the reshaped image.
+            h (int | None): You can choose a value for the height of the reshaped image.
                 The embedding size will be implicitly discovered from it.
         """
         super().__init__(channel_list)

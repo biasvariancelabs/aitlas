@@ -107,21 +107,22 @@ class Panopticon(FoundationModel):
 
         Args:
             x_dict (dict): Dictionary of input tensors with keys:
-                imgs (torch.Tensor): Tensor of shape (B, C, H, W).
-                chn_ids (torch.Tensor): Tensor of shape (B, C) encoding the spectral information
-                         of each channel. For optical channels, this is the wavelength in
-                         nanometers. For SAR channels, this is a negative integer as outlined
-                         in https://github.com/Panopticon-FM/panopticon/blob/main/dinov2/configs/data/satellites/sentinel1.yaml
-            dense_features (bool, optional): Whether to return unpooled or pooled features. Defaults to False.
+
+                * **imgs** (torch.Tensor): Tensor of shape (B, C, H, W).
+                * **chn_ids** (torch.Tensor): Tensor of shape (B, C) encoding the spectral information
+                  of each channel. For optical channels, this is the wavelength in nanometers.
+                  For SAR channels, this is a negative integer as outlined in the Panopticon docs.
+
+            dense_features (bool, optional): Whether to return unpooled or pooled features.
+                Defaults to False.
 
         Returns:
-            embedding (torch.Tensor): A feature embedding tensor
-                - If dense_features=False:
-                    A single tensor of shape (B, D) representing the
-                    pooled embeddings of all unmasked tokens.
-                - If dense_features=True:
-                    A single tensor of shape (B, N + 1, D) representing the
-                    unpooled embeddings of all unmasked tokens
+            torch.Tensor: A feature embedding tensor:
+
+                * If **dense_features=False**: A single tensor of shape (B, D) representing the
+                  pooled embeddings of all unmasked tokens.
+                * If **dense_features=True**: A single tensor of shape (B, N + 1, D) representing the
+                  unpooled embeddings of all unmasked tokens.
         """
 
         # Pass the input through the backbone (encoder)

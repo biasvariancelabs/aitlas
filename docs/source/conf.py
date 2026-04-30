@@ -5,6 +5,7 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import importlib.metadata
 import os
 import sys
 
@@ -13,9 +14,8 @@ sys.path.insert(0, os.path.abspath("../../aitlas"))
 print(sys.executable)
 
 project = "AiTLAS : Artificial Intelligence Toolbox for Earth Observation"
-copyright = "2023, Bias Variance Labs"
+copyright = "2026, Bias Variance Labs"
 author = "Bias Variance Labs"
-# release = "1.0.0"
 doc_title = "AiTLAS documentation"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -24,11 +24,12 @@ doc_title = "AiTLAS documentation"
 #
 # The release is read from __init__ file and version is shortened release string.
 
-with open(os.path.join(os.path.dirname(__file__), "../../setup.py")) as setup_file:
-    for line in setup_file:
-        if "version=" in line:
-            release = line.split("=")[1].strip('", \n').strip("'")
-            version = release.rsplit(".", 1)[0]
+try:
+    release = importlib.metadata.version("aitlas")
+except importlib.metadata.PackageNotFoundError:
+    release = "2.0.0"
+
+version = ".".join(release.split(".")[:2])
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -41,11 +42,11 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
-    "sphinx.ext.intersphinx",
-    "sphinx_mdinclude",
+    # "sphinx.ext.intersphinx",
     "sphinx.ext.imgconverter",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
+    "myst_parser",
 ]
 
 autosummary_generate = True
@@ -63,7 +64,10 @@ autodoc_inherit_docstrings = False
 autodoc_member_order = "bysource"
 
 
-source_suffix = [".rst", ".md"]
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".md": "markdown",
+}
 master_doc = "index"
 
 
@@ -78,8 +82,8 @@ nbsphinx_allow_errors = True
 nbsphinx_execute = "never"
 
 nbsphinx_execute_arguments = [
-    "--InlineBackend.figure_formats={'svg', 'pdf'}",
-    "--InlineBackend.rc={'figure.dpi': 96}",
+    "--InlineBackend.figure_formats=['svg', 'pdf']",
+    "--InlineBackend.rc=['figure.dpi': 96]",
 ]
 
 templates_path = ["_templates"]
@@ -125,17 +129,19 @@ html_theme_options = {
     "launch_buttons": {
         "colab_url": "https://colab.research.google.com/",
     },
-    "default_mode": "light",
+    "show_nav_level": 2,
+    "collapse_navigation": False,
+    "navigation_depth": 4,
 }
 
 
 intersphinx_mapping = {
-    "torch": ("https://pytorch.org/docs/stable/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    "matplotlib": ("https://matplotlib.org/stable/", None),
-    "sklearn": ("https://scikit-learn.org/stable/", None),
-    "pandas": ("https://pandas.pydata.org/docs/", None),
+    "torch": ("https://pytorch.org/docs/stable", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy", None),
+    "matplotlib": ("https://matplotlib.org/stable", None),
+    "sklearn": ("https://scikit-learn.org/stable", None),
+    "pandas": ("https://pandas.pydata.org/docs", None),
     "python": ("https://docs.python.org/3", None),
 }
 

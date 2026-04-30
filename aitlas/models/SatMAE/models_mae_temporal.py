@@ -137,7 +137,7 @@ class MaskedAutoencoderTemporalViT(nn.Module):
     def patchify(self, imgs):
         """
         imgs: (N, 3, H, W)
-        x: (N, L, patch_size**2 *3)
+        x: (N, L, ``patch_size**2 *3``)
         """
         p = self.patch_embed.patch_size[0]
         assert imgs.shape[2] == imgs.shape[3] and imgs.shape[2] % p == 0
@@ -150,7 +150,7 @@ class MaskedAutoencoderTemporalViT(nn.Module):
 
     def unpatchify(self, x):
         """
-        x: (N, L, patch_size**2 *3)
+        x: (N, L, ``patch_size**2 *3``)
         imgs: (N, 3, H, W)
         """
         p = self.patch_embed.patch_size[0]

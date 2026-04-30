@@ -69,7 +69,7 @@ class SatMAEHead(nn.Module):
 
     def unpatchify(self, x, p, c):
         """
-        x: (N, L, patch_size**2 *C)
+        x: (N, L, ``patch_size**2 *C``)
         p: Patch embed patch size
         c: Num channels
         imgs: (N, C, H, W)
@@ -176,7 +176,7 @@ class SatMAEHeadViT(nn.Module):
 
     def unpatchify(self, x, p, c):
         """
-        x: (N, L, patch_size**2 *C)
+        x: (N, L, ``patch_size**2 *C``)
         p: Patch embed patch size
         c: Num channels
         imgs: (N, C, H, W)

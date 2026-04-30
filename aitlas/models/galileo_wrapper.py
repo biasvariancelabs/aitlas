@@ -172,37 +172,37 @@ class Galileo(FoundationModel):
 
         Args:
             inputs (Dict[str, Any]): A dictionary where keys are data types:
-                "s1": torch.Tensor of shape (B, T, C_s1, H, W); C_s1 = 2
-                "s2": torch.Tensor of shape (B, T, C_s2, H, W); C_s2 = 10
-                "era5": torch.Tensor of shape (B, T, C_era5); C_era5 = 2
-                "tc": torch.Tensor of shape (B, T, C_tc); C_tc = 3
-                "viirs": torch.Tensor of shape (B, T, C_viirs); C_viirs = 1
-                "srtm": torch.Tensor of shape (B, C_srtm, H, W); C_srtm = 2
-                "dw": torch.Tensor of shape (B, C_dw, H, W); C_dw = 9
-                "wc": torch.Tensor of shape (B, C_wc, H, W); C_wc = 5
-                "landscan": torch.Tensor of shape (B, C_landscan); C_landscan = 1
-                "latlon": torch.Tensor of shape (B, 2)
-                "months": torch.Tensor of shape (B, T)
+
+                * "s1": torch.Tensor of shape (B, T, C_s1, H, W); C_s1 = 2
+                * "s2": torch.Tensor of shape (B, T, C_s2, H, W); C_s2 = 10
+                * "era5": torch.Tensor of shape (B, T, C_era5); C_era5 = 2
+                * "tc": torch.Tensor of shape (B, T, C_tc); C_tc = 3
+                * "viirs": torch.Tensor of shape (B, T, C_viirs); C_viirs = 1
+                * "srtm": torch.Tensor of shape (B, C_srtm, H, W); C_srtm = 2
+                * "dw": torch.Tensor of shape (B, C_dw, H, W); C_dw = 9
+                * "wc": torch.Tensor of shape (B, C_wc, H, W); C_wc = 5
+                * "landscan": torch.Tensor of shape (B, C_landscan); C_landscan = 1
+                * "latlon": torch.Tensor of shape (B, 2)
+                * "months": torch.Tensor of shape (B, T)
+
             patch_size (int): The patch size to use for processing spatial inputs.
-            average_features (bool):
-                If True, returns a single averaged tensor for the batch.
+            average_features (bool): If True, returns a single averaged tensor for the batch.
                 If False, returns a tuple of all raw feature embedding tensors.
-            **kwargs: Additional keyword arguments, such as:
+            ``**kwargs``: Additional keyword arguments, such as:
                 "normalize": bool, whether to normalize the inputs (default: False)
 
         Returns:
             Union[torch.Tensor, Tuple[torch.Tensor]]:
-                - If average_features=True:
-                    A single tensor of shape (B, D) representing the
-                    averaged embeddings of all unmasked tokens.
-                - If average_features=False:
-                    A tuple of the 9 raw, patched embedding tensors:
-                    (s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m, months_out).
-                    Of these, only the the first four are actual data embeddings.
-                        "s_t_x": torch.Tensor of shape (B, H', W', T, C_st_g, D)
-                        "sp_x": torch.Tensor of shape (B, H', W', C_sp_g, D)
-                        "t_x": torch.Tensor of shape (B, T, C_t_g, D
-                        "st_x": torch.Tensor of shape (B, C_st_g, D)
+                - If average_features=True: A single tensor of shape (B, D) representing the
+                  averaged embeddings of all unmasked tokens.
+                - If average_features=False: A tuple of the 9 raw, patched embedding tensors:
+                  (s_t_x, sp_x, t_x, st_x, s_t_m, sp_m, t_m, st_m, months_out).
+                  Of these, only the the first four are actual data embeddings.
+
+                  * "s_t_x": torch.Tensor of shape (B, H', W', T, C_st_g, D)
+                  * "sp_x": torch.Tensor of shape (B, H', W', C_sp_g, D)
+                  * "t_x": torch.Tensor of shape (B, T, C_t_g, D)
+                  * "st_x": torch.Tensor of shape (B, C_st_g, D)
         """
         # Reshape the inputs from the standard AiTLAS format to Galileo expected format,
         # e.g., (B, T, C, H, W) to (B, H, W, T, C) for space-time image data

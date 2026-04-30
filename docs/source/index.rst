@@ -3,7 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. mdinclude:: markdown/intro.md
+.. include:: markdown/intro.md
+   :parser: myst_parser.sphinx_
 
 .. Welcome to AiTLAS's documentation!
 .. ==================================
@@ -20,11 +21,9 @@
    :hidden:
    :caption: Contents
 
-   .. intro
-   self
-   working
-   ecosys
-   install
+   markdown/how
+   markdown/ecosys
+   markdown/install
    examples
    modules
 

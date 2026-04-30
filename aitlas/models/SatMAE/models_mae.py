@@ -137,7 +137,7 @@ class MaskedAutoencoderViT(nn.Module):
         imgs: (N, C, H, W)
         p: Patch embed patch size
         c: Num channels
-        x: (N, L, patch_size**2 *C)
+        x: (N, L, ``patch_size**2 *C``)
         """
         # p = self.patch_embed.patch_size[0]
         assert imgs.shape[2] == imgs.shape[3] and imgs.shape[2] % p == 0
@@ -151,7 +151,7 @@ class MaskedAutoencoderViT(nn.Module):
 
     def unpatchify(self, x, p, c):
         """
-        x: (N, L, patch_size**2 *C)
+        x: (N, L, ``patch_size**2 *C``)
         p: Patch embed patch size
         c: Num channels
         imgs: (N, C, H, W)

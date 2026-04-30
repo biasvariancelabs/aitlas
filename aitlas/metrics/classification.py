@@ -50,13 +50,13 @@ class AveragedScore(BaseMetric):
         It calculates the score for each class and then averages the results.
         The type of average is {'micro', 'macro', 'weighted'}:
 
-        *'micro': Calculate metrics globally by counting the total true positives,
-            false negatives and false positives.
-        *'macro': Calculate metrics for each label, and find their unweighted
-            mean.  This does not take label imbalance into account.
-        *'weighted': Calculate metrics for each label, and find their average, weighted
-            by support (the number of true instances for each label). This
-            alters 'macro' to account for label imbalance.
+            'micro': Calculate metrics globally by counting the total true positives,
+                false negatives and false positives.
+            'macro': Calculate metrics for each label, and find their unweighted
+                mean.  This does not take label imbalance into account.
+            'weighted': Calculate metrics for each label, and find their average, weighted
+                by support (the number of true instances for each label). This
+                alters 'macro' to account for label imbalance.
 
         :param y_true: The ground truth labels
         :type y_true: array-like

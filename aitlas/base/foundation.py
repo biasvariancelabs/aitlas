@@ -37,12 +37,12 @@ class FoundationModel(BaseModel):
 
         :param x: Input image tensor
         :type x: torch.Tensor
-        **kwargs: Additional arguments that might be required for the forward_features pass, such a as wave_list for certain models
+        :param ``**kwargs``: Additional arguments that might be required for the forward_features pass, such a as wave_list for certain models
         :return: Output feature embeddings or predictions
         :rtype: torch.Tensor
         """
         raise NotImplementedError(
-            "Each foundation model should implement 'forward_features' to define its forward pass to get the feature embaddings."
+            "Each foundation model should implement 'forward_features' to define its forward pass to get the feature embeddings."
         )
 
     def forward(self, x=None, **kwargs):

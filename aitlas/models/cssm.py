@@ -139,6 +139,9 @@ class MambaBlock_CD(nn.Module):
 
         NOTE: Deviation from original source code to align with the CSSM Paper mathematically.
         The original paper defines the state update for the CSSM block as:
+
+        .. math::
+
             h_t = \\bar{A} h_{t-1} + || \\bar{B}'_t z_{post,t} - \\bar{B}_t z_{pre,t} ||_1
 
         In State Space Models, the discretization of the B matrices depends on the step-size \\Delta.

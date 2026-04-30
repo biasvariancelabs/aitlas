@@ -251,14 +251,16 @@ class TokenProjection(nn.Module):
         """
         Applies a sequence of linear projections used for Case 1 & N in modality augmentation.
 
-        Steps:
+        **Steps:**
+
         1. proj1 is shared between Case 1 and Case N (acts like value projection in attention).
         2. Applies LayerNorm to stabilize training and normalize features.
         3. In Case N, proj2 is applied after the weighted mean operation.
         4. proj3 projects to the final embedding dimension.
+
         Args:
-            tokens (Tensor): Input tensor of shape [B, N, input_dim], where
-                             B = batch size, N = number of tokens.
+            x (Tensor): Input tensor of shape [B, N, input_dim], where
+                B = batch size, N = number of tokens.
 
         Returns:
             Tensor: Projected output of shape [B, N, final_dim].

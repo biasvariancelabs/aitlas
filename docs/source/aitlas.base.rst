@@ -1,90 +1,133 @@
-Base
+aitlas.base package
 ===================
+
+Submodules
+----------
+
+aitlas.base.adapters module
+---------------------------
+
+.. automodule:: aitlas.base.adapters
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+aitlas.base.change\_detection module
+------------------------------------
+
+.. automodule:: aitlas.base.change_detection
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 aitlas.base.classification module
 ---------------------------------
 
 .. automodule:: aitlas.base.classification
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
+
+aitlas.base.composite module
+----------------------------
+
+.. automodule:: aitlas.base.composite
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 aitlas.base.config module
 -------------------------
 
 .. automodule:: aitlas.base.config
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 aitlas.base.datasets module
 ---------------------------
 
 .. automodule:: aitlas.base.datasets
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
+
+aitlas.base.foundation module
+-----------------------------
+
+.. automodule:: aitlas.base.foundation
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 aitlas.base.metrics module
 --------------------------
 
 .. automodule:: aitlas.base.metrics
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 aitlas.base.models module
 -------------------------
 
 .. automodule:: aitlas.base.models
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 aitlas.base.object\_detection module
 ------------------------------------
 
 .. automodule:: aitlas.base.object_detection
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 aitlas.base.schemas module
 --------------------------
 
 .. automodule:: aitlas.base.schemas
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 aitlas.base.segmentation module
 -------------------------------
 
 .. automodule:: aitlas.base.segmentation
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 aitlas.base.tasks module
 ------------------------
 
 .. automodule:: aitlas.base.tasks
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 aitlas.base.transforms module
 -----------------------------
 
 .. automodule:: aitlas.base.transforms
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 aitlas.base.visualizations module
 ---------------------------------
 
 .. automodule:: aitlas.base.visualizations
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: aitlas.base
+   :members:
+   :show-inheritance:
+   :undoc-members:

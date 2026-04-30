@@ -1,1 +1,0 @@
-.. mdinclude:: markdown/ecosys.md

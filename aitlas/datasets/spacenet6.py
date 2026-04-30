@@ -216,7 +216,7 @@ class SpaceNet6Dataset(BaseDataset):
         return len(self.image_paths)
 
     def load_directory(self):
-        """Loads the *.tif images from the specified directory."""
+        """Loads the .tif images from the specified directory."""
         self.image_paths = glob.glob(os.path.join(self.config.test_directory, "*.tif"))
         self.mask_paths = None
 

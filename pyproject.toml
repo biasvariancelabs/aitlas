@@ -14,12 +14,13 @@ authors = [
     { name = "Elena Merdjanovska"},
     { name = "Stefan Popov"}
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "albucore>=0.0.20",
     "albumentations>=2.0.0",
     "arff>=0.9",
     "click>=8.1.0",
+    "dataclasses-json>=0.5.14",
     "diffusers>=0.31.0",
     "dill>=0.3.8",
     "einops>=0.8.0",
@@ -60,6 +61,7 @@ dependencies = [
     "scipy>=1.14.0",
     "seaborn>=0.13.0",
     "segmentation-models-pytorch>=0.5.0",
+    "setuptools>=70.0.0,<81.0.0",
     "shapely>=2.0.0",
     "tensorboard>=2.14.0",
     "tifffile>=2024.12.0",
@@ -89,6 +91,15 @@ dev = [
     "pytest>=8.0.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.15.12",
+]
+docs = [
+    "ipykernel>=7.2.0",
+    "myst-parser>=5.0.0",
+    "nbsphinx>=0.9.8",
+    "sphinx>=9.1.0",
+    "sphinx-autobuild>=2025.8.25",
+    "sphinx-book-theme>=1.2.0",
+    "sphinx-rtd-theme>=3.1.0",
 ]
 
 [tool.ruff]

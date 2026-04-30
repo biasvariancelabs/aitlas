@@ -264,20 +264,19 @@ class TerraMindModule(nn.Module):
 
         Args:
             mod_dict (dict): A dictionary containing information for each modality.
-                             Expected keys for each modality are 'x' (input tokens),
-                             'emb' (embeddings), 'input_mask', etc.
+                Expected keys for each modality are ``'x'`` (input tokens),
+                ``'emb'`` (embeddings), ``'input_mask'``, etc.
 
         Returns:
             tuple[torch.Tensor]:
-                (torch.Tensor) **Concatenated encoder tokens from all
-                modalities**. Shape (B, O, D) where O is the total number of all encoder tokens.
-                (torch.Tensor) **Concatenated encoder embeddings from all
-                modalities**. Shape (B, O, D).
-                (torch.Tensor) **Concatenated boolean masks
-                  indicating which tokens are part of the encoder input (set to
-                  0 for valid tokens, 1 otherwise)**. Shape (B, O).
-                (torch.Tensor) **Concatenated integer mask marking the modality
-                type for each encoder token**. Shape (B, O).
+                * **Tokens**: Concatenated encoder tokens from all modalities.
+                  Shape (B, O, D) where O is the total number of all encoder tokens.
+                * **Embeddings**: Concatenated encoder embeddings from all modalities.
+                  Shape (B, O, D).
+                * **Boolean Masks**: Concatenated boolean masks indicating which tokens
+                  are part of the encoder input (0 for valid, 1 otherwise). Shape (B, O).
+                * **Modality Type**: Concatenated integer mask marking the modality
+                  type for each encoder token. Shape (B, O).
         """
 
         encoder_tokens_all = []

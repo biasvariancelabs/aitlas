@@ -1538,12 +1538,15 @@ class GenerationSampler(nn.Module):
         num_tokens=None,
     ):
         """Generates a sequence of tokens from the input modalities.
+
         :param mod_dict: Dictionary of modalities.
         :param schedule: Schedule of modalities to use.
-            list of dictionaries containing {target_domain, scheme, num_tokens, temperature, cfg_scale, cfg_cond_domains}.
-        :param top_k: top_k > 0: Keep only top k tokens with highest probability (a.k.a. top-k filtering).
-        :param top_p: top_p > 0.0: Keep the top tokens with cumulative probability >= top_p (a.k.a. nucleus filtering).
-        :param tokenizer: Modality tokenizers: dict[domain, module] with each module having an text_tokenizer attribute
+
+            List of dictionaries containing ``{target_domain, scheme, num_tokens, temperature, cfg_scale, cfg_cond_domains}``.
+
+        :param top_k: top_k > 0: Keep only top k tokens with highest probability.
+        :param top_p: top_p > 0.0: Keep the top tokens with cumulative probability >= top_p.
+        :param tokenizer: Modality tokenizers: ``dict[domain, module]`` with each module having an text_tokenizer attribute.
         :param verbose: Whether to print progress.
         :param seed: Random seed.
         :return: Generated mod dict.
@@ -1651,11 +1654,14 @@ class GenerationSampler(nn.Module):
         seed=None,
     ):
         """Iterator that generates a sequence of tokens from the input modalities step by step.
+
         :param mod_dict: Dictionary of modalities.
         :param schedule: Schedule of modalities to use.
-            list of dictionaries containing {target_domain, scheme, num_tokens, temperature, cfg_scale, cfg_cond_domains}.
-        :param top_k: top_k > 0: Keep only top k tokens with highest probability (a.k.a. top-k filtering).
-        :param top_p: top_p > 0.0: Keep the top tokens with cumulative probability >= top_p (a.k.a. nucleus filtering).
+
+            * List of dictionaries containing ``{target_domain, scheme, num_tokens, temperature, cfg_scale, cfg_cond_domains}``.
+
+        :param top_k: top_k > 0: Keep only top k tokens with highest probability.
+        :param top_p: top_p > 0.0: Keep the top tokens with cumulative probability >= top_p.
         :param text_tokenizer: Text tokenizer.
         :param verbose: Whether to print progress.
         :param seed: Random seed.

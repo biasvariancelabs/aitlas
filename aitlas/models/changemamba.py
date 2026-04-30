@@ -718,13 +718,16 @@ class ChangeDecoder(nn.Module):
     Decoder that captures spatio-temporal relationships between pre/post images.
 
     Structure:
-    - 4 Stages (scales), matching the backbone.
-    - Each stage has 3 "ST Blocks" (Spatio-Temporal Blocks) that mix features differently:
+
+    * 4 Stages (scales), matching the backbone.
+    * Each stage has 3 "ST Blocks" (Spatio-Temporal Blocks) that mix features differently:
+
       1. Sequential: Concatenate pre/post in channel dim.
       2. Cross: Interleave pre/post pixels (like a checkerboard).
       3. Parallel: Concatenate pre/post side-by-side.
-    - A "Fuse Layer" combines these representations.
-    - A "Smooth Layer" refines the result.
+
+    * A "Fuse Layer" combines these representations.
+    * A "Smooth Layer" refines the result.
     """
 
     def __init__(self, in_channels, num_classes=2, embed_dim=128, d_state=16, drop_path=0.1):

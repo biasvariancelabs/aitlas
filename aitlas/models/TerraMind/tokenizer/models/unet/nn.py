@@ -121,8 +121,8 @@ def normalization(channels):
 def timestep_embedding(timesteps, dim, max_period=10000):
     """
     Create sinusoidal timestep embeddings.
-    :param timesteps: a 1-D Tensor of N indices, one per batch element.
-                      These may be fractional.
+
+    :param timesteps: a 1-D Tensor of N indices, one per batch element (may be fractional).
     :param dim: the dimension of the output.
     :param max_period: controls the minimum frequency of the embeddings.
     :return: an [N x dim] Tensor of positional embeddings.
@@ -142,11 +142,13 @@ def checkpoint(func, inputs, params, flag):
     """
     Evaluate a function without caching intermediate activations, allowing for
     reduced memory at the expense of extra compute in the backward pass.
+
     :param func: the function to evaluate.
-    :param inputs: the argument sequence to pass to `func`.
-    :param params: a sequence of parameters `func` depends on but does not
-                   explicitly take as arguments.
+    :param inputs: the argument sequence to pass to ``func``.
+    :param params: a sequence of parameters ``func`` depends on but does not
+        explicitly take as arguments.
     :param flag: if False, disable gradient checkpointing.
+
     """
     if flag:
         args = tuple(inputs) + tuple(params)

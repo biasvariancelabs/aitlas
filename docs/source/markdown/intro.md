@@ -3,7 +3,7 @@
 
 <br/>
 
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg?style=for-the-badge)](https://www.repostatus.org/#active) [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/release/python-370/) [![License: Apache License 2.0](https://img.shields.io/badge/License-Apache%202.0-olivegreen.svg)](https://github.com/biasvariancelabs/aitlas/blob/master/LICENSE)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg?style=for-the-badge)](https://www.repostatus.org/#active) [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/) [![License: Apache License 2.0](https://img.shields.io/badge/License-Apache%202.0-olivegreen.svg)](https://github.com/biasvariancelabs/aitlas/blob/master/LICENSE) [![Documentation Status](https://readthedocs.org/projects/aitlas/badge/?version=latest)](https://aitlas.readthedocs.io/en/latest/?badge=latest)
 
 <br/>
 <br/>
@@ -12,7 +12,7 @@ The AiTLAS toolbox (Artificial Intelligence Toolbox for Earth Observation) inclu
 
 AiTLAS adheres to the principle *less is more* - it embeds the most common tasks and functionalities in easy-to-use interfaces that simplify the usage and adaptation of the toolbox with minimal modifications. It is fully aligned with the principles of open-science and open-software.
 
-![AiTLAS](_media/AiTLAS_mdpi_graphicalAbstract.png)
+![AiTLAS](/_media/AiTLAS_mdpi_graphicalAbstract.png)
 
 ## Getting started
 
@@ -33,7 +33,7 @@ AiTLAS examples:
 
 For any questions and issues feel free to contact us via email at info@bvlabs.ai or by opening an issue on the official [repository](https://github.com/biasvariancelabs/aitlas).
 
-## Acknowlidgments
+## Acknowledgements
 
 The AiTLAS toolbox is developed within the grant from the European Space Agency (ESRIN): AiTLAS--Artificial Intelligence toolbox for Earth Observation (ESA RFP/3-16371/19/I-NB) awarded to [Bias Variance Labs, d.o.o](https://bvlabs.ai/).
 

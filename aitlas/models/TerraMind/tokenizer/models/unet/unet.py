@@ -113,10 +113,12 @@ class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
 class Upsample(nn.Module):
     """
     An upsampling layer with an optional convolution.
+
     :param channels: channels in the inputs and outputs.
     :param use_conv: a bool determining if a convolution is applied.
     :param dims: determines if the signal is 1D, 2D, or 3D. If 3D, then
-                 upsampling occurs in the inner-two dimensions.
+        upsampling occurs in the inner-two dimensions.
+
     """
 
     def __init__(self, channels, use_conv, dims=2, out_channels=None):
@@ -142,10 +144,12 @@ class Upsample(nn.Module):
 class Downsample(nn.Module):
     """
     A downsampling layer with an optional convolution.
+
     :param channels: channels in the inputs and outputs.
     :param use_conv: a bool determining if a convolution is applied.
     :param dims: determines if the signal is 1D, 2D, or 3D. If 3D, then
-                 downsampling occurs in the inner-two dimensions.
+        downsampling occurs in the inner-two dimensions.
+
     """
 
     def __init__(self, channels, use_conv, dims=2, out_channels=None):
@@ -169,6 +173,7 @@ class Downsample(nn.Module):
 class ResBlock(TimestepBlock):
     """
     A residual block that can optionally change the number of channels.
+
     :param channels: the number of input channels.
     :param emb_channels: the number of timestep embedding channels.
     :param dropout: the rate of dropout.
@@ -180,6 +185,7 @@ class ResBlock(TimestepBlock):
     :param use_checkpoint: if True, use gradient checkpointing on this module.
     :param up: if True, use this block for upsampling.
     :param down: if True, use this block for downsampling.
+
     """
 
     def __init__(
@@ -326,12 +332,15 @@ def count_flops_attn(model, _x, y):
     """
     A counter for the `thop` package to count the operations in an
     attention operation.
-    Meant to be used like:
+
+    Meant to be used like::
+
         macs, params = thop.profile(
             model,
             inputs=(inputs, timestamps),
             custom_ops={QKVAttention: QKVAttention.count_flops},
         )
+
     """
     b, c, *spatial = y[0].shape
     num_spatial = int(np.prod(spatial))
@@ -411,6 +420,7 @@ class QKVAttention(nn.Module):
 class UNetModel(ModelMixin, ConfigMixin):
     """
     The full UNet model with attention and timestep embedding.
+
     :param in_channels: channels in the input Tensor.
     :param model_channels: base channel count for the model.
     :param out_channels: channels in the output Tensor.
@@ -425,17 +435,18 @@ class UNetModel(ModelMixin, ConfigMixin):
         downsampling.
     :param dims: determines if the signal is 1D, 2D, or 3D.
     :param num_classes: if specified (as an int), then this model will be
-        class-conditional with `num_classes` classes.
+        class-conditional with ``num_classes`` classes.
     :param use_checkpoint: use gradient checkpointing to reduce memory usage.
     :param num_heads: the number of attention heads in each attention layer.
     :param num_heads_channels: if specified, ignore num_heads and instead use
-                               a fixed channel width per attention head.
+        a fixed channel width per attention head.
     :param num_heads_upsample: works with num_heads to set a different number
-                               of heads for upsampling. Deprecated.
+        of heads for upsampling. Deprecated.
     :param use_scale_shift_norm: use a FiLM-like conditioning mechanism.
     :param resblock_updown: use residual blocks for up/downsampling.
     :param use_new_attention_order: use a different attention pattern for potentially
-                                    increased efficiency.
+        increased efficiency.
+
     """
 
     def __init__(

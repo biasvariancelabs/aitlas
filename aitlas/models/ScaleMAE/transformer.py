@@ -1,12 +1,13 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 """
-Copy-paste from DETR repo
--------------
+Note: Copy-paste from DETR repo.
+
 DETR Transformer class.
 Copy-paste from torch.nn.Transformer with modifications:
-    * positional encodings are passed in MHattention
-    * extra LN at the end of encoder is removed
-    * decoder returns a stack of activations from all decoding layers
+
+* positional encodings are passed in MHattention
+* extra LN at the end of encoder is removed
+* decoder returns a stack of activations from all decoding layers
 """
 
 import copy
