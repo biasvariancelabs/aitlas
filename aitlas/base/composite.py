@@ -412,12 +412,12 @@ class CompositeModelArchitectureMixin:
                     # We are looking for the ResNet stages
                     if isinstance(child, torch.nn.Sequential) and len(child) > 0:
                         last_block = child[-1]
-                        # Logic for ResNet18/34 (BasicBlock uses bn2)
-                        if hasattr(last_block, "bn2") and hasattr(last_block.bn2, "num_features"):
-                            last_known_dim = last_block.bn2.num_features
                         # Logic for ResNet50/101 (Bottleneck uses bn3)
-                        elif hasattr(last_block, "bn3") and hasattr(last_block.bn3, "num_features"):
+                        if hasattr(last_block, "bn3") and hasattr(last_block.bn3, "num_features"):
                             last_known_dim = last_block.bn3.num_features
+                        # Logic for ResNet18/34 (BasicBlock uses bn2)
+                        elif hasattr(last_block, "bn2") and hasattr(last_block.bn2, "num_features"):
+                            last_known_dim = last_block.bn2.num_features
                 # If we found dimensions, return ONLY the final one as a single-item list.
                 if last_known_dim:
                     found_channels = [last_known_dim]  # [512] for ResNet18, [2048] for ResNet50
