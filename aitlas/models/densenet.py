@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torchvision import models
 
-from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
+from ..base.classification import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class DenseNet161(BaseMulticlassClassifier):

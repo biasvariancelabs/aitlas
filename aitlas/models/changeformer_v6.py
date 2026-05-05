@@ -10,7 +10,7 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from torch import nn
 
 # Assuming BaseChangeDetection is available in your environment
-from ..base import BaseChangeDetection
+from ..base.change_detection import BaseChangeDetection
 
 
 # -----------------------------------------------------------------------------

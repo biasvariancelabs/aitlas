@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from einops import einsum, rearrange, repeat
 from torch import nn
 
-from ..base import BaseChangeDetection
+from ..base.change_detection import BaseChangeDetection
 
 
 # -----------------------------------------------------------------------------

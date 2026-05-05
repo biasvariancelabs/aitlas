@@ -8,7 +8,7 @@ LSTM model
 import torch.nn.functional as F
 from torch import nn, optim
 
-from ..base import BaseMulticlassClassifier
+from ..base.classification import BaseMulticlassClassifier
 from .schemas import LSTMSchema
 
 

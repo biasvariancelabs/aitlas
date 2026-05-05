@@ -11,7 +11,7 @@ from torch import nn
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
-from .Galileo import Encoder
+from .Galileo import Decoder, Encoder, GalileoBase  # noqa: F401
 from .Galileo.utils import CONFIG_FILENAME, ENCODER_FILENAME, construct_galileo_input
 
 

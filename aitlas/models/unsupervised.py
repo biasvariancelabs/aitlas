@@ -7,7 +7,7 @@ import torch
 from torch import nn
 from torch.utils.data.sampler import Sampler
 
-from ..base import BaseMulticlassClassifier
+from ..base.classification import BaseMulticlassClassifier
 from ..clustering import Kmeans, cluster_assign
 from .schemas import UnsupervisedDeepMulticlassClassifierSchema
 

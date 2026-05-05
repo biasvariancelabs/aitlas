@@ -5,7 +5,7 @@ from einops import rearrange
 from torch import nn
 from torchvision import models
 
-from ..base import BaseChangeDetection
+from ..base.change_detection import BaseChangeDetection
 
 
 # -----------------------------------------------------------------------------

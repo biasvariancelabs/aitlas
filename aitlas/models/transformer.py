@@ -13,7 +13,7 @@ from torch import nn, optim
 from torch.nn.modules import LayerNorm, Linear, ReLU
 from torch.nn.modules.transformer import TransformerEncoder, TransformerEncoderLayer
 
-from ..base import BaseMulticlassClassifier
+from ..base.classification import BaseMulticlassClassifier
 from .schemas import TransformerModelSchema
 
 

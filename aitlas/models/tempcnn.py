@@ -11,7 +11,7 @@ Temporal Convolutional Neural Network (TempCNN) model
 import torch.utils.data
 from torch import nn, optim
 
-from ..base import BaseMulticlassClassifier
+from ..base.classification import BaseMulticlassClassifier
 from .schemas import TempCNNSchema
 
 

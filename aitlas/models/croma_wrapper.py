@@ -8,6 +8,7 @@ from torch import Tensor, nn
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .CROMA.croma import CROMAModule, croma_base, croma_large  # noqa: F401
 
 
 class CROMA(FoundationModel):

@@ -1,7 +1,7 @@
 import torch.nn.functional as F
 from torch import nn
 
-from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
+from ..base.classification import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class ShallowCNNNet(BaseMulticlassClassifier):

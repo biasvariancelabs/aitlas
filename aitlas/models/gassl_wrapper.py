@@ -9,6 +9,8 @@ from tqdm import tqdm
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .GASSL.gassl import MoCo, gassl_moco_resnet50  # noqa: F401
+from .GASSL.gassl_geo import MoCo_geo, gassl_moco_geo_resnet50  # noqa: F401
 
 
 class GASSL(FoundationModel):

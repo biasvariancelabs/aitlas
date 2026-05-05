@@ -7,7 +7,7 @@ from torch import Tensor, nn
 from torchvision import models
 
 # Assuming BaseChangeDetection is available in your environment
-from ..base import BaseChangeDetection
+from ..base.change_detection import BaseChangeDetection
 
 
 # -----------------------------------------------------------------------------

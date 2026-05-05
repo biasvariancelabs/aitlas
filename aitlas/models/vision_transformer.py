@@ -6,7 +6,7 @@ import timm
 import torch
 from torch import nn
 
-from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
+from ..base.classification import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

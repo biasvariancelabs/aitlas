@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torchvision.models.detection import SSD300_VGG16_Weights, ssd300_vgg16
 
-from ..base import BaseObjectDetection
+from ..base.object_detection import BaseObjectDetection
 
 
 class SSD(BaseObjectDetection):

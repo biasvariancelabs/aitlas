@@ -12,7 +12,7 @@ import torch
 import torch.nn.functional as Functional
 from torch import nn, optim
 
-from ..base import BaseMulticlassClassifier
+from ..base.classification import BaseMulticlassClassifier
 from .schemas import MSResNetSchema
 
 

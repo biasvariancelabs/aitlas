@@ -2,7 +2,7 @@
 
 import segmentation_models_pytorch as smp
 
-from ..base import BaseSegmentationClassifier
+from ..base.segmentation import BaseSegmentationClassifier
 
 
 class SegFormer(BaseSegmentationClassifier):

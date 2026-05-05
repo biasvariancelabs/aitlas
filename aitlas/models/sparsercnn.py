@@ -13,7 +13,7 @@ from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 from torchvision.ops import MultiScaleRoIAlign
 from torchvision.ops.boxes import box_area
 
-from ..base import BaseObjectDetection
+from ..base.object_detection import BaseObjectDetection
 
 
 # -----------------------------------------------------------------------------

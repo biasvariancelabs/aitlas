@@ -7,6 +7,10 @@ from torch import nn
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .SatMAE_plusplus.models_mae import (  # noqa: F401
+    MaskedAutoencoderViT,
+    satmae_plusplus_vit_large,
+)
 
 
 class SatMAE_plusplus(FoundationModel):

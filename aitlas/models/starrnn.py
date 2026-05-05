@@ -18,7 +18,7 @@ from torch import nn, optim
 from torch.autograd import Variable
 from torch.nn import init
 
-from ..base import BaseMulticlassClassifier
+from ..base.classification import BaseMulticlassClassifier
 from .schemas import StarRNNSchema
 
 

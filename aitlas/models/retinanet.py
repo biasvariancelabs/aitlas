@@ -9,7 +9,7 @@ from torchvision.models.detection import (
     retinanet_resnet50_fpn_v2,
 )
 
-from ..base import BaseObjectDetection
+from ..base.object_detection import BaseObjectDetection
 
 
 class RetinaNet(BaseObjectDetection):

@@ -8,6 +8,9 @@ from tqdm import tqdm
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .SatMAE.models_mae import MaskedAutoencoderViT, satmae_vit_large  # noqa: F401
+
+# noqa: F401
 from .SatMAE.models_mae_temporal import (
     MaskedAutoencoderTemporalViT,
 )

@@ -8,6 +8,7 @@ from torch import nn
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .AnySat.anysat import AnySatModule, anysat_base  # noqa: F401
 from .schemas import AnySatSchema
 
 

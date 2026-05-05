@@ -5,7 +5,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from ..base import BaseSegmentationClassifier
+from ..base.segmentation import BaseSegmentationClassifier
 
 
 NHIGH = 120

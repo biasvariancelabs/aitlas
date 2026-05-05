@@ -11,6 +11,7 @@ from tqdm import tqdm
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .SeCo.seco import MoCoV2Module, seco_resnet18, seco_resnet50  # noqa: F401
 
 
 class SeCo(FoundationModel):

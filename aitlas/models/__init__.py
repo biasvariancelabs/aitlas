@@ -53,7 +53,6 @@ from .deeplabv3plus import DeepLabV3Plus
 from .densenet import DenseNet161, DenseNet161MultiLabel
 from .detr import DETR
 from .DOFA import (
-    DOFA_v1,
     OFAViT,
     dofa_v1_vit_base_patch16,
     dofa_v1_vit_large_patch16,

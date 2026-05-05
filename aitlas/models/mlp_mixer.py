@@ -3,7 +3,7 @@
 import timm
 from torch import nn
 
-from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
+from ..base.classification import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class MLPMixer(BaseMulticlassClassifier):

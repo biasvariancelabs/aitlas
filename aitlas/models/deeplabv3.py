@@ -3,7 +3,7 @@
 from torch import nn
 from torchvision import models
 
-from ..base import BaseSegmentationClassifier
+from ..base.segmentation import BaseSegmentationClassifier
 from .schemas import DeepLabV3ModelSchema
 
 

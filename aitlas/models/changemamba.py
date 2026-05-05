@@ -14,7 +14,7 @@ from timm.models.layers import DropPath, trunc_normal_
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 
-from ..base import BaseChangeDetection
+from ..base.change_detection import BaseChangeDetection
 
 
 # -----------------------------------------------------------------------------

@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torchvision.models import resnet152
 
-from ..base import BaseMultilabelClassifier
+from ..base.classification import BaseMultilabelClassifier
 from .schemas import CNNRNNModelSchema
 
 

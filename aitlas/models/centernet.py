@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from torch import nn
 from torchvision import models
 
-from ..base import BaseObjectDetection
+from ..base.object_detection import BaseObjectDetection
 
 
 # -----------------------------------------------------------------------------

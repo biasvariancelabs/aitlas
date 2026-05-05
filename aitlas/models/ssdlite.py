@@ -11,7 +11,7 @@ from torchvision.models.detection import (
 )
 from torchvision.ops.misc import Conv2dNormActivation
 
-from ..base import BaseObjectDetection
+from ..base.object_detection import BaseObjectDetection
 
 
 class SafeBatchNorm2d(nn.BatchNorm2d):

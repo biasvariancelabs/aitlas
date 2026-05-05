@@ -7,6 +7,7 @@ from torch import Tensor, nn
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .TerraFM import TerraFMModule, terrafm_base  # noqa: F401
 
 
 class TerraFM(FoundationModel):

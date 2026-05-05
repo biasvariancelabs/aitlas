@@ -12,7 +12,7 @@ from torch import nn, optim
 from torchvision.models._utils import IntermediateLayerGetter
 from torchvision.ops.boxes import box_area
 
-from ..base import BaseObjectDetection
+from ..base.object_detection import BaseObjectDetection
 
 
 # -----------------------------------------------------------------------------

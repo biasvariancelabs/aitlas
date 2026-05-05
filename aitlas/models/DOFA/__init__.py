@@ -1,4 +1,3 @@
-from .dofa_v1 import DOFA_v1
 from .dofa_v2 import (
     OFAViT,
     dofa_v1_vit_base_patch16,

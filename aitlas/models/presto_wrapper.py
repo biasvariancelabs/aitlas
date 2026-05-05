@@ -9,9 +9,12 @@ from torch import nn
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .Presto.presto import PrestoModel, presto_default  # noqa: F401
 from .Presto.utils import (
     prepare_presto_input,
 )
+
+# noqa: F401
 from .schemas import PrestoSchema
 
 

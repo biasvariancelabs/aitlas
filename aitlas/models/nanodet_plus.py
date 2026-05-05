@@ -9,7 +9,7 @@ from torch import nn
 from torchvision import models
 from torchvision.ops.boxes import batched_nms, box_iou
 
-from ..base import BaseObjectDetection
+from ..base.object_detection import BaseObjectDetection
 
 
 # -----------------------------------------------------------------------------

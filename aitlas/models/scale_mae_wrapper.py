@@ -7,6 +7,7 @@ from torch import nn
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .ScaleMAE.scale_mae import MaskedAutoencoderViT, scalemae_vit_large_patch16  # noqa: F401
 
 
 class ScaleMAE(FoundationModel):

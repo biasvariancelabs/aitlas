@@ -5,16 +5,6 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from aitlas.base import (
-    BaseChangeDetection,
-    BaseInputAdapter,
-    BaseMulticlassClassifier,
-    BaseMultilabelClassifier,
-    BaseObjectDetection,
-    BaseSegmentationClassifier,
-    FoundationModel,
-)
-
 from ..models.necks import NeckSequential
 from ..models.registries import (
     ADAPTER_REGISTRY,
@@ -23,12 +13,18 @@ from ..models.registries import (
     HEAD_REGISTRY,
     NECK_REGISTRY,
 )
+from .adapters import BaseInputAdapter
+from .change_detection import BaseChangeDetection
+from .classification import BaseMulticlassClassifier, BaseMultilabelClassifier
+from .foundation import FoundationModel
+from .object_detection import BaseObjectDetection
 from .schemas import (
     CompositeClassificationSchema,
     CompositeModelSchema,
     CompositeObjectDetectionSchema,
     CompositeSegmentationSchema,
 )
+from .segmentation import BaseSegmentationClassifier
 
 
 class CompositeModelArchitectureMixin:

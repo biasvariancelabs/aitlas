@@ -8,6 +8,7 @@ from tqdm import tqdm
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .CACo.caco import MoCoV2CACoModule, caco_resnet18, caco_resnet50  # noqa: F401
 
 
 class CACo(FoundationModel):

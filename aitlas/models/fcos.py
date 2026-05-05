@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from torchvision.models.detection import FCOS_ResNet50_FPN_Weights, fcos_resnet50_fpn
 
-from ..base import BaseObjectDetection
+from ..base.object_detection import BaseObjectDetection
 
 
 class FCOS(BaseObjectDetection):

@@ -14,7 +14,7 @@ from torchvision.models._utils import IntermediateLayerGetter
 from torchvision.ops.boxes import box_area
 from torchvision.ops.feature_pyramid_network import FeaturePyramidNetwork
 
-from ..base import BaseObjectDetection
+from ..base.object_detection import BaseObjectDetection
 
 
 # -----------------------------------------------------------------------------
