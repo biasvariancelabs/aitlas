@@ -115,8 +115,7 @@ dependencies = [
     { name = "diffusers" },
     { name = "dill" },
     { name = "einops" },
-    { name = "eo-learn-core" },
-    { name = "eo-learn-geometry" },
+    { name = "eo-learn" },
     { name = "faiss-cpu" },
     { name = "fiona" },
     { name = "fsspec" },
@@ -152,6 +151,7 @@ dependencies = [
     { name = "scipy" },
     { name = "seaborn" },
     { name = "segmentation-models-pytorch" },
+    { name = "sentinelhub" },
     { name = "setuptools" },
     { name = "shapely" },
     { name = "tensorboard" },
@@ -199,8 +199,7 @@ requires-dist = [
     { name = "diffusers", specifier = ">=0.31.0" },
     { name = "dill", specifier = ">=0.3.8" },
     { name = "einops", specifier = ">=0.8.0" },
-    { name = "eo-learn-core", specifier = ">=1.1.0" },
-    { name = "eo-learn-geometry", specifier = ">=1.1.0" },
+    { name = "eo-learn", specifier = ">=1.5.2" },
     { name = "faiss-cpu", specifier = ">=1.8.0" },
     { name = "fiona", specifier = ">=1.10.0" },
     { name = "fsspec", specifier = ">=2024.10.0" },
@@ -236,7 +235,8 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.14.0" },
     { name = "seaborn", specifier = ">=0.13.0" },
     { name = "segmentation-models-pytorch", specifier = ">=0.5.0" },
-    { name = "setuptools", specifier = ">=70.0.0,<81.0.0" },
+    { name = "sentinelhub", specifier = ">=3.11.5" },
+    { name = "setuptools", specifier = ">=80.10.2" },
     { name = "shapely", specifier = ">=2.0.0" },
     { name = "tensorboard", specifier = ">=2.14.0" },
     { name = "tifffile", specifier = ">=2024.12.0" },
@@ -765,30 +765,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/62/9a/65533078caa449b21996b9c5190e50579809d0130daf10258f6be7c433c4/eo_learn-1.5.2.tar.gz", hash = "sha256:191657fb8015e9c74e16b0cc0c08478ae7c08d5204eaa12a50c9d51b48138e5c", size = 117114, upload-time = "2023-11-07T12:25:07.503Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f9/be/7827b8e48290cc9a0e4c9760669da0ad119de44bb008f56859aaece7dbaf/eo_learn-1.5.2-py3-none-any.whl", hash = "sha256:0d418e01df2ebcbe7c2a5f318a01a232661d167186ea9229df7c0161e706f816", size = 147386, upload-time = "2023-11-07T12:25:04.356Z" },
-]
-
-[[package]]
-name = "eo-learn-core"
-version = "1.5.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "eo-learn" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/70/7a/e9ba22c3e21580f384128906eeeefab1ac231dfeae9e52d552fd7dc39dfd/eo-learn-core-1.5.0.tar.gz", hash = "sha256:b0cba92e779e852ddccc0cd7e6ba15581e368b8db2d97b9d23c93f1c0ce2e20a", size = 2189, upload-time = "2023-09-06T14:55:16.384Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/79/5e4eb52becdb8764b1358b346e7413ed2c9a0faf694276baadf188378eaf/eo_learn_core-1.5.0-py3-none-any.whl", hash = "sha256:568eccc33ede2801516fc1ec6b3aa619d8537e8d308880115fb21b0c77f5f58b", size = 3069, upload-time = "2023-09-06T14:55:14.982Z" },
-]
-
-[[package]]
-name = "eo-learn-geometry"
-version = "1.5.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "eo-learn" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ad/a8/20154233a4e881cffabd1a8df432a1eb37c1563be6da19b8da3e52b99af1/eo-learn-geometry-1.5.0.tar.gz", hash = "sha256:e1b29ffc1d688cdaa0066be83b1cccbfa2c2586830909f82af0cd94b4eac9d36", size = 2144, upload-time = "2023-09-06T14:55:28.476Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/65/5e/520c6c011dc28a2c71785e8520e71b703193b684fffa9d6a97f94a25ed78/eo_learn_geometry-1.5.0-py3-none-any.whl", hash = "sha256:42ff3e4652d25c5dc25c91514cac7ee1e8b518953ee33c19469ac9bce549e14a", size = 3092, upload-time = "2023-09-06T14:55:27.129Z" },
 ]
 
 [[package]]
