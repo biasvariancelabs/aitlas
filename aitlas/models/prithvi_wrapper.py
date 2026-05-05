@@ -7,6 +7,17 @@ from torch import nn
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .Prithvi.prithvi_mae import (  # noqa: F401
+    PrithviMAE,
+    PrithviViT,
+    prithvi_eo_v1_base,
+    prithvi_eo_v2_base_tl,
+    prithvi_eo_v2_huge,
+    prithvi_eo_v2_huge_tl,
+    prithvi_eo_v2_large,
+    prithvi_eo_v2_large_tl,
+    prithvi_eo_v2_tiny_tl,
+)
 
 
 class Prithvi(FoundationModel):

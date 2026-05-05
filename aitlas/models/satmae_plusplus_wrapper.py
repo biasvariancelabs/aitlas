@@ -11,6 +11,10 @@ from .SatMAE_plusplus.models_mae import (  # noqa: F401
     MaskedAutoencoderViT,
     satmae_plusplus_vit_large,
 )
+from .SatMAE_plusplus.models_mae_group_channels import (  # noqa: F401
+    MaskedAutoencoderGroupChannelViT,
+    satmae_plusplus_vit_large_multispectral,
+)
 
 
 class SatMAE_plusplus(FoundationModel):

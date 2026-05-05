@@ -8,6 +8,11 @@ from torch import Tensor, nn
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .CopernicusFM.copernicusfm import (  # noqa: F401
+    CopernicusFMModule,
+    copernicusfm_base,
+    copernicusfm_large,
+)
 
 
 class CopernicusFM(FoundationModel):

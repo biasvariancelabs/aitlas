@@ -7,6 +7,13 @@ from torch import nn
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .DOFA.dofa_v2 import (  # noqa: F401
+    OFAViT,
+    dofa_v1_vit_base_patch16,
+    dofa_v1_vit_large_patch16,
+    dofa_v2_vit_base_patch14,
+    dofa_v2_vit_large_patch14,
+)
 
 
 class DOFA_v2(FoundationModel):

@@ -9,10 +9,14 @@ from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
 from .SatMAE.models_mae import MaskedAutoencoderViT, satmae_vit_large  # noqa: F401
-
-# noqa: F401
-from .SatMAE.models_mae_temporal import (
+from .SatMAE.models_mae_group_channels import (  # noqa: F401
+    MaskedAutoencoderGroupChannelViT,
+    satmae_vit_base_multispectral,
+    satmae_vit_large_multispectral,
+)
+from .SatMAE.models_mae_temporal import (  # noqa: F401
     MaskedAutoencoderTemporalViT,
+    satmae_vit_large_temporal,
 )
 
 

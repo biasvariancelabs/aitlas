@@ -8,6 +8,7 @@ from torch import nn
 from aitlas.models.registries import BACKBONE_REGISTRY
 
 from ..base.foundation import FoundationModel
+from .Panopticon.panopticon import PanopticonModule, panopticon_base  # noqa: F401
 
 
 class Panopticon(FoundationModel):
