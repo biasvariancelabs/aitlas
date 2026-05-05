@@ -4,14 +4,6 @@ aitlas.models.DOFA package
 Submodules
 ----------
 
-aitlas.models.DOFA.dofa\_v1 module
-----------------------------------
-
-.. automodule:: aitlas.models.DOFA.dofa_v1
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 aitlas.models.DOFA.dofa\_v2 module
 ----------------------------------
 

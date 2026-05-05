@@ -14,7 +14,7 @@ Added comprehensive support for the following **foundation models**:
 - AnySat, CACo, Copernicus-FM, CROMA, DOFA (v2), Galileo, GASSL, Panopticon, Presto, Prithvi (v2), SatMAE, SatMAE++, Scale-MAE, SeCo, TerraFM, TerraMind
 
 ## 🧠 New model architectures
-- **Change detection**: Added BIT, CGNet, ChangeFormer V6, ChangeMamba, ChangeVIT, CSSM, HRNet SiamConc, SiamCRNN, STANet, TinyCD, and U-Net SiamConc.
+- **Change detection**: Added [BIT](https://github.com/justchenhao/BIT_CD), [CGNet](https://github.com/wutianyiRosun/CGNet), [ChangeFormer V6](https://github.com/wgcban/ChangeFormer), [ChangeMamba](https://github.com/ChenHongruixuan/ChangeMamba), [ChangeVIT](https://github.com/zhuduowang/ChangeViT), [CSSM](https://github.com/Elman295/CSSM), HRNet SiamConc, [SiamCRNN](https://github.com/ChenHongruixuan/SiamCRNN), [STANet](https://github.com/justchenhao/STANet), [TinyCD](https://github.com/AndreaCodegoni/Tiny_model_4_CD), and U-Net SiamConc.
 - **Object detection**: ATSS, CenterNet, DETR, EfficientDet, NanoDet-Plus, and Sparse R-CNN.
 - **Segmentation**: Added FPN, MaNet, PSPNet, SegFormer, UNet++, and UPerNet.
 
