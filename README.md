@@ -15,7 +15,7 @@ The AiTLAS toolbox (Artificial Intelligence Toolbox for Earth Observation) inclu
 - A table summarizing input modalities for foundation models:
 
 | Foundation model | RGB | S1 | S2 | L8 | DEM |
-| :--- | :---: | :---: | :--- | :---: | :---: |
+| :--- | :---: | :---: | :---: | :---: | :---: |
 | **AnySat** | 🔴 NO | 🟢 YES | 🟢 YES (no B1, B9, B10) | 🟢 YES | 🔴 NO |
 | **CACo** | 🟢 YES | 🔴 NO | 🔴 NO | 🔴 NO | 🔴 NO |
 | **Copernicus-FM** | 🟢 YES | 🔴 NO | 🟢 YES | 🔴 NO | 🔴 NO |
@@ -33,7 +33,7 @@ The AiTLAS toolbox (Artificial Intelligence Toolbox for Earth Observation) inclu
 | **TerraFM** | 🔴 NO | 🔴 NO | 🟢 YES (no B10) | 🔴 NO | 🔴 NO |
 | **TerraMind** | 🟢 YES | 🟢 YES | 🟢 YES | 🔴 NO* | 🟢 YES |
 
-* Can be added as a new modality.
+\* Can be added as a new modality.
 
 ## 🧠 New model architectures
 - **Change detection**: Added [BIT](https://github.com/justchenhao/BIT_CD), [CGNet](https://github.com/wutianyiRosun/CGNet), [ChangeFormer V6](https://github.com/wgcban/ChangeFormer), [ChangeMamba](https://github.com/ChenHongruixuan/ChangeMamba), [ChangeVIT](https://github.com/zhuduowang/ChangeViT), [CSSM](https://github.com/Elman295/CSSM), HRNet SiamConc, [SiamCRNN](https://github.com/ChenHongruixuan/SiamCRNN), [STANet](https://github.com/justchenhao/STANet), [TinyCD](https://github.com/AndreaCodegoni/Tiny_model_4_CD), and U-Net SiamConc.
