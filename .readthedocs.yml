@@ -1,24 +1,20 @@
 version: 2
 
-# Set the version of Python and other tools you might need
 build:
   os: ubuntu-24.04
   tools:
     python: "3.12"
 
-# Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/source/conf.py
 
-# Specify dependencies to enable reproducible builds
 python:
   install:
-    - requirements: requirements.txt
-    - method: pip
-      path: .
-  system_packages: true
+    - method: uv
+      command: sync
+      # For doc tools that are separated into a dependency group in pyproject.toml
+      # groups:
+      #   - docs
 
-# Define formats (removed the duplicate from the top)
 formats:
   - epub
-  # - pdf  # Uncomment if you need PDF later

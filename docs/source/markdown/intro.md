@@ -18,6 +18,17 @@ AiTLAS adheres to the principle *less is more* - it embeds the most common tasks
 
 <br/>
 
+### **v2.0.0**
+
+AiTLAS examples:
+- [Multiclass classification with Galileo foundation model](https://github.com/biasvariancelabs/aitlas/blob/aitlas-uv-migration/examples/multiclass_classification_example_galileo_brazildam.ipynb)
+- [Multilabel classification with Copernicus-FM foundation model](https://github.com/biasvariancelabs/aitlas/blob/aitlas-uv-migration/examples/multilabel_classification_example_copernicusfm_dlrsd_multilabel.ipynb)
+- [Semantic segmentation with TerraMind foundation model](https://github.com/biasvariancelabs/aitlas/blob/aitlas-uv-migration/examples/semantic_segmentation_example_terramind_dlrsd.ipynb)
+- [Feature extraction with TerraMind foundation model](https://github.com/biasvariancelabs/aitlas/blob/aitlas-uv-migration/examples/feature_extraction_example_terramind_dlrsd.ipynb)
+- [Change detection with U-Net SiamConc](https://github.com/biasvariancelabs/aitlas/blob/aitlas-uv-migration/examples/change_detection_example_california_flood.ipynb)
+
+### **v1.0.0**
+
 - [AiTLAS Introduction](https://youtu.be/-3Son1NhdDg)
 - [AiTLAS Software Architecture](https://youtu.be/cLfEZFQQiXc)
 - [AiTLAS in a nutshell](https://www.youtube.com/watch?v=lhDjiZg7RwU)
