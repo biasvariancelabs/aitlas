@@ -10,7 +10,7 @@ from typing import Callable
 import torch
 import torch.nn.functional as F
 from einops import repeat
-from timm.models.layers import DropPath, trunc_normal_
+from timm.layers import DropPath, trunc_normal_
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 
