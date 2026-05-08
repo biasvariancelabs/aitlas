@@ -1,6 +1,11 @@
 aitlas package
 ==============
 
+.. automodule:: aitlas
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Subpackages
 -----------
 
@@ -20,18 +25,7 @@ Subpackages
 Submodules
 ----------
 
-aitlas.run module
------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: aitlas.run
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: aitlas
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   aitlas.run

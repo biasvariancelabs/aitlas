@@ -1,6 +1,11 @@
 aitlas.models.TerraMind.tokenizer package
 =========================================
 
+.. automodule:: aitlas.models.TerraMind.tokenizer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Subpackages
 -----------
 
@@ -15,42 +20,10 @@ Subpackages
 Submodules
 ----------
 
-aitlas.models.TerraMind.tokenizer.tokenizer\_backbones\_register module
------------------------------------------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: aitlas.models.TerraMind.tokenizer.tokenizer_backbones_register
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-aitlas.models.TerraMind.tokenizer.tokenizer\_register module
-------------------------------------------------------------
-
-.. automodule:: aitlas.models.TerraMind.tokenizer.tokenizer_register
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-aitlas.models.TerraMind.tokenizer.vqvae module
-----------------------------------------------
-
-.. automodule:: aitlas.models.TerraMind.tokenizer.vqvae
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-aitlas.models.TerraMind.tokenizer.vqvae\_backbone module
---------------------------------------------------------
-
-.. automodule:: aitlas.models.TerraMind.tokenizer.vqvae_backbone
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: aitlas.models.TerraMind.tokenizer
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   aitlas.models.TerraMind.tokenizer.tokenizer_backbones_register
+   aitlas.models.TerraMind.tokenizer.tokenizer_register
+   aitlas.models.TerraMind.tokenizer.vqvae
+   aitlas.models.TerraMind.tokenizer.vqvae_backbone

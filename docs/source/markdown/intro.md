@@ -6,7 +6,6 @@
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg?style=for-the-badge)](https://www.repostatus.org/#active) [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/) [![License: Apache License 2.0](https://img.shields.io/badge/License-Apache%202.0-olivegreen.svg)](https://github.com/biasvariancelabs/aitlas/blob/master/LICENSE) [![Documentation Status](https://readthedocs.org/projects/aitlas/badge/?version=latest)](https://aitlas.readthedocs.io/en/latest/?badge=latest)
 
 <br/>
-<br/>
 
 The AiTLAS toolbox (Artificial Intelligence Toolbox for Earth Observation) includes state-of-the-art machine learning methods for exploratory and predictive analysis of satellite imagery as well as repository of AI-ready Earth Observation (EO) datasets. It can be easily applied for a variety of Earth Observation tasks, such as land use and cover classification, crop type prediction, localization of specific objects (semantic segmentation), etc. The main goal of AiTLAS is to facilitate better usability and adoption of novel AI methods (and models) by EO experts, while offering easy access and standardized format of EO datasets to AI experts which allows benchmarking of various existing and novel AI methods tailored for EO data.
 
@@ -15,8 +14,6 @@ AiTLAS adheres to the principle *less is more* - it embeds the most common tasks
 ![AiTLAS](/_media/AiTLAS_mdpi_graphicalAbstract.png)
 
 ## Getting started
-
-<br/>
 
 ### **v2.0.0**
 
@@ -46,7 +43,7 @@ For any questions and issues feel free to contact us via email at info@bvlabs.ai
 
 ## Acknowledgements
 
-The AiTLAS toolbox is developed within the grant from the European Space Agency (ESRIN): AiTLAS--Artificial Intelligence toolbox for Earth Observation (ESA RFP/3-16371/19/I-NB) awarded to [Bias Variance Labs, d.o.o](https://bvlabs.ai/).
+The AiTLAS toolbox was developed within the grant from the European Space Agency (ESRIN): AiTLAS--Artificial Intelligence toolbox for Earth Observation (ESA RFP/3-16371/19/I-NB) awarded to [Bias Variance Labs, d.o.o](https://bvlabs.ai/). The major update to v2.0 was made possible with the grant from the Open Science Clusters' Action for Research & Society (OSCARS): FAIR-EO--FAIR, Open and AI-Ready Earth Observation Resources.
 
 ## Citation
 

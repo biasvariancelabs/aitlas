@@ -8,6 +8,7 @@
 import importlib.metadata
 import os
 import sys
+import warnings
 
 
 sys.path.insert(0, os.path.abspath("../../aitlas"))
@@ -31,6 +32,12 @@ except importlib.metadata.PackageNotFoundError:
 
 version = ".".join(release.split(".")[:2])
 
+# -- Warnings suppression -----------------------------------------------------
+# Ignore fs (PyFilesystem) pkg_resources deprecation warning
+warnings.filterwarnings(
+    "ignore", message="pkg_resources is deprecated as an API", category=UserWarning
+)
+
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
@@ -53,7 +60,13 @@ autosummary_generate = True
 
 # Include typehints in descriptions
 autodoc_typehints = "description"
-autodoc_mock_imports = ["gdal", "solaris", "tensorflow", "osr"]
+autodoc_mock_imports = [
+    "gdal",
+    "solaris",
+    "tensorflow",
+    "osr",
+    "aitlas.models.AnySat.utils.rpe_ops",
+]
 # nitpicky = True
 
 # Both the class’ and the __init__ method’s docstring are concatenated and inserted.
@@ -130,6 +143,8 @@ html_theme_options = {
         "colab_url": "https://colab.research.google.com/",
     },
     "show_nav_level": 2,
+    "home_page_in_toc": True,
+    "show_navbar_depth": 1,
     "collapse_navigation": False,
     "navigation_depth": 4,
 }

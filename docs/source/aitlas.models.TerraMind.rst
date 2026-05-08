@@ -1,6 +1,11 @@
 aitlas.models.TerraMind package
 ===============================
 
+.. automodule:: aitlas.models.TerraMind
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Subpackages
 -----------
 
@@ -13,18 +18,7 @@ Subpackages
 Submodules
 ----------
 
-aitlas.models.TerraMind.utils module
-------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: aitlas.models.TerraMind.utils
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: aitlas.models.TerraMind
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   aitlas.models.TerraMind.utils

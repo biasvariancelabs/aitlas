@@ -1,6 +1,11 @@
 aitlas.models.TerraMind.tokenizer.models package
 ================================================
 
+.. automodule:: aitlas.models.TerraMind.tokenizer.models
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Subpackages
 -----------
 
@@ -12,34 +17,9 @@ Subpackages
 Submodules
 ----------
 
-aitlas.models.TerraMind.tokenizer.models.mlp\_models module
------------------------------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: aitlas.models.TerraMind.tokenizer.models.mlp_models
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-aitlas.models.TerraMind.tokenizer.models.uvit module
-----------------------------------------------------
-
-.. automodule:: aitlas.models.TerraMind.tokenizer.models.uvit
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-aitlas.models.TerraMind.tokenizer.models.vit\_models module
------------------------------------------------------------
-
-.. automodule:: aitlas.models.TerraMind.tokenizer.models.vit_models
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: aitlas.models.TerraMind.tokenizer.models
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   aitlas.models.TerraMind.tokenizer.models.mlp_models
+   aitlas.models.TerraMind.tokenizer.models.uvit
+   aitlas.models.TerraMind.tokenizer.models.vit_models
