@@ -80,7 +80,15 @@ AiTLAS examples:
 
 # Installation
 
-AiTLAS requires Python 3.12+. While you can use standard `pip`, we highly recommend `uv` for significantly faster installations. This will automatically handle all dependencies defined in pyproject.toml. Here are the steps:
+AiTLAS requires Python 3.12. While you can use standard `pip`, we highly recommend [`uv`](https://github.com/astral-sh/uv) for significantly faster installations. This will automatically handle all dependencies defined in `pyproject.toml`.
+
+## Option 1: Install from PyPI (recommended)
+The easiest way to install AiTLAS is directly via PyPI:
+```bash
+uv pip install aitlas
+```
+
+## Option 2: Install from the source
 
 - Clone the AiTLAS repository
 ```bash
