@@ -1,6 +1,85 @@
 from marshmallow import fields, validate
 from ..base.schemas import BaseDatasetSchema
 
+class ClassificationDatasetSchema(BaseDatasetSchema):
+    """
+    Schema for configuring a classification dataset.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
+    )
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv",
+    )
+
+
+class SegmentationDatasetSchema(BaseDatasetSchema):
+    """
+    Schema for configuring a segmentation dataset.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
+    )
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv",
+    )
+
+
+class ObjectDetectionPascalDatasetSchema(BaseDatasetSchema):
+    """
+    Schema for configuring an object detection dataset given in PASCAL VOC format.
+    """
+    imageset_file = fields.String(
+        missing="/",
+        description="File with the image ids in the set",
+        example="./data/DIOR/train.txt",
+    )
+    image_dir = fields.String(
+        missing="/", description="Folder to the images on disk", example="./data/DIOR/"
+    )
+    annotations_dir = fields.String(
+        missing="/",
+        description="Folder with the XML annotations in VOC format",
+        example="./data/DIOR/Annons/",
+    )
+    csv_file = fields.String(
+        missing=None,
+        description="CSV file containing the list of images for the split",
+        example="./data/train.csv",
+    )
+
+
+class ObjectDetectionCocoDatasetSchema(BaseDatasetSchema):
+    """
+    Schema for configuring an object detection dataset given in COCO format.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/DIOR/"
+    )
+    json_file = fields.String(
+        missing=None,
+        description="JSON Coco file format on disk",
+        example="./data/train.json",
+    )
+    hardcode_background = fields.Bool(
+        missing=True, description="Do we need to hardcode the background as a class?"
+    )
+
+
+class ObjectDetectionRfiCocoDatasetSchema(BaseDatasetSchema):
+    """
+    Schema for configuring an object detection dataset given in COCO format.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/DIOR/"
+    )
+    annotation_dir = fields.String(
+        missing='/',
+        description="JSON Coco files path on disk",
+        example="./data/annotations/"
+    )
+
+
 class FAIREOSchema(BaseDatasetSchema):
     """
     Schema for configuring FAIR-EO datasets.

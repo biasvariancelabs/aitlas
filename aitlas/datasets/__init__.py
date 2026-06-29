@@ -44,6 +44,11 @@ from .whdld_multilabel import WHDLDMultilabelDataset
 from .whu_ohs import WHUOHSDataset
 from .wids_datathon_2019 import WiDSDatathon2019Dataset
 
+from .schemas import ClassificationDatasetSchema
+from .schemas import SegmentationDatasetSchema
+from .schemas import ObjectDetectionPascalDatasetSchema
+from .schemas import ObjectDetectionCocoDatasetSchema
+from .schemas import ObjectDetectionRfiCocoDatasetSchema
 from .schemas import FAIREOSchema
 from .schemas import FAIREOObjectDetectionYoloSchema
 from .schemas import FAIREOObjectDetectionPascalSchema
