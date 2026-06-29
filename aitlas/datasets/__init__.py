@@ -44,20 +44,6 @@ from .whdld_multilabel import WHDLDMultilabelDataset
 from .whu_ohs import WHUOHSDataset
 from .wids_datathon_2019 import WiDSDatathon2019Dataset
 
-from .schemas import MatDatasetSchema
-from .schemas import NPZDatasetSchema
-from .schemas import ClassificationDatasetSchema
-from .schemas import SegmentationDatasetSchema
-from .schemas import ObjectDetectionPascalDatasetSchema
-from .schemas import ObjectDetectionCocoDatasetSchema
-from .schemas import ObjectDetectionRfiCocoDatasetSchema
-from .schemas import BigEarthNetSchema
-from .schemas import SpaceNet6DatasetSchema
-from .schemas import BreizhCropsSchema
-from .schemas import CropsDatasetSchema
-from .schemas import So2SatDatasetSchema
-from .schemas import CloudDatasets_AI4QCSchema
-from .schemas import ClusteringDatasetSchema
 from .schemas import FAIREOSchema
 from .schemas import FAIREOObjectDetectionYoloSchema
 from .schemas import FAIREOObjectDetectionPascalSchema
@@ -88,4 +74,9 @@ from .schemas import OmbriaSchema
 from .schemas import RapidAI4EOSchema
 from .schemas import WHUOHSSchema
 from .schemas import ArtifivePotsdamSchema
-from .schemas import TiiLIDARMultiModalDatasetSchema
+from .schemas import RarePlanesSchema
+from .schemas import GeoNRWSchema
+from .schemas import xView2Schema
+from .schemas import Sen1Floods11Schema
+from .schemas import DynamicEarthNetSchema
+from .schemas import BioMasstersSchema
