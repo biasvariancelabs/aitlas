@@ -1,17 +1,15 @@
 import csv
-import math
 import os
-
+import math
+import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import seaborn as sns
-from matplotlib.patches import Patch
 
+from matplotlib.patches import Patch
 from ..base import BaseDataset
 from ..utils import image_loader
 from .schemas import SegmentationDatasetSchema
-
 
 """
 Generic dataset for the task of semantic segmentation
@@ -68,19 +66,17 @@ class SemanticSegmentationDataset(BaseDataset):
         for image, mask in self.dataloader():
             for index, label in enumerate(self.labels):
                 label_dist[self.labels[index]] += mask[:, :, :, index].sum()
-        label_count = pd.DataFrame.from_dict(label_dist, orient="index")
+        label_count = pd.DataFrame.from_dict(label_dist, orient='index')
         label_count.columns = ["Number of pixels"]
         return label_count
 
     def data_distribution_barchart(self, show_title=True):
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
-        sns.barplot(data=label_count, x=label_count.index, y="Number of pixels", ax=ax)
+        sns.barplot(data=label_count, x=label_count.index, y='Number of pixels', ax=ax)
         if show_title:
             ax.set_title(
-                "Labels distribution for {}".format(self.get_name()),
-                pad=20,
-                fontsize=18,
+                "Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18
             )
         return fig
 
@@ -104,21 +100,15 @@ class SemanticSegmentationDataset(BaseDataset):
         #        fontsize=16,
         #        y=0.82,
         #    )
-        height_factor = math.ceil(len(self.labels) / 3)
+        height_factor = math.ceil(len(self.labels)/3)
         if height_factor == 4:
             height_factor = 0.73
         elif height_factor == 2:
             height_factor = 0.80
         else:
             height_factor = 0.81
-        fig.legend(
-            handles=legend_elements,
-            bbox_to_anchor=(0.2, height_factor, 0.6, 0.2),
-            ncol=3,
-            mode="expand",
-            loc="lower left",
-            prop={"size": 12},
-        )
+        fig.legend(handles=legend_elements, bbox_to_anchor=(0.2, height_factor, 0.6, 0.2), ncol=3, mode='expand',
+                   loc='lower left', prop={'size': 12})
         plt.subplot(1, 2, 1)
         plt.imshow(img)
         plt.axis("off")

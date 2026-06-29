@@ -1,404 +1,710 @@
 from marshmallow import fields, validate
-
 from ..base.schemas import BaseDatasetSchema
 
-
-class MatDatasetSchema(BaseDatasetSchema):
+class FAIREOSchema(BaseDatasetSchema):
     """
-    Schema for configuring a classification dataset given as mat file.
+    Schema for configuring FAIR-EO datasets.
     """
-
-    mat_file = fields.String(
-        load_default=None,
-        metadata={"description": "mat file on disk", "example": "./data/dataset.mat"},
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
     )
     mode = fields.String(
-        load_default="train",
-        metadata={"description": "Which split to use, train or test.", "example": "train"},
-    )
-    csv_file = fields.String(
-        load_default=None,
-        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
-    )
-    download = fields.Bool(
-        load_default=False,
-        metadata={"description": "Whether to download the dataset", "example": True},
+        missing=None, description="train/val or test task", example="train"
     )
 
-
-class NPZDatasetSchema(BaseDatasetSchema):
+class FAIREOObjectDetectionYoloSchema(BaseDatasetSchema):
     """
-    Schema for configuring a classification dataset given as npz file.
+    Schema for configuring an object detection dataset given in YOLO format.
     """
-
-    npz_file = fields.String(
-        load_default=None,
-        metadata={"description": "npz file on disk", "example": "./data/dataset.npz"},
-    )
-    mode = fields.String(
-        load_default="train",
-        metadata={"description": "Which split to use, train or test.", "example": "train"},
-    )
-    labels = fields.List(
-        fields.String,
-        load_default=None,
-        required=False,
-        metadata={"description": "List of labels"},
-    )
-
-
-class ClassificationDatasetSchema(BaseDatasetSchema):
-    """
-    Schema for configuring a classification dataset.
-    """
-
     data_dir = fields.String(
-        load_default="/",
-        metadata={"description": "Dataset path on disk", "example": "./data/BigEarthNet/"},
+        missing="/", description="Dataset path on disk", example="./data/DIOR/"
+    )
+    annotation_dir = fields.String(
+        missing='/',
+        description="txt Yolo files path on disk",
+        example="./data/annotations/"
     )
     csv_file = fields.String(
-        load_default=None,
-        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    task = fields.String(
+        missing=None, description="training, validation or test task", example="train"
     )
 
-
-class SegmentationDatasetSchema(BaseDatasetSchema):
-    """
-    Schema for configuring a segmentation dataset.
-    """
-
-    data_dir = fields.String(
-        load_default="/",
-        metadata={"description": "Dataset path on disk", "example": "./data/BigEarthNet/"},
-    )
-    csv_file = fields.String(
-        load_default=None,
-        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
-    )
-
-
-class ObjectDetectionPascalDatasetSchema(BaseDatasetSchema):
+class FAIREOObjectDetectionPascalSchema(BaseDatasetSchema):
     """
     Schema for configuring an object detection dataset given in PASCAL VOC format.
     """
-
-    imageset_file = fields.String(
-        load_default="/",
-        metadata={
-            "description": "File with the image ids in the set",
-            "example": "./data/DIOR/train.txt",
-        },
-    )
     image_dir = fields.String(
-        load_default="/",
-        metadata={"description": "Folder to the images on disk", "example": "./data/DIOR/"},
+        missing="/", description="Folder to the images on disk", example="./data/DIOR/"
     )
     annotations_dir = fields.String(
-        load_default="/",
-        metadata={
-            "description": "Folder with the XML annotations in VOC format",
-            "example": "./data/DIOR/Annons/",
-        },
+        missing="/",
+        description="Folder with the XML annotations in VOC format",
+        example="./data/DIOR/Annons/",
+    )
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
     )
 
-
-class ObjectDetectionCocoDatasetSchema(BaseDatasetSchema):
+class FAIREOObjectDetectionCocoSchema(BaseDatasetSchema):
     """
     Schema for configuring an object detection dataset given in COCO format.
     """
-
     data_dir = fields.String(
-        load_default="/",
-        metadata={"description": "Dataset path on disk", "example": "./data/DIOR/"},
-    )
-    json_file = fields.String(
-        load_default=None,
-        metadata={"description": "JSON Coco file format on disk", "example": "./data/train.json"},
-    )
-    hardcode_background = fields.Bool(
-        load_default=True,
-        metadata={"description": "Do we need to hardcode the background as a class?"},
-    )
-
-
-class ObjectDetectionRfiCocoDatasetSchema(BaseDatasetSchema):
-    """
-    Schema for configuring an object detection dataset given in COCO format.
-    """
-
-    data_dir = fields.String(
-        load_default="/",
-        metadata={"description": "Dataset path on disk", "example": "./data/DIOR/"},
+        missing="/", description="Dataset path on disk", example="./data/DIOR/"
     )
     annotation_dir = fields.String(
-        load_default="/",
-        metadata={"description": "JSON Coco files path on disk", "example": "./data/annotations/"},
+        missing='/', description="json COCO files path on disk", example="./data/annotations/"
     )
-
-
-class BigEarthNetSchema(BaseDatasetSchema):
-    """
-    Schema for configuring the BigEarthNet dataset.
-    """
-
     csv_file = fields.String(
-        load_default=None,
-        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
-    )
-    lmdb_path = fields.String(
-        load_default=None, metadata={"description": "Path to the lmdb storage"}
-    )
-    data_dir = fields.String(
-        load_default=None,
-        metadata={"description": "Dataset path on disk", "example": "./data/BigEarthNet/"},
+        missing=None, description="CSV file on disk", example="./data/train.csv"
     )
     selection = fields.String(
-        load_default="rgb",
-        metadata={"description": "Read RGB channels or 13 channels", "example": "all/rgb"},
-    )
-    version = fields.String(
-        load_default="19 labels",
-        metadata={"description": "43 or 19 labels", "example": "43 labels/19 labels"},
-    )
-    import_to_lmdb = fields.Bool(
-        load_default=False, metadata={"description": "Should the data be moved to LMDB"}
-    )
-    bands10_mean = fields.List(
-        fields.Float,
-        load_default=(429.9430203, 614.21682446, 590.23569706),
-        required=False,
-        metadata={"description": "List of mean values for the 3 channels"},
-    )
-    bands10_std = fields.List(
-        fields.Float,
-        load_default=(572.41639287, 582.87945694, 675.88746967),
-        required=False,
-        metadata={"description": "List of std values for the 3 channels"},
+        missing=None, description="Include all images or only images with labels", example="all"
     )
 
-
-class SpaceNet6DatasetSchema(BaseDatasetSchema):
+class MatDatasetSchema(BaseDatasetSchema):
     """
-    Schema for configuring the SpaceNet6 dataset.
+    Schema for configuring datasets given in .mat format.
     """
-
-    orients = fields.String(
-        required=False,
-        metadata={
-            "description": "Absolute path pointing to the SAR orientations text file "
-            "(output of the pre-processing task",
-            "example": "path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.csv",
-        },
+    mat_file = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
     )
-    root_directory = fields.String(
-        required=False,
-        metadata={
-            "description": "Root directory for the raw SpaceNet6 data set",
-            "example": "path/to/data/train/AOI_11_Rotterdam/",
-        },
+    mode = fields.String(
+	missing=None, description="train/val/test", example="train"
     )
-    start_val_epoch = fields.Int(
-        required=False,
-        metadata={"description": "From which epoch should the validation period start"},
-    )
-    # Train & val
-    folds_path = fields.String(
-        required=False,
-        metadata={"description": "Path to the fold csv files", "example": "path/to/results/folds"},
-    )
-    segmentation_directory = fields.String(
-        required=False,
-        metadata={
-            "description": "Source directory with the target segmentation masks",
-            "example": "path/to/results/segmentation",
-        },
-    )
-    gt_csv = fields.String(
-        required=False,
-        metadata={
-            "description": "Source file containing the ground truth segmentation data on the buildings"
-        },
-    )
-    pred_csv = fields.String(
-        required=False,
-        metadata={
-            "description": "Destination file for saving the predictions from the current fold"
-        },
-    )
-    pred_folder = fields.String(
-        required=False,
-        metadata={"description": "Destination directory for saving the predictions from all folds"},
-    )
-    edge_weight = fields.Int(
-        required=False, metadata={"description": "Weight for the building edges pixels"}
-    )
-    contact_weight = fields.Int(
-        required=False, metadata={"description": "Weight for the building contact pixels"}
-    )
-    # Test
-    test_directory = fields.String(
-        required=False,
-        metadata={
-            "description": "Root directory for the raw SpaceNet6 data set",
-            "example": "path/to/data/train/AOI_11_Rotterdam/",
-        },
-    )
-    merged_pred_dir = fields.String(
-        required=False,
-        metadata={
-            "description": "Destination directory for merging the predictions from all folds",
-            "example": "path/to/data/train/AOI_11_Rotterdam/",
-        },
-    )
-    solution_file = fields.String(
-        required=False,
-        metadata={
-            "description": "SpaceNet6-compliant csv destination file used for grading the challenge",
-            "example": "path/to/data/results/solution.csv",
-        },
-    )
-    # Prepare
-    num_folds = fields.Int(
-        required=False,
-        load_default=10,
-        metadata={"description": "Number of fold splits for the data set"},
-    )
-    orients_output = fields.String(
-        required=False,
-        metadata={
-            "description": "Absolute path pointing to the output SAR orientations csv file",
-            "example": "path/to/data/train/AOI_11_Roterdam/SummaryData/SAR_orientations.txt",
-        },
-    )
-    num_threads = fields.Int(
-        required=False,
-        load_default=1,
-        metadata={"description": "Number of threads for parallel execution", "example": "1"},
-    )
-    edge_width = fields.Int(
-        required=False,
-        load_default=3,
-        metadata={"description": "Width of the edge of buildings (in pixels)", "example": "3"},
-    )
-    contact_width = fields.Int(
-        required=False,
-        load_default=9,
-        metadata={"description": "Width of the contact between (in pixels)", "example": "9"},
-    )
-    folds_dir = fields.String(
-        required=False,
-        metadata={
-            "description": "Source directory with the fold csv files",
-            "example": "path/to/results/folds",
-        },
-    )
-
-
-class BreizhCropsSchema(BaseDatasetSchema):
-    """
-    Schema for configuring the BreizhCrops dataset for crop type prediction.
-    """
-
-    regions = fields.List(
-        fields.String,
-        required=True,
-        metadata={"description": "Brittany region (frh01..frh04)", "example": "['frh01','frh01']"},
-    )
-
-    root = fields.String(
-        required=True,
-        metadata={"description": "Dataset path on disk", "example": "./breizhcrops_dataset"},
-    )
-    year = fields.Integer(
-        load_default=2017,
-        validate=validate.OneOf([2017, 2018]),
-        metadata={"description": "year", "example": "2017"},
-    )
-    filter_length = fields.Integer(
-        load_default=0,
-        metadata={"description": "filter_length"},
-    )
-    level = fields.String(
-        required=True,
-        validate=validate.OneOf(["L1C", "L2A"]),
-        metadata={"description": "L1C or L2A", "example": "L1C"},
-    )
-    verbose = fields.Bool(load_default=False, metadata={"description": "verbose"})
-    load_timeseries = fields.Bool(load_default=True, metadata={"description": "load_timeseries"})
-    recompile_h5_from_csv = fields.Bool(
-        load_default=False, metadata={"description": "recompile_h5_from_csv"}
-    )
-    preload_ram = fields.Bool(load_default=False, metadata={"description": "preload_ram"})
-
-
-class CropsDatasetSchema(BaseDatasetSchema):
-    """
-    Schema for configuring dataset for crop type prediction.
-    """
-
-    csv_file_path = fields.String(
-        load_default=None,
-        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
-    )
-    root = fields.String(
-        required=True,
-        metadata={"description": "Dataset path on disk", "example": "./slovenia-crops"},
-    )
-    verbose = fields.Bool(load_default=False, metadata={"description": "verbose"})
-    level = fields.String(
-        load_default="L1C",
-        validate=validate.OneOf(["L1C", "L2A"]),
-        metadata={"description": "L1C or L2A", "example": "L1C"},
-    )
-    regions = fields.List(
-        fields.String,
-        required=True,
-        metadata={
-            "description": "Brittany region (frh01..frh04) or train/val/test",
-            "example": "['frh01','frh01']",
-        },
-    )
-
-
-class So2SatDatasetSchema(BaseDatasetSchema):
-    """
-    Schema for configuring the So2Sat dataset.
-    """
-
-    h5_file = fields.String(
-        required=True, metadata={"description": "H5 file on disk", "example": "./data/train.h5"}
-    )
-
-
-class CloudDatasets_AI4QCSchema(BaseDatasetSchema):
-    """
-    Schema for configuring Cloud AI4QC datasets.
-    """
-
     csv_file = fields.String(
-        load_default=None,
-        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
+        missing=None, description="CSV file on disk", example="./data/train.csv"
     )
+
+class LLCCDatasetSchema(BaseDatasetSchema):
+    """
+    Schema for configuring the LLCC image classification dataset which has triplets of images.
+    """
     data_dir = fields.String(
-        load_default="/",
-        metadata={"description": "Dataset path on disk", "example": "./data/CESBIO/"},
+        missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
+    )
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv",
     )
     selection = fields.String(
-        load_default="rgb",
-        metadata={"description": "Read RGB channels or 13 channels", "example": "all/rgb"},
+        missing="/", description="Use images as triplets or as individual images", example="individual"
+    )
+    task = fields.String(
+        missing=None, description="training, validation or test task", example="training"
     )
 
-
-class ClusteringDatasetSchema(BaseDatasetSchema):
+class OSMDatasetSchema(BaseDatasetSchema):
     """
-    Schema for configuring a clustering dataset.
+    Schema for configuring the OSM dataset.
     """
-
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
     data_dir = fields.String(
-        load_default="/",
-        metadata={"description": "Dataset path on disk", "example": "./data/New_anomalies/"},
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    classification = fields.String(
+        missing="/", description="Choose the classification schema (land_use, water_and_roads, buildings)", example="land_use"
+    )
+    mode = fields.String(
+        missing=None, description="train/val or test task", example="train"
+    )
+
+class SpaceNet8DatasetSchema(BaseDatasetSchema):
+    """
+    Schema for configuring the SpaceNet8 dataset.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./Germany_Training_Public/"
+    )
+    mode = fields.String(
+        missing="post-event",
+        description="Use only post-event images or pre-/post-event pairs",
+        example="pairs",
+    )
+
+class SACropTypeSchema(BaseDatasetSchema):
+    """
+    Schema for configuring SA Crop Type dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or 13 channels", example="all/rgb"
+    )
+    date = fields.Int(
+        missing=None, description="Read only one image out of a time series", example=1
+    )
+
+class MTS12Schema(BaseDatasetSchema):
+    """
+    Schema for configuring the MTS12 dataset.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    date = fields.String(
+        missing=None, description="Visualise images for a particular date", example="1"
+    )  
+    imagery = fields.String(
+        missing="s2", description="Select which Sentinel imagery to use: 's1' for Sentinel-1, 's2' for Sentinel-2", example="s2"
+    )
+    split = fields.String(
+        missing="train", description="Select which split to use, train, val or test", example="train"
+    )
+
+class Sen4AgriNetSchema(BaseDatasetSchema):
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    date = fields.String(
+        missing=None, description="Visualise images for a particular date", example="1"
+    )
+    class_selection = fields.String(
+        missing = "12", description = "Select the 12 core classes or all 168 classes", example="12/all"
+    )
+
+class BrazilDAMSchema(BaseDatasetSchema):
+    """
+    Schema for configuring the BrazilDAM dataset.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
     )
     csv_file = fields.String(
-        load_default=None,
-        metadata={"description": "CSV file on disk", "example": "./data/train.csv"},
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    imagery = fields.String(
+        missing="sentinel", description="Select which imagery to use: 'sentinel', 'landsat' or 'sentinel and landsat'", example="sentinel"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels, all channels or specific ones", example="all/rgb/bands"
+    )
+    bands_s2 = fields.List(
+        fields.String(), missing=None, description="Select which S2 bands to use with a list of band names", example=["B01","B02","B03"]
+    )
+    bands_l8 = fields.List(
+        fields.String(), missing=None, description="Select which L8 bands to use with a list of band names", example=["B01","B02","B03"]
+    )
+
+class SEN12MSSchema(BaseDatasetSchema):
+    """
+    Schema for configuring SEN12MS dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    imagery = fields.String(
+        missing="s2", description="Consider s1, s2 or both s1 and s2 images", example="s1/s2/all"
+    )
+    bands_s2 = fields.List(
+        fields.String(), missing=None, description="Select which S2 bands to use with a list of band names", example=["B02","B03","B04"]
+    )
+    bands_s1 = fields.List(
+        fields.String(), missing=None, description="Select which S1 bands to use with a list of band names", example=["VV","VH"]
+    )
+
+class PASTISHDSchema(BaseDatasetSchema):
+    """
+    Schema for configuring PASTIS-HD dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    imagery = fields.String(
+        missing="SPOT", description="read S1A, S1D, S2 and SPOT imagery or SPOT imagery only", example="all/SPOT"
+    )
+    bands_s2 = fields.List(
+        fields.String(), missing=None, description="Select which S2 bands to use with a list of band names", example=["B01","B02","B03"]
+    )
+    bands_s1 = fields.List(
+        fields.String(), missing=None, description="Select which s1 bands to use with a list of band names", example=["VV","VH"]
+    )
+
+class SatlasPretrainSemanticSegmentationSchema(BaseDatasetSchema):
+    """
+    Schema for configuring SatlasPretrain dataset for the semantic segmentation task.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    tile_list = fields.String(
+        missing=None, description="Txt file with the list of tiles and their corresponding s2a, s2b, naip and label files", example="./data/tile_list.txt"
+    )
+    mode = fields.String(
+        missing=None, description="train/val or test task", example="train"
+    )
+
+class SSL4EOS12MLSchema(BaseDatasetSchema):
+    """
+    Schema for configuring SSL4EO-S12-ML dataset.
+    """
+    label_file = fields.String(
+        missing=None, description="json file on disk containing the labels", example="./data/labels.json"
+    )
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk containing the train/val/test split", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    imagery = fields.String(
+        missing="S2 L2A", description="Choose which imagery source to read", example="S2 L1C/S2 L2A/S1/all"
+    )
+    bands_s2 = fields.List(
+        fields.String(), missing=None, description="Select which S2 bands to use with a list of band names", example=["B01","B02","B03"]
+    )
+    bands_s1 = fields.List(
+        fields.String(), missing=None, description="Select which s1 bands to use with a list of band names", example=["VV","VH"]
+    )
+
+class DFC21DSESchema(BaseDatasetSchema):
+    """
+    Schema for configuring DFC21-DSE datasets.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    time_series = fields.Boolean(
+        missing=False, description="Consider the time series or a single time step", example="True"
+    )
+    imagery = fields.String(
+        missing="s2", description="Read S1, S2, Landsat 8 or VIIRS images", example="s1/s2/l8/viirs"
+    )
+
+class WHUOPTSARSchema(BaseDatasetSchema):
+    """
+    Schema for configuring WHU-OPT-SAR dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    imagery = fields.String(
+        missing="s2", description="Consider s1, s2 or both s1 and s2 images", example="s1/s2/s1 and s2"
+    )
+
+class MultilabelChangeDetectionSchema(BaseDatasetSchema):
+    """
+    Schema for configuring Change Detection datasets with multilabel masks.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    mode = fields.String(
+        missing=None, description="train/val or test task", example="train"
+    )
+    task_type = fields.String(
+        missing="multilabel", description="binary or multilabel", example="binary"
+    )
+
+class BandonSchema(BaseDatasetSchema):
+    """
+    Schema for configuring Bandon dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    mode = fields.String(
+        missing=None, description="train/val or test task", example="train"
+    )
+    split = fields.String(
+        missing="original", description="original or new 60/20/20 split", example="new"
+    )
+
+class MSBCSchema(BaseDatasetSchema):
+    """
+    Schema for configuring MSBC dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    mode = fields.String(
+        missing=None, description="train/val or test task", example="train"
+    )
+    imagery = fields.String(
+        missing="s2", description="Consider only one of s1, s2, aerial or all sources", example="s1/s2/aerial/all"
+    )
+    bands_s2 = fields.List(
+        fields.String(), missing=None, description="Select which S2 bands to use with a list of band names", example=["B01","B02","B03"]
+    )
+    bands_s1 = fields.List(
+        fields.String(), missing=None, description="Select which S1 bands to use with a list of band names", example=["VV","VH"]
+    )
+
+class SMARSSchema(BaseDatasetSchema):
+    """
+    Schema for configuring the SMARS dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    mode = fields.String(
+        missing=None, description="train/val or test task", example="train"
+    )
+    imagery = fields.String(
+        missing="rgb", description="Consider only RGB, DEM or both sources", example="rgb/dem/all"
+    )
+    task_type = fields.String(
+        missing="multilabel", description="binary or multilabel", example="binary"
+    )
+
+class TallosSchema(BaseDatasetSchema):
+    """
+    Schema for configuring the TalloS dataset.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/BigEarthNet/"
+    )
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv",
+    )
+    annotations = fields.String(
+        missing="/", description="Annotation file on disk", example="./data/annotations.csv",
+    )
+    task = fields.String(
+        missing=None, description="Training, validation or testing task", example="val",
+    )
+    selection = fields.String(
+        missing="rgb", description="Select 3 bands RGB images, specific bands or all bands", example="rgb/bands/all",
+    )
+    imagery = fields.String(
+        missing="sentinel2", description="Select S2, DEM or all sources", example="dem/sentinel2/all",
+    )
+    bands_s2 = fields.List(
+        fields.String(), missing=None, description="Select which S2 bands to use with a list of band names", example=["B01","B02","B03"]
+    )
+
+class Sentinel2CloudCoverSchema(BaseDatasetSchema):
+    """
+    Schema for configuring Sentinel-2 Cloud Cover dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels, specific channels or all channels", example="all/rgb/bands"
+    )
+    bands_s2 = fields.List(
+        fields.String(), missing=None, description="Select which S2 bands to use with a list of band names", example=["B02","B03","B04"]
+    )
+
+class AIRPolSARSegSchema(BaseDatasetSchema):
+    """
+    Schema for configuring AIR-PolSAR-Seg dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels, specific channels or all channels", example="all/rgb/bands"
+    )
+    bands_gf3 = fields.List(
+        fields.String(), missing=None, description="Select which GaoFen-3 bands to use with a list of band names", example=["HH","HV","VV"]
+    )
+
+class AgriFieldNetSchema(BaseDatasetSchema):
+    """
+    Schema for configuring AgriFieldNet dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels, specific channels or all channels", example="all/rgb/bands"
+    )
+    bands_s2 = fields.List(
+        fields.String(), missing=None, description="Select which S2 bands to use with a list of band names", example=["B02","B03","B04"]
+    )
+
+class OmbriaSchema(BaseDatasetSchema):
+    """
+    Schema for configuring Ombria dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or all original channels", example="all/rgb"
+    )
+    mode = fields.String(
+        missing=None, description="train/val or test task", example="train"
+    )
+    imagery = fields.String(
+        missing="S2", description="Consider only one of s1, s2 or all sources", example="S1/S2/all"
+    )
+
+class RapidAI4EOSchema(BaseDatasetSchema):
+    """
+    Schema for configuring the RapidAI4EO dataset.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    csv_file = fields.String(
+        missing=None, description="CSV path on disk", example="./data/CESBIO/train.csv"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    date = fields.String(
+        missing=None, description="Visualise images for a particular date", example="1"
+    )  
+    imagery = fields.String(
+        missing="S2", description="Select which imagery to use: 'S2' for Sentinel-2, 'PF' for Planet Fusion", example="S2"
+    )
+    task = fields.String(
+        missing=None, description="Select which split to use, train, val or test", example="train"
+    )
+
+class WHUOHSSchema(BaseDatasetSchema):
+    """
+    Schema for configuring WHU-OHS dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels, specific channels or all channels", example="all/rgb/bands"
+    )
+    bands_ohs = fields.List(
+        fields.String(), missing=None, description="Select which OHS bands to use with a list of band names", example=["B02","B03","B04"]
+    )
+
+class ArtifivePotsdamSchema(BaseDatasetSchema):
+    """
+    Schema for configuring the Artifive-Potsdam dataset.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    annotation_dir = fields.String(
+        missing='/', description="json COCO files path on disk", example="./data/annotations/"
+    )
+    csv_file = fields.String(
+        missing=None, description="CSV path on disk", example="./data/CESBIO/train.csv"
+    )
+    data_selection = fields.String(
+        missing="labeled", description="Read all images or only those which contain at least one label", example="all/labeled"
+    )
+    imagery = fields.String(
+        missing="all", description="Select which imagery to use: real, artificial or all", example="real/artificial/all"
+    )
+
+class RarePlanesSchema(BaseDatasetSchema):
+    """
+    Schema for configuring the RarePlanes dataset.
+    """
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/DIOR/"
+    )
+    annotation_dir = fields.String(
+        missing='/', description="annotation files path on disk", example="./data/annotations/"
+    )
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    task = fields.String(
+        missing=None, description="training, validation or test task", example="train"
+    )
+    imagery = fields.String(
+        missing="real", description="Select which imagery to use: real, synthetic or all", example="real/synthetic/all"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+
+class GeoNRWSchema(BaseDatasetSchema):
+    """
+    Schema for configuring GeoNRW dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    imagery = fields.String(
+        missing="aerial", description="Select aerial, DEM or all sources", example="dem/aerial/all",
+    )
+
+class xView2Schema(BaseDatasetSchema):
+    """
+    Schema for configuring xView2 dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    classification = fields.String(
+        missing="binary", description="Classification schema", example="multilabel/binary"
+    )
+
+class Sen1Floods11Schema(BaseDatasetSchema):
+    """
+    Schema for configuring Sen1Floods11 dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    source_dir = fields.String(
+        missing="/", description="Source images path on disk", example="./data/CESBIO/"
+    )
+    annot_dir = fields.String(
+        missing="/", description="Annotations path on disk", example="./data/CESBIO/"
+    )
+    imagery = fields.String(
+        missing=None, description="Imagery source", example="S1/S2"
+    )
+    annotations = fields.String(
+        missing=None, description="Annotations type", example="weakly labeled/hand labeled"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+
+class DynamicEarthNetSchema(BaseDatasetSchema):
+    """
+    Schema for configuring DynamicEarthNet dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    mode = fields.String(
+        missing=None, description="train/val or test task", example="train"
+    )
+    imagery = fields.String(
+        missing="s2", description="S1, S2, PlanetScope imagery or all sources", example="s1/s2/planet/all"
+    )
+    timeseries= fields.Boolean(
+        missing=False, description="Consider the timeseries or a single timestamp", example="True/False"
+    )
+
+class BioMasstersSchema(BaseDatasetSchema):
+    """
+    Schema for configuring BioMassters dataset.
+    """
+    csv_file = fields.String(
+        missing=None, description="CSV file on disk", example="./data/train.csv"
+    )
+    data_dir = fields.String(
+        missing="/", description="Dataset path on disk", example="./data/CESBIO/"
+    )
+    annotation_dir = fields.String(
+        missing="/", description="Annotations path on disk", example="./data/CESBIO/"
+    )
+    selection = fields.String(
+        missing="rgb", description="Read RGB channels or more than 3 channels", example="all/rgb"
+    )
+    mode = fields.String(
+        missing=None, description="train/val or test task", example="train"
+    )
+    timeseries = fields.Boolean(
+        missing=False, description="Consider the time series or a single time stamp", example="True/False"
+    )
+    imagery = fields.String(
+        missing="S2", description="Consider S1, S2 or both sources", example="S1/S2/all"
     )

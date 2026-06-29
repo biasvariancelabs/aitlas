@@ -1,35 +1,37 @@
+from .multiclass_classification import MultiClassClassificationDataset
+from ..base import BaseDataset
+from .schemas import ClassificationDatasetSchema
+from ..utils import image_loader
+
 import csv
 import os
-import random
-
-import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
+import random
+import numpy as np
 
-from ..base import BaseDataset
-from ..utils import image_loader
-from .schemas import ClassificationDatasetSchema
+'''
+FireRisk is a remote sensing dataset for fire risk assessment. It contains 7 fire risk classes 
+with a total of 91872 labelled images.
+'''
 
+LABELS = ["High","Low","Moderate","Non-burnable","Very_High","Very_Low","Water"]
 
-"""
-The format of the multiclass classification dataset is:
-image_path1,label1
-image_path2,label2
-...
-"""
+class FireRiskDataset(BaseDataset):
 
-
-class MultiClassClassificationDataset(BaseDataset):
+    url = "https://drive.google.com/file/d/1J5GrJJPLWkpuptfY_kgqkiDtcSNP88OP/view"
+    labels = LABELS
+    name = "FireRisk dataset"
     schema = ClassificationDatasetSchema
 
     def __init__(self, config):
-        # now call the constructor to validate the schema
+        # now call the constructor to validate the schema and load the data
         super().__init__(config)
-
         # load the data
         self.data_dir = self.config.data_dir
         self.csv_file = self.config.csv_file
-        self.data = self.load_dataset()
+        self.data = self.load_dataset(self.data_dir)
 
     def __getitem__(self, index):
         """
@@ -49,14 +51,42 @@ class MultiClassClassificationDataset(BaseDataset):
             target = self.target_transform(target)
         return img, target
 
-    def __len__(self):
-        return len(self.data)
+    def load_dataset(self, data_dir):
+        data = []
+        # the dataset is originally split into 80/20 train/test split
+        # csv_files created by BVLabs provide a 60/20/20 train/val/test split with a stratification based on class
+        if self.csv_file:
+            with open(self.csv_file, "r") as f:
+                    reader = csv.reader(f)
+                    next(reader, None) # skip header
+                    for row in reader:
+                        file_name = os.path.join(row[1], row[0])
+                        label = row[2] 
+                        item = (
+                            os.path.join(self.data_dir, file_name),
+                            self.labels.index(label),            
+                        )
+                        data.append(item)
 
-    def get_labels(self):
-        return self.labels
+        else: # original split
+            for labels in os.listdir(data_dir):
+                for j in os.listdir(data_dir + labels):
+                    file_name = labels + '/' + j
+                    item = (
+                        os.path.join(self.data_dir, file_name),
+                        self.labels.index(labels),
+                    )
+                    data.append(item)
+
+        if not self.labels:
+            raise ValueError("You need to provide the list of labels for the dataset")
+
+        return data
 
     def data_distribution_table(self):
-        df = pd.read_csv(self.csv_file, sep=",", names=["File name", "Label"])
+        df = pd.DataFrame(columns=['File name','Label'])
+        for i in np.arange(len(self.data)):
+            df.loc[i] = [self.data[i][0]] + [self.labels[self.data[i][1]]]
         label_count = df.groupby("Label").count().reset_index()
         label_count.columns = ["Label", "Count"]
         return label_count
@@ -70,9 +100,12 @@ class MultiClassClassificationDataset(BaseDataset):
         )
         return fig
 
-    def show_samples(self):
-        df = pd.read_csv(self.csv_file, sep=",", names=["File name", "Label"])
-        return df.head(20)
+
+    def __len__(self):
+        return len(self.data)
+
+    def get_labels(self):
+        return self.labels
 
     def show_image(self, index):
         label = self.labels[self[index][1]]
@@ -105,39 +138,3 @@ class MultiClassClassificationDataset(BaseDataset):
             axes.set_yticks([])
         figure.tight_layout()
         return figure
-
-    def load_dataset(self):
-        data = []
-        if self.csv_file:
-            with open(self.csv_file, "r") as f:
-                csv_reader = csv.reader(f)
-                raw_data = list(csv_reader)
-
-                # If not provided initialize the labels from the csv file
-                if not self.labels:
-                    self.labels = []
-                    for index, row in enumerate(raw_data):
-                        self.labels.append(row[1])
-                    self.labels = list(sorted(set(self.labels)))
-
-                for index, row in enumerate(raw_data):
-                    file_name = row[0]
-                    item = (
-                        os.path.join(self.data_dir, file_name),
-                        self.labels.index(row[1]),
-                    )
-                    data.append(item)
-
-        if not self.labels:
-            raise ValueError("You need to provide the list of labels for the dataset")
-
-        return data
-
-    def re_map_labels(self, labels_remapping):
-        # re mapp the labels
-        tmp_data = []
-        if self.data:
-            for i, (path, label) in enumerate(self.data):
-                if label in labels_remapping.keys():
-                    tmp_data.append((path, labels_remapping[label]))
-        self.data = tmp_data

@@ -1,34 +1,42 @@
+from ..base import BaseDataset
+from ..utils import image_loader
+from .schemas import FAIREOSchema
+
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+import random
 import csv
 import os
 import random
-
-import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from ..base import BaseDataset
-from ..utils import image_loader
-from .schemas import ClassificationDatasetSchema
+'''
+SynthWakeSAR is a synthetic ship classification dataset of synthetic aperture radar (SAR) images 
+of the sea surface. It includes 10 real ship models for a total of 46080 simulated images containing 
+visible ship wakes. The dataset was created using the 'AssenSAR Image Simulator', also available via 
+the University of Bristol.
+'''
+
+LABELS = ["Cargo I","Cargo II","Tanker I","Tanker II","Passenger Vessel I","Passenger Vessel II",
+          "High Speed Craft I","High Speed Craft II","Fishing Vessel I","Fishing Vessel II"]
 
 
-"""
-The format of the multiclass classification dataset is:
-image_path1,label1
-image_path2,label2
-...
-"""
+class SynthWakeSARDataset(BaseDataset):
 
-
-class MultiClassClassificationDataset(BaseDataset):
-    schema = ClassificationDatasetSchema
+    url = "https://data.bris.ac.uk/data/dataset/30kvuvmatwzij2mz1573zqumfx"
+    labels = LABELS
+    name = "SynthWakeSAR dataset"
+    schema = FAIREOSchema
 
     def __init__(self, config):
-        # now call the constructor to validate the schema
+        # now call the constructor to validate the schema and load the data
         super().__init__(config)
-
         # load the data
         self.data_dir = self.config.data_dir
         self.csv_file = self.config.csv_file
+        self.selection = self.config.selection
         self.data = self.load_dataset()
 
     def __getitem__(self, index):
@@ -41,14 +49,45 @@ class MultiClassClassificationDataset(BaseDataset):
         """
         # load image
         img = image_loader(self.data[index][0])
-        # apply transformations
+        if self.selection == 'rgb': # 3 bands image
+            img = np.asarray(Image.fromarray(img).convert('RGB'))
+        elif self.selection == 'all':
+            img = img # original 1 band immage
+
         if self.transform:
             img = self.transform(img)
         target = self.data[index][1]
         if self.target_transform:
             target = self.target_transform(target)
         return img, target
+    
+    def load_dataset(self):
+        data = []
+        if self.csv_file:
+            with open(self.csv_file, "r") as f:
+                csv_reader = csv.reader(f)
+                raw_data = list(csv_reader)
 
+                # If not provided initialize the labels from the csv file
+                if not self.labels:
+                    self.labels = []
+                    for index, row in enumerate(raw_data):
+                        self.labels.append(row[1])
+                    self.labels = list(sorted(set(self.labels)))
+
+                for index, row in enumerate(raw_data):
+                    file_name = row[0]
+                    item = (
+                        os.path.join(self.data_dir, file_name),
+                        self.labels.index(row[1]),
+                    )
+                    data.append(item)
+
+        if not self.labels:
+            raise ValueError("You need to provide the list of labels for the dataset")
+
+        return data
+    
     def __len__(self):
         return len(self.data)
 
@@ -82,7 +121,10 @@ class MultiClassClassificationDataset(BaseDataset):
             fontsize=14,
         )
         plt.axis("off")
-        plt.imshow(self[index][0])
+        if self.selection == "rgb": # 3 bands image
+            plt.imshow(self[index][0][:,:,0])
+        elif self.selection == "all": # 1 band image
+            plt.imshow(self[index][0])
         return fig
 
     def show_batch(self, size, show_title=True):
@@ -99,45 +141,9 @@ class MultiClassClassificationDataset(BaseDataset):
                 y=1.006,
             )
         for axes, image_index in zip(ax.flatten(), image_indices):
-            axes.imshow(self[image_index][0])
+            axes.imshow(self[image_index][0][:,:,0])
             axes.set_title(self.labels[self[image_index][1]], fontsize=18, pad=10)
             axes.set_xticks([])
             axes.set_yticks([])
         figure.tight_layout()
         return figure
-
-    def load_dataset(self):
-        data = []
-        if self.csv_file:
-            with open(self.csv_file, "r") as f:
-                csv_reader = csv.reader(f)
-                raw_data = list(csv_reader)
-
-                # If not provided initialize the labels from the csv file
-                if not self.labels:
-                    self.labels = []
-                    for index, row in enumerate(raw_data):
-                        self.labels.append(row[1])
-                    self.labels = list(sorted(set(self.labels)))
-
-                for index, row in enumerate(raw_data):
-                    file_name = row[0]
-                    item = (
-                        os.path.join(self.data_dir, file_name),
-                        self.labels.index(row[1]),
-                    )
-                    data.append(item)
-
-        if not self.labels:
-            raise ValueError("You need to provide the list of labels for the dataset")
-
-        return data
-
-    def re_map_labels(self, labels_remapping):
-        # re mapp the labels
-        tmp_data = []
-        if self.data:
-            for i, (path, label) in enumerate(self.data):
-                if label in labels_remapping.keys():
-                    tmp_data.append((path, labels_remapping[label]))
-        self.data = tmp_data
