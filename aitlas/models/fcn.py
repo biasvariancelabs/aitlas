@@ -1,8 +1,9 @@
 """FCN model for segmentation"""
-import torch.nn as nn
+
+from torch import nn
 from torchvision import models
 
-from ..base import BaseSegmentationClassifier
+from ..base.segmentation import BaseSegmentationClassifier
 
 
 class FCN(BaseSegmentationClassifier):

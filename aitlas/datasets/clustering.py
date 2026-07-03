@@ -1,4 +1,5 @@
 import random
+
 import matplotlib.pyplot as plt
 import torch
 
@@ -35,7 +36,7 @@ class ClusteringDataset(BaseDataset):
         if self.transform:
             image = self.transform(image)
         return image
-    
+
     def show_image(self, index, show_title=False):
         # plot the image
         img = self[index]
@@ -48,9 +49,7 @@ class ClusteringDataset(BaseDataset):
         if size % 5:
             raise ValueError("The provided size should be divided by 5!")
         image_indices = random.sample(range(0, len(self)), size)
-        figure, ax = plt.subplots(
-            int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5))
-        )
+        figure, ax = plt.subplots(int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5)))
 
         for axes, image_index in zip(ax.flatten(), image_indices):
             img = self[image_index]

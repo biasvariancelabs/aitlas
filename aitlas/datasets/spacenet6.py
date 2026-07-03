@@ -2,7 +2,9 @@
 .. note:: Based on the implementation at: https://github.com/SpaceNetChallenge/SpaceNet_SAR_Buildings_Solutions/blob/master/1-zbigniewwojna/main.py#L412
 
 """
+
 import glob
+import logging
 import math
 import os
 import warnings
@@ -10,14 +12,9 @@ from functools import partial
 from multiprocessing import Pool
 
 import cv2
-
-try:
-    import gdal
-except ModuleNotFoundError as err:
-    from osgeo import gdal
-
 import numpy as np
 import pandas as pd
+import tifffile
 import torch
 from shapely.wkt import loads
 from skimage import io, measure
@@ -33,6 +30,23 @@ from ..utils import parse_img_id
 # Ignore the "low-contrast" warnings
 warnings.filterwarnings("ignore")
 
+# Suppress noisy tifffile warnings about GDAL_NODATA casting
+warnings.filterwarnings("ignore", message=".*GDAL_NODATA.*")
+logging.getLogger("tifffile").setLevel(logging.ERROR)
+
+
+def get_transform_info(tif_path):
+    """Extracts transform info using tifffile."""
+    with tifffile.TiffFile(tif_path) as tif:
+        page = tif.pages[0]
+        try:
+            tiepoint = page.tags["ModelTiepointTag"].value
+            x_min = tiepoint[3]
+            y_max = tiepoint[4]
+        except KeyError:
+            x_min, y_max = 0, 0
+        return x_min, y_max
+
 
 def polygon_to_mask(poly, image_size):
     image_mask = np.zeros(image_size, np.uint8)
@@ -47,9 +61,7 @@ def polygon_to_mask(poly, image_size):
     return image_mask
 
 
-def process_image(
-    image_path, segmentation_directory, edge_width, contact_width, gt_buildings_csv
-):
+def process_image(image_path, segmentation_directory, edge_width, contact_width, gt_buildings_csv):
     """
     Creates and saves the target (ground-truth) segmentation mask for the input image.
 
@@ -67,9 +79,9 @@ def process_image(
     """
     gt_buildings = pd.read_csv(gt_buildings_csv)
     image_name = os.path.basename(image_path)
-    values = gt_buildings[
-        (gt_buildings["ImageId"] == "_".join(image_name.split("_")[-4:])[:-4])
-    ][["TileBuildingId", "PolygonWKT_Pix", "Mean_Building_Height"]].values
+    values = gt_buildings[(gt_buildings["ImageId"] == "_".join(image_name.split("_")[-4:])[:-4])][
+        ["TileBuildingId", "PolygonWKT_Pix", "Mean_Building_Height"]
+    ].values
     labels = np.zeros((900, 900), dtype="uint16")
     heights = np.zeros((900, 900), dtype="float")
     cur_lbl = 0
@@ -113,9 +125,7 @@ def process_image(
                 )
                 if len(unique[unique > 0]) > 1:
                     contact_msk[y0, x0] = True
-        msk = np.stack(
-            (255 * footprint_msk, 255 * border_msk, 255 * contact_msk)
-        ).astype("uint8")
+        msk = np.stack((255 * footprint_msk, 255 * border_msk, 255 * contact_msk)).astype("uint8")
         msk = np.rollaxis(msk, 0, 3)
     io.imsave(os.path.join(segmentation_directory, image_name), msk)
 
@@ -167,9 +177,9 @@ class SpaceNet6Dataset(BaseDataset):
             image = np.fliplr(np.flipud(image))
             if self.config.transforms:
                 mask = np.fliplr(np.flipud(mask))
-        image = (
-            image - np.array([28.62501827, 36.09922463, 33.84483687, 26.21196667])
-        ) / np.array([8.41487376, 8.26645475, 8.32328472, 8.63668993])
+        image = (image - np.array([28.62501827, 36.09922463, 33.84483687, 26.21196667])) / np.array(
+            [8.41487376, 8.26645475, 8.32328472, 8.63668993]
+        )
         # Transpose image
         image = torch.from_numpy(image.transpose((2, 0, 1)).copy()).float()
         # Reorder bands
@@ -206,7 +216,7 @@ class SpaceNet6Dataset(BaseDataset):
         return len(self.image_paths)
 
     def load_directory(self):
-        """Loads the *.tif images from the specified directory."""
+        """Loads the .tif images from the specified directory."""
         self.image_paths = glob.glob(os.path.join(self.config.test_directory, "*.tif"))
         self.mask_paths = None
 
@@ -214,37 +224,26 @@ class SpaceNet6Dataset(BaseDataset):
         """Loads all images (and masks) except the ones from this fold."""
         df = pd.read_csv(self.config.folds_path)
         self.image_paths = [
-            os.path.join(
-                self.config.root_directory, "SAR-Intensity", os.path.basename(x)
-            )
-            for x in df[
-                np.logical_or(
-                    df["fold"] > (fold % 10) + 1, df["fold"] < (fold % 10) - 1
-                )
-            ]["sar"].values
+            os.path.join(self.config.root_directory, "SAR-Intensity", os.path.basename(x))
+            for x in df[np.logical_or(df["fold"] > (fold % 10) + 1, df["fold"] < (fold % 10) - 1)][
+                "sar"
+            ].values
         ]
         self.mask_paths = [
             os.path.join(self.config.segmentation_directory, os.path.basename(x))
-            for x in df[
-                np.logical_or(
-                    df["fold"] > (fold % 10) + 1, df["fold"] < (fold % 10) - 1
-                )
-            ]["segm"].values
+            for x in df[np.logical_or(df["fold"] > (fold % 10) + 1, df["fold"] < (fold % 10) - 1)][
+                "segm"
+            ].values
         ]
 
     def load_fold(self, fold):
         """Loads the images from this fold."""
         df = pd.read_csv(self.config.folds_path)
         self.image_paths = [
-            os.path.join(
-                self.config.root_directory, "SAR-Intensity", os.path.basename(x)
-            )
+            os.path.join(self.config.root_directory, "SAR-Intensity", os.path.basename(x))
             for x in df[df["fold"] == (fold % 10)]["sar"].values
         ]
         self.mask_paths = None
-
-    def labels(self):
-        pass
 
     def prepare(self):
         """
@@ -293,29 +292,25 @@ class SpaceNet6Dataset(BaseDataset):
             names=["strip", "direction"],
             header=None,
         )
-        df_fold = pd.DataFrame(
-            columns=["ImageId", "sar", "segm", "rotation", "x", "y", "fold"]
-        )
+        df_fold = pd.DataFrame(columns=["ImageId", "sar", "segm", "rotation", "x", "y", "fold"])
         l_edge = 591640
         r_edge = 596160
         orientations["sum_y"] = 0.0
         orientations["ctr_y"] = 0.0
         for sar_path in tqdm(sar_image_paths):
-            image_id = "_".join(
-                os.path.splitext(os.path.basename(sar_path))[0].split("_")[-4:]
-            )
+            image_id = "_".join(os.path.splitext(os.path.basename(sar_path))[0].split("_")[-4:])
             strip_name = "_".join(image_id.split("_")[-4:-2])
             rotation = orientations.loc[strip_name]["direction"].squeeze()
-            tr = gdal.Open(sar_path).GetGeoTransform()
-            orientations.loc[strip_name, "sum_y"] += tr[3]
+
+            tr0, tr3 = get_transform_info(sar_path)
+
+            orientations.loc[strip_name, "sum_y"] += tr3
             orientations.loc[strip_name, "ctr_y"] += 1
             fold_no = min(
                 self.config.num_folds - 1,
                 max(
                     0,
-                    math.floor(
-                        (tr[0] - l_edge) / (r_edge - l_edge) * self.config.num_folds
-                    ),
+                    math.floor((tr0 - l_edge) / (r_edge - l_edge) * self.config.num_folds),
                 ),
             )
             segmentation_path = os.path.join(
@@ -327,8 +322,8 @@ class SpaceNet6Dataset(BaseDataset):
                     "sar": sar_path,
                     "segm": segmentation_path,
                     "rotation": rotation,
-                    "x": tr[0],
-                    "y": tr[3],
+                    "x": tr0,
+                    "y": tr3,
                     "fold": fold_no,
                 },
                 ignore_index=True,
@@ -341,7 +336,5 @@ class SpaceNet6Dataset(BaseDataset):
                 index=False,
             )
         orientations["mean_y"] = orientations["sum_y"] / orientations["ctr_y"]
-        orientations["coord_y"] = (
-            (orientations["mean_y"] - 5746153.106161971) / 11000
-        ) + 0.2
+        orientations["coord_y"] = ((orientations["mean_y"] - 5746153.106161971) / 11000) + 0.2
         orientations.to_csv(self.config.orients_output, index=True)

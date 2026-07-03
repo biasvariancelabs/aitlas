@@ -1,17 +1,17 @@
 """
 Temporal Convolutional Neural Network (TempCNN) model
-  
+
 .. note::
     Adapted from: https://github.com/dl4sits/BreizhCrops
-    
+
     Original implementation(s) of TempCNN model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/LongShortTermMemory.py and https://github.com/charlotte-pel/temporalCNN
 
 """
-import torch.nn as nn
-import torch.optim as optim
-import torch.utils.data
 
-from ..base import BaseMulticlassClassifier
+import torch.utils.data
+from torch import nn, optim
+
+from ..base.classification import BaseMulticlassClassifier
 from .schemas import TempCNNSchema
 
 

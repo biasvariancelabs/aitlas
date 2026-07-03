@@ -1,35 +1,18 @@
-Visualizations
+aitlas.visualizations package
 =============================
 
-aitlas.visualizations.classification module
--------------------------------------------
-
-.. automodule:: aitlas.visualizations.classification
+.. automodule:: aitlas.visualizations
    :members:
-   :undoc-members:
    :show-inheritance:
-
-aitlas.visualizations.eopatch module
-------------------------------------
-
-.. automodule:: aitlas.visualizations.eopatch
-   :members:
    :undoc-members:
-   :show-inheritance:
 
-aitlas.visualizations.grad\_cam module
---------------------------------------
+Submodules
+----------
 
-.. automodule:: aitlas.visualizations.grad_cam
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. toctree::
+   :maxdepth: 4
 
-aitlas.visualizations.segmentation module
------------------------------------------
-
-.. automodule:: aitlas.visualizations.segmentation
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
+   aitlas.visualizations.classification
+   aitlas.visualizations.eopatch
+   aitlas.visualizations.grad_cam
+   aitlas.visualizations.segmentation

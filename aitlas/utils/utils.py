@@ -1,14 +1,13 @@
 import csv
+import glob
 import importlib
 import os
 from time import time
-import glob
+
 import cv2
 import numpy as np
 import tifffile
 import torch
-import subprocess
-
 from PIL import Image, ImageOps
 
 
@@ -48,14 +47,13 @@ def image_loader(file_path, convert_to_grayscale=False):
 
     """
     filename, file_extension = os.path.splitext(file_path)
+    file_extension = file_extension.lower()
     if file_extension in [".jpg", ".png", ".bmp", ".jpeg"]:
         return pil_loader(file_path, convert_to_grayscale)
     elif file_extension in [".tif", ".tiff"]:
         return tiff_loader(file_path)
     else:
-        raise ValueError(
-            "Invalid image. It should be `.jpg, .png, .bmp, .tif, .tiff, .jpeg`"
-        )
+        raise ValueError("Invalid image. It should be `.jpg, .png, .bmp, .tif, .tiff, .jpeg`")
 
 
 def image_invert(file_path, convert_to_grayscale=False):
@@ -123,18 +121,11 @@ def split_images(images_dir, ext_images, masks_dir, ext_masks, output_dir, targe
                 img_tile = img[y : y + target_size, x : x + target_size]
                 mask_tile = mask[y : y + target_size, x : x + target_size]
 
-                if (
-                    img_tile.shape[0] == target_size
-                    and img_tile.shape[1] == target_size
-                ):
-                    out_img_path = os.path.join(
-                        output_dir, "{}_{}.jpg".format(img_filename, k)
-                    )
+                if img_tile.shape[0] == target_size and img_tile.shape[1] == target_size:
+                    out_img_path = os.path.join(output_dir, "{}_{}.jpg".format(img_filename, k))
                     cv2.imwrite(out_img_path, img_tile)
 
-                    out_mask_path = os.path.join(
-                        output_dir, "{}_{}_m.png".format(mask_filename, k)
-                    )
+                    out_mask_path = os.path.join(output_dir, "{}_{}_m.png".format(mask_filename, k))
                     cv2.imwrite(out_mask_path, mask_tile)
 
                     file.write("{}_{}".format(img_filename, k) + "\n")
@@ -155,9 +146,7 @@ def load_voc_format_dataset(dir_path, csv_file_path):
         for line in lines[1:]:
             line = line.decode("utf-8")
             labels_list = line[line.find("\t") + 1 :].split("\t")
-            multi_hot_labels[line[: line.find("\t")]] = np.asarray(
-                list((map(float, labels_list)))
-            )
+            multi_hot_labels[line[: line.find("\t")]] = np.asarray(list((map(float, labels_list))))
 
     images = []
     images_folder = os.path.expanduser(dir_path)
@@ -193,9 +182,7 @@ def load_folder_per_class_dataset(dir, extensions=None):
 
     images = []
     dir = os.path.expanduser(dir)
-    classes = [
-        item for item in os.listdir(dir) if os.path.isdir(os.path.join(dir, item))
-    ]
+    classes = [item for item in os.listdir(dir) if os.path.isdir(os.path.join(dir, item))]
 
     for target in classes:
         d = os.path.join(dir, target)
@@ -224,30 +211,6 @@ def load_aitlas_format_dataset(file_path):
             data.append(item)
 
         return data
-
-
-# Run this function to submit the masks to inria contest for semantic segmentation
-# https://project.inria.fr/aerialimagelabeling/
-def submit_inria_results(input_dir, output_dir):
-    for file in os.listdir(input_dir):
-        if file.endswith("_Buildings.png"):
-            input_file = os.path.join(input_dir, file)
-            output_file = os.path.join(input_dir, file).replace(
-                "_Buildings.png", ".tif"
-            )
-            command = "gdal_translate -of GTiff " + input_file + " " + output_file
-            subprocess.call(command, shell=True)
-            input_file = os.path.join(input_dir, file).replace("_Buildings.png", ".tif")
-            output_file = os.path.join(output_dir, file).replace(
-                "_Buildings.png", ".tif"
-            )
-            command = (
-                "gdal_translate --config GDAL_PAM_ENABLED NO -co COMPRESS=CCITTFAX4 -co NBITS=1 "
-                + input_file
-                + " "
-                + output_file
-            )
-            subprocess.call(command, shell=True)
 
 
 def save_best_model(model, model_directory, epoch, optimizer, loss, start, run_id):

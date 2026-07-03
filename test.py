@@ -1,9 +1,20 @@
 from aitlas.datasets import EurosatDataset
-from aitlas.tasks import StratifiedSplitTask
 from aitlas.models import ResNet50
+from aitlas.tasks import StratifiedSplitTask
+
 
 # one tuple is (train, test)
-splits = [(10, 90), (20, 80), (30, 70), (40, 60), (50, 50), (60, 40), (70, 30), (80, 20), (90, 10)]
+splits = [
+    (10, 90),
+    (20, 80),
+    (30, 70),
+    (40, 60),
+    (50, 50),
+    (60, 40),
+    (70, 30),
+    (80, 20),
+    (90, 10),
+]
 
 dataset_path = "/home/dkocev/data/UCMerced"  # where is the dataset on disk
 trainset_path = "/home/dkocev/data/UCMerced/train.csv"  # where to store the train IDs
@@ -18,16 +29,10 @@ for train, test in splits:
     # configure split task
     split_config = {
         "split": {
-            "train": {
-                "ratio": train,
-                "file": trainset_path
-            },
-            "test": {
-                "ratio": test,
-                "file": testset_path
-            }
+            "train": {"ratio": train, "file": trainset_path},
+            "test": {"ratio": test, "file": testset_path},
         },
-        "path": dataset_path
+        "path": dataset_path,
     }
     split_task = StratifiedSplitTask(None, split_config)
     split_task.run()
@@ -38,7 +43,7 @@ for train, test in splits:
         "shuffle": True,
         "num_workers": 4,
         "csv_file_path": trainset_path,
-        "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"]
+        "transforms": ["aitlas.transforms.ResizeCenterCropFlipHVToTensor"],
     }
 
     train_dataset = EurosatDataset(train_dataset_config)
@@ -49,7 +54,7 @@ for train, test in splits:
         "shuffle": False,
         "num_workers": 4,
         "csv_file_path": testset_path,
-        "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"]
+        "transforms": ["aitlas.transforms.ResizeCenterCropToTensor"],
     }
 
     test_dataset = EurosatDataset(test_dataset_config)
@@ -68,7 +73,7 @@ for train, test in splits:
         epochs=epochs,
         model_directory=model_directory,
         val_dataset=test_dataset,
-        run_id='2',
+        run_id="2",
     )
     # collect results
     results.append(model.running_metrics.f1_score())
@@ -76,10 +81,7 @@ print(results)
 
 # See the results
 
-#df = pd.DataFrame(zip(splits, [round(float(r["Accuracy"]) * 100, 2) for r in results]),
+# df = pd.DataFrame(zip(splits, [round(float(r["Accuracy"]) * 100, 2) for r in results]),
 #                  columns=["Train/Test", "F1 score"])
 
-#print(df)
-
-
-
+# print(df)

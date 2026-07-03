@@ -1,18 +1,19 @@
 """Models base class.
-This is the base class for all models. All models should subclass it. 
+This is the base class for all models. All models should subclass it.
 """
+
 import collections
 import copy
 import logging
 import os
 from shutil import copyfile
 
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
+from matplotlib import patches
+from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
@@ -46,6 +47,12 @@ class EarlyStopping:
         self.early_stop = False
 
     def __call__(self, val_loss):
+        # Immediate termination on NaN
+        if np.isnan(val_loss):
+            logging.warning("INFO: NaN loss detected. Terminating training.")
+            self.early_stop = True
+            return
+
         if self.best_loss is None:
             self.best_loss = val_loss
         elif self.best_loss - val_loss > self.min_delta:
@@ -54,9 +61,7 @@ class EarlyStopping:
             self.counter = 0
         elif self.best_loss - val_loss < self.min_delta:
             self.counter += 1
-            logging.info(
-                f"INFO: Early stopping counter {self.counter} of {self.patience}"
-            )
+            logging.info(f"INFO: Early stopping counter {self.counter} of {self.patience}")
             if self.counter >= self.patience:
                 logging.info("INFO: Early stopping")
                 self.early_stop = True
@@ -91,10 +96,40 @@ class BaseModel(nn.Module, Configurable):
         self.metrics = self.config.metrics
         self.num_classes = self.config.num_classes
         self.weights = (
-            torch.tensor(self.config.weights, dtype=torch.float32)
-            if self.config.weights
-            else None
+            torch.tensor(self.config.weights, dtype=torch.float32) if self.config.weights else None
         )
+
+        # Auto-detect if AMP is beneficial
+        if self.config.automatic_mixed_precision:
+            if self._should_use_amp():
+                self.use_amp = True
+            else:
+                logging.info(
+                    "AMP is enabled in config but not supported on this GPU - falling back to FP32"
+                )
+                self.use_amp = False
+        else:
+            self.use_amp = False
+
+        self.scaler = torch.amp.GradScaler("cuda") if self.use_amp else None
+
+    def _should_use_amp(self):
+        """Check if GPU has Tensor Cores for meaningful AMP speedup"""
+        if not torch.cuda.is_available():
+            return False
+
+        device_name = torch.cuda.get_device_name(0)
+        compute_capability = torch.cuda.get_device_capability(0)
+
+        # Tensor Cores available in: Volta (7.0+), Turing (7.5), Ampere (8.x), Hopper (9.x)
+        has_tensor_cores = compute_capability[0] >= 7
+
+        if has_tensor_cores:
+            logging.info(f"GPU {device_name} has Tensor Cores - enabling AMP")
+            return True
+        else:
+            logging.info(f"GPU {device_name} lacks Tensor Cores - disabling AMP")
+            return False
 
     def prepare(self):
         """Prepare the model before using it. Loans loss criteria, optimizer, lr scheduler and early stopping."""
@@ -152,9 +187,7 @@ class BaseModel(nn.Module, Configurable):
 
         # load the model if needs to resume training
         if resume_model:
-            start_epoch, loss, start, run_id = self.load_model(
-                resume_model, self.optimizer
-            )
+            start_epoch, loss, start, run_id = self.load_model(resume_model, self.optimizer)
 
         # allocate device
         self.allocate_device()
@@ -179,29 +212,31 @@ class BaseModel(nn.Module, Configurable):
 
             self.writer.add_scalar("Loss/train", loss, epoch + 1)
             if epoch % save_epochs == 0:
-                self.save_model(
-                    model_directory, epoch, self.optimizer, loss, start, run_id
+                self.save_model(model_directory, epoch, self.optimizer, loss, start, run_id)
+
+            # evaluate against the train set based on the specified frequency
+            if (epoch + 1) % self.config.evaluate_train_every_n_epochs == 0:
+                self.running_metrics.reset()
+                train_loss = self.evaluate_model(
+                    train_loader,
+                    criterion=self.criterion,
+                    description="testing on train set",
+                )
+                self.log_metrics(
+                    self.running_metrics.get_scores(self.metrics),
+                    dataset.get_labels(),
+                    "train",
+                    self.writer,
+                    epoch + 1,
                 )
 
-            # evaluate against the train set
-            self.running_metrics.reset()
-            train_loss = self.evaluate_model(
-                train_loader,
-                criterion=self.criterion,
-                description="testing on train set",
-            )
-            self.log_metrics(
-                self.running_metrics.get_scores(self.metrics),
-                dataset.get_labels(),
-                "train",
-                self.writer,
-                epoch + 1,
-            )
-
-            # for object detection log the loss calculated during training, otherwise the loss calculated in eval mode
-            if train_loss:
-                train_losses.append(train_loss)
+                # for object detection log the loss calculated during training, otherwise the loss calculated in eval mode
+                if train_loss:
+                    train_losses.append(train_loss)
+                else:
+                    train_losses.append(loss)
             else:
+                # append the training loss from the training phase when not evaluating
                 train_losses.append(loss)
 
             # evaluate against a validation set if there is one
@@ -243,11 +278,10 @@ class BaseModel(nn.Module, Configurable):
                         break
 
                     self.writer.add_scalar("Loss/val", val_loss, epoch + 1)
-            else:
-                if self.lr_scheduler and not isinstance(
-                    self.lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
-                ):
-                    self.lr_scheduler.step()
+            elif self.lr_scheduler and not isinstance(
+                self.lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
+            ):
+                self.lr_scheduler.step()
 
         self.writer.close()
 
@@ -289,45 +323,59 @@ class BaseModel(nn.Module, Configurable):
             # zero the parameter gradients
             if isinstance(optimizer, tuple):
                 for opt in optimizer:
-                    opt.zero_grad()
+                    opt.zero_grad(set_to_none=True)
             else:
-                optimizer.zero_grad()
+                optimizer.zero_grad(set_to_none=True)
 
             # forward + backward + optimize
-            outputs = self(inputs)
+            if self.use_amp:
+                # AMP path
+                with torch.amp.autocast("cuda"):
+                    outputs = self(inputs)
 
-            # check if outputs is OrderedDict for segmentation
-            if isinstance(outputs, collections.abc.Mapping):
-                outputs = outputs["out"]
+                    # check if outputs is OrderedDict for segmentation
+                    if isinstance(outputs, collections.abc.Mapping):
+                        outputs = outputs["out"]
 
-            loss = criterion(outputs, labels)
-            loss.backward()
+                    loss = criterion(outputs, labels)
 
-            # perform a single optimization step
-            if isinstance(optimizer, tuple):
-                for opt in optimizer:
-                    opt.step()
+                self.scaler.scale(loss).backward()  # perform a single optimization step
+                if isinstance(optimizer, tuple):
+                    for opt in optimizer:
+                        self.scaler.step(opt)
+                else:
+                    self.scaler.step(optimizer)
+                self.scaler.update()
             else:
-                optimizer.step()
+                # Standard FP32 path
+                outputs = self(inputs)
+
+                # check if outputs is OrderedDict for segmentation
+                if isinstance(outputs, collections.abc.Mapping):
+                    outputs = outputs["out"]
+
+                loss = criterion(outputs, labels)
+                loss.backward()
+
+                # perform a single optimization step
+                if isinstance(optimizer, tuple):
+                    for opt in optimizer:
+                        opt.step()
+                else:
+                    optimizer.step()
 
             # log statistics
             running_loss += loss.item() * inputs.size(0)
             running_items += inputs.size(0)
             total_loss += loss.item() * inputs.size(0)
 
-            if (
-                i % iterations_log == iterations_log - 1
-            ):  # print every iterations_log mini-batches
-                logging.info(
-                    f"[{epoch + 1}, {i + 1}], loss: {running_loss / running_items : .5f}"
-                )
+            if i % iterations_log == iterations_log - 1:  # print every iterations_log mini-batches
+                logging.info(f"[{epoch + 1}, {i + 1}], loss: {running_loss / running_items: .5f}")
                 running_loss = 0.0
                 running_items = 0
 
         total_loss = total_loss / len(dataloader.dataset)
-        logging.info(
-            f"epoch: {epoch + 1}, time: {current_ts() - start}, loss: {total_loss: .5f}"
-        )
+        logging.info(f"epoch: {epoch + 1}, time: {current_ts() - start}, loss: {total_loss: .5f}")
         return total_loss
 
     def evaluate(
@@ -372,9 +420,7 @@ class BaseModel(nn.Module, Configurable):
         # initialize loss if applicable
         total_loss = 0.0
 
-        for inputs, outputs, labels in self.predict_output_per_batch(
-            dataloader, description
-        ):
+        for inputs, outputs, labels in self.predict_output_per_batch(dataloader, description):
             if criterion:
                 batch_loss = criterion(outputs, labels)
                 total_loss += batch_loss.item() * inputs.size(0)
@@ -465,11 +511,18 @@ class BaseModel(nn.Module, Configurable):
         fig = plt.figure(figsize=(16, 7))
         ax = plt.subplot(1, 2, 1)
         ax.axis("off")
-        ax.imshow(original_image)
 
+        # if the original image is a tensor, convert it to numpy and transpose it to (H, W, C)
+        if torch.is_tensor(original_image):
+            original_image = original_image.cpu().detach().numpy().transpose(1, 2, 0)
+        # If the original images has number of channels different than 3 or 4, take just a single channel and plot it as grayscale
+        if len(original_image.shape) == 3 and original_image.shape[2] not in [3, 4]:
+            original_image = original_image[:, :, 0]
+
+        # Plot the original image
+        ax.imshow(original_image)
         # Set title to be the actual class
         ax.set_title("", size=20)
-
         ax = plt.subplot(1, 2, 2)
         # Plot a bar plot of predictions
         result.sort_values("p")["p"].plot.barh(color="blue", edgecolor="k", ax=ax)
@@ -500,8 +553,11 @@ class BaseModel(nn.Module, Configurable):
         if torch.is_tensor(image):
             inputs = image.unsqueeze(0).to(self.device)
         else:
-            inputs = torch.from_numpy(image).unsqueeze(0).to(self.device)
-        outputs = self(inputs)
+            inputs = torch.from_numpy(image.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
+
+        with torch.no_grad():
+            with torch.amp.autocast("cuda", enabled=self.use_amp):
+                outputs = self(inputs)
         # check if outputs is OrderedDict for segmentation
         if isinstance(outputs, collections.abc.Mapping):
             outputs = outputs["out"]
@@ -514,6 +570,13 @@ class BaseModel(nn.Module, Configurable):
         # Show the image
         fig = plt.figure(figsize=(10, 10))
 
+        # if the original image is a tensor, convert it to numpy and transpose it to (H, W, C)
+        if torch.is_tensor(original_image):
+            original_image = original_image.cpu().detach().numpy().transpose(1, 2, 0)
+        # If the original images has number of channels different than 3 or 4, take just a single channel and plot it as grayscale
+        if len(original_image.shape) == 3 and original_image.shape[2] not in [3, 4]:
+            original_image = original_image[:, :, 0]
+
         # plot image
         plt.subplot(1, len(labels) + 1, 1)
         plt.imshow(original_image)
@@ -523,9 +586,7 @@ class BaseModel(nn.Module, Configurable):
         # plot masks
         for i in range(len(labels)):
             plt.subplot(1, len(labels) + 1, i + 2)
-            plt.imshow(
-                predicted[0][i].astype(np.uint8) * 255, cmap="gray", vmin=0, vmax=255
-            )
+            plt.imshow(predicted[0][i].astype(np.uint8) * 255, cmap="gray", vmin=0, vmax=255)
             plt.title(labels[i])
             plt.axis("off")
 
@@ -547,22 +608,17 @@ class BaseModel(nn.Module, Configurable):
         :rtype: matplotlib.figure.Figure
         """
         # load the image and apply transformations
+        original_image = copy.deepcopy(image)
         image = image / 255
         self.model.eval()
         if data_transforms:
             image = data_transforms(image)
-            original_image = copy.deepcopy(image)
             image = image.transpose(2, 0, 1)
         # check if tensor and convert to batch of size 1, otherwise convert to tensor and then to batch of size 1
         if torch.is_tensor(image):
             inputs = image.unsqueeze(0).to(self.device)
         else:
-            inputs = (
-                torch.from_numpy(image)
-                .type(torch.FloatTensor)
-                .unsqueeze(0)
-                .to(self.device)
-            )
+            inputs = torch.from_numpy(image).type(torch.FloatTensor).unsqueeze(0).to(self.device)
 
         outputs = self(inputs)
 
@@ -604,18 +660,19 @@ class BaseModel(nn.Module, Configurable):
 
         # run predictions
         with torch.no_grad():
-            for i, data in enumerate(tqdm(dataloader, desc=description)):
-                inputs, labels = data
-                inputs = inputs.to(self.device)
-                labels = labels.to(self.device)
+            with torch.amp.autocast("cuda", enabled=self.use_amp):
+                for i, data in enumerate(tqdm(dataloader, desc=description)):
+                    inputs, labels = data
+                    inputs = inputs.to(self.device)
+                    labels = labels.to(self.device)
 
-                outputs = self(inputs)
+                    outputs = self(inputs)
 
-                # check if outputs is OrderedDict for segmentation
-                if isinstance(outputs, collections.abc.Mapping):
-                    outputs = outputs["out"]
+                    # check if outputs is OrderedDict for segmentation
+                    if isinstance(outputs, collections.abc.Mapping):
+                        outputs = outputs["out"]
 
-                yield inputs, outputs, labels
+                    yield inputs, outputs, labels
 
     def forward(self, *input, **kwargs):
         """
@@ -644,7 +701,7 @@ class BaseModel(nn.Module, Configurable):
             for cm in calculated_metrics:
                 for key in cm:
                     metric = cm[key]
-                    if isinstance(metric, list) or isinstance(metric, np.ndarray):
+                    if isinstance(metric, list | np.ndarray):
                         for i, sub in enumerate(metric):
                             writer.add_scalar(f"{key}/{labels[i]}/{tag}", sub, epoch)
                     else:
@@ -661,9 +718,7 @@ class BaseModel(nn.Module, Configurable):
         if self.criterion:
             self.criterion = self.criterion.to(self.device)
         if self.config.use_ddp:
-            self.model = nn.parallel.DistributedDataParallel(
-                self.model, device_ids=[self.device]
-            )
+            self.model = nn.parallel.DistributedDataParallel(self.model, device_ids=[self.device])
         return self.model
 
     def save_model(self, model_directory, epoch, optimizer, loss, start, run_id):
@@ -683,9 +738,7 @@ class BaseModel(nn.Module, Configurable):
             os.makedirs(os.path.join(model_directory, run_id))
 
         timestamp = current_ts()
-        checkpoint = os.path.join(
-            model_directory, run_id, f"checkpoint_{timestamp}.pth.tar"
-        )
+        checkpoint = os.path.join(model_directory, run_id, f"checkpoint_{timestamp}.pth.tar")
 
         # create timestamped checkpoint
         torch.save(
@@ -696,6 +749,12 @@ class BaseModel(nn.Module, Configurable):
                 "loss": loss,
                 "start": start,
                 "id": run_id,
+                "early_stopping": {
+                    "counter": self.early_stopping.counter,
+                    "best_loss": self.early_stopping.best_loss,
+                    "early_stop": self.early_stopping.early_stop,
+                },
+                "lr_scheduler": (self.lr_scheduler.state_dict() if self.lr_scheduler else None),
             },
             checkpoint,
         )
@@ -705,7 +764,7 @@ class BaseModel(nn.Module, Configurable):
 
     def extract_features(self, *input, **kwargs):
         """
-        Abstract for trim the model to extract feature. Extending classes should override this method.
+        Abstract to trim the model to extract features. Extending classes should override this method.
 
         :return: Instance of the model architecture
         :rtype: nn.Module
@@ -716,7 +775,7 @@ class BaseModel(nn.Module, Configurable):
         """Loads a model from a checkpoint"""
         if os.path.isfile(file_path):
             logging.info(f"Loading checkpoint {file_path}")
-            checkpoint = torch.load(file_path)
+            checkpoint = torch.load(file_path, map_location=self.device)  # Can be either CPU or GPU
 
             if "state_dict" in checkpoint:
                 self.model.load_state_dict(checkpoint["state_dict"], strict=False)
@@ -738,6 +797,26 @@ class BaseModel(nn.Module, Configurable):
             if optimizer:
                 optimizer.load_state_dict(checkpoint["optimizer"])
 
+            # Load early stopping state
+            if "early_stopping" in checkpoint:
+                es_state = checkpoint["early_stopping"]
+                self.early_stopping.best_loss = es_state.get("best_loss", None)
+                self.early_stopping.early_stop = es_state.get("early_stop", False)
+                # Reset counter if early stopping was triggered, otherwise restore it
+                if es_state.get("early_stop", False):
+                    self.early_stopping.counter = 0
+                    logging.info("Early stopping was triggered in previous run - resetting counter")
+                else:
+                    self.early_stopping.counter = es_state.get("counter", 0)
+
+            # Load LR scheduler state
+            if (
+                "lr_scheduler" in checkpoint
+                and checkpoint["lr_scheduler"] is not None
+                and self.lr_scheduler
+            ):
+                self.lr_scheduler.load_state_dict(checkpoint["lr_scheduler"])
+
             logging.info(f"Loaded checkpoint {file_path} at epoch {start_epoch}")
             return (start_epoch, loss, start, run_id)
         else:
@@ -752,9 +831,7 @@ class BaseModel(nn.Module, Configurable):
         raise NotImplementedError("Please implement `load_criterion` for your model. ")
 
     def load_lr_scheduler(self, optimizer):
-        raise NotImplementedError(
-            "Please implement `load_lr_scheduler` for your model. "
-        )
+        raise NotImplementedError("Please implement `load_lr_scheduler` for your model. ")
 
     def train_model(
         self,

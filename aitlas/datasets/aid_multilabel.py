@@ -1,7 +1,25 @@
 from .multilabel_classification import MultiLabelClassificationDataset
 
-LABELS = ["airplane", "bare-soil", "buildings", "cars", "chaparral", "court", "dock", "field", "grass",
-          "mobile-home", "pavement", "sand", "sea", "ship", "tanks", "trees", "water"]
+
+LABELS = [
+    "airplane",
+    "bare-soil",
+    "buildings",
+    "cars",
+    "chaparral",
+    "court",
+    "dock",
+    "field",
+    "grass",
+    "mobile-home",
+    "pavement",
+    "sand",
+    "sea",
+    "ship",
+    "tanks",
+    "trees",
+    "water",
+]
 
 
 class AIDMultiLabelDataset(MultiLabelClassificationDataset):

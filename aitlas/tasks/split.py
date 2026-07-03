@@ -1,10 +1,11 @@
 import logging
-import numpy as np
 import math
 
+import numpy as np
 from sklearn.model_selection import train_test_split
 from skmultilearn.model_selection import iterative_train_test_split
 from torch.utils.data import random_split
+
 from ..base import BaseModel, BaseTask
 from ..utils import (
     load_aitlas_format_dataset,
@@ -65,9 +66,7 @@ class BaseSplitTask(BaseTask):
 
     def split(self):
         if not self.is_split_valid():
-            raise ValueError(
-                "The defined split is invalid. The sum should be equal to 100."
-            )
+            raise ValueError("The defined split is invalid. The sum should be equal to 100.")
         # split the dataset
         self.make_splits()
 
@@ -127,9 +126,7 @@ class BaseSplitTask(BaseTask):
                 / (self.config.split.val.ratio + self.config.split.train.ratio)
             )
 
-            X_train, y_train, X_val, y_val = self.perform_split(
-                X_train, y_train, val_size
-            )
+            X_train, y_train, X_val, y_val = self.perform_split(X_train, y_train, val_size)
 
             # save split
             self.save_split(X_val, y_val, self.config.split.val.file)
@@ -178,9 +175,7 @@ class StratifiedSplitTask(BaseSplitTask):
         if self.is_multilabel:
             X = X.reshape(X.shape[0], 1)  # it needs this reshape for the split to work
 
-            X_train, y_train, X_test, y_test = iterative_train_test_split(
-                X, y, test_size=test_size
-            )
+            X_train, y_train, X_test, y_test = iterative_train_test_split(X, y, test_size=test_size)
         else:
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, test_size=test_size, stratify=y

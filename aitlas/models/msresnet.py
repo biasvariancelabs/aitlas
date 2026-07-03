@@ -1,41 +1,32 @@
 """
 MRSResNet model
 
-.. note:: 
+.. note::
     Adapted from https://github.com/dl4sits/BreizhCrops
-    
+
     Original implementation of MSResNet model: https://github.com/geekfeiw/Multi-Scale-1D-ResNet/blob/master/model/multi_scale_ori.py and  https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/MSResNet.py
 
 """
 
-import os
-
 import torch
-import torch.nn as nn
 import torch.nn.functional as Functional
-import torch.optim as optim
+from torch import nn, optim
 
-from ..base import BaseMulticlassClassifier
+from ..base.classification import BaseMulticlassClassifier
 from .schemas import MSResNetSchema
 
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
-    return nn.Conv1d(
-        in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False
-    )
+    return nn.Conv1d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
 
 
 def conv5x5(in_planes, out_planes, stride=1):
-    return nn.Conv1d(
-        in_planes, out_planes, kernel_size=5, stride=stride, padding=1, bias=False
-    )
+    return nn.Conv1d(in_planes, out_planes, kernel_size=5, stride=stride, padding=1, bias=False)
 
 
 def conv7x7(in_planes, out_planes, stride=1):
-    return nn.Conv1d(
-        in_planes, out_planes, kernel_size=7, stride=stride, padding=1, bias=False
-    )
+    return nn.Conv1d(in_planes, out_planes, kernel_size=7, stride=stride, padding=1, bias=False)
 
 
 class BasicBlock3x3(nn.Module):
@@ -210,9 +201,7 @@ class MSResNet(BaseMulticlassClassifier):
         )
         self.model.maxpool7 = nn.AvgPool1d(kernel_size=6, stride=1, padding=0)
 
-        self.model.fc = nn.Linear(
-            4 * self.config.hidden_dims * 3, self.config.num_classes
-        )
+        self.model.fc = nn.Linear(4 * self.config.hidden_dims * 3, self.config.num_classes)
 
     def _make_layer3(self, block, planes, blocks, stride=2):
         downsample = None

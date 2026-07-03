@@ -4,7 +4,7 @@ from shutil import copyfile
 
 import numpy as np
 
-from ..base import BaseDataset, BaseModel, BaseTask
+from ..base import BaseModel, BaseTask
 from .schemas import OptimizeTaskSchema, TrainAndEvaluateTaskSchema, TrainTaskSchema
 
 
@@ -67,9 +67,7 @@ def generate_parameters_for_range(method, parameter):
             (parameter.max - parameter.min) / parameter.steps,
         )
     elif method == "random":
-        return np.random.uniform(
-            low=parameter.min, high=parameter.max, size=(parameter.steps,)
-        )
+        return np.random.uniform(low=parameter.min, high=parameter.max, size=(parameter.steps,))
     else:
         raise ValueError("Incorrect parameter search method!")
 
@@ -105,7 +103,7 @@ class OptimizeTask(BaseTask):
 
     def run(self):
         """Do something awesome here"""
-        logging.info(f"Searching parameters")
+        logging.info("Searching parameters")
         train_dataset = self.create_dataset(self.config.train_dataset_config)
         val_dataset = self.create_dataset(self.config.val_dataset_config)
 
@@ -153,9 +151,7 @@ class OptimizeTask(BaseTask):
             reverse=True,
         )[0]
 
-        copyfile(
-            checkpoint, os.path.join(best_model_output_directory, "checkpoint.pth.tar")
-        )
+        copyfile(checkpoint, os.path.join(best_model_output_directory, "checkpoint.pth.tar"))
         logging.info(
             f"Best models saved at: {os.path.join(best_model_output_directory, 'checkpoint.pth.tar')}"
         )

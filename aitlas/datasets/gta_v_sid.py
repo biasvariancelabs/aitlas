@@ -1,12 +1,14 @@
-import numpy as np
 import os
+
+import numpy as np
 import pandas as pd
 
-from .semantic_segmentation import SemanticSegmentationDataset
 from ..utils import image_loader
+from .semantic_segmentation import SemanticSegmentationDataset
+
 
 """
-121 images of size 500x500 with 1m resolution. GTA-V-SID is a synthetic dataset for remote sensing image segmentation based on 
+121 images of size 500x500 with 1m resolution. GTA-V-SID is a synthetic dataset for remote sensing image segmentation based on
 the well-known video game Grand Theft Auto-V (GTA-V). It was created for building extraction.
 """
 
@@ -14,14 +16,13 @@ the well-known video game Grand Theft Auto-V (GTA-V). It was created for buildin
 class GTADataset(SemanticSegmentationDataset):
     url = "https://github.com/jiupinjia/gtav-sattellite-imagery-dataset?tab=readme-ov-file"
 
-    labels = ["background","building"]
-    color_mapping = [[0,0,0],[255,255,255]] 
+    labels = ["background", "building"]
+    color_mapping = [[0, 0, 0], [255, 255, 255]]
     name = "GTA-V-SID"
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
         super().__init__(config)
-
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
@@ -34,10 +35,29 @@ class GTADataset(SemanticSegmentationDataset):
         if not self.labels:
             raise ValueError("You need to provide the list of labels for the dataset")
 
-        ids = os.listdir(os.path.join(data_dir[: data_dir.rfind(".")], "img_dir", data_dir[data_dir.rfind(".") :]))
-        self.images = [os.path.join(data_dir[: data_dir.rfind(".")], "img_dir", data_dir[data_dir.rfind(".") :], image_id) for image_id in ids]
+        ids = os.listdir(
+            os.path.join(
+                data_dir[: data_dir.rfind(".")],
+                "img_dir",
+                data_dir[data_dir.rfind(".") :],
+            )
+        )
+        self.images = [
+            os.path.join(
+                data_dir[: data_dir.rfind(".")],
+                "img_dir",
+                data_dir[data_dir.rfind(".") :],
+                image_id,
+            )
+            for image_id in ids
+        ]
         self.masks = [
-            os.path.join(data_dir[: data_dir.rfind(".")], "ann_dir", data_dir[data_dir.rfind(".") :], image_id) 
+            os.path.join(
+                data_dir[: data_dir.rfind(".")],
+                "ann_dir",
+                data_dir[data_dir.rfind(".") :],
+                image_id,
+            )
             for image_id in ids
         ]
 
@@ -46,7 +66,7 @@ class GTADataset(SemanticSegmentationDataset):
         for image, mask in self.dataloader():
             for index, label in enumerate(self.labels):
                 label_dist[self.labels[index]] += mask[:, :, :, index].sum()
-        label_count = pd.DataFrame.from_dict(label_dist, orient='index')
+        label_count = pd.DataFrame.from_dict(label_dist, orient="index")
         label_count.columns = ["Number of pixels"]
         label_count = label_count.astype(float)
 

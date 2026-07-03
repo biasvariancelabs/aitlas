@@ -1,59 +1,21 @@
-Transforms
+aitlas.transforms package
 =========================
 
-aitlas.transforms.big\_earth\_net module
-----------------------------------------
-
-.. automodule:: aitlas.transforms.big_earth_net
+.. automodule:: aitlas.transforms
    :members:
-   :undoc-members:
    :show-inheritance:
-
-aitlas.transforms.breizhcrops module
-------------------------------------
-
-.. automodule:: aitlas.transforms.breizhcrops
-   :members:
    :undoc-members:
-   :show-inheritance:
 
-aitlas.transforms.classification module
----------------------------------------
+Submodules
+----------
 
-.. automodule:: aitlas.transforms.classification
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. toctree::
+   :maxdepth: 4
 
-aitlas.transforms.joint\_transforms module
-------------------------------------------
-
-.. automodule:: aitlas.transforms.joint_transforms
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-aitlas.transforms.object\_detection module
-------------------------------------------
-
-.. automodule:: aitlas.transforms.object_detection
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-aitlas.transforms.segmentation module
--------------------------------------
-
-.. automodule:: aitlas.transforms.segmentation
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-aitlas.transforms.spacenet6 module
-----------------------------------
-
-.. automodule:: aitlas.transforms.spacenet6
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
+   aitlas.transforms.big_earth_net
+   aitlas.transforms.breizhcrops
+   aitlas.transforms.classification
+   aitlas.transforms.joint_transforms
+   aitlas.transforms.object_detection
+   aitlas.transforms.segmentation
+   aitlas.transforms.spacenet6

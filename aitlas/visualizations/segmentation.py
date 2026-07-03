@@ -1,9 +1,11 @@
 """Classes and methods for visualizations for segmentation tasks."""
+
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
+
 from ..base import BaseDetailedVisualization
 from ..utils import pil_loader
-from PIL import Image, ImageOps
 
 
 class ImageMaskPredictionVisualization(BaseDetailedVisualization):
@@ -91,9 +93,7 @@ def display_image_segmentation(image, y_true, y_pred, y_prob, labels, file):
     :param file: The output file path
     :type file: str
     """
-    viz = ImageMaskPredictionVisualization(
-        y_true, y_pred, y_prob, labels, file, image=image
-    )
+    viz = ImageMaskPredictionVisualization(y_true, y_pred, y_prob, labels, file, image=image)
     viz.plot()
 
 

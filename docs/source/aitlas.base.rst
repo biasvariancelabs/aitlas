@@ -1,91 +1,29 @@
-Base
+aitlas.base package
 ===================
 
-aitlas.base.classification module
----------------------------------
-
-.. automodule:: aitlas.base.classification
+.. automodule:: aitlas.base
    :members:
-   :undoc-members:
    :show-inheritance:
-
-aitlas.base.config module
--------------------------
-
-.. automodule:: aitlas.base.config
-   :members:
    :undoc-members:
-   :show-inheritance:
 
-aitlas.base.datasets module
----------------------------
+Submodules
+----------
 
-.. automodule:: aitlas.base.datasets
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. toctree::
+   :maxdepth: 4
 
-aitlas.base.metrics module
---------------------------
-
-.. automodule:: aitlas.base.metrics
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-aitlas.base.models module
--------------------------
-
-.. automodule:: aitlas.base.models
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-aitlas.base.object\_detection module
-------------------------------------
-
-.. automodule:: aitlas.base.object_detection
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-aitlas.base.schemas module
---------------------------
-
-.. automodule:: aitlas.base.schemas
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-aitlas.base.segmentation module
--------------------------------
-
-.. automodule:: aitlas.base.segmentation
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-aitlas.base.tasks module
-------------------------
-
-.. automodule:: aitlas.base.tasks
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-aitlas.base.transforms module
------------------------------
-
-.. automodule:: aitlas.base.transforms
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-aitlas.base.visualizations module
----------------------------------
-
-.. automodule:: aitlas.base.visualizations
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
+   aitlas.base.adapters
+   aitlas.base.change_detection
+   aitlas.base.classification
+   aitlas.base.composite
+   aitlas.base.config
+   aitlas.base.datasets
+   aitlas.base.foundation
+   aitlas.base.metrics
+   aitlas.base.models
+   aitlas.base.object_detection
+   aitlas.base.schemas
+   aitlas.base.segmentation
+   aitlas.base.tasks
+   aitlas.base.transforms
+   aitlas.base.visualizations

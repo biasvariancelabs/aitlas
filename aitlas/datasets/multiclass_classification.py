@@ -65,9 +65,7 @@ class MultiClassClassificationDataset(BaseDataset):
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(y="Label", x="Count", data=label_count, ax=ax)
-        ax.set_title(
-            "Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18
-        )
+        ax.set_title("Labels distribution for {}".format(self.get_name()), pad=20, fontsize=18)
         return fig
 
     def show_samples(self):
@@ -89,9 +87,7 @@ class MultiClassClassificationDataset(BaseDataset):
         if size % 5:
             raise ValueError("The provided size should be divided by 5!")
         image_indices = random.sample(range(0, len(self.data)), size)
-        figure, ax = plt.subplots(
-            int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5))
-        )
+        figure, ax = plt.subplots(int(size / 5), 5, figsize=(13.75, 2.8 * int(size / 5)))
         if show_title:
             figure.suptitle(
                 "Example images with labels from {}".format(self.get_name()),

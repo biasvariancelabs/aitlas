@@ -1,8 +1,8 @@
 import logging
 
 import torch
-import torch.optim as optim
 import torchvision
+from torch import optim
 from tqdm import tqdm
 
 from ..utils import current_ts
@@ -25,11 +25,41 @@ class BaseObjectDetection(BaseModel):
     def __init__(self, config):
         super().__init__(config)
 
-        self.running_metrics = ObjectDetectionRunningScore(
-            self.num_classes, self.device
-        )
+        self.running_metrics = ObjectDetectionRunningScore(self.num_classes, self.device)
         self.step_size = self.config.step_size
         self.gamma = self.config.gamma
+
+        # Auto-detect if AMP is beneficial
+        if self.config.automatic_mixed_precision:
+            if self._should_use_amp():
+                self.use_amp = True
+            else:
+                logging.info(
+                    "AMP is enabled in config but not supported on this GPU - falling back to FP32"
+                )
+                self.use_amp = False
+        else:
+            self.use_amp = False
+
+        self.scaler = torch.amp.GradScaler("cuda") if self.use_amp else None
+
+    def _should_use_amp(self):
+        """Check if GPU has Tensor Cores for meaningful AMP speedup"""
+        if not torch.cuda.is_available():
+            return False
+
+        device_name = torch.cuda.get_device_name(0)
+        compute_capability = torch.cuda.get_device_capability(0)
+
+        # Tensor Cores available in: Volta (7.0+), Turing (7.5), Ampere (8.x), Hopper (9.x)
+        has_tensor_cores = compute_capability[0] >= 7
+
+        if has_tensor_cores:
+            logging.info(f"GPU {device_name} has Tensor Cores - enabling AMP")
+            return True
+        else:
+            logging.info(f"GPU {device_name} lacks Tensor Cores - disabling AMP")
+            return False
 
     def get_predicted(self, outputs, threshold=0.3):
         """Get predicted objects from the model outputs.
@@ -89,46 +119,53 @@ class BaseObjectDetection(BaseModel):
         for i, data in enumerate(tqdm(dataloader, desc="training")):
             inputs, targets = data
 
-            inputs = list(
-                image.type(torch.FloatTensor).to(self.device) for image in inputs
-            )
+            inputs = list(image.type(torch.FloatTensor).to(self.device) for image in inputs)
             targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
 
             # zero the parameter gradients
             if isinstance(optimizer, tuple):
                 for opt in optimizer:
-                    opt.zero_grad()
+                    opt.zero_grad(set_to_none=True)
             else:
-                optimizer.zero_grad()
+                optimizer.zero_grad(set_to_none=True)
 
             # forward + backward + optimize
-            outputs = self(inputs, targets)
-            loss = sum(loss for loss in outputs.values())
-            loss.backward()
+            if self.use_amp:
+                # AMP path
+                with torch.amp.autocast("cuda"):
+                    outputs = self(inputs, targets)
+                    loss = sum(loss for loss in outputs.values())
 
-            # perform a single optimization step
-            if isinstance(optimizer, tuple):
-                for opt in optimizer:
-                    opt.step()
+                self.scaler.scale(loss).backward()
+                if isinstance(optimizer, tuple):
+                    for opt in optimizer:
+                        self.scaler.step(opt)
+                else:
+                    self.scaler.step(optimizer)
+                self.scaler.update()
             else:
-                optimizer.step()
+                # Standard FP32 path
+                outputs = self(inputs, targets)
+                loss = sum(loss for loss in outputs.values())
+                loss.backward()
+
+                # perform a single optimization step
+                if isinstance(optimizer, tuple):
+                    for opt in optimizer:
+                        opt.step()
+                else:
+                    optimizer.step()
 
             # log statistics
             running_loss += loss.item() * len(inputs)
             total_loss += loss.item() * len(inputs)
 
-            if (
-                i % iterations_log == iterations_log - 1
-            ):  # print every iterations_log mini-batches
-                logging.info(
-                    f"[{epoch + 1}, {i + 1}], loss: {running_loss / iterations_log : .5f}"
-                )
+            if i % iterations_log == iterations_log - 1:  # print every iterations_log mini-batches
+                logging.info(f"[{epoch + 1}, {i + 1}], loss: {running_loss / iterations_log: .5f}")
                 running_loss = 0.0
 
         total_loss = total_loss / len(dataloader.dataset)
-        logging.info(
-            f"epoch: {epoch + 1}, time: {current_ts() - start}, loss: {total_loss: .5f}"
-        )
+        logging.info(f"epoch: {epoch + 1}, time: {current_ts() - start}, loss: {total_loss: .5f}")
         return total_loss
 
     def predict_output_per_batch(self, dataloader, description):
@@ -146,21 +183,21 @@ class BaseObjectDetection(BaseModel):
 
         # run predictions
         with torch.no_grad():
-            for i, data in enumerate(tqdm(dataloader, desc=description)):
-                inputs, targets = data
-                inputs = list(
-                    image.type(torch.FloatTensor).to(self.device) for image in inputs
-                )
-                targets = [
-                    {k: v.to(self.device) for k, v in t.items()} for t in targets
-                ]
+            with torch.amp.autocast("cuda", enabled=self.use_amp):
+                for i, data in enumerate(tqdm(dataloader, desc=description)):
+                    inputs, targets = data
+                    inputs = list(image.type(torch.FloatTensor).to(self.device) for image in inputs)
+                    targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
 
-                outputs = self(inputs, targets)
+                    outputs = self(inputs, targets)
 
-                yield inputs, outputs, targets
+                    yield inputs, outputs, targets
 
     def evaluate_model(
-        self, dataloader, criterion=None, description="testing on validation set",
+        self,
+        dataloader,
+        criterion=None,
+        description="testing on validation set",
     ):
         """Method used to evaluate the model on a validation set.
 
@@ -176,10 +213,7 @@ class BaseObjectDetection(BaseModel):
 
         self.model.eval()
 
-        for inputs, outputs, targets in self.predict_output_per_batch(
-            dataloader, description
-        ):
-
+        for inputs, outputs, targets in self.predict_output_per_batch(dataloader, description):
             predicted = self.get_predicted(outputs)
             self.running_metrics.update(predicted, targets)
 

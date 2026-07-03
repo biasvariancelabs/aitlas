@@ -1,10 +1,11 @@
 """HRNet model for segmentation"""
+
 import timm
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.nn import functional as F
 
-from ..base import BaseSegmentationClassifier
+from ..base.segmentation import BaseSegmentationClassifier
 
 
 NHIGH = 120
@@ -18,9 +19,7 @@ class HRNetModule(nn.Module):
 
     """
 
-    def __init__(
-        self, head: nn.Module, pretrained: bool = True, higher_res: bool = False
-    ):
+    def __init__(self, head: nn.Module, pretrained: bool = True, higher_res: bool = False):
         """Pretrained backbone for HRNet.
         :param head: Output head
         :type head: nn.Module

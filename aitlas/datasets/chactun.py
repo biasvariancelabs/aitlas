@@ -1,10 +1,12 @@
 import os
+
 import matplotlib.pyplot as plt
 import numpy as np
-
 from matplotlib.patches import Patch
+
 from ..utils import image_invert, image_loader
 from .semantic_segmentation import SemanticSegmentationDataset
+
 
 """
 For the Chactun dataset there is a seperate mask for each label
@@ -13,7 +15,6 @@ The object is black and the background is white
 
 
 class ChactunDataset(SemanticSegmentationDataset):
-
     labels = ["Aguada", "Building", "Platform"]
     color_mapping = [[255, 255, 0], [100, 100, 100], [0, 255, 0]]
     name = "Chactun"
@@ -24,9 +25,7 @@ class ChactunDataset(SemanticSegmentationDataset):
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
-        mask = np.zeros(
-            shape=(image.shape[0], image.shape[1], len(self.masks[index])), dtype=float
-        )
+        mask = np.zeros(shape=(image.shape[0], image.shape[1], len(self.masks[index])), dtype=float)
         for i, path in enumerate(self.masks[index]):
             mask[:, :, i] = image_invert(path, True) / 255
         return self.apply_transformations(image, mask)
@@ -68,8 +67,14 @@ class ChactunDataset(SemanticSegmentationDataset):
         #        fontsize=16,
         #        y=1.006,
         #    )
-        fig.legend(handles=legend_elements, bbox_to_anchor=(0.3, 1.0, 0.4, 0.2), ncol=3, mode='expand',
-                   loc='lower left', prop={'size': 12})
+        fig.legend(
+            handles=legend_elements,
+            bbox_to_anchor=(0.3, 1.0, 0.4, 0.2),
+            ncol=3,
+            mode="expand",
+            loc="lower left",
+            prop={"size": 12},
+        )
         plt.subplot(2, 2, 1)
         plt.imshow(img)
         plt.axis("off")

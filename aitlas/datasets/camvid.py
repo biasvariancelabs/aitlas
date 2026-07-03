@@ -1,8 +1,10 @@
 import os
+
 import numpy as np
 
 from ..utils import image_loader
 from .semantic_segmentation import SemanticSegmentationDataset
+
 
 """
 For the CamVid dataset the mask is in one file, each label is color coded.
@@ -26,9 +28,20 @@ class CamVidDataset(SemanticSegmentationDataset):
         "byciclist",
         "void",
     ]
-    color_mapping = [[255, 127, 127], [255, 191, 127], [255, 255, 127], [191, 255, 127], [127, 255, 127],
-                     [127, 255, 191], [127, 255, 255], [127, 191, 255], [127, 127, 255],
-                     [191, 127, 255], [255, 127, 255], [255, 127, 191]]
+    color_mapping = [
+        [255, 127, 127],
+        [255, 191, 127],
+        [255, 255, 127],
+        [191, 255, 127],
+        [127, 255, 127],
+        [127, 255, 191],
+        [127, 255, 255],
+        [127, 191, 255],
+        [127, 127, 255],
+        [191, 127, 255],
+        [255, 127, 255],
+        [255, 127, 191],
+    ]
     name = "CamVid"
 
     def __init__(self, config):

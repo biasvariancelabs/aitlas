@@ -1,20 +1,19 @@
 """
 Transformer model
-   
+
 .. note::
     Adapted from: https://github.com/dl4sits/BreizhCrops
-    
+
     Original implementation of Transformer model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/TransformerModel.py
 
 """
 
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
+from torch import nn, optim
 from torch.nn.modules import LayerNorm, Linear, ReLU
 from torch.nn.modules.transformer import TransformerEncoder, TransformerEncoderLayer
 
-from ..base import BaseMulticlassClassifier
+from ..base.classification import BaseMulticlassClassifier
 from .schemas import TransformerModelSchema
 
 

@@ -22,9 +22,7 @@ class PIC:
     :type images_lists: list of lists of ints
     """
 
-    def __init__(
-        self, args=None, sigma=0.2, nnn=5, alpha=0.001, distribute_singletons=True
-    ):
+    def __init__(self, args=None, sigma=0.2, nnn=5, alpha=0.001, distribute_singletons=True):
         self.sigma = sigma
         self.alpha = alpha
         self.nnn = nnn

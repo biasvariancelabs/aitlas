@@ -25,7 +25,6 @@ LABELS = [
 
 
 class WHURS19Dataset(MultiClassClassificationDataset):
-
     url = "https://github.com/CAPTAIN-WHU/BED4RS"
     labels = LABELS
     name = "WHU-RS19 dataset"

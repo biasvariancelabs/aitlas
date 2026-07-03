@@ -1,4 +1,5 @@
 """Metrics for segmentation tasks."""
+
 import numpy as np
 import torch
 
@@ -37,7 +38,7 @@ class F1ScoreSample(BaseMetric):
         total_score = 0.0
         for i, item in enumerate(y_true):
             predictions = torch.from_numpy(np.array(y_pred[i]))
-            labels = torch.from_numpy(np.array(y_true[i]))
+            labels = torch.from_numpy(np.array(item))
 
             predictions = predictions.to(self.device)
             labels = labels.to(self.device)
@@ -83,7 +84,7 @@ class IoU(BaseMetric):
         total_score = 0.0
         for i, item in enumerate(y_true):
             predictions = torch.from_numpy(np.array(y_pred[i]))
-            labels = torch.from_numpy(np.array(y_true[i]))
+            labels = torch.from_numpy(np.array(item))
 
             predictions = predictions.to(self.device)
             labels = labels.to(self.device)
@@ -122,7 +123,7 @@ class Accuracy(BaseMetric):
         total_score = 0.0
         for i, item in enumerate(y_true):
             predictions = torch.from_numpy(np.array(y_pred[i]))
-            labels = torch.from_numpy(np.array(y_true[i]))
+            labels = torch.from_numpy(np.array(item))
 
             predictions = predictions.to(self.device)
             labels = labels.to(self.device)
@@ -251,9 +252,7 @@ class FocalLoss(BaseMetric):
             import torch.nn.functional as F
 
             if self.logits:
-                binary_cross_entropy_loss = F.binary_cross_entropy_with_logits(
-                    input=x, target=y
-                )
+                binary_cross_entropy_loss = F.binary_cross_entropy_with_logits(input=x, target=y)
             else:
                 binary_cross_entropy_loss = F.binary_cross_entropy(input=x, target=y)
             pt = torch.exp(-1 * binary_cross_entropy_loss)
@@ -296,9 +295,7 @@ class CompositeMetric(BaseMetric):
                 f"the lists of metrics ({len(metrics)}) and weights ({len(weights)}) must be of equal length"
             )
         if sum(weights) != 1:
-            raise ValueError(
-                f"the sum of weights ({sum(weights)}) must be equal to one"
-            )
+            raise ValueError(f"the sum of weights ({sum(weights)}) must be equal to one")
         self.zipped = zip(weights, metrics)
 
     def calculate(self, y_true, y_pred):

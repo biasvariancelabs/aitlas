@@ -1,13 +1,14 @@
 import numpy as np
-
-from ..base import BaseDataset
-from .schemas import NPZDatasetSchema
 from numpy import load
 from PIL import Image
 
+from ..base import BaseDataset
+from .schemas import NPZDatasetSchema
+
+
 """
 Load a dataset from a file in .npz format
-The file contains the train, validation and the test splits 
+The file contains the train, validation and the test splits
 """
 
 
@@ -34,7 +35,7 @@ class NpzDataset(BaseDataset):
         """
         # load image and convert to RGB
         img, target = self.data[index]
-        img = np.asarray(Image.fromarray(img).convert('RGB'))
+        img = np.asarray(Image.fromarray(img).convert("RGB"))
         # apply transformations
         if self.transform:
             img = self.transform(img)
@@ -67,8 +68,8 @@ class NpzDataset(BaseDataset):
         data = []
         if self.npz_file:
             raw_data = load(self.npz_file)
-            images = raw_data[f'{self.config.mode}_images']
-            labels = raw_data[f'{self.config.mode}_labels']
+            images = raw_data[f"{self.config.mode}_images"]
+            labels = raw_data[f"{self.config.mode}_labels"]
 
             for index, image in enumerate(images):
                 item = (
@@ -81,5 +82,3 @@ class NpzDataset(BaseDataset):
             raise ValueError("You need to provide the list of labels for the dataset")
 
         return data
-
-

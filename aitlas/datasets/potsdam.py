@@ -1,13 +1,15 @@
-import numpy as np
 import os
+
+import numpy as np
 import pandas as pd
 
-from .semantic_segmentation import SemanticSegmentationDataset
 from ..utils import image_loader
+from .semantic_segmentation import SemanticSegmentationDataset
+
 
 """
-38 images of size 6000x6000 pixels with resolution of 0.05m. The dataset was created to provide a benchmark for 
-urban semantic segmentation. Each patch contains a true ortophoto and a DSM. Images were acquired over Potsdam 
+38 images of size 6000x6000 pixels with resolution of 0.05m. The dataset was created to provide a benchmark for
+urban semantic segmentation. Each patch contains a true ortophoto and a DSM. Images were acquired over Potsdam
 in Germany using photogrammetric digital airborne camera systems and Airborne Laser Scanning (lidar).
 """
 
@@ -15,14 +17,29 @@ in Germany using photogrammetric digital airborne camera systems and Airborne La
 class PotsdamDataset(SemanticSegmentationDataset):
     url = "https://www.isprs.org/education/benchmarks/UrbanSemLab/default.aspx"
 
-    labels = ["no-data","Impervious surface","Clutter","Car","Tree","Low vegetation","Building"]
-    color_mapping = [[0,0,0],[255, 255, 255], [255, 0, 0], [255, 255, 0], [0, 255, 0], [0, 255, 255],[0,0,255]] 
+    labels = [
+        "no-data",
+        "Impervious surface",
+        "Clutter",
+        "Car",
+        "Tree",
+        "Low vegetation",
+        "Building",
+    ]
+    color_mapping = [
+        [0, 0, 0],
+        [255, 255, 255],
+        [255, 0, 0],
+        [255, 255, 0],
+        [0, 255, 0],
+        [0, 255, 255],
+        [0, 0, 255],
+    ]
     name = "Potsdam"
 
     def __init__(self, config):
         # now call the constructor to validate the schema and split the data
         super().__init__(config)
-
 
     def __getitem__(self, index):
         image = image_loader(self.images[index])
@@ -44,7 +61,7 @@ class PotsdamDataset(SemanticSegmentationDataset):
         for image, mask in self.dataloader():
             for index, label in enumerate(self.labels):
                 label_dist[self.labels[index]] += mask[:, :, :, index].sum()
-        label_count = pd.DataFrame.from_dict(label_dist, orient='index')
+        label_count = pd.DataFrame.from_dict(label_dist, orient="index")
         label_count.columns = ["Number of pixels"]
         label_count = label_count.astype(float)
         return label_count

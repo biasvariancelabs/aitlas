@@ -22,19 +22,26 @@ class Config(Munch):
 
 
 class ObjectConfig(Schema):
-    classname = fields.String(required=True, description="Class to instantiate.")
+    classname = fields.String(required=True, metadata={"description": "Class to instantiate."})
     config = fields.Dict(
-        required=True, descripton="Configuration used for instantiation of the class."
+        required=True,
+        metadata={"description": "Configuration used for instantiation of the class."},
     )
 
 
 class RunConfig(Schema):
     """Top level configuration schema"""
 
-    model = fields.Nested(ObjectConfig, missing=None, description="Model configuration")
-    task = fields.Nested(ObjectConfig, required=True, description="Task configuration")
+    model = fields.Nested(
+        ObjectConfig, load_default=None, metadata={"description": "Model configuration"}
+    )
+    task = fields.Nested(
+        ObjectConfig, required=True, metadata={"description": "Task configuration"}
+    )
     use_ddp = fields.Boolean(
-        required=False, missing=False, description="Turn on distributed data processing"
+        required=False,
+        load_default=False,
+        metadata={"description": "Turn on distributed data processing"},
     )
 
 

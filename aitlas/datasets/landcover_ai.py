@@ -1,10 +1,12 @@
 import glob
 import os
+
 import cv2
 import numpy as np
 
 from ..utils import image_loader
 from .semantic_segmentation import SemanticSegmentationDataset
+
 
 """
 41 orthophoto tiles from different counties located in all regions. Every tile has about 5 km2.
@@ -18,7 +20,13 @@ class LandCoverAiDataset(SemanticSegmentationDataset):
     url = "https://landcover.ai.linuxpolska.com/"
 
     labels = ["Background", "Buildings", "Woodlands", "Water", "Road"]
-    color_mapping = [[255, 255, 0], [0, 0, 0], [0, 255, 0], [0, 0, 255], [200, 200, 200]]
+    color_mapping = [
+        [255, 255, 0],
+        [0, 0, 0],
+        [0, 255, 0],
+        [0, 0, 255],
+        [200, 200, 200],
+    ]
     name = "Landcover AI"
 
     def __init__(self, config):
@@ -55,21 +63,14 @@ def split_images(imgs_dir, masks_dir, output_dir):
         k = 0
         for y in range(0, img.shape[0], target_size):
             for x in range(0, img.shape[1], target_size):
-                img_tile = img[y: y + target_size, x: x + target_size]
-                mask_tile = mask[y: y + target_size, x: x + target_size]
+                img_tile = img[y : y + target_size, x : x + target_size]
+                mask_tile = mask[y : y + target_size, x : x + target_size]
 
-                if (
-                    img_tile.shape[0] == target_size
-                    and img_tile.shape[1] == target_size
-                ):
-                    out_img_path = os.path.join(
-                        output_dir, "{}_{}.jpg".format(img_filename, k)
-                    )
+                if img_tile.shape[0] == target_size and img_tile.shape[1] == target_size:
+                    out_img_path = os.path.join(output_dir, "{}_{}.jpg".format(img_filename, k))
                     cv2.imwrite(out_img_path, img_tile)
 
-                    out_mask_path = os.path.join(
-                        output_dir, "{}_{}_m.png".format(mask_filename, k)
-                    )
+                    out_mask_path = os.path.join(output_dir, "{}_{}_m.png".format(mask_filename, k))
                     cv2.imwrite(out_mask_path, mask_tile)
 
                 k += 1

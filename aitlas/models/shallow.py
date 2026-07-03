@@ -1,12 +1,11 @@
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
-from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
+from ..base.classification import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class ShallowCNNNet(BaseMulticlassClassifier):
-    """Simlpe shallow multi-class CNN network for testing purposes
-    """
+    """Simple shallow multi-class CNN network for testing purposes"""
 
     def __init__(self, config):
         super().__init__(config)
@@ -30,8 +29,7 @@ class ShallowCNNNet(BaseMulticlassClassifier):
 
 
 class ShallowCNNNetMultilabel(BaseMultilabelClassifier):
-    """Simlpe shallow multi-label CNN network for testing purposes
-    """
+    """Simlpe shallow multi-label CNN network for testing purposes"""
 
     def __init__(self, config):
         super().__init__(config)

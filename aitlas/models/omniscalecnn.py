@@ -1,28 +1,25 @@
 """
-    OmniScaleCNN model implementation 
-    
-.. note:: 
+    OmniScaleCNN model implementation
+
+.. note::
     Adapted from https://github.com/dl4sits/BreizhCrops
-    
+
     Original implementation of OmniScaleCNN model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/OmniScaleCNN.py
 
 """
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
+from torch import nn, optim
 
-from ..base import BaseMulticlassClassifier
+from ..base.classification import BaseMulticlassClassifier
 from .schemas import OmniScaleCNNSchema
 
 
 class SampaddingConv1D_BN(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
         super(SampaddingConv1D_BN, self).__init__()
-        self.padding = nn.ConstantPad1d(
-            (int((kernel_size - 1) / 2), int(kernel_size / 2)), 0
-        )
+        self.padding = nn.ConstantPad1d((int((kernel_size - 1) / 2), int(kernel_size / 2)), 0)
         self.conv1d = torch.nn.Conv1d(
             in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size
         )
@@ -134,16 +131,12 @@ def get_out_channel_number(paramenter_layer, in_channel, prime_list):
     return out_channel_expect
 
 
-def generate_layer_parameter_list(
-    start, end, paramenter_number_of_layer_list, in_channel=1
-):
+def generate_layer_parameter_list(start, end, paramenter_number_of_layer_list, in_channel=1):
     prime_list = get_Prime_number_in_a_range(start, end)
 
     layer_parameter_list = []
     for paramenter_number_of_layer in paramenter_number_of_layer_list:
-        out_channel = get_out_channel_number(
-            paramenter_number_of_layer, in_channel, prime_list
-        )
+        out_channel = get_out_channel_number(paramenter_number_of_layer, in_channel, prime_list)
 
         tuples_in_layer = []
         for prime in prime_list:

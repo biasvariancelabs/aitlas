@@ -2,8 +2,8 @@ import csv
 import logging
 import os
 
-from ..base import BaseDataset, BaseModel, BaseTask, Configurable
-from ..utils import get_class, image_loader, stringify
+from ..base import BaseDataset, BaseModel, BaseTask
+from ..utils import image_loader
 from ..visualizations import (
     display_eopatch_predictions,
     display_image_labels,
@@ -72,20 +72,23 @@ class PredictTask(BaseTask):
             batch_size = self.config.batch_size
 
         test_dataset = ImageFolderDataset(
-            self.data_dir, labels, transforms, batch_size,
+            self.data_dir,
+            labels,
+            transforms,
+            batch_size,
         )
 
         # load the model
         self.model.load_model(self.config.model_path)
 
         # run predictions
-        y_true, y_pred, y_prob = self.model.predict(dataset=test_dataset,)
+        y_true, y_pred, y_prob = self.model.predict(
+            dataset=test_dataset,
+        )
 
         if self.output_format == "plot":
             for i, image_path in enumerate(test_dataset.data):
-                plot_path = os.path.join(
-                    self.output_dir, f"{test_dataset.fnames[i]}_plot.png"
-                )
+                plot_path = os.path.join(self.output_dir, f"{test_dataset.fnames[i]}_plot.png")
                 # y_true, y_pred, y_prob, labels, file
                 display_image_labels(
                     image_path,
@@ -136,14 +139,19 @@ class PredictSegmentationTask(BaseTask):
             batch_size = self.config.batch_size
 
         test_dataset = ImageFolderDataset(
-            self.config.data_dir, labels, transforms, batch_size,
+            self.config.data_dir,
+            labels,
+            transforms,
+            batch_size,
         )
 
         # load the model
         self.model.load_model(self.config.model_path)
 
         # run predictions
-        y_true, y_pred, y_prob = self.model.predict(dataset=test_dataset,)
+        y_true, y_pred, y_prob = self.model.predict(
+            dataset=test_dataset,
+        )
 
         if self.output_format == "plot":
             # plot predictions
@@ -166,7 +174,9 @@ class PredictSegmentationTask(BaseTask):
                     self.config.output_dir, os.path.splitext(test_dataset.fnames[i])[0]
                 )
                 save_predicted_masks(
-                    y_pred[i], test_dataset.labels, base_filepath_name,
+                    y_pred[i],
+                    test_dataset.labels,
+                    base_filepath_name,
                 )
 
 
@@ -196,7 +206,9 @@ class PredictEOPatchTask(BaseTask):
         self.model.load_model(self.config.model_path)
 
         # run predictions
-        y_true, y_pred, y_prob = self.model.predict(dataset=test_dataset,)
+        y_true, y_pred, y_prob = self.model.predict(
+            dataset=test_dataset,
+        )
 
         if not os.path.isdir(self.output_path):
             os.makedirs(self.output_path)

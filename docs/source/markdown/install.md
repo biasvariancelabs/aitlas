@@ -1,35 +1,41 @@
-# AiTLAS installation
+# Installation
 
-The best way to install `aitlas`, is if you create a virtual environment and install the  requirements with `pip`. Here are the steps:
-- Go to the folder where you cloned the repo.
-- Create a virtual environment
+AiTLAS requires Python 3.12. While you can use standard `pip`, we highly recommend [`uv`](https://github.com/astral-sh/uv) for significantly faster installations. This will automatically handle all dependencies defined in `pyproject.toml`.
+
+## Option 1: Install from PyPI (recommended)
+The easiest way to install AiTLAS is directly via PyPI:
 ```bash
-conda create -n aitlas python=3.8
+uv pip install aitlas
 ```
-- Use the virtual environment
+
+## Option 2: Install from the source
+
+- Clone the AiTLAS repository
 ```bash
-conda activate aitlas
+git clone https://github.com/biasvariancelabs/aitlas.git
 ```
-- Before installing `aitlas` on Windows it is recommended to install the following packages 
-from [Unofficial Windows wheels repository](https://www.lfd.uci.edu/~gohlke/pythonlibs/):
+
+- Go to the folder where you cloned the repo
+
+- Install using `uv`
 ```bash
-pip install GDAL-3.4.1-cp38-cp38-win_amd64.whl 
-pip install Fiona-1.8.20-cp38-cp38-win_amd64.whl
-pip install rasterio-1.2.10-cp38-cp38-win_amd64.whl
+uv pip install .
 ```
-- Install the requirements
+
+- Or, for developers (editable mode)
 ```bash
-pip install -r requirements.txt
+uv pip install -e .
 ```
-And, that's it, you can start using `aitlas`!
+
+- Verify the installation
+```bash
+python -c "import aitlas; print(f'AiTLAS version: {aitlas.__version__}')"
+```
+
+- Running AiTLAS
 ```bash
 python -m aitlas.run configs/example_config.json
 ```
-If you want to use `aitlas` as a package run
-```bash
-pip install .
-```
-in the folder where you cloned the repo.
 
 
 <!-- ---

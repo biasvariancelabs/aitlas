@@ -1,9 +1,10 @@
 """CNNRNN model"""
+
 import torch
-import torch.nn as nn
+from torch import nn
 from torchvision.models import resnet152
 
-from ..base import BaseMultilabelClassifier
+from ..base.classification import BaseMultilabelClassifier
 from .schemas import CNNRNNModelSchema
 
 
@@ -45,9 +46,7 @@ class CNNRNN(BaseMultilabelClassifier):
 
     def __init__(self, config):
         super(CNNRNN, self).__init__(config)
-        self.model.encoder = EncoderCNN(embed_size=self.config["embed_size"]).to(
-            self.device
-        )
+        self.model.encoder = EncoderCNN(embed_size=self.config["embed_size"]).to(self.device)
         self.model.decoder = DecoderRNN(
             embed_size=self.config["embed_size"],
             hidden_size=self.config["hidden_size"],

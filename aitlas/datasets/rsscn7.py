@@ -13,7 +13,6 @@ LABELS = [
 
 
 class RSSCN7Dataset(MultiClassClassificationDataset):
-
     url = "https://www.kaggle.com/datasets/nifulislam/rsscn7-dataset"
 
     labels = LABELS

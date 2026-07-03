@@ -1,4 +1,5 @@
 """Loss functions for image segmentation"""
+
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -17,8 +18,8 @@ class DiceLoss(nn.Module):
         inputs = torch.sigmoid(inputs)
 
         # flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
+        inputs = inputs.reshape(-1)
+        targets = targets.reshape(-1)
 
         intersection = (inputs * targets).sum()
         dice = (2.0 * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
@@ -41,11 +42,40 @@ class FocalLoss(nn.Module):
         # comment out if your model contains a sigmoid or equivalent activation layer
         inputs = torch.sigmoid(inputs)
 
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
+        inputs = inputs.reshape(-1)
+        targets = targets.reshape(-1)
 
         BCE = F.binary_cross_entropy(inputs, targets, reduction="mean")
         BCE_EXP = torch.exp(-BCE)
         focal_loss = alpha * (1 - BCE_EXP) ** gamma * BCE
 
         return focal_loss
+
+
+class BCL(nn.Module):
+    """
+    batch-balanced contrastive loss for change detection (for STANet)
+    no-change, 1
+    change, -1
+    """
+
+    def __init__(self, margin=2.0):
+        super(BCL, self).__init__()
+        self.margin = margin
+
+    def forward(self, distance, label):
+        label[label == 255] = 1
+        mask = (label != 255).float()
+        distance = distance * mask
+        pos_num = torch.sum((label == 1).float()) + 0.0001
+        neg_num = torch.sum((label == -1).float()) + 0.0001
+
+        loss_1 = torch.sum((1 + label) / 2 * torch.pow(distance, 2)) / pos_num
+        loss_2 = (
+            torch.sum(
+                (1 - label) / 2 * mask * torch.pow(torch.clamp(self.margin - distance, min=0.0), 2)
+            )
+            / neg_num
+        )
+        loss = loss_1 + loss_2
+        return loss

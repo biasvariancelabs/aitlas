@@ -1,27 +1,17 @@
-Clustering
+aitlas.clustering package
 =========================
 
-aitlas.clustering.kmeans module
--------------------------------
-
-.. automodule:: aitlas.clustering.kmeans
+.. automodule:: aitlas.clustering
    :members:
-   :undoc-members:
    :show-inheritance:
-
-aitlas.clustering.pic module
-----------------------------
-
-.. automodule:: aitlas.clustering.pic
-   :members:
    :undoc-members:
-   :show-inheritance:
 
-aitlas.clustering.utils module
-------------------------------
+Submodules
+----------
 
-.. automodule:: aitlas.clustering.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. toctree::
+   :maxdepth: 4
 
+   aitlas.clustering.kmeans
+   aitlas.clustering.pic
+   aitlas.clustering.utils

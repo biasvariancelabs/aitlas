@@ -71,9 +71,7 @@ class CropsDataset(BaseDataset):
 
     def parcel_distribution_table(self):
         # Figure 2 a) in the paper
-        parcel_count = (
-            self.index[["id", "region"]].groupby("region").count().reset_index()
-        )
+        parcel_count = self.index[["id", "region"]].groupby("region").count().reset_index()
         parcel_count.columns = ["Region NUTS-3", "# " + self.config.level]
         total_row = parcel_count.sum(axis=0)
         total_row["Region NUTS-3"] = "Total"
@@ -85,9 +83,7 @@ class CropsDataset(BaseDataset):
         # Figure 2 b) in the paper
         label_count = self.data_distribution_table()
         fig, ax = plt.subplots(figsize=(12, 10))
-        g = sns.barplot(
-            x="Label", y="Number of parcels", hue="Region", data=label_count, ax=ax
-        )
+        g = sns.barplot(x="Label", y="Number of parcels", hue="Region", data=label_count, ax=ax)
         g.set_xticklabels(g.get_xticklabels(), rotation=30)
         g.set_yscale("log")
         return fig
@@ -122,9 +118,8 @@ class CropsDataset(BaseDataset):
                 """
                 TODO: either add a url for our dataset or remove it for breizhcrops
                 """
-        else:
-            if self.config.verbose:
-                logging.info(f"Found class mapping at {classmapping}")
+        elif self.config.verbose:
+            logging.info(f"Found class mapping at {classmapping}")
 
         self.mapping = pd.read_csv(classmapping, index_col=0).sort_values(by="id")
         self.mapping = self.mapping.set_index("code")

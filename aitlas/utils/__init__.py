@@ -1,5 +1,6 @@
 from .segmentation_losses import *
 from .utils import (
+    collate_fn,
     current_ts,
     get_class,
     image_invert,
@@ -9,10 +10,8 @@ from .utils import (
     load_voc_format_dataset,
     parse_img_id,
     pil_loader,
+    save_best_model,
     split_images,
     stringify,
     tiff_loader,
-    save_best_model,
-    submit_inria_results,
-    collate_fn,
 )

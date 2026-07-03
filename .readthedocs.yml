@@ -1,32 +1,20 @@
 version: 2
-formats: all
 
-# .readthedocs.yaml
-# Read the Docs configuration file
-# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
-
-# Set the version of Python and other tools you might need
 build:
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   tools:
-    python: "3.8"
-# Build documentation in the docs/ directory with Sphinx
+    python: "3.12"
+
 sphinx:
   configuration: docs/source/conf.py
 
-# We recommend specifying your dependencies to enable reproducible builds:
-# https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
-
 python:
   install:
-    - requirements: requirements.txt
-    - method: pip
-      path: .
-  system_packages: true
-
-# conda:
-#   environment: docs/environment.yml
+    - method: uv
+      command: sync
+      # For doc tools that are separated into a dependency group in pyproject.toml
+      # groups:
+      #   - docs
 
 formats:
-#   - pdf
-   - epub
+  - epub

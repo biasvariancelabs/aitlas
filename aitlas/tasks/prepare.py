@@ -1,6 +1,6 @@
 import logging
 
-from ..base import BaseDataset, BaseModel, BaseTask
+from ..base import BaseModel, BaseTask
 from .schemas import PrepareTaskSchema
 
 

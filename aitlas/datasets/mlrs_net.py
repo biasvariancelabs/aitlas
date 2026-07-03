@@ -83,9 +83,7 @@ class MLRSNetMultiLabelDataset(MultiLabelClassificationDataset):
 # Function to convert the dataset in PASCAL VOC data format
 # First unrar all the images in the images folder using this command for linux: for file in *.rar; do unrar e "$file"; done
 def prepare(root_folder):
-    all_csv_filenames = [
-        i for i in glob.glob("{}{}/*.{}".format(root_folder, "labels", "csv"))
-    ]
+    all_csv_filenames = [i for i in glob.glob("{}{}/*.{}".format(root_folder, "labels", "csv"))]
     combined_csv = pd.concat([pd.read_csv(f) for f in all_csv_filenames])
     combined_csv["image"] = combined_csv["image"].str.replace(".jpg", "", regex=False)
     combined_csv.to_csv(

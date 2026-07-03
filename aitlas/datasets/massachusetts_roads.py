@@ -1,5 +1,6 @@
 from .semantic_segmentation import SemanticSegmentationDataset
 
+
 """
 This dataset contains 1171 aerial images, along with their respective maps.
 They are 1500 x 1500 in dimension and are in .tiff format

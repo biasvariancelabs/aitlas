@@ -37,7 +37,6 @@ LABELS = [
 
 
 class Optimal31Dataset(MultiClassClassificationDataset):
-
     url = "https://drive.google.com/file/d/1Fk9a0DW8UyyQsR8dP2Qdakmr69NVBhq9/view"
 
     labels = LABELS

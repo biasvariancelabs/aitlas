@@ -1,9 +1,10 @@
 """DenseNet161 model for multiclass classification"""
-import torch
-import torch.nn as nn
-import torchvision.models as models
 
-from ..base import BaseMulticlassClassifier, BaseMultilabelClassifier
+import torch
+from torch import nn
+from torchvision import models
+
+from ..base.classification import BaseMulticlassClassifier, BaseMultilabelClassifier
 
 
 class DenseNet161(BaseMulticlassClassifier):

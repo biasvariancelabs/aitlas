@@ -1,25 +1,24 @@
 """
 StarRNN model for multiclass classification
-    
-.. note:: 
+
+.. note::
     Adapted from https://github.com/dl4sits/BreizhCrops
-    
+
     Original implementation of StarRNN model: https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/StarRNN.py
-    
+
     Author: Türkoglu Mehmet Özgür <ozgur.turkoglu@geod.baug.ethz.ch>
 """
 
 import math
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
-import torch.optim as optim
 import torch.utils.data
+from torch import nn, optim
 from torch.autograd import Variable
+from torch.nn import init
 
-from ..base import BaseMulticlassClassifier
+from ..base.classification import BaseMulticlassClassifier
 from .schemas import StarRNNSchema
 
 
@@ -40,10 +39,7 @@ class StarRNN(BaseMulticlassClassifier):
         if self.config.use_layernorm:
             self.model.inlayernorm = nn.LayerNorm(self.config.input_dim)
             self.model.clayernorm = nn.LayerNorm(
-                (
-                    self.config.hidden_dims
-                    + self.config.hidden_dims * self.config.bidirectional
-                )
+                (self.config.hidden_dims + self.config.hidden_dims * self.config.bidirectional)
             )
 
         self.model.block = torch.nn.Sequential(
@@ -61,7 +57,7 @@ class StarRNN(BaseMulticlassClassifier):
                     device=self.device,
                 )
             ]
-            * (self.config.num_layers - 1)
+            * (self.config.num_layers - 1),
         )
 
         if self.config.bidirectional:
@@ -69,9 +65,7 @@ class StarRNN(BaseMulticlassClassifier):
         else:
             hidden_dims = self.config.hidden_dims
 
-        self.model.linear_class = nn.Linear(
-            hidden_dims, self.config.num_classes, bias=True
-        )
+        self.model.linear_class = nn.Linear(hidden_dims, self.config.num_classes, bias=True)
 
         if self.config.use_batchnorm:
             if self.config.bidirectional:
@@ -193,9 +187,7 @@ class StarLayer(nn.Module):
     def forward(self, x):
         # Initialize hidden state with zeros
         h0 = Variable(torch.zeros(x.size(0), self.hidden_dim)).to(self.device)
-        outs = Variable(torch.zeros(x.size(0), x.shape[1], self.hidden_dim)).to(
-            self.device
-        )
+        outs = Variable(torch.zeros(x.size(0), x.shape[1], self.hidden_dim)).to(self.device)
         hn = h0
         for seq in range(x.size(1)):
             hn = self.cell(x[:, seq], hn)

@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from ignite.metrics import confusion_matrix
 from ignite.metrics.multilabel_confusion_matrix import MultiLabelConfusionMatrix
-from sklearn.metrics import average_precision_score, roc_auc_score
+from sklearn.metrics import average_precision_score, hamming_loss, roc_auc_score
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
 
@@ -18,7 +18,6 @@ class BaseMetric:
 
 
 class RunningScore(object):
-
     def __init__(self, num_classes, device):
         self.num_classes = num_classes
         self.device = device
@@ -93,7 +92,7 @@ class RunningScore(object):
 
 
 class MultiClassRunningScore(RunningScore):
-    """Calculates confusion matrix for multi-class data. This class contains metrics that are averaged over batches. """
+    """Calculates confusion matrix for multi-class data. This class contains metrics that are averaged over batches."""
 
     def __init__(self, num_classes, device):
         super().__init__(num_classes, device)
@@ -117,8 +116,7 @@ class MultiClassRunningScore(RunningScore):
             cm.diag() / (cm.sum(dim=1) + 1e-15)
         ).mean()  # same as average accuracy in breizhcrops
         weighted = (
-            (cm.diag() / (cm.sum(dim=1) + 1e-15))
-            * ((cm.sum(dim=1)) / (cm.sum() + 1e-15))
+            (cm.diag() / (cm.sum(dim=1) + 1e-15)) * ((cm.sum(dim=1)) / (cm.sum() + 1e-15))
         ).sum()
         per_class = cm.diag() / (cm.sum(dim=1) + 1e-15)
 
@@ -134,8 +132,7 @@ class MultiClassRunningScore(RunningScore):
         micro = cm.diag().sum() / (cm.sum() + 1e-15)  # same as accuracy for multiclass
         macro = (cm.diag() / (cm.sum(dim=0) + 1e-15)).mean()
         weighted = (
-            (cm.diag() / (cm.sum(dim=0) + 1e-15))
-            * ((cm.sum(dim=1)) / (cm.sum() + 1e-15))
+            (cm.diag() / (cm.sum(dim=0) + 1e-15)) * ((cm.sum(dim=1)) / (cm.sum() + 1e-15))
         ).sum()
         per_class = cm.diag() / (cm.sum(dim=0) + 1e-15)
 
@@ -165,40 +162,40 @@ class MultiClassRunningScore(RunningScore):
         total_agreements = cm.diag().sum()
         agreements_chance = (act_hist * pred_hist) / num_samples
         agreements_chance = agreements_chance.sum()
-        kappa = (total_agreements - agreements_chance) / (
-            num_samples - agreements_chance
-        )
+        kappa = (total_agreements - agreements_chance) / (num_samples - agreements_chance)
         return {"Kappa metric": kappa}
 
 
 class MultiLabelRunningScore(RunningScore):
-    """Calculates a confusion matrix for multi-labelled, multi-class data in addition to the """
+    """Calculates a confusion matrix for multi-labelled, multi-class data in addition to the"""
 
     def __init__(self, num_classes, device):
         super().__init__(num_classes, device)
         self.confusion_matrix = MultiLabelConfusionMatrix(
-            num_classes=self.num_classes, device=self.device,
+            num_classes=self.num_classes,
+            device=self.device,
         )
         self.list_y_prob = []
         self.list_y_true = []
+        self.list_y_pred = []
 
     def reset(self):
         """Reset the confusion matrix and list of probabilities"""
         self.confusion_matrix.reset()
         self.list_y_prob = []
         self.list_y_true = []
+        self.list_y_pred = []
 
     def update(self, y_true, y_pred, y_prob=None):
         """Updates stats on each batch"""
         self.confusion_matrix.update((y_pred, y_true))
         self.list_y_prob.extend(y_prob.tolist())
         self.list_y_true.extend(y_true.tolist())
+        self.list_y_pred.extend(y_pred.tolist())
 
     def map(self):
         return {
-            "mAP": average_precision_score(
-                np.array(self.list_y_true), np.array(self.list_y_prob)
-            )
+            "mAP": average_precision_score(np.array(self.list_y_true), np.array(self.list_y_prob))
         }
 
     def roc_auc_score(self):
@@ -208,13 +205,16 @@ class MultiLabelRunningScore(RunningScore):
             )
         }
 
+    def hamming_loss(self):
+        return {
+            "hamming_loss": hamming_loss(np.array(self.list_y_true), np.array(self.list_y_pred))
+        }
+
     def accuracy(self):
         tp, tn, fp, fn = self.get_outcomes()
         tp_total, tn_total, fp_total, fn_total = self.get_outcomes(total=True)
 
-        accuracy = (tp_total + tn_total) / (
-            tp_total + tn_total + fp_total + fn_total + 1e-15
-        )
+        accuracy = (tp_total + tn_total) / (tp_total + tn_total + fp_total + fn_total + 1e-15)
         accuracy_per_class = (tp + tn) / (tp + tn + fp + fn + 1e-15)
 
         return {"Accuracy": accuracy, "Accuracy per Class": accuracy_per_class}
@@ -307,9 +307,7 @@ class ObjectDetectionRunningScore(object):
     def __init__(self, num_classes, device):
         self.num_classes = num_classes
         self.device = device
-        self.metric = MeanAveragePrecision(
-            iou_type="bbox", class_metrics=True
-        )
+        self.metric = MeanAveragePrecision(iou_type="bbox", class_metrics=True)
 
     def update(self, preds, target):
         """Updates stats on each batch"""
@@ -323,7 +321,7 @@ class ObjectDetectionRunningScore(object):
         results = self.metric.compute()
         dict_results = {}
         for key, value in results.items():
-            if len(list(value.size())):
+            if list(value.size()):
                 dict_results[key] = list(value)
             else:
                 dict_results[key] = float(value)

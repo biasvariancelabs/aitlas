@@ -1,17 +1,16 @@
 """
 InceptionTime model
-    
+
     .. note:: Original implementation of InceptionTime model https://github.com/dl4sits/BreizhCrops/blob/master/breizhcrops/models/InceptionTime.py
 
 """
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 import torch.utils.data
+from torch import nn, optim
 
-from ..base import BaseMulticlassClassifier
+from ..base.classification import BaseMulticlassClassifier
 from .schemas import InceptionTimeSchema
 
 
@@ -27,9 +26,7 @@ class InceptionTime(BaseMulticlassClassifier):
     def __init__(self, config):
         BaseMulticlassClassifier.__init__(self, config)
 
-        self.model.inlinear = nn.Linear(
-            self.config.input_dim, self.config.hidden_dims * 4
-        )
+        self.model.inlinear = nn.Linear(self.config.input_dim, self.config.hidden_dims * 4)
 
         self.model.inception_modules_list = [
             InceptionModule(
@@ -44,9 +41,7 @@ class InceptionTime(BaseMulticlassClassifier):
         self.inception_modules = nn.Sequential(*self.model.inception_modules_list)
 
         self.model.avgpool = nn.AdaptiveAvgPool1d(1)
-        self.model.outlinear = nn.Linear(
-            self.config.hidden_dims * 4, self.config.num_classes
-        )
+        self.model.outlinear = nn.Linear(self.config.hidden_dims * 4, self.config.num_classes)
 
     def forward(self, x):
         # N x T x D -> N x D x T
@@ -101,9 +96,7 @@ class InceptionModule(nn.Module):
 
         self.pool_conv = nn.Sequential(
             nn.MaxPool1d(kernel_size=3, stride=1, padding=1),
-            nn.Conv1d(
-                num_filters, num_filters // 4, kernel_size=1, padding=0, bias=use_bias
-            ),
+            nn.Conv1d(num_filters, num_filters // 4, kernel_size=1, padding=0, bias=use_bias),
         )
 
         self.bn_relu = nn.Sequential(nn.BatchNorm1d(num_filters), nn.ReLU())

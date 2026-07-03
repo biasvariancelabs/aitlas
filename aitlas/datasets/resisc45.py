@@ -51,7 +51,6 @@ LABELS = [
 
 
 class Resisc45Dataset(MultiClassClassificationDataset):
-
     url = "https://www.tensorflow.org/datasets/catalog/resisc45"
     labels = LABELS
 

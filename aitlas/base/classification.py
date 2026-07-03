@@ -2,9 +2,8 @@ import logging
 
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as nnf
-import torch.optim as optim
+from torch import nn, optim
 
 from .metrics import MultiClassRunningScore, MultiLabelRunningScore
 from .models import BaseModel
@@ -15,8 +14,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 
 class BaseMulticlassClassifier(BaseModel):
-    """Base class for a multiclass classifier.
-    """
+    """Base class for a multiclass classifier."""
 
     schema = BaseClassifierSchema
 
@@ -55,13 +53,13 @@ class BaseMulticlassClassifier(BaseModel):
         if running_metrics.confusion_matrix:
             cm = running_metrics.get_computed()
 
-        # plot confusion matrix for model evaluation
-        plot_multiclass_confusion_matrix(
-            np.array(cm),
-            labels,
-            dataset_name,
-            f"{dataset_name}_{self.name}_{run_id}_cm.pdf",
-        )
+            # plot confusion matrix for model evaluation
+            plot_multiclass_confusion_matrix(
+                np.array(cm),
+                labels,
+                dataset_name,
+                f"{dataset_name}_{self.name}_{run_id}_cm.pdf",
+            )
 
     def load_optimizer(self):
         """Load the optimizer"""
@@ -83,8 +81,7 @@ class BaseMulticlassClassifier(BaseModel):
 
 
 class BaseMultilabelClassifier(BaseModel):
-    """Base class for a multilabel classifier.
-    """
+    """Base class for a multilabel classifier."""
 
     schema = BaseClassifierSchema
 
@@ -121,9 +118,7 @@ class BaseMultilabelClassifier(BaseModel):
         :rtype: tuple
         """
         predicted_probs = torch.sigmoid(outputs)
-        predicted = predicted_probs >= (
-            threshold if threshold else self.config.threshold
-        )
+        predicted = predicted_probs >= (threshold if threshold else self.config.threshold)
         return predicted_probs, predicted
 
     def report(self, labels, dataset_name, running_metrics, **kwargs):

@@ -16,7 +16,6 @@ LABELS = [
 
 
 class EurosatDataset(MultiClassClassificationDataset):
-
     url = "https://github.com/phelber/EuroSAT"
 
     labels = LABELS

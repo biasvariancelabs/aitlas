@@ -18,7 +18,6 @@ LABELS = [
 
 
 class SiriWhuDataset(MultiClassClassificationDataset):
-
     url = "http://www.lmars.whu.edu.cn/prof_web/zhongyanfei/e-code.html"
     labels = LABELS
     name = "SIRI-WHU dataset"

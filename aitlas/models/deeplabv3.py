@@ -1,8 +1,9 @@
 """DeepLabV3 model"""
-import torch.nn as nn
+
+from torch import nn
 from torchvision import models
 
-from ..base import BaseSegmentationClassifier
+from ..base.segmentation import BaseSegmentationClassifier
 from .schemas import DeepLabV3ModelSchema
 
 
@@ -25,8 +26,8 @@ class DeepLabV3(BaseSegmentationClassifier):
 
     def forward(self, x):
         return self.model(x)
-    
-    
+
+
 class DeepLabV3_13_bands(BaseSegmentationClassifier):
     """DeepLabV3 model implementation for input with more than 3 channels
 
@@ -40,10 +41,14 @@ class DeepLabV3_13_bands(BaseSegmentationClassifier):
         super().__init__(config)
 
         self.model = models.segmentation.deeplabv3_resnet101(
-            pretrained = self.config.pretrained, progress=True, num_classes= self.config.num_classes
+            pretrained=self.config.pretrained,
+            progress=True,
+            num_classes=self.config.num_classes,
         )
-        
-        self.model.backbone.conv1 = nn.Conv2d(self.config.input_dim, 64, self.config.num_classes, 1, bias=False) #to accept the 13 channels
+
+        self.model.backbone.conv1 = nn.Conv2d(
+            self.config.input_dim, 64, self.config.num_classes, 1, bias=False
+        )  # to accept the 13 channels
 
         self.model.classifier[4] = nn.Conv2d(256, self.config.num_classes, 1)
 

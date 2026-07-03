@@ -1,2 +1,8 @@
 from .classification import AccuracyScore, F1Score, PrecisionScore, RecallScore
-from .segmentation import F1ScoreSample, DiceCoefficient, FocalLoss, CompositeMetric, IoU
+from .segmentation import (
+    CompositeMetric,
+    DiceCoefficient,
+    F1ScoreSample,
+    FocalLoss,
+    IoU,
+)

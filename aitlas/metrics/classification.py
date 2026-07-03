@@ -1,6 +1,5 @@
 """Metrics for classification tasks."""
 
-
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 from ..base import BaseMetric
@@ -51,13 +50,13 @@ class AveragedScore(BaseMetric):
         It calculates the score for each class and then averages the results.
         The type of average is {'micro', 'macro', 'weighted'}:
 
-        *'micro': Calculate metrics globally by counting the total true positives,
-            false negatives and false positives.
-        *'macro': Calculate metrics for each label, and find their unweighted
-            mean.  This does not take label imbalance into account.
-        *'weighted': Calculate metrics for each label, and find their average, weighted
-            by support (the number of true instances for each label). This
-            alters 'macro' to account for label imbalance.
+            'micro': Calculate metrics globally by counting the total true positives,
+                false negatives and false positives.
+            'macro': Calculate metrics for each label, and find their unweighted
+                mean.  This does not take label imbalance into account.
+            'weighted': Calculate metrics for each label, and find their average, weighted
+                by support (the number of true instances for each label). This
+                alters 'macro' to account for label imbalance.
 
         :param y_true: The ground truth labels
         :type y_true: array-like
@@ -68,10 +67,11 @@ class AveragedScore(BaseMetric):
         :raises ValueError: If the shapes of y_pred and y_true do not match.
 
         """
-
+        # pylint: disable=not-callable
         micro = self.method(y_true, y_pred, average="micro")
         macro = self.method(y_true, y_pred, average="macro")
         weighted = self.method(y_true, y_pred, average="weighted")
+        # pylint: enable=not-callable
 
         return {"micro": micro, "macro": macro, "weighted": weighted}
 

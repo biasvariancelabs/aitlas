@@ -1,8 +1,147 @@
-[build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
-
 [project]
 name = "aitlas"
-authors = [{name = "Bias Variance Labs", email = "info@bvlabs.ai"}]
-dynamic = ["version", "description"]
+version = "2.0.0"
+description = "AiTLAS toolbox for EO data."
+readme = "README.md"
+authors = [
+    { name = "Bias Variance Labs", email = "info@bvlabs.ai" },
+    { name = "Tadej Tomanič"},
+    { name = "Jan Sotošek"},
+    { name = "Alice Baudhuin"},
+    { name = "Nikola Simidjievski"},
+    { name = "Ivica Dimitrovski"},
+    { name = "Ivan Kitanovski"},
+    { name = "Elena Merdjanovska"},
+    { name = "Stefan Popov"}
+]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "albucore>=0.0.20",
+    "albumentations>=2.0.0",
+    "arff>=0.9",
+    "click>=8.1.0",
+    "dataclasses-json>=0.5.14",
+    "diffusers>=0.31.0",
+    "dill>=0.3.8",
+    "einops>=0.8.0",
+    "eo-learn>=1.5.2",
+    "faiss-cpu>=1.8.0",
+    "fiona>=1.10.0",
+    "fsspec>=2024.10.0",
+    "fvcore>=0.1.5",
+    "geffnet>=1.0.2",
+    "geopandas>=0.14.0",
+    "h5py>=3.12.0",
+    "huggingface-hub>=0.28.0",
+    "imagecodecs>=2024.12.0",
+    "imageio>=2.36.0",
+    "importlib-metadata>=8.5.0",
+    "iopath>=0.1.10",
+    "lmdb>=1.5.0",
+    "marshmallow>=3.25.0",
+    "matplotlib>=3.10.0",
+    "munch>=4.0.0",
+    "numpy>=1.26.0",
+    "opencv-python-headless>=4.10.0",
+    "packaging>=24.0",
+    "pandas>=2.2.0",
+    "pillow>=11.0.0",
+    "pyproj>=3.7.0",
+    "pytorch-ignite>=0.5.0",
+    "pytorch-lightning>=2.5.0",
+    "pyyaml>=6.0.0",
+    "rasterio>=1.4.0",
+    "regex>=2024.11.0",
+    "requests>=2.32.0",
+    "safetensors>=0.5.0",
+    "scikit-image>=0.24.0",
+    "scikit-learn>=1.6.0",
+    "scikit-multilearn>=0.2.0",
+    "scipy>=1.14.0",
+    "seaborn>=0.13.0",
+    "segmentation-models-pytorch>=0.5.0",
+    "sentinelhub>=3.11.5",
+    "setuptools>=80.10.2",
+    "shapely>=2.0.0",
+    "tensorboard>=2.14.0",
+    "tifffile>=2024.12.0",
+    "timm>=1.0.0",
+    "tokenizers>=0.20.0",
+    "torch==2.8.0",
+    "torchmetrics>=1.8.0",
+    "torchvision==0.23.0",
+    "tqdm>=4.66.0",
+    "transformers>=4.55.0",
+    "ttach>=0.0.3",
+    "typing-extensions>=4.14.0",
+    "urllib3>=2.4.0",
+    "utm>=0.8.1",
+    "yacs>=0.1.8",
+    "zipp>=3.22.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "codecov>=2.1.13",
+    "pre-commit>=3.5.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.12",
+]
+docs = [
+    "ipykernel>=7.2.0",
+    "myst-parser>=5.0.0",
+    "nbsphinx>=0.9.8",
+    "sphinx>=9.1.0",
+    "sphinx-autobuild>=2025.8.25",
+    "sphinx-book-theme>=1.2.0",
+    "sphinx-rtd-theme>=3.1.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort (automatically sorts imports)
+    "PL",  # pylint rules
+]
+
+ignore = [
+    "D",       # Ignore all missing docstring errors
+    "PLR0913", # Ignore "too many arguments" warnings
+    "PLR0911", # Ignore "too many return statements" warnings
+    "E741", # Ignore "ambiguous variable name"
+    "F841", # Ignore "unused variables"
+    "E501", # Ignore "line too long"
+    "PLR0912", # Ignore "too many branches"
+    "PLR0915", # Ignore "too many statements"
+    "PLR2004", # Ignore "magic value used in comparison"
+    "PLW2901", # Ignore "for loop variable overwritten by assignment target"
+    "PLW0127", # Ignore "self-assignment of variable"
+    "PLR1714", # Ignore "consider merging multiple comparisons"
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+"**/models/*_wrapper.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["kenny"]
+lines-after-imports = 2
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.setuptools]
+packages = ["aitlas"]
+package-dir = {"" = "."}

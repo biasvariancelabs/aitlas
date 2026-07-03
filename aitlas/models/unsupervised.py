@@ -1,11 +1,13 @@
 """DeepCluster model"""
+
 import math
+
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.utils.data.sampler import Sampler
 
-from ..base import BaseMulticlassClassifier
+from ..base.classification import BaseMulticlassClassifier
 from ..clustering import Kmeans, cluster_assign
 from .schemas import UnsupervisedDeepMulticlassClassifierSchema
 
@@ -37,9 +39,7 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
         """Overriding train epoch to implement the custom logic for the unsupervised classifier"""
         self.model.top_layer = None
-        self.model.classifier = nn.Sequential(
-            *list(self.model.classifier.children())[:-1]
-        )
+        self.model.classifier = nn.Sequential(*list(self.model.classifier.children())[:-1])
 
         # get the original dataset
         dataset = dataloader.dataset
@@ -94,9 +94,7 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
             optimizer_tl,
         )
 
-        return super().train_epoch(
-            epoch, train_dataloader, optimizers, criterion, iterations_log
-        )
+        return super().train_epoch(epoch, train_dataloader, optimizers, criterion, iterations_log)
 
     def forward(self, x):
         return self.model.forward(x)
@@ -105,10 +103,11 @@ class UnsupervisedDeepMulticlassClassifier(BaseMulticlassClassifier):
 def compute_features(dataloader, model, N, batch, device):
     """Compute features for images"""
     model.eval()
+    features = None
 
     # discard the label information in the dataloader
     for i, (input_tensor, _) in enumerate(dataloader):
-        input_var = torch.autograd.Variable(input_tensor.to(device), volatile=True)
+        input_var = input_tensor.to(device)
         aux = model(input_var).data.cpu().numpy()
 
         if i == 0:

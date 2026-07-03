@@ -1,19 +1,16 @@
-Utils
+aitlas.utils package
 ====================
 
-aitlas.utils.segmentation\_losses module
-----------------------------------------
-
-.. automodule:: aitlas.utils.segmentation_losses
+.. automodule:: aitlas.utils
    :members:
-   :undoc-members:
    :show-inheritance:
-
-aitlas.utils.utils module
--------------------------
-
-.. automodule:: aitlas.utils.utils
-   :members:
    :undoc-members:
-   :show-inheritance:
 
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   aitlas.utils.segmentation_losses
+   aitlas.utils.utils
