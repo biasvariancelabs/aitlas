@@ -802,12 +802,7 @@ class BaseModel(nn.Module, Configurable):
                 es_state = checkpoint["early_stopping"]
                 self.early_stopping.best_loss = es_state.get("best_loss", None)
                 self.early_stopping.early_stop = es_state.get("early_stop", False)
-                # Reset counter if early stopping was triggered, otherwise restore it
-                if es_state.get("early_stop", False):
-                    self.early_stopping.counter = 0
-                    logging.info("Early stopping was triggered in previous run - resetting counter")
-                else:
-                    self.early_stopping.counter = es_state.get("counter", 0)
+                self.early_stopping.counter = es_state.get("counter", 0)
 
             # Load LR scheduler state
             if (
