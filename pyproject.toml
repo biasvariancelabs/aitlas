@@ -142,6 +142,7 @@ lines-after-imports = 2
 quote-style = "double"
 indent-style = "space"
 
-[tool.setuptools]
-packages = ["aitlas"]
-package-dir = {"" = "."}
+[tool.setuptools.packages.find]
+# Ship the aitlas package and all of its subpackages. The include filter keeps
+# the other top-level directories (configs, media, tests, ...) out of the build.
+include = ["aitlas", "aitlas.*"]
