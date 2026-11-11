@@ -107,9 +107,9 @@ uv pip install .
 uv pip install -e .
 ```
 
-- Verify the installation
+- Verify the installation (importing `aitlas.base` also checks that the subpackages were installed)
 ```bash
-python -c "import aitlas; print(f'AiTLAS version: {aitlas.__version__}')"
+python -c "import aitlas.base; print(f'AiTLAS version: {aitlas.__version__}')"
 ```
 
 - Running AiTLAS
