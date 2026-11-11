@@ -1,3 +1,20 @@
+# v2.0.1
+
+## Fixes
+- **Packaging:** the 2.0.0 wheel and sdist contained only `aitlas/__init__.py` and `aitlas/run.py`, so importing any subpackage (e.g. `aitlas.models`) failed after `pip install aitlas`. All subpackages are now included ([#26](https://github.com/biasvariancelabs/aitlas/issues/26)).
+- **Dependencies:** setuptools is now capped below 82. setuptools 82 removed `pkg_resources`, which `fs` (a dependency of `eo-learn`) still imports, so `import aitlas.datasets` failed in fresh installs.
+
+## Other changes
+- Added a CI check that builds the sdist and wheel and verifies they contain the complete package.
+- The README installation check now imports `aitlas.base`.
+
+## Known issues
+- Importing `aitlas.datasets` shows a `pkg_resources` deprecation warning from `fs`. Making `eo-learn` optional is planned for 2.1.0.
+
+**Full Changelog**: https://github.com/biasvariancelabs/aitlas/compare/v2.0.0...v2.0.1
+
+# v2.0.0
+
 ## What's new
 
 ### New foundation models & adapters
