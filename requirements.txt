@@ -418,7 +418,7 @@ sentinelhub==3.11.5
     # via
     #   aitlas (pyproject.toml)
     #   eo-learn
-setuptools==82.0.1
+setuptools==81.0.0
     # via
     #   aitlas (pyproject.toml)
     #   fs

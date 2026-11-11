@@ -61,7 +61,8 @@ dependencies = [
     "seaborn>=0.13.0",
     "segmentation-models-pytorch>=0.5.0",
     "sentinelhub>=3.11.5",
-    "setuptools>=80.10.2",
+    # <82: eo-learn depends on fs, which imports pkg_resources (removed in setuptools 82)
+    "setuptools>=80.10.2,<82",
     "shapely>=2.0.0",
     "tensorboard>=2.14.0",
     "tifffile>=2024.12.0",
