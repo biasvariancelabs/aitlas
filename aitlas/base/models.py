@@ -140,6 +140,17 @@ class BaseModel(nn.Module, Configurable):
         self.lr_scheduler = self.load_lr_scheduler(self.optimizer)
         self.early_stopping = EarlyStopping()
 
+    @staticmethod
+    def _is_new_best(val_loss, best_loss):
+        """Return True if val_loss is a valid loss that improves on best_loss.
+
+        A NaN loss is never an improvement, so a diverged epoch cannot be kept as the best
+        model. best_loss is None before the first valid epoch.
+        """
+        if val_loss is None or np.isnan(val_loss):
+            return False
+        return best_loss is None or val_loss < best_loss
+
     def fit(
         self,
         dataset: BaseDataset,
@@ -257,7 +268,7 @@ class BaseModel(nn.Module, Configurable):
                 )
 
                 if self.log_loss:
-                    if not best_loss or val_loss < best_loss:
+                    if self._is_new_best(val_loss, best_loss):
                         best_loss = val_loss
                         best_epoch = epoch
                         best_model = copy.deepcopy(self.model)

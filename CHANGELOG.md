@@ -1,3 +1,15 @@
+# v2.0.2
+
+## Fixes
+- **Change detection evaluation:** ground truth masks resized to the model input size become soft at object borders. They were cast to integers before scoring, which removed every partially covered border pixel from both classes. Masks are now binarised at 0.5 before the metrics are computed. Scores change for datasets whose masks are resized.
+- **Change detection precision:** float16 mixed precision could overflow in some change detection models (for example in the attention of CGNet) and produce NaN losses. With `automatic_mixed_precision`, training now uses bfloat16 where the GPU supports it and float32 otherwise. Evaluation always runs in float32.
+- **Best checkpoint selection:** an epoch with a NaN validation loss could be kept as the best model when it was the first epoch. Such epochs are now never selected, and a validation loss of exactly 0 is no longer treated as missing.
+
+## Other changes
+- Fixed the change detection unit tests, which failed since mixed precision was added, and added tests for the fixes above.
+
+**Full Changelog**: https://github.com/biasvariancelabs/aitlas/compare/v2.0.1...v2.0.2
+
 # v2.0.1
 
 ## Fixes
