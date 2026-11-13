@@ -61,37 +61,28 @@ class BaseChangeDetection(BaseModel):
         super().__init__(config)
         self.running_metrics = SegmentationRunningScore(self.num_classes, self.device)
 
-        # Auto-detect if AMP is beneficial
-        if self.config.automatic_mixed_precision:
-            if self._should_use_amp():
-                self.use_amp = True
-            else:
-                logging.info(
-                    "AMP is enabled in config but not supported on this GPU - falling back to FP32"
-                )
-                self.use_amp = False
-        else:
-            self.use_amp = False
+        # Training precision. float16 autocast can overflow in some change detection models
+        # (for example in the attention of CGNet), which produces NaN losses. bfloat16 has the
+        # range of float32 and needs no gradient scaling. Without native bfloat16 support,
+        # training runs in float32. Evaluation always runs in float32.
+        self.amp_dtype = self._select_amp_dtype() if self.config.automatic_mixed_precision else None
+        self.use_amp = self.amp_dtype is not None
+        self.scaler = None
 
-        self.scaler = torch.amp.GradScaler("cuda") if self.use_amp else None
-
-    def _should_use_amp(self):
-        """Check if GPU has Tensor Cores for meaningful AMP speedup"""
-        if not torch.cuda.is_available():
-            return False
-
-        device_name = torch.cuda.get_device_name(0)
-        compute_capability = torch.cuda.get_device_capability(0)
-
-        # Tensor Cores available in: Volta (7.0+), Turing (7.5), Ampere (8.x), Hopper (9.x)
-        has_tensor_cores = compute_capability[0] >= 7
-
-        if has_tensor_cores:
-            logging.info(f"GPU {device_name} has Tensor Cores - enabling AMP")
-            return True
-        else:
-            logging.info(f"GPU {device_name} lacks Tensor Cores - disabling AMP")
-            return False
+    @staticmethod
+    def _select_amp_dtype():
+        """Return the autocast dtype for training: bfloat16 if the GPU supports it natively,
+        otherwise None, which means training in float32. float16 is never used."""
+        if torch.cuda.is_available():
+            try:
+                supported = torch.cuda.is_bf16_supported(including_emulation=False)
+            except TypeError:  # PyTorch versions without the including_emulation argument
+                supported = torch.cuda.is_bf16_supported()
+            if supported:
+                logging.info("Mixed precision training with bfloat16")
+                return torch.bfloat16
+        logging.info("bfloat16 is not supported on this device - training in float32")
+        return None
 
     def train_epoch(self, epoch, dataloader, optimizer, criterion, iterations_log):
         self.model.train()
@@ -111,14 +102,13 @@ class BaseChangeDetection(BaseModel):
 
             # forward + backward + optimize
             if self.use_amp:
-                # AMP path
-                with torch.amp.autocast("cuda"):
+                # Mixed precision path (bfloat16, see __init__). No gradient scaling is needed.
+                with torch.amp.autocast("cuda", dtype=self.amp_dtype):
                     outputs = self(image1, image2)
                     loss = criterion(outputs, labels)
 
-                self.scaler.scale(loss).backward()
-                self.scaler.step(optimizer)
-                self.scaler.update()
+                loss.backward()
+                optimizer.step()
             else:
                 # Standard FP32 path
                 outputs = self(image1, image2)
@@ -143,7 +133,8 @@ class BaseChangeDetection(BaseModel):
         """Run predictions on a dataloader and return inputs, outputs, labels per batch"""
         self.model.eval()
         with torch.no_grad():
-            with torch.amp.autocast("cuda", enabled=self.use_amp):
+            # Evaluation always runs in float32, also when training uses mixed precision.
+            with torch.amp.autocast("cuda", enabled=False):
                 for i, data in enumerate(tqdm(dataloader, desc=description)):
                     inputs, labels = data
                     image1, image2 = inputs
@@ -193,6 +184,12 @@ class BaseChangeDetection(BaseModel):
                 one_hot[torch.arange(labels.size(0)), predicted.type(torch.long)] = 1
                 predicted = one_hot
                 predicted = predicted.to(self.device)
+
+            # Masks resized to the model input size are soft at object borders. Binarise them
+            # at 0.5 before scoring. Casting them to integers would drop every border pixel
+            # with a value below 1 from both classes.
+            if labels.is_floating_point() and labels.dim() > 1:
+                labels = labels >= 0.5
 
             self.running_metrics.update(
                 labels.type(torch.int64), predicted.type(torch.int64), predicted_probs
@@ -245,7 +242,7 @@ class BaseChangeDetection(BaseModel):
             inputs2 = torch.from_numpy(image2.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
-            with torch.amp.autocast("cuda", enabled=self.use_amp):
+            with torch.amp.autocast("cuda", enabled=False):  # float32, as in evaluation
                 outputs = self(inputs1, inputs2)  # Model inference with two images
 
         # Check if outputs is OrderedDict for segmentation (from BaseModel)
