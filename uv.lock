@@ -104,7 +104,7 @@ wheels = [
 
 [[package]]
 name = "aitlas"
-version = "2.0.0"
+version = "2.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "albucore" },
@@ -236,7 +236,7 @@ requires-dist = [
     { name = "seaborn", specifier = ">=0.13.0" },
     { name = "segmentation-models-pytorch", specifier = ">=0.5.0" },
     { name = "sentinelhub", specifier = ">=3.11.5" },
-    { name = "setuptools", specifier = ">=80.10.2" },
+    { name = "setuptools", specifier = ">=80.10.2,<82" },
     { name = "shapely", specifier = ">=2.0.0" },
     { name = "tensorboard", specifier = ">=2.14.0" },
     { name = "tifffile", specifier = ">=2024.12.0" },

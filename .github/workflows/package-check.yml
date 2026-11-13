@@ -1,0 +1,39 @@
+# Builds the sdist and wheel and checks that they contain the whole aitlas
+# package (see tools/check_dist.py). Added after the 2.0.0 wheel shipped
+# without any subpackages (issue #26).
+#
+# Only GitHub-made actions are used, so this also runs under an organization
+# policy that restricts third-party actions; uv is installed with pip.
+name: Package check
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-dist:
+    name: Build and check distributions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: python -m pip install "uv==0.13.6"
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Check distributions
+        run: python tools/check_dist.py dist
